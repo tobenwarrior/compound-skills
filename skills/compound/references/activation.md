@@ -12,7 +12,13 @@ The activation step writes no files; later tasks retain their normal authorizati
 
 Use the bundled [helper](../scripts/project_setup.py) through Python 3.11+, using the skill's actual install directory.
 
-`setup global` configures personal defaults for Codex, Cursor, and Claude Code across all projects on this machine:
+`setup global` configures personal defaults for Codex, Cursor, and Claude Code across all projects on this machine. Preflight local state access first: resolve `COMPOUND_SKILLS_STATE_DIR`, defaulting to `~/.cache/compound-skills`, and create that directory. For the selected hosts, merge only its absolute path into the native write-path lists:
+
+- Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
+- Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
+- Claude Code: use its normal tool permissions; report any required native approval.
+
+Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves first-use cleanup unavailable. Use a fresh session to test the saved configuration, then enable routing:
 
 ```bash
 python3 <installed-skill-dir>/scripts/project_setup.py enable --global
@@ -36,4 +42,4 @@ The plugin must be installed and enabled at user scope in each app for global us
 
 ## Inspect or remove defaults
 
-For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report first-use completion; global status checks activation settings. Disable removes only the helper's managed sections in that scope and ends the current chat preference. Global disable leaves independent project defaults intact. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
+For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report first-use completion; global status checks routing; inspect the native cache-path entries separately for state access. Disable removes only the helper's managed sections in that scope and ends the current chat preference. Global disable leaves independent project defaults intact. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
