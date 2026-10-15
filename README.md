@@ -9,6 +9,7 @@ After activation, give normal engineering requests. The optional `compound` comm
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
+- **First-repository cleanup:** inspect a repository once before its first coding change, apply safe verified cleanup, and report larger improvements as a backlog.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
 - **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and remove duplication as the toolkit evolves.
 
@@ -60,6 +61,8 @@ After the user-scope installs above, run global setup **once from any one app**.
 
 Global setup saves the Codex and Claude defaults together. Cursor includes its default in the plugin: install at user scope and keep the `compound-default` rule set to **Always** in Customize → Rules. New chats across your projects use Compound without repeating a command or adding files to every repository. Only a small routing rule stays active; detailed guidance loads when relevant.
 
+Before the first write-authorized engineering task in a repository, Compound runs a bounded onboarding pass: inspect the structure and existing checks, audit hygiene, apply high-confidence cleanup, and verify changes. It preserves existing uncommitted work and leaves larger architecture changes for review. Read-only requests remain read-only. Completion is remembered locally across all three apps, so it does not repeat in every chat or add a marker to Git. See [first-use behavior](skills/compound/references/onboarding.md).
+
 | App | Global rule |
 | --- | --- |
 | Codex | `~/.codex/AGENTS.md`, plus an existing nonempty `AGENTS.override.md` |
@@ -89,7 +92,7 @@ For a smaller scope, `compound setup` applies to one project and `compound sessi
 
 Architecture guidance favors simpler responsibilities and less reader effort. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
 
-After activation, Compound guides engineering tasks without a repeated command. Explanations and reviews stay read-only; architecture changes follow the task you authorize. It does not run background restructuring.
+After activation, Compound guides engineering tasks without a repeated command. Its one-time onboarding pass provides bounded cleanup before the first coding change; later work follows the task you authorize. Explanations and reviews stay read-only. It does not run background restructuring.
 
 ## Try it on your project
 
@@ -125,7 +128,7 @@ python3 scripts/check.py --json
 
 The package checker validates host manifests, skill frontmatter, local links, and release content, including common credential and private-path patterns. It also reports discovery descriptions, entrypoint bodies, optional references, metadata, and scripts separately. Counts are UTF-8 bytes and words; token costs depend on the model's tokenizer and host framing.
 
-Python 3.11+ is required for the bundled setup and check scripts. Local development tests and evaluation artifacts are intentionally excluded from the distributed package.
+Python 3.11+ is required for the bundled scripts. First-use completion is stored in `~/.cache/compound-skills/onboarding.sqlite3`; `COMPOUND_SKILLS_STATE_DIR` can select a different local state directory. Local development tests and evaluation artifacts are intentionally excluded from the distributed package.
 
 ## Credits
 

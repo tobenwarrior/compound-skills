@@ -14,6 +14,14 @@ For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` r
 
 Read the project's instructions and relevant implementation. Name the outcome, constraints, and evidence that would establish success. A request for explanation or review stays read-only. Ask about missing product choices; investigate observable facts with available tools.
 
+Before the first write-authorized engineering task for a repository in this chat, check its onboarding state:
+
+```bash
+python3 <installed-skill-dir>/scripts/onboarding.py status --repo <repo-root>
+```
+
+If it is not completed, follow [first-use onboarding](references/onboarding.md). Read-only requests and activation-only operations do not trigger cleanup. Remember completion for this chat; later chats check the shared local record.
+
 Choose the current task below. Resolve links relative to this skill directory. Read only the reference needed now; open another when the task reaches it.
 
 | Task | Reference |
