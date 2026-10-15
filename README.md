@@ -17,7 +17,11 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 
 ## Install
 
+Install once in each app you use. Choose **User** scope so the plugin is available across your projects.
+
 ### Codex
+
+Run these in a terminal:
 
 ```sh
 codex plugin marketplace add tobenwarrior/compound-skills
@@ -28,6 +32,8 @@ Commands: `$compound` and `$compound-integrate`. Choose an activation mode below
 
 ### Claude Code
 
+Run these inside a Claude Code chat, choosing **User** scope if prompted:
+
 ```text
 /plugin marketplace add tobenwarrior/compound-skills
 /plugin install compound-skills@compound-skills
@@ -37,11 +43,17 @@ Commands: `/compound-skills:compound` and `/compound-skills:compound-integrate`.
 
 ### Cursor
 
-In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skills`, then install the plugin. Commands: `/compound` and `/compound-integrate`. Choose an activation mode below. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
+1. Open **Customize → Plugins → Add → From GitHub Repository**.
+2. Enter `https://github.com/tobenwarrior/compound-skills`, choose **User** scope, then **Import**.
+3. Click **Add** or **Install** beside `compound-skills` in the imported marketplace.
+
+Commands: `/compound` and `/compound-integrate`. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
+
+After installation, start a **new chat** in each app before using the commands. Claude Code can also load the install with `/reload-plugins`. If a plugin is missing after installation, reopen the app and check its plugin manager.
 
 ## Enable once, then work normally
 
-Install the plugin at **user scope** in each app, then run global setup **once from any one of them**:
+After the user-scope installs above, run global setup **once from any one app**. Choose one command from the first row; you do not need to run it in all three:
 
 | Action | Codex | Cursor | Claude Code |
 | --- | --- | --- | --- |
