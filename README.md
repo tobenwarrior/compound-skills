@@ -39,7 +39,7 @@ In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skill
 
 Give `compound-integrate` a source and the problem its guidance should solve. It checks provenance, overlap, portability, observed behavior, and context cost before retaining material. Newer models can justify shorter instructions only after evaluation.
 
-From a checkout, inspect package structure, links, release-content checks, and context measurements:
+From a checkout, inspect package structure, links, release-content checks, and context measurements. Stage intended changes first when using Git:
 
 ```sh
 python3 scripts/check.py --json

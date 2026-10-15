@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import ast
 import json
 import re
 import subprocess
@@ -55,7 +54,7 @@ def add(errors: list[dict[str, str]], code: str, path: str, message: str) -> Non
 
 def relative(root: Path, path: Path) -> str:
     try:
-        return path.resolve().relative_to(root).as_posix()
+        return path.relative_to(root).as_posix()
     except ValueError:
         return path.as_posix()
 
@@ -66,6 +65,21 @@ def inside(path: Path, root: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def under_symlink(root: Path, path: Path) -> bool:
+    """Check a lexical release path without resolving any symlink target."""
+
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError:
+        return False
+    current = root
+    for part in parts:
+        current /= part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def public_files(root: Path) -> list[Path]:
@@ -84,7 +98,7 @@ def public_files(root: Path) -> list[Path]:
                 if item
             }
             return sorted(
-                (path for path in paths if path.is_file() and not path.is_symlink()),
+                (path for path in paths if path.is_symlink() or path.is_file()),
                 key=lambda path: relative(root, path),
             )
     except OSError:
@@ -95,8 +109,7 @@ def public_files(root: Path) -> list[Path]:
         (
             path
             for path in root.rglob("*")
-            if path.is_file()
-            and not path.is_symlink()
+            if (path.is_symlink() or path.is_file())
             and not any(part in ignored for part in path.relative_to(root).parts)
         ),
         key=lambda path: relative(root, path),
@@ -105,11 +118,17 @@ def public_files(root: Path) -> list[Path]:
 
 def read_json(root: Path, path: str, label: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
     file = root / path
+    if under_symlink(root, file):
+        add(errors, "release_symlink", path, "release paths may not be symlinks")
+        return None
     if not file.is_file():
         add(errors, f"{label}_missing", path, f"{label} file is missing")
         return None
     try:
         value = json.loads(file.read_text(encoding="utf-8"))
+    except OSError:
+        add(errors, "unreadable_content", path, f"{label} could not be read")
+        return None
     except UnicodeDecodeError as exc:
         add(errors, f"{label}_encoding", path, f"{label} is not UTF-8: {exc}")
         return None
@@ -132,7 +151,15 @@ def check_identity(path: str, value: dict[str, Any], errors: list[dict[str, str]
         add(errors, "identity_mismatch", path, "author.name does not match package identity")
 
 
-def check_path(root: Path, value: Any, origin: str, field: str, errors: list[dict[str, str]]) -> None:
+def check_path(
+    root: Path,
+    value: Any,
+    origin: str,
+    field: str,
+    errors: list[dict[str, str]],
+    *,
+    directory: bool = False,
+) -> None:
     if not isinstance(value, str):
         add(errors, "path_type", origin, f"{field} must contain a string path")
         return
@@ -147,11 +174,17 @@ def check_path(root: Path, value: Any, origin: str, field: str, errors: list[dic
     if ".." in Path(portable).parts:
         add(errors, "path_escape", origin, f"{field} may not contain ..")
         return
-    target = (root / value).resolve()
+    lexical = root / value
+    if under_symlink(root, lexical):
+        add(errors, "release_symlink", origin, f"{field} may not traverse a symlink")
+        return
+    target = lexical.resolve()
     if not inside(target, root):
         add(errors, "path_escape", origin, f"{field} resolves outside the package")
     elif not target.exists():
         add(errors, "path_missing", origin, f"{field} does not resolve to a package path")
+    elif directory and not target.is_dir():
+        add(errors, "source_directory", origin, f"{field} must resolve to a directory")
 
 
 def check_manifest(root: Path, path: str, kind: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
@@ -202,9 +235,9 @@ def check_marketplace(root: Path, path: str, kind: str, errors: list[dict[str, s
             if not isinstance(source, dict) or source.get("source") != "local":
                 add(errors, "marketplace_source", origin, "Codex source must be a local source object")
             else:
-                check_path(root, source.get("path"), origin, "source.path", errors)
+                check_path(root, source.get("path"), origin, "source.path", errors, directory=True)
         elif isinstance(source, str):
-            check_path(root, source, origin, "source", errors)
+            check_path(root, source, origin, "source", errors, directory=True)
         else:
             add(errors, "marketplace_source", origin, "marketplace source must be a relative path")
         if "version" in entry and entry["version"] != VERSION:
@@ -212,28 +245,40 @@ def check_marketplace(root: Path, path: str, kind: str, errors: list[dict[str, s
     return value
 
 
-def scalar(value: str) -> str:
+def scalar(value: str) -> str | None:
+    """Accept quoted strings and unambiguous plain text, not YAML structures."""
     value = value.strip()
-    if len(value) > 1 and value[0] == value[-1] and value[0] in {'"', "'"}:
+    if value.startswith('"'):
         try:
-            parsed = ast.literal_eval(value)
-            return parsed if isinstance(parsed, str) else value[1:-1]
-        except (SyntaxError, ValueError):
-            return value[1:-1]
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, str) else None
+        except json.JSONDecodeError:
+            return None
+    if value.startswith("'"):
+        return value[1:-1].replace("''", "'") if re.fullmatch(r"'(?:[^']|'')*'", value) else None
+    if (not value or not (value[0].isalpha() or value[0] == "_")
+            or value.lower() in {"true", "false", "null", "yes", "no", "on", "off"}
+            or re.search(r":(?:\s|$)|\s#", value)):
+        return None
     return value
 
 
-def parse_skill(path: Path) -> dict[str, str] | None:
+def parse_skill(path: Path) -> tuple[dict[str, str] | None, str]:
     try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return None
+        raw = path.read_bytes()
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return None, "frontmatter is not valid UTF-8"
+    except OSError:
+        return None, "frontmatter could not be read"
+    if b"\0" in raw:
+        return None, "frontmatter contains binary bytes"
     lines = text.splitlines(keepends=True)
     if not lines or lines[0].strip() != "---":
-        return None
+        return None, "frontmatter must start with ---"
     end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
     if end is None:
-        return None
+        return None, "frontmatter is missing its closing ---"
     fields: dict[str, str] = {}
     for line in lines[1:end]:
         stripped = line.strip()
@@ -241,11 +286,14 @@ def parse_skill(path: Path) -> dict[str, str] | None:
             continue
         match = re.match(r"^([A-Za-z0-9_-]+):(?:[ \t]+)?(.*)$", stripped)
         if not match or match.group(1) in fields:
-            return None
-        fields[match.group(1)] = scalar(match.group(2))
+            return None, "frontmatter contains an invalid or duplicate field"
+        parsed = scalar(match.group(2))
+        if parsed is None:
+            return None, f"frontmatter field {match.group(1)!r} has an unterminated or unsupported scalar"
+        fields[match.group(1)] = parsed
     if not fields.get("name") or "description" not in fields:
-        return None
-    return {"name": fields["name"], "description": fields["description"], "body": "".join(lines[end + 1 :]), "raw": text}
+        return None, "frontmatter requires name and description"
+    return {"name": fields["name"], "description": fields["description"], "body": "".join(lines[end + 1 :]), "raw": text}, ""
 
 
 def check_references(root: Path, skill_root: Path, source: Path, text: str, errors: list[dict[str, str]]) -> None:
@@ -277,20 +325,26 @@ def check_references(root: Path, skill_root: Path, source: Path, text: str, erro
 
 def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str, str]]:
     directory = root / "skills"
+    if under_symlink(root, directory):
+        return {}
     if not directory.is_dir():
         add(errors, "skills_missing", "skills", "skills directory is missing")
         return {}
-    paths = sorted(path for path in directory.glob("*/SKILL.md") if path.is_file())
+    paths = sorted(
+        path for path in directory.glob("*/SKILL.md") if path.is_file() and not under_symlink(root, path)
+    )
     if {path.parent.name for path in paths} != set(SKILLS) or len(paths) != len(SKILLS):
         add(errors, "skill_count", "skills", "expected exactly two skill entrypoints")
     for path in directory.rglob("SKILL.md"):
+        if under_symlink(root, path):
+            continue
         if path.parent.parent != directory:
             add(errors, "skill_layout", relative(root, path), "skill entrypoints must be immediate children of skills/")
     result: dict[str, dict[str, str]] = {}
     for path in paths:
-        parsed = parse_skill(path)
+        parsed, reason = parse_skill(path)
         if parsed is None:
-            add(errors, "frontmatter", relative(root, path), "skill frontmatter is malformed")
+            add(errors, "frontmatter", relative(root, path), reason)
             continue
         name = path.parent.name
         result[name] = parsed
@@ -300,11 +354,13 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
             add(errors, "frontmatter", relative(root, path), "skill description must not be empty")
         check_references(root, path.parent, path, parsed["body"], errors)
         for resource in sorted(path.parent.rglob("*.md")):
-            if resource != path:
+            if resource != path and not under_symlink(root, resource):
                 try:
                     check_references(root, path.parent, resource, resource.read_text(encoding="utf-8"), errors)
-                except (OSError, UnicodeDecodeError):
-                    pass
+                except UnicodeDecodeError:
+                    add(errors, "unreadable_content", relative(root, resource), "release file is not valid UTF-8")
+                except OSError:
+                    add(errors, "unreadable_content", relative(root, resource), "release file could not be read")
     names = [parsed["name"] for parsed in result.values()]
     if len(names) != len(set(names)):
         add(errors, "duplicate_identity", "skills", "skill frontmatter names are duplicated")
@@ -385,30 +441,71 @@ def context(root: Path, manifests: dict[str, Any], marketplaces: dict[str, Any],
         "conditional_resources": {
             "references": bundle(resources["references"], loading="on demand by the selected skill"),
             "scripts": bundle(resources["scripts"], loading="executable storage; not prompt text by default"),
-            "metadata": bundle(resources["metadata"], loading="host or UI metadata; not prompt text"),
-            "other": bundle(resources["other"], loading="storage only"),
+            "metadata": bundle(resources["metadata"], loading="host or UI metadata; loading is host/task dependent"),
+            "other": bundle(resources["other"], loading="package files; loading depends on host and task"),
         },
     }
+
+
+def release_text(path: Path, root: Path, errors: list[dict[str, str]]) -> str | None:
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        add(errors, "unreadable_content", relative(root, path), "release file could not be read")
+        return None
+    if b"\0" in raw:
+        add(errors, "unreadable_content", relative(root, path), "release file contains binary bytes")
+        return None
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        add(errors, "unreadable_content", relative(root, path), "release file is not valid UTF-8")
+        return None
+
+
+def check_index_worktree(root: Path, errors: list[dict[str, str]]) -> None:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "diff", "--name-only", "-z", "--"],
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return
+    if result.returncode != 0:
+        return
+    for raw_path in result.stdout.split(b"\0"):
+        if raw_path:
+            path = raw_path.decode("utf-8", "surrogateescape")
+            add(errors, "index_mismatch", path, "tracked release content differs between index and worktree")
 
 
 def check_package(root: Path) -> dict[str, Any]:
     root = root.resolve()
     errors: list[dict[str, str]] = []
     public = public_files(root) if root.is_dir() else []
+    symlinks = [path for path in public if under_symlink(root, path)]
+    for path in symlinks:
+        add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
+    scannable = [path for path in public if not under_symlink(root, path)]
+    check_index_worktree(root, errors)
     manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
     marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
     skills = check_skills(root, errors) if root.is_dir() else {}
-    for path in public:
+    readable = []
+    for path in scannable:
         path_name = relative(root, path)
         if path_name.startswith(("tests/", "test/")):
             add(errors, "public_development_file", path_name, "tests must remain ignored and outside the public package")
-        try:
-            text = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        text = release_text(path, root, errors)
+        if text is None:
             continue
+        readable.append(path)
         for kind, pattern in PRIVATE_PATTERNS:
             if pattern.search(text):
                 add(errors, "sensitive_content", path_name, f"detected {kind} pattern")
+        if path.suffix == ".md" and "skills" not in path.relative_to(root).parts:
+            check_references(root, root, path, text, errors)
     return {
         "status": "pass" if not errors else "fail",
         "root": str(root),
@@ -419,7 +516,7 @@ def check_package(root: Path) -> dict[str, Any]:
         "public_files": [relative(root, path) for path in public],
         "errors": errors,
         "warnings": [],
-        "context": context(root, manifests, marketplaces, skills, public),
+        "context": context(root, manifests, marketplaces, skills, readable),
     }
 
 
