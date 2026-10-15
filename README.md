@@ -4,10 +4,7 @@
 
 A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practical guidance for architecture, implementation, debugging, refactoring, and review—and a process for improving that guidance as you discover better skills.
 
-| Command | What you get |
-| --- | --- |
-| `compound` | Enable guidance for a session or project, then route engineering tasks to the relevant workflow |
-| `compound-integrate` | Evaluate incoming skill packs, consolidate overlap, and test shorter instructions |
+After activation, give normal engineering requests. The optional `compound` command manages session, project, and global defaults.
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
@@ -28,7 +25,7 @@ codex plugin marketplace add tobenwarrior/compound-skills
 codex plugin add compound-skills@compound-skills
 ```
 
-Commands: `$compound` and `$compound-integrate`. Choose an activation mode below.
+Optional command: `$compound`. Choose an activation mode below.
 
 ### Claude Code
 
@@ -39,7 +36,7 @@ Run these inside a Claude Code chat, choosing **User** scope if prompted:
 /plugin install compound-skills@compound-skills
 ```
 
-Commands: `/compound-skills:compound` and `/compound-skills:compound-integrate`. Choose an activation mode below.
+Optional command: `/compound-skills:compound`. Choose an activation mode below.
 
 ### Cursor
 
@@ -47,7 +44,7 @@ Commands: `/compound-skills:compound` and `/compound-skills:compound-integrate`.
 2. Enter `https://github.com/tobenwarrior/compound-skills`, choose **User** scope, then **Import**.
 3. Click **Add** or **Install** beside `compound-skills` in the imported marketplace.
 
-Commands: `/compound` and `/compound-integrate`. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
+Optional command: `/compound`. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
 
 After installation, start a **new chat** in each app before using the commands. Claude Code can also load the install with `/reload-plugins`. If a plugin is missing after installation, reopen the app and check its plugin manager.
 
@@ -96,29 +93,17 @@ After activation, Compound guides engineering tasks without a repeated command. 
 
 ## Try it on your project
 
-Invoke the appropriate command for your host, then give it a task like:
+Once activated, give normal requests such as:
 
 | Goal | Example task |
 | --- | --- |
 | Improve architecture | Audit this project's architecture. Implement the highest-value simplifications, preserve existing behavior, and verify the changes. |
 | Fix a stubborn bug | Reproduce this failure, identify its cause, make the smallest correction, and replay the original case. |
 | Review a change | Review this diff for correctness, ownership, retry behavior, and unnecessary complexity. Report concrete findings without editing. |
-| Add a skill pack | Evaluate this skill pack: SOURCE_URL. Merge useful missing guidance, remove overlap, preserve attribution, and report the context change. |
-| Compact for a newer model | Compare shorter instructions against the current version using the same behavioral cases. Keep reductions supported by the results. |
 
-Use `compound` for the first three examples and `compound-integrate` for the last two.
+## How the toolkit grows
 
-## Add knowledge without duplicating it
-
-`compound-integrate` provides a repeatable intake process:
-
-1. Identify the concrete failure the incoming guidance addresses.
-2. Check its source, revision, license, assumptions, and overlap with existing guidance.
-3. Merge a missing idea, replace weaker wording, keep a specialized reference on demand, or reject redundant material.
-4. Compare actual outputs using representative tasks, including a case where the candidate should remain inactive.
-5. Remove superseded instructions, measure the context change, and update [SOURCES.md](SOURCES.md).
-
-For newer models, use unchanged behavioral cases to evaluate compression. A shorter version is retained when the observed results support it. Imported instructions are treated as source material; they cannot grant permission to publish, delete, message others, or change settings.
+New source material is integrated in this repository through the [maintainer guide](CONTRIBUTING.md): select useful ideas, consolidate overlap, compare actual behavior and context cost, and preserve provenance in [SOURCES.md](SOURCES.md). This is repository maintenance; it adds no user command or routine prompt overhead.
 
 ## Repository hygiene with a practical adoption path
 
@@ -130,7 +115,7 @@ These findings are review heuristics. They do not prove architectural quality or
 
 ## Inspect the plugin's context cost
 
-The toolkit has two discoverable skills, focused references, and executable checks. There is no required model, MCP server, external plugin, or automatic hook.
+The toolkit has one discoverable skill, focused references, and executable checks. There is no required model, MCP server, external plugin, or automatic hook.
 
 From a source checkout, stage intended changes when using Git, then run:
 

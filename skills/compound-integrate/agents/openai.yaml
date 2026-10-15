@@ -1,4 +1,0 @@
-interface:
-  display_name: "Compound Integrate"
-  short_description: "Curate new skills and compact existing guidance"
-  default_prompt: "Use $compound-integrate to evaluate and integrate this skill pack."

@@ -13,10 +13,10 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
-SKILLS = ("compound", "compound-integrate")
+SKILLS = ("compound",)
 SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MANIFESTS = {
     "plugin.json": "portable",
@@ -378,7 +378,7 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
         add(errors, "unreadable_content", "skills", "skills directory could not be read")
     paths.sort()
     if {path.parent.name for path in paths} != set(SKILLS) or len(paths) != len(SKILLS):
-        add(errors, "skill_count", "skills", "expected exactly two skill entrypoints")
+        add(errors, "skill_count", "skills", "expected exactly one skill entrypoint")
     for path in directory.rglob("SKILL.md"):
         if under_symlink(root, path, errors):
             continue
