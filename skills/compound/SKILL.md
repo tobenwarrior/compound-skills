@@ -1,12 +1,14 @@
 ---
 name: compound
-description: "Use when investigating, designing, implementing, debugging, refactoring, or reviewing software and evidence-backed engineering decisions matter."
+description: "Use for software engineering work, or enabling Compound guidance for a session or project."
 license: MIT
 ---
 
 # Compound
 
 Turn the requested outcome into the smallest justified change and verify what its users observe. Scale effort to uncertainty and impact.
+
+For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` requests, read [activation](references/activation.md) first.
 
 ## Start
 

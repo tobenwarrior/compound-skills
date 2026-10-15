@@ -6,11 +6,12 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 
 | Command | What you get |
 | --- | --- |
-| `compound` | One engineering entrypoint that selects the workflow your task needs |
+| `compound` | Enable guidance for a session or project, then route engineering tasks to the relevant workflow |
 | `compound-integrate` | Evaluate incoming skill packs, consolidate overlap, and test shorter instructions |
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
+- **Set up once:** keep Compound active for the current chat or make it the default for future chats in a project.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
 - **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and remove duplication as the toolkit evolves.
 
@@ -23,7 +24,7 @@ codex plugin marketplace add tobenwarrior/compound-skills
 codex plugin add compound-skills@compound-skills
 ```
 
-Invoke `$compound` or `$compound-integrate`, followed by your task.
+Commands: `$compound` and `$compound-integrate`. Choose an activation mode below.
 
 ### Claude Code
 
@@ -32,11 +33,28 @@ Invoke `$compound` or `$compound-integrate`, followed by your task.
 /plugin install compound-skills@compound-skills
 ```
 
-Invoke `/compound-skills:compound` or `/compound-skills:compound-integrate`, followed by your task.
+Commands: `/compound-skills:compound` and `/compound-skills:compound-integrate`. Choose an activation mode below.
 
 ### Cursor
 
-In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skills`, then install the plugin. Invoke `/compound` or `/compound-integrate`, followed by your task. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
+In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skills`, then install the plugin. Commands: `/compound` and `/compound-integrate`. Choose an activation mode below. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
+
+## Enable once, then work normally
+
+After installation, activate Compound once for your chat or project:
+
+| Scope | Codex | Cursor | Claude Code |
+| --- | --- | --- | --- |
+| Current chat | `$compound session` | `/compound session` | `/compound-skills:compound session` |
+| Project, including future chats | `$compound setup` | `/compound setup` | `/compound-skills:compound setup` |
+| Check project defaults | `$compound status` | `/compound status` | `/compound-skills:compound status` |
+| Remove project defaults | `$compound disable` | `/compound disable` | `/compound-skills:compound disable` |
+
+A bare `compound` invocation also enables the current chat. Once active, give normal engineering requests; you do not need to repeat the command for every task.
+
+**Session mode** writes no files and lasts for the current chat. **Project setup** adds a small managed section to `AGENTS.md`, preserving existing instructions. New chats in that project pick up the default through their host's project instructions. Keep the plugin installed and enabled in each app you use.
+
+Setup handles an existing nonempty Codex `AGENTS.override.md` and adds a small Claude project rule when legacy Claude instructions would hide `AGENTS.md`. It preserves unrelated content, supports repeated setup, and changes no global settings. Host settings can override project instructions. See [activation details](skills/compound/references/activation.md).
 
 ## Eight engineering workflows
 
@@ -55,7 +73,7 @@ In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skill
 
 Architecture guidance favors simpler responsibilities and less reader effort. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
 
-Changes happen through the task you request. Explanations and reviews stay read-only; architecture improvements require a request to implement them. Installing the plugin does not start a background restructuring process.
+After activation, Compound guides engineering tasks without a repeated command. Explanations and reviews stay read-only; architecture changes follow the task you authorize. It does not run background restructuring.
 
 ## Try it on your project
 
@@ -103,7 +121,7 @@ python3 scripts/check.py --json
 
 The package checker validates host manifests, skill frontmatter, local links, and release content, including common credential and private-path patterns. It also reports discovery descriptions, entrypoint bodies, optional references, metadata, and scripts separately. Counts are UTF-8 bytes and words; token costs depend on the model's tokenizer and host framing.
 
-Python 3.11+ is required for the bundled checks. Local development tests and evaluation artifacts are intentionally excluded from the distributed package.
+Python 3.11+ is required for the bundled setup and check scripts. Local development tests and evaluation artifacts are intentionally excluded from the distributed package.
 
 ## Credits
 

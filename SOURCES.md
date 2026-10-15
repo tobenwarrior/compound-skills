@@ -21,3 +21,5 @@ The earlier guidelines credited [multica-ai/andrej-karpathy-skills](https://gith
 ## Future integrations
 
 Use [compound-integrate](skills/compound-integrate/SKILL.md). Add a short entry recording source, immutable revision or content hash, license/notice, inspected material, accepted and rejected ideas, destination, and the behavioral/context evidence supporting the decision. Current packaging guidance comes from the official [OpenAI](https://developers.openai.com/plugins/build/plugins), [Cursor](https://cursor.com/docs/reference/plugins), and [Claude Code](https://code.claude.com/docs/en/plugins-reference) documentation.
+
+Project activation uses the hosts' native persistent instructions: [Codex AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Cursor rules](https://cursor.com/docs/rules), and [Claude Code project instructions](https://code.claude.com/docs/en/memory). The setup helper and managed routing section are maintained here under the project license.
