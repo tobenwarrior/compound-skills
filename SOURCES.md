@@ -1,0 +1,23 @@
+# Sources
+
+Record only sources whose ideas or material affect the toolkit. Keep raw downloads and evaluation transcripts outside the published repository.
+
+## pstack
+
+- Source: [cursor/plugins, pstack](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/pstack).
+- Revision: `e5136d82418d2db3165ea1050d17577cd618cc05`, inspected 2026-10-15; manifest version `0.15.25`.
+- License: MIT, copyright 2026 Lauren Tan. Full notice: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Inspected: `skills/poteto-mode/SKILL.md`, its investigation/feature/bug-fix/refactoring playbooks, `skills/architect/SKILL.md`, `skills/interrogate/SKILL.md`, the reader-load and behavior-testing principles, manifests and license.
+- Retained: conditional task routing; caller-first interfaces; explicit data and ownership; reproduce and verify on the relevant surface; behavior-preserving refactoring; evidence-backed review; reader effort as a design criterion.
+- Adapted into: [compound](skills/compound/SKILL.md) and its linked references. Wording and routing were rewritten for a shared Codex/Cursor/Claude Code package.
+- Excluded: fixed model names, Cursor tool calls, mandatory parallel panels, automatic PR opening, external communication authority, aggressive comment removal, automations and the large playbook catalog.
+
+## Earlier lucas-skills
+
+The repository hygiene checker originated in lucas-skills and is maintained here under [LICENSE](LICENSE). Private memory integration and platform-specific graph orchestration are outside this package.
+
+The earlier guidelines credited [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), derived from Andrej Karpathy's observations about coding agents. That repository declares MIT in its README, but no standalone license notice was available when inspected. Its guideline and example files are not bundled; the new engineering entrypoint is rewritten. Preserve this lineage rather than presenting those earlier ideas as original.
+
+## Future integrations
+
+Use [compound-integrate](skills/compound-integrate/SKILL.md). Add a short entry recording source, immutable revision or content hash, license/notice, inspected material, accepted and rejected ideas, destination, and the behavioral/context evidence supporting the decision. Current packaging guidance comes from the official [OpenAI](https://developers.openai.com/plugins/build/plugins), [Cursor](https://cursor.com/docs/reference/plugins), and [Claude Code](https://code.claude.com/docs/en/plugins-reference) documentation.

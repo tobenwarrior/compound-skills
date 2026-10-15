@@ -1,0 +1,2 @@
+# Intentional package metadata, not session artifacts.
+root_allow_extra = ["plugin.json", "SOURCES.md", "THIRD_PARTY_NOTICES.md"]
