@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -82,7 +83,7 @@ def under_symlink(root: Path, path: Path) -> bool:
     return False
 
 
-def public_files(root: Path) -> list[Path]:
+def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
     """Use Git's tracked/unignored view, with a small non-Git fallback."""
 
     try:
@@ -97,23 +98,25 @@ def public_files(root: Path) -> list[Path]:
                 for item in result.stdout.split(b"\0")
                 if item
             }
-            return sorted(
-                (path for path in paths if path.is_symlink() or path.is_file()),
-                key=lambda path: relative(root, path),
-            )
+            if result.stderr:
+                add(errors, "release_inventory", ".", "Git could not read every release path")
+            return sorted(paths, key=lambda path: relative(root, path))
     except OSError:
         pass
 
     ignored = {".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache", "tests", "test"}
-    return sorted(
-        (
-            path
-            for path in root.rglob("*")
-            if (path.is_symlink() or path.is_file())
-            and not any(part in ignored for part in path.relative_to(root).parts)
-        ),
-        key=lambda path: relative(root, path),
-    )
+    paths = []
+
+    def unreadable(exc: OSError) -> None:
+        path = Path(exc.filename) if exc.filename else root
+        add(errors, "unreadable_content", relative(root, path), "release directory could not be read")
+
+    for directory, directories, files in os.walk(root, followlinks=False, onerror=unreadable):
+        parent = Path(directory)
+        directories[:] = [name for name in directories if name not in ignored]
+        paths.extend(parent / name for name in files if name not in ignored)
+        paths.extend(parent / name for name in directories if (parent / name).is_symlink())
+    return sorted(paths, key=lambda path: relative(root, path))
 
 
 def read_json(root: Path, path: str, label: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
@@ -483,7 +486,7 @@ def check_index_worktree(root: Path, errors: list[dict[str, str]]) -> None:
 def check_package(root: Path) -> dict[str, Any]:
     root = root.resolve()
     errors: list[dict[str, str]] = []
-    public = public_files(root) if root.is_dir() else []
+    public = public_files(root, errors) if root.is_dir() else []
     symlinks = [path for path in public if under_symlink(root, path)]
     for path in symlinks:
         add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
