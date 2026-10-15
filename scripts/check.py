@@ -68,7 +68,16 @@ def inside(path: Path, root: Path) -> bool:
         return False
 
 
-def under_symlink(root: Path, path: Path) -> bool:
+def safe_is_symlink(root: Path, path: Path, errors: list[dict[str, str]] | None = None) -> bool:
+    try:
+        return path.is_symlink()
+    except OSError:
+        if errors is not None:
+            add(errors, "unreadable_content", relative(root, path), "release path could not be inspected")
+        return True
+
+
+def under_symlink(root: Path, path: Path, errors: list[dict[str, str]] | None = None) -> bool:
     """Check a lexical release path without resolving any symlink target."""
 
     try:
@@ -78,7 +87,7 @@ def under_symlink(root: Path, path: Path) -> bool:
     current = root
     for part in parts:
         current /= part
-        if current.is_symlink():
+        if safe_is_symlink(root, current, errors):
             return True
     return False
 
@@ -115,16 +124,21 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
         parent = Path(directory)
         directories[:] = [name for name in directories if name not in ignored]
         paths.extend(parent / name for name in files if name not in ignored)
-        paths.extend(parent / name for name in directories if (parent / name).is_symlink())
+        paths.extend(parent / name for name in directories if safe_is_symlink(root, parent / name, errors))
     return sorted(paths, key=lambda path: relative(root, path))
 
 
 def read_json(root: Path, path: str, label: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
     file = root / path
-    if under_symlink(root, file):
+    if under_symlink(root, file, errors):
         add(errors, "release_symlink", path, "release paths may not be symlinks")
         return None
-    if not file.is_file():
+    try:
+        is_file = file.is_file()
+    except OSError:
+        add(errors, "unreadable_content", path, f"{label} could not be inspected")
+        return None
+    if not is_file:
         add(errors, f"{label}_missing", path, f"{label} file is missing")
         return None
     try:
@@ -178,7 +192,7 @@ def check_path(
         add(errors, "path_escape", origin, f"{field} may not contain ..")
         return
     lexical = root / value
-    if under_symlink(root, lexical):
+    if under_symlink(root, lexical, errors):
         add(errors, "release_symlink", origin, f"{field} may not traverse a symlink")
         return
     target = lexical.resolve()
@@ -186,8 +200,14 @@ def check_path(
         add(errors, "path_escape", origin, f"{field} resolves outside the package")
     elif not target.exists():
         add(errors, "path_missing", origin, f"{field} does not resolve to a package path")
-    elif directory and not target.is_dir():
-        add(errors, "source_directory", origin, f"{field} must resolve to a directory")
+    elif directory:
+        try:
+            is_directory = target.is_dir()
+        except OSError:
+            add(errors, "unreadable_content", origin, f"{field} could not be inspected")
+        else:
+            if not is_directory:
+                add(errors, "source_directory", origin, f"{field} must resolve to a directory")
 
 
 def check_manifest(root: Path, path: str, kind: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
@@ -328,18 +348,33 @@ def check_references(root: Path, skill_root: Path, source: Path, text: str, erro
 
 def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str, str]]:
     directory = root / "skills"
-    if under_symlink(root, directory):
+    if under_symlink(root, directory, errors):
         return {}
-    if not directory.is_dir():
+    try:
+        is_directory = directory.is_dir()
+    except OSError:
+        add(errors, "unreadable_content", "skills", "skills directory could not be inspected")
+        return {}
+    if not is_directory:
         add(errors, "skills_missing", "skills", "skills directory is missing")
         return {}
-    paths = sorted(
-        path for path in directory.glob("*/SKILL.md") if path.is_file() and not under_symlink(root, path)
-    )
+    paths = []
+    try:
+        for path in directory.glob("*/SKILL.md"):
+            try:
+                is_file = path.is_file()
+            except OSError:
+                add(errors, "unreadable_content", relative(root, path), "skill entrypoint could not be inspected")
+                continue
+            if is_file and not under_symlink(root, path, errors):
+                paths.append(path)
+    except OSError:
+        add(errors, "unreadable_content", "skills", "skills directory could not be read")
+    paths.sort()
     if {path.parent.name for path in paths} != set(SKILLS) or len(paths) != len(SKILLS):
         add(errors, "skill_count", "skills", "expected exactly two skill entrypoints")
     for path in directory.rglob("SKILL.md"):
-        if under_symlink(root, path):
+        if under_symlink(root, path, errors):
             continue
         if path.parent.parent != directory:
             add(errors, "skill_layout", relative(root, path), "skill entrypoints must be immediate children of skills/")
@@ -357,7 +392,7 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
             add(errors, "frontmatter", relative(root, path), "skill description must not be empty")
         check_references(root, path.parent, path, parsed["body"], errors)
         for resource in sorted(path.parent.rglob("*.md")):
-            if resource != path and not under_symlink(root, resource):
+            if resource != path and not under_symlink(root, resource, errors):
                 try:
                     check_references(root, path.parent, resource, resource.read_text(encoding="utf-8"), errors)
                 except UnicodeDecodeError:
@@ -406,7 +441,7 @@ def resource_group(root: Path, path: Path) -> str:
 
 
 def context(root: Path, manifests: dict[str, Any], marketplaces: dict[str, Any], skills: dict[str, dict[str, str]], public: list[Path]) -> dict[str, Any]:
-    metadata_paths = [root / path for path in (*manifests, *marketplaces) if (root / path).is_file()]
+    metadata_paths = [root / path for path in (*manifests, *marketplaces)]
     descriptions = []
     for name, value in sorted(skills.items()):
         source = f"{name}\n{value['description']}".encode()
@@ -484,31 +519,51 @@ def check_index_worktree(root: Path, errors: list[dict[str, str]]) -> None:
 
 
 def check_package(root: Path) -> dict[str, Any]:
-    root = root.resolve()
     errors: list[dict[str, str]] = []
-    public = public_files(root, errors) if root.is_dir() else []
-    symlinks = [path for path in public if under_symlink(root, path)]
-    for path in symlinks:
-        add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
-    scannable = [path for path in public if not under_symlink(root, path)]
-    check_index_worktree(root, errors)
-    manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
-    marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
-    skills = check_skills(root, errors) if root.is_dir() else {}
-    readable = []
-    for path in scannable:
-        path_name = relative(root, path)
-        if path_name.startswith(("tests/", "test/")):
-            add(errors, "public_development_file", path_name, "tests must remain ignored and outside the public package")
-        text = release_text(path, root, errors)
-        if text is None:
-            continue
-        readable.append(path)
-        for kind, pattern in PRIVATE_PATTERNS:
-            if pattern.search(text):
-                add(errors, "sensitive_content", path_name, f"detected {kind} pattern")
-        if path.suffix == ".md" and "skills" not in path.relative_to(root).parts:
-            check_references(root, root, path, text, errors)
+    try:
+        root = root.resolve()
+    except OSError:
+        add(errors, "unreadable_content", ".", "package root could not be resolved")
+    public: list[Path] = []
+    manifests: dict[str, Any] = {}
+    marketplaces: dict[str, Any] = {}
+    skills: dict[str, dict[str, str]] = {}
+    readable: list[Path] = []
+    try:
+        try:
+            root_is_directory = root.is_dir()
+        except OSError:
+            add(errors, "unreadable_content", ".", "package root could not be inspected")
+            root_is_directory = False
+        public = public_files(root, errors) if root_is_directory else []
+        symlinks = [path for path in public if under_symlink(root, path, errors)]
+        for path in symlinks:
+            add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
+        scannable = [path for path in public if not under_symlink(root, path, errors)]
+        check_index_worktree(root, errors)
+        manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
+        marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
+        skills = check_skills(root, errors) if root_is_directory else {}
+        for path in scannable:
+            path_name = relative(root, path)
+            if path_name.startswith(("tests/", "test/")):
+                add(errors, "public_development_file", path_name, "tests must remain ignored and outside the public package")
+            text = release_text(path, root, errors)
+            if text is None:
+                continue
+            readable.append(path)
+            for kind, pattern in PRIVATE_PATTERNS:
+                if pattern.search(text):
+                    add(errors, "sensitive_content", path_name, f"detected {kind} pattern")
+            if path.suffix == ".md" and "skills" not in path.relative_to(root).parts:
+                check_references(root, root, path, text, errors)
+    except OSError:
+        add(errors, "unreadable_content", ".", "package could not be fully inspected")
+    try:
+        measured_context = context(root, manifests, marketplaces, skills, readable)
+    except OSError:
+        add(errors, "unreadable_content", ".", "package measurements could not be read")
+        measured_context = context(root, {}, {}, {}, [])
     return {
         "status": "pass" if not errors else "fail",
         "root": str(root),
@@ -519,7 +574,7 @@ def check_package(root: Path) -> dict[str, Any]:
         "public_files": [relative(root, path) for path in public],
         "errors": errors,
         "warnings": [],
-        "context": context(root, manifests, marketplaces, skills, readable),
+        "context": measured_context,
     }
 
 
