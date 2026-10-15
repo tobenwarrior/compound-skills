@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "compound-skills",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Reusable engineering workflows for focused changes, integration, and verification.",
   "author": {
     "name": "tobenwarrior"

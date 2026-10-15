@@ -13,7 +13,7 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
 SKILLS = ("compound", "compound-integrate")
@@ -29,6 +29,8 @@ MARKETPLACES = {
     ".cursor-plugin/marketplace.json": "cursor",
     ".claude-plugin/marketplace.json": "claude",
 }
+CURSOR_RULES_PATH = "./.cursor-plugin/rules/"
+CURSOR_RULE_PATH = ".cursor-plugin/rules/compound-default.mdc"
 PRIVATE_PATTERNS = (
     ("private_path", re.compile(r"/(?:Users|home|private/tmp|var/folders)/[^\s'\"`<>]+")),
     ("windows_private_path", re.compile(r"(?i)\b[A-Z]:\\Users\\[^\s'\"`<>]+")),
@@ -223,6 +225,10 @@ def check_manifest(root: Path, path: str, kind: str, errors: list[dict[str, str]
         add(errors, "component_path", path, "Cursor skills must be ./skills/ when declared")
     if kind in {"codex", "cursor"} and "skills" in value:
         check_path(root, value["skills"], path, "skills", errors)
+    if kind == "cursor" and "rules" in value:
+        if value["rules"] != CURSOR_RULES_PATH:
+            add(errors, "component_path", path, f"Cursor rules must be {CURSOR_RULES_PATH}")
+        check_path(root, value["rules"], path, "rules", errors, directory=True)
     return value
 
 
@@ -440,7 +446,14 @@ def resource_group(root: Path, path: Path) -> str:
     return "other"
 
 
-def context(root: Path, manifests: dict[str, Any], marketplaces: dict[str, Any], skills: dict[str, dict[str, str]], public: list[Path]) -> dict[str, Any]:
+def context(
+    root: Path,
+    manifests: dict[str, Any],
+    marketplaces: dict[str, Any],
+    skills: dict[str, dict[str, str]],
+    public: list[Path],
+    host_rules: list[Path],
+) -> dict[str, Any]:
     metadata_paths = [root / path for path in (*manifests, *marketplaces)]
     descriptions = []
     for name, value in sorted(skills.items()):
@@ -452,7 +465,9 @@ def context(root: Path, manifests: dict[str, Any], marketplaces: dict[str, Any],
         entrypoints.append({"skill": name, "path": f"skills/{name}/SKILL.md", **stats(value["body"].encode())})
 
     resources: dict[str, list[dict[str, Any]]] = {"references": [], "scripts": [], "metadata": [], "other": []}
+    host_rule_items = [file_item(root, path) for path in host_rules]
     known = set(manifests) | set(marketplaces) | {item["path"] for item in entrypoints}
+    known.update(item["path"] for item in host_rule_items)
     for path in public:
         path_name = relative(root, path)
         if path_name in known:
@@ -476,6 +491,11 @@ def context(root: Path, manifests: dict[str, Any], marketplaces: dict[str, Any],
             ),
         },
         "entrypoints": bundle(entrypoints, source="SKILL.md bodies"),
+        "host_rules": bundle(
+            host_rule_items,
+            source="Cursor compound-default.mdc",
+            loading="native Cursor always-loaded rule; applies when enabled",
+        ),
         "conditional_resources": {
             "references": bundle(resources["references"], loading="on demand by the selected skill"),
             "scripts": bundle(resources["scripts"], loading="executable storage; not prompt text by default"),
@@ -499,6 +519,55 @@ def release_text(path: Path, root: Path, errors: list[dict[str, str]]) -> str | 
     except UnicodeDecodeError:
         add(errors, "unreadable_content", relative(root, path), "release file is not valid UTF-8")
         return None
+
+
+def check_cursor_rule(root: Path, errors: list[dict[str, str]]) -> Path | None:
+    rule = root / CURSOR_RULE_PATH
+    if under_symlink(root, rule, errors):
+        add(errors, "release_symlink", CURSOR_RULE_PATH, "release paths may not be symlinks")
+        return None
+    try:
+        is_file = rule.is_file()
+    except OSError:
+        add(errors, "unreadable_content", CURSOR_RULE_PATH, "Cursor rule could not be inspected")
+        return None
+    if not is_file:
+        add(errors, "cursor_rule_missing", CURSOR_RULE_PATH, "Cursor always-loaded rule is missing")
+        return None
+    try:
+        raw = rule.read_bytes()
+    except OSError:
+        add(errors, "unreadable_content", CURSOR_RULE_PATH, "Cursor rule could not be read")
+        return rule
+    if b"\0" in raw:
+        add(errors, "unreadable_content", CURSOR_RULE_PATH, "Cursor rule contains binary bytes")
+        return rule
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        add(errors, "unreadable_content", CURSOR_RULE_PATH, "Cursor rule is not valid UTF-8")
+        return rule
+    lines = text.splitlines()
+    end = next((index for index in range(1, len(lines)) if lines[index].strip() == "---"), None)
+    valid = bool(lines and lines[0].strip() == "---" and end is not None)
+    always_apply = False
+    if valid:
+        for line in lines[1:end]:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            match = re.match(r"^([A-Za-z0-9_-]+):[ \t]*(.*)$", stripped)
+            if not match or not match.group(2).strip():
+                valid = False
+                break
+            if match.group(1) == "alwaysApply":
+                if always_apply or match.group(2).strip() != "true":
+                    valid = False
+                    break
+                always_apply = True
+    if not valid or not always_apply:
+        add(errors, "cursor_rule_frontmatter", CURSOR_RULE_PATH, "Cursor rule frontmatter must declare alwaysApply: true")
+    return rule
 
 
 def check_index_worktree(root: Path, errors: list[dict[str, str]]) -> None:
@@ -528,6 +597,7 @@ def check_package(root: Path) -> dict[str, Any]:
     manifests: dict[str, Any] = {}
     marketplaces: dict[str, Any] = {}
     skills: dict[str, dict[str, str]] = {}
+    host_rules: list[Path] = []
     readable: list[Path] = []
     try:
         try:
@@ -542,6 +612,13 @@ def check_package(root: Path) -> dict[str, Any]:
         scannable = [path for path in public if not under_symlink(root, path, errors)]
         check_index_worktree(root, errors)
         manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
+        cursor_manifest = manifests.get(".cursor-plugin/plugin.json")
+        if isinstance(cursor_manifest, dict) and "rules" in cursor_manifest:
+            if rule := check_cursor_rule(root, errors):
+                if rule in public:
+                    host_rules.append(rule)
+                else:
+                    add(errors, "release_inventory", CURSOR_RULE_PATH, "declared Cursor rule is not in release inventory")
         marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
         skills = check_skills(root, errors) if root_is_directory else {}
         for path in scannable:
@@ -560,10 +637,10 @@ def check_package(root: Path) -> dict[str, Any]:
     except OSError:
         add(errors, "unreadable_content", ".", "package could not be fully inspected")
     try:
-        measured_context = context(root, manifests, marketplaces, skills, readable)
+        measured_context = context(root, manifests, marketplaces, skills, readable, host_rules)
     except OSError:
         add(errors, "unreadable_content", ".", "package measurements could not be read")
-        measured_context = context(root, {}, {}, {}, [])
+        measured_context = context(root, {}, {}, {}, [], [])
     return {
         "status": "pass" if not errors else "fail",
         "root": str(root),

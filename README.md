@@ -11,7 +11,7 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
-- **Set up once:** keep Compound active for the current chat or make it the default for future chats in a project.
+- **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
 - **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and remove duplication as the toolkit evolves.
 
@@ -41,20 +41,27 @@ In Customize, use **From GitHub Repository** to add `tobenwarrior/compound-skill
 
 ## Enable once, then work normally
 
-After installation, activate Compound once for your chat or project:
+Install the plugin at **user scope** in each app, then run global setup **once from any one of them**:
 
-| Scope | Codex | Cursor | Claude Code |
+| Action | Codex | Cursor | Claude Code |
 | --- | --- | --- | --- |
-| Current chat | `$compound session` | `/compound session` | `/compound-skills:compound session` |
-| Project, including future chats | `$compound setup` | `/compound setup` | `/compound-skills:compound setup` |
-| Check project defaults | `$compound status` | `/compound status` | `/compound-skills:compound status` |
-| Remove project defaults | `$compound disable` | `/compound disable` | `/compound-skills:compound disable` |
+| All projects on this machine | `$compound setup global` | `/compound setup global` | `/compound-skills:compound setup global` |
+| Check global defaults | `$compound status global` | `/compound status global` | `/compound-skills:compound status global` |
+| Remove global defaults | `$compound disable global` | `/compound disable global` | `/compound-skills:compound disable global` |
 
-A bare `compound` invocation also enables the current chat. Once active, give normal engineering requests; you do not need to repeat the command for every task.
+Global setup saves the Codex and Claude defaults together. Cursor includes its default in the plugin: install at user scope and keep the `compound-default` rule set to **Always** in Customize → Rules. New chats across your projects use Compound without repeating a command or adding files to every repository. Only a small routing rule stays active; detailed guidance loads when relevant.
 
-**Session mode** writes no files and lasts for the current chat. **Project setup** adds a small managed section to `AGENTS.md`, preserving existing instructions. New chats in that project pick up the default through their host's project instructions. Keep the plugin installed and enabled in each app you use.
+| App | Global rule |
+| --- | --- |
+| Codex | `~/.codex/AGENTS.md`, plus an existing nonempty `AGENTS.override.md` |
+| Cursor | Bundled `compound-default` rule, enabled as Always in the user-scoped plugin |
+| Claude Code | `~/.claude/rules/compound-skills.md` |
 
-Setup handles an existing nonempty Codex `AGENTS.override.md` and adds a small Claude project rule when legacy Claude instructions would hide `AGENTS.md`. It preserves unrelated content, supports repeated setup, and changes no global settings. Host settings can override project instructions. See [activation details](skills/compound/references/activation.md).
+Custom `CODEX_HOME` and `CLAUDE_CONFIG_DIR` locations are respected. Saved Codex and Claude rules stay on this machine; repeat setup on another machine or profile. Keep the plugin installed and enabled in each app. Host settings and project-specific guidance can change how defaults apply; setup checks saved rules and reports Cursor as host-managed, without verifying runtime loading.
+
+`disable global` removes the managed Codex and Claude defaults. For Cursor, change `compound-default` to Manual or disable it in Customize. Independent project defaults remain in place.
+
+For a smaller scope, `compound setup` applies to one project and `compound session` applies to the current chat. A bare `compound` invocation also activates the chat. Use the same host command prefixes shown above. Session activation writes no files; project setup preserves existing instructions in a managed `AGENTS.md` section and handles Codex overrides and legacy Claude compatibility. See [activation details](skills/compound/references/activation.md).
 
 ## Eight engineering workflows
 

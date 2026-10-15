@@ -1,6 +1,6 @@
 {
   "name": "compound-skills",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Reusable engineering workflows for focused changes, integration, and verification.",
   "author": {
     "name": "tobenwarrior"
@@ -12,5 +12,6 @@
     "code-review",
     "repository-hygiene"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "rules": "./.cursor-plugin/rules/"
 }

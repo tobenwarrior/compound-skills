@@ -1,0 +1,6 @@
+---
+description: "Route engineering work through Compound Skills"
+alwaysApply: true
+---
+
+For engineering tasks, use the installed Compound Skills `compound` skill by default; load only the references relevant to the task. Respect project-specific guidance and the user's scope. If the installed skill is missing, report that and follow the project's conventions.

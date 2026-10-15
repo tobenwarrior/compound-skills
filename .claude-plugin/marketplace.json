@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Reusable engineering workflows for focused changes, integration, and verification.",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "plugins": [
     {
