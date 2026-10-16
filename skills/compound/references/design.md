@@ -10,4 +10,4 @@ For a consequential unresolved choice, compare structurally different alternativ
 
 State what each module owns and which decisions its interface hides. If callers repeatedly need internal knowledge, or unrelated cases demand the same workaround, revisit the model. A new layer should remove more reader work than it introduces.
 
-Implement in units with observable checks. Migrate internal callers together where practical. Preserve compatibility when an actual external contract requires it, with an explicit removal strategy. Keep comments that explain constraints the code cannot express.
+Implement in units with observable checks. Migrate internal callers together where practical. Preserve compatibility when an actual external contract requires it, with an explicit removal strategy.

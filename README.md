@@ -12,7 +12,7 @@ After activation, give normal engineering requests. The optional `compound` comm
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
 - **First-repository cleanup:** inspect a repository once before its first coding change, apply safe verified cleanup, and report larger improvements as a backlog.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
-- **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and remove duplication as the toolkit evolves.
+- **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and delete superseded material as the toolkit evolves.
 
 ## Install
 
@@ -92,7 +92,7 @@ For a smaller scope, `compound setup` applies to one project and `compound sessi
 | [Repository hygiene](skills/compound/references/repo-hygiene.md) | Inspect clutter, source-size candidates, script references, ignore rules, and accumulated agent artifacts |
 | [Git and pull requests](skills/compound/references/git.md) | Follow project formats, write clear commit/PR titles and explanations, report verified checks, and preserve human attribution |
 
-Architecture guidance favors simpler responsibilities and less reader effort. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
+Architecture guidance favors simpler responsibilities, less reader effort, and short comments only where intent or constraints need explaining. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
 
 After activation, Compound guides engineering tasks without a repeated command. Its one-time onboarding pass provides bounded cleanup before the first coding change; later work follows the task you authorize. Explanations and reviews stay read-only. It does not run background restructuring.
 

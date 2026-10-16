@@ -14,7 +14,7 @@ Identify the concrete failure the candidate addresses. Compare it with the curre
 
 Use representative task fixtures before editing. Compare current guidance with the proposed version in fresh contexts using the same inputs, tools, and model version. Inspect actual outputs or artifacts for correctness, scope, evidence, and tool authority. Include a task where the candidate should stay inactive. Keep local evaluation artifacts out of the distributed package.
 
-Edit the existing responsible section first. Add a reference only when its conditional use saves unrelated reads. Keep `compound` as the sole discoverable skill; repository maintenance guidance stays here. Remove superseded wording and stale links in the same change.
+Every integration or compaction includes pruning. Replace weaker guidance in place; delete superseded instructions and unused supporting files, updating callers, links, manifests, and evaluations in the same change. Keep no archive, disabled copy, or redundant entrypoint; Git history retains prior versions. Preserve required notices and behavior that evaluations still justify. Add a reference only when conditional use saves unrelated reads; `compound` remains the sole discoverable skill.
 
 Run `python3 scripts/check.py --json` from the repository root. Report discovery and entrypoint cost separately from optional references and executable resources. Bytes and words are measurements; token estimates depend on the tokenizer.
 
