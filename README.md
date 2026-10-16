@@ -91,7 +91,7 @@ Open the live viewer with its own command:
 
 Add a focus such as `map pricing`. In Claude Code, `/map` can also resolve when no other skill shares that name. Start a new chat after updating so the new command appears; Claude Code also supports `/reload-plugins`. The older `compound map` form still routes to the same viewer.
 
-The viewer opens at **`http://127.0.0.1:43127/`** in your browser. Explore folder groups, search files and symbols, pan and zoom through the dependency graph, and inspect a file's imports and dependents. One shared local service handles registered projects. The host may request permission for local cache and network access. Reopening the command reuses its service and index; the visible page checks for changes and updates incrementally. No generated HTML files or repeated full rebuilds.
+The viewer opens at **`http://127.0.0.1:43127/`** in your browser. Use the compact terminal-style interface to explore folder groups, search files and symbols, pan and zoom through the dependency graph, and inspect a file's imports and dependents. One shared local service handles registered projects. The host may request permission for local cache and network access. Reopening the command reuses its service and index; the visible page checks for changes and updates incrementally. No generated HTML files or repeated full rebuilds.
 
 Use `map status` to check the service and `map stop` to stop it. It stays available until stopped or the machine session ends; the next coding or map request starts it again. There is no login agent or scan of all your projects at startup. Set `COMPOUND_MAP_PORT` to choose another local port.
 

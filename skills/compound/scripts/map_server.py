@@ -445,6 +445,10 @@ class MapService:
 
     def _refresh(self, project: Project, force: bool = False) -> None:
         now = time.monotonic()
+        display_name = engine.repository_name(project.root)
+        if display_name != project.name:
+            project.name = display_name
+            force = True
         if not force and now - project.last_check < 2.0:
             return
         project.last_check = now
@@ -460,6 +464,7 @@ class MapService:
             if old is None or stable_old != stable_new:
                 project.revision += 1
             project.model = model
+            project.name = model.get("root_name", display_name)
             project.error = None
             project.updated_at = _now()
         except Exception as exc:
@@ -477,11 +482,11 @@ class MapService:
                 project = Project(project_id, root.name, root, query[:MAX_QUERY], INDEX_MAX_FILES)
                 self.projects[project_id] = project
                 self._refresh(project, force=True)
-            elif requery and project.query != query[:MAX_QUERY]:
-                project.query = query[:MAX_QUERY]
-                self._refresh(project)
-            elif refresh:
-                self._refresh(project, force=True)
+            else:
+                query_changed = requery and project.query != query[:MAX_QUERY]
+                if query_changed:
+                    project.query = query[:MAX_QUERY]
+                self._refresh(project, force=refresh or query_changed)
             return project
 
     def project(self, project_id: str) -> Project | None:

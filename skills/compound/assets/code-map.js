@@ -936,6 +936,8 @@ async function loadMap(force = false) {
     const previousSelection = state.selectedPath;
     state.model = nextModel;
     state.projectName = safeString(payload && payload.project && payload.project.name, state.projectName || nextModel.rootName);
+    const currentProject = state.projects.find(project => project.id === state.projectId);
+    if (currentProject) currentProject.name = state.projectName;
     const revision = safeNumber(payload && payload.revision, NaN);
     if (Number.isFinite(revision)) state.revision = Math.round(revision);
     if (!previousModel) state.didFit = false;

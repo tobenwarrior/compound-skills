@@ -15,6 +15,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 from pathlib import Path, PurePosixPath
 from typing import Any
 try:
@@ -89,6 +90,50 @@ def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
+
+
+def _remote_name(value: str) -> str | None:
+    remote = value.strip()
+    if not remote or any(character.isspace() or ord(character) < 32 or ord(character) == 127 for character in remote):
+        return None
+    path = ""
+    if "://" in remote:
+        try:
+            parsed = urllib.parse.urlsplit(remote)
+            hostname = parsed.hostname
+        except ValueError:
+            return None
+        if parsed.scheme.lower() not in {"http", "https", "ssh", "git", "git+ssh"} or not hostname:
+            return None
+        path = parsed.path
+    else:
+        match = re.fullmatch(r"(?:[^@/\s:]+@)?[^/\s:]+:(?P<path>[^?#\s]+)", remote)
+        if not match:
+            return None
+        path = match.group("path")
+    candidate = PurePosixPath(path.rstrip("/")).name
+    if candidate.lower().endswith(".git"):
+        candidate = candidate[:-4]
+    if not candidate or candidate in {".", ".."} or any(character in candidate for character in "/\\:@"):
+        return None
+    if any(ord(character) < 32 or ord(character) == 127 for character in candidate):
+        return None
+    return candidate
+
+
+def repository_name(root: Path) -> str:
+    """Return a safe display name without changing the canonical repository path."""
+    fallback = root.name
+    result = _git(root, "remote", "get-url", "origin")
+    if result is None or result.returncode != 0:
+        return fallback
+    try:
+        remote = os.fsdecode(result.stdout)
+    except (UnicodeDecodeError, ValueError):
+        return fallback
+    return _remote_name(remote) or fallback
+
+
 def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
@@ -488,7 +533,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         _note(notes, "Python and JavaScript/TypeScript import links are heuristic and incomplete; aliases, dynamic imports, and unresolved modules need native search")
     selected = sorted(ranked[:max_files], key=lambda record: record["path"])
     model = {
-        "root_name": root.name,
+        "root_name": repository_name(root),
         "generated_at": _now(),
         "head": head,
         "coverage": {"inventory": len(inventory), "indexed": len(selected), "truncated": truncated, "skipped": skipped, "notes": notes[:24]},
