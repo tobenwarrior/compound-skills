@@ -372,7 +372,8 @@ export function createGraph(canvas, options = {}) {
             : queryMatch ? 700000
               : focusNeighbor ? 500000 + Math.min(100000, degree * 20)
                 : (node.kind === "directory" ? 200000 : 0) + Math.min(100000, finite(node.count, 0) * 20);
-      if (!selected && !hovered && !highlighted && !queryMatch && priority < 200000 && state.view.scale < 0.56) return;
+      if (state.nodes.length > 120 && !selected && !hovered && !highlighted && !queryMatch
+        && priority < 200000 && state.view.scale < 0.56) return;
       labels.push({ node, point, text: labelFor(node, duplicate), priority });
     });
     labels.sort((left, right) => right.priority - left.priority || left.node.id.localeCompare(right.node.id));
@@ -432,7 +433,17 @@ export function createGraph(canvas, options = {}) {
       const width = context.measureText(value).width;
       const point = candidate.point;
       const radius = getRadius(candidate.node) * state.view.scale;
-      const rect = { x: point.x + radius + 5, y: point.y - 8, width: width + 8, height: 16 };
+      const labelWidth = width + 8;
+      const labelHeight = 16;
+      let labelX = point.x + radius + 5;
+      if (labelX + labelWidth > state.width) {
+        const leftX = point.x - radius - 5 - labelWidth;
+        labelX = leftX >= 0 ? leftX : clamp(labelX, 0, Math.max(0, state.width - labelWidth));
+      } else if (labelX < 0) {
+        labelX = 0;
+      }
+      const labelY = clamp(point.y - 8, 0, Math.max(0, state.height - labelHeight));
+      const rect = { x: labelX, y: labelY, width: labelWidth, height: labelHeight };
       if (rect.x + rect.width < 0 || rect.x > state.width || rect.y + rect.height < 0 || rect.y > state.height) {
         if (candidate.priority < 500000) continue;
       }
