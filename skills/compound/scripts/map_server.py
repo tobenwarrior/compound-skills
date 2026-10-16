@@ -56,6 +56,9 @@ REGISTRY_FILE = "registry.json"
 MAX_REGISTRY_PROJECTS = 32
 MAX_REGISTRY_BYTES = 256 * 1024
 MAX_REGISTRY_NAME = 256
+MODEL_WAIT = 30.0
+MAX_LOADED_PROJECTS = 8
+MAX_INDEX_WORKERS = 4
 ASSET_NAMES = ("code-map.html", "code-map.css", "code-map.js", "map-graph.js")
 ASSET_TYPES = {
     "code-map.html": "text/html; charset=utf-8",
@@ -260,7 +263,7 @@ def _source_path(root: Path, relative: str) -> Path:
     """Validate a repository-relative source path without resolving its leaf."""
     try:
         relative = _source_relative(relative)
-        if engine._private(relative) or engine._skip_dir(relative):
+        if engine._private(relative) or engine._skip_dir(relative, git_inventory=True):
             raise MapServerError("source file unavailable")
         if engine._has_symlink_ancestor(root, root):
             raise MapServerError("source file unavailable")
@@ -738,6 +741,19 @@ def get_model(repo: str | os.PathLike[str], query: str = "", max_files: int = 20
     """Return the canonical metadata model through the persistent service."""
     _, runtime, root = _open_registered(repo, query, max_files, refresh=refresh, requery=True)
     project = _project_id(root)
+    deadline = time.monotonic() + MODEL_WAIT
+    while True:
+        status, value, raw = _request(runtime["port"], "GET", "/api/status?" + urllib.parse.urlencode({"project": project}), runtime["token"])
+        if status != 200 or value is None:
+            detail = raw.decode("utf-8", "replace")[:300]
+            raise MapServerError(f"map index unavailable ({status}): {detail}")
+        if value.get("error") and not value.get("indexing"):
+            raise MapServerError(f"map index failed: {value['error']}")
+        if not value.get("indexing"):
+            break
+        if time.monotonic() >= deadline:
+            raise MapServerError("map index did not become ready before the bounded wait")
+        time.sleep(0.1)
     path = "/api/map?" + urllib.parse.urlencode({
         "project": project,
         "query": query[:MAX_QUERY],
@@ -764,6 +780,8 @@ class Project:
     updated_at: str = ""
     last_check: float = 0.0
     git_fingerprint: tuple[str, str] | None = None
+    last_used: float = 0.0
+    lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
 
 
 def _project_model(model: dict[str, Any], query: str, max_files: int) -> dict[str, Any]:
@@ -814,6 +832,7 @@ class MapService:
         self._registry: dict[str, dict[str, str]] = {}
         self._registry_loaded = False
         self.lock = threading.RLock()
+        self._index_slots = threading.BoundedSemaphore(MAX_INDEX_WORKERS)
         self.httpd: MapHTTPServer | None = None
 
     def _load_registry(self) -> None:
@@ -831,12 +850,15 @@ class MapService:
 
     def _remember(self, project: Project) -> None:
         self._load_registry()
+        with project.lock:
+            name = project.name[:MAX_REGISTRY_NAME]
+            query = project.query[:MAX_QUERY]
         self._registry.pop(project.id, None)
         self._registry[project.id] = {
             "id": project.id,
             "root": str(project.root),
-            "name": project.name[:MAX_REGISTRY_NAME],
-            "query": project.query[:MAX_QUERY],
+            "name": name,
+            "query": query,
         }
         while len(self._registry) > MAX_REGISTRY_PROJECTS:
             self._registry.pop(next(iter(self._registry)))
@@ -865,103 +887,176 @@ class MapService:
         self.projects[project_id] = project
         return project
 
+    def _evict_loaded(self, keep: Project | None = None) -> None:
+        """Drop idle in-memory models while retaining their registry records."""
+        while len(self.projects) > MAX_LOADED_PROJECTS:
+            candidates: list[tuple[float, str]] = []
+            for project_id, project in self.projects.items():
+                if project is keep:
+                    continue
+                with project.lock:
+                    if project.indexing:
+                        continue
+                    candidates.append((project.last_used, project_id))
+            if not candidates:
+                return
+            _, project_id = min(candidates)
+            self.projects.pop(project_id, None)
+
     def project_list(self) -> list[dict[str, str]]:
         """List safe IDs and display names without validating/indexing roots."""
         with self.lock:
             self._load_registry()
-            values: dict[str, dict[str, str]] = {
-                project.id: {"id": project.id, "name": project.name} for project in self.projects.values()
-            }
+            values: dict[str, dict[str, str]] = {}
+            for project in self.projects.values():
+                with project.lock:
+                    values[project.id] = {"id": project.id, "name": project.name}
             for project_id, entry in self._registry.items():
                 values.setdefault(project_id, {"id": project_id, "name": entry["name"]})
             return sorted(values.values(), key=lambda item: item["name"])
 
-    def _refresh(self, project: Project, force: bool = False) -> None:
-        now = time.monotonic()
-        display_name = engine.repository_name(project.root)
-        if display_name != project.name:
-            project.name = display_name
-            force = True
-        if not force and now - project.last_check < 2.0:
-            return
-        project.last_check = now
-        project.indexing = True
+    def _refresh_worker(self, project: Project) -> None:
+        self._index_slots.acquire()
         try:
+            display_name = engine.repository_name(project.root)
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="json")
             git_state = _model_git_state(model)
             if git_state is None and not hasattr(engine, "_git_state"):
                 git_state = _git_state_fingerprint(project.root)
             if git_state and git_state[0] and "branch" not in model:
                 model["branch"] = git_state[0]
-            old = project.model
-            stable_old = dict(old) if old else None
-            if stable_old is not None:
-                stable_old.pop("generated_at", None)
-            stable_new = dict(model)
-            stable_new.pop("generated_at", None)
-            if old is None or stable_old != stable_new or (git_state is not None and project.git_fingerprint != git_state):
-                project.revision += 1
-            project.model = model
-            if git_state is not None:
-                project.git_fingerprint = git_state
-            project.name = model.get("root_name", display_name)
-            project.error = None
-            project.updated_at = _now()
+            with project.lock:
+                old = project.model
+                stable_old = dict(old) if old else None
+                if stable_old is not None:
+                    stable_old.pop("generated_at", None)
+                stable_new = dict(model)
+                stable_new.pop("generated_at", None)
+                if old is None or stable_old != stable_new or (git_state is not None and project.git_fingerprint != git_state):
+                    project.revision += 1
+                project.model = model
+                if git_state is not None:
+                    project.git_fingerprint = git_state
+                project.name = model.get("root_name", display_name)
+                project.error = None
+                project.updated_at = _now()
         except Exception as exc:
             message = str(exc).replace(str(project.root), "<repository>")
-            project.error = message[:500] or exc.__class__.__name__
-            project.updated_at = _now()
+            with project.lock:
+                project.error = message[:500] or exc.__class__.__name__
+                project.updated_at = _now()
         finally:
-            project.indexing = False
+            try:
+                with self.lock:
+                    with project.lock:
+                        project.last_check = time.monotonic()
+                        project.indexing = False
+                    self._remember(project)
+                    self._evict_loaded(keep=project)
+            finally:
+                self._index_slots.release()
+
+    def _refresh(self, project: Project, force: bool = False) -> None:
+        """Queue one bounded index build without holding the service lock."""
+        try:
+            display_name = engine.repository_name(project.root)
+        except Exception:
+            display_name = ""
+        with project.lock:
+            if display_name and display_name != project.name:
+                project.name = display_name
+                force = True
+            now = time.monotonic()
+            if project.indexing or (not force and now - project.last_check < 2.0):
+                return
+            project.last_check = now
+            project.indexing = True
+        worker = threading.Thread(
+            target=self._refresh_worker,
+            args=(project,),
+            name="compound-map-index",
+            daemon=True,
+        )
+        try:
+            worker.start()
+        except RuntimeError as exc:
+            with project.lock:
+                project.indexing = False
+                project.error = str(exc)[:500]
+                project.updated_at = _now()
 
     def register(self, root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> Project:
         project_id = _project_id(root)
         with self.lock:
             self._load_registry()
             project = self.projects.get(project_id)
+            force = refresh
             if project is None:
                 project = Project(project_id, root.name, root, query[:MAX_QUERY], INDEX_MAX_FILES)
+                project.last_used = time.monotonic()
                 self.projects[project_id] = project
-                self._refresh(project, force=True)
+                force = True
             else:
-                query_changed = requery and project.query != query[:MAX_QUERY]
-                if query_changed:
-                    project.query = query[:MAX_QUERY]
-                self._refresh(project, force=refresh or query_changed)
+                with project.lock:
+                    project.last_used = time.monotonic()
+                    query_changed = requery and project.query != query[:MAX_QUERY]
+                    if query_changed:
+                        project.query = query[:MAX_QUERY]
+                force = refresh or query_changed
             self._remember(project)
-            return project
+            self._evict_loaded(keep=project)
+        self._refresh(project, force=force)
+        return project
 
     def project(self, project_id: str) -> Project | None:
         with self.lock:
             if not isinstance(project_id, str) or len(project_id) != 64:
                 return None
             project = self.projects.get(project_id)
-            return project if project is not None else self._restore(project_id)
+            if project is None:
+                project = self._restore(project_id)
+            if project is not None:
+                with project.lock:
+                    project.last_used = time.monotonic()
+                self._evict_loaded(keep=project)
+            return project
 
     def status(self, project: Project) -> dict[str, Any]:
-        with self.lock:
-            self._refresh(project)
+        self._refresh(project)
+        with project.lock:
             return {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "indexing": project.indexing, "error": project.error, "updated_at": project.updated_at}
 
+    def _model_snapshot(
+        self, project: Project, max_files: int | None = None, query: str | None = None
+    ) -> tuple[dict[str, Any] | None, dict[str, str], int, bool, str | None]:
+        self._refresh(project)
+        with project.lock:
+            current = project.model
+            project_info = {"id": project.id, "name": project.name}
+            revision = project.revision
+            indexing = project.indexing
+            error = project.error
+            selected_query = project.query if query is None else query
+        if current is None:
+            return None, project_info, revision, indexing, error
+        requested = INDEX_MAX_FILES if max_files is None else max(1, min(INDEX_MAX_FILES, int(max_files)))
+        return _project_model(current, selected_query, requested), project_info, revision, indexing, error
+
     def model(self, project: Project, max_files: int | None = None, query: str | None = None) -> dict[str, Any] | None:
-        with self.lock:
-            self._refresh(project)
-            if project.model is None:
-                return None
-            requested = INDEX_MAX_FILES if max_files is None else max(1, min(INDEX_MAX_FILES, int(max_files)))
-            return _project_model(project.model, project.query if query is None else query, requested)
+        model, _, _, _, _ = self._model_snapshot(project, max_files, query)
+        return model
 
     def map_response(self, project: Project, max_files: int | None = None, query: str | None = None) -> tuple[dict[str, Any] | None, bytes]:
         """Serialize a map response under the transport cap without shrinking the index."""
         cap = INDEX_MAX_FILES if max_files is None else max(1, min(INDEX_MAX_FILES, int(max_files)))
         response_capped = False
         while True:
-            model = self.model(project, cap, query=query)
+            model, project_info, revision, indexing, error = self._model_snapshot(project, cap, query=query)
             if model is None:
-                return None, b""
+                return None, _json({"project": project_info, "revision": revision, "indexing": indexing, "error": error, "model": None})
             if response_capped:
                 model = _mark_response_cap(model)
-            payload = {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "model": model}
+            payload = {"project": project_info, "revision": revision, "model": model}
             body = _json(payload)
             if len(body) <= MAX_RESPONSE:
                 return model, body
@@ -975,9 +1070,10 @@ class MapService:
             cap = next_cap
 
     def source(self, project: Project, relative: str) -> dict[str, Any]:
-        with self.lock:
-            self._refresh(project)
+        self._refresh(project)
+        with project.lock:
             model = project.model
+            root = project.root
             if not isinstance(model, dict):
                 raise MapServerError("source file unavailable")
             files = model.get("files")
@@ -986,7 +1082,8 @@ class MapService:
             record = next((item for item in files if isinstance(item, dict) and item.get("path") == relative), None)
             if record is None or not isinstance(record.get("language"), str):
                 raise MapServerError("source file unavailable")
-            return _read_source_preview(project.root, relative, record["language"])
+            language = record["language"]
+        return _read_source_preview(root, relative, language)
 
 
 class MapHTTPServer(http.server.ThreadingHTTPServer):
@@ -1098,7 +1195,20 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
                 return
             model, body = self.service.map_response(project, maximum, query=query)
             if model is None:
-                self._error(503, project.error or "map is unavailable")
+                try:
+                    pending = json.loads(body.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    pending = {}
+                if not isinstance(pending, dict):
+                    self._error(503, "map is unavailable")
+                    return
+                if pending.get("error") and not pending.get("indexing"):
+                    self._error(503, str(pending["error"]))
+                    return
+                if not pending.get("indexing"):
+                    self._error(503, "map is unavailable")
+                    return
+                self._respond(202, body)
                 return
             if len(body) > MAX_RESPONSE:
                 self._error(413, "map response exceeds service limit")

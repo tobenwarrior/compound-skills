@@ -29,14 +29,14 @@ DEFAULT_MAX_CHARS = 2500
 MAX_CHARS = 12000
 DEFAULT_MAX_FILES = 2000
 MAX_FILES = 5000
-MAX_FILE_BYTES = 128 * 1024
-MAX_READ_BYTES = 16 * 1024 * 1024
-MAX_SYMBOLS = 128
+MAX_FILE_BYTES = 1024 * 1024
+MAX_READ_BYTES = 64 * 1024 * 1024
+MAX_SYMBOLS = 512
 MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 5
+CACHE_VERSION = 6
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 8
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -47,19 +47,21 @@ MAX_COCHANGE_FILES = 60
 MAX_COCHANGE_RESULTS = 6
 MAX_GIT_LOG_BYTES = 1024 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
-SKIP_DIRS = {".git", "vendor", "node_modules", "build", "dist"}
+SKIP_DIRS = {".git", "vendor", "node_modules"}
+BUILD_DIRS = {"build", "dist"}
 PRIVATE_NAMES = {"credentials", "credential", "secrets", "secret", "keys", "id_rsa", "id_ed25519"}
 CONFIG_NAMES = {
-    "cargo.toml", "dockerfile", "go.mod", "makefile", "package.json", "pyproject.toml",
+    "cargo.toml", "dockerfile", "go.mod", "makefile", "package.json", "pyproject.toml", "procfile",
     "requirements.txt", "setup.cfg", "setup.py", "tsconfig.json", "vite.config.js", "webpack.config.js",
 }
 NON_CODE_NAMES = {
     ".codeowners", ".cursorignore", ".dockerignore", ".editorconfig", ".gitattributes", ".gitignore",
-    ".gitmodules", ".npmignore", "authors", "changelog", "copying", "license", "notice", "readme",
+    ".gitmodules", ".gitkeep", ".npmignore", "authors", "changelog", "copying", "license", "notice", "readme",
 }
 NON_CODE_SUFFIXES = {
     ".adoc", ".bmp", ".csv", ".gif", ".ico", ".jpeg", ".jpg", ".lock", ".log", ".map", ".md",
     ".mdc", ".markdown", ".png", ".rst", ".svg", ".text", ".txt", ".webp",
+    ".bin", ".jsonl", ".otf", ".ttf", ".woff", ".woff2", ".xls", ".xlsx",
 }
 LANGUAGES = {
     **dict.fromkeys((".py", ".pyw"), "python"),
@@ -72,7 +74,8 @@ LANGUAGES = {
     **dict.fromkeys((".sh", ".bash", ".zsh", ".fish"), "shell"),
     ".sql": "sql", ".html": "html", ".htm": "html", ".css": "css", ".scss": "scss",
     ".less": "less", ".vue": "vue", ".svelte": "svelte", ".json": "json", ".jsonc": "json",
-    ".yaml": "yaml", ".yml": "yaml", ".toml": "toml", ".xml": "xml", ".ini": "ini", ".cfg": "ini",
+    ".yaml": "yaml", ".yml": "yaml", ".toml": "toml", ".xml": "xml", ".plist": "xml",
+    ".ini": "ini", ".cfg": "ini", ".service": "ini",
     ".conf": "ini", ".properties": "properties", ".gradle": "groovy", ".proto": "protobuf",
 }
 JS_IMPORT = re.compile(
@@ -290,8 +293,9 @@ def _private(rel: str) -> bool:
         if lower.endswith((".pem", ".key", ".p12", ".pfx")) or re.search(r"(?:^|[-_.])key(?:[-_.]|$)", lower):
             return True
     return False
-def _skip_dir(rel: str) -> bool:
-    return any(part.lower() in SKIP_DIRS for part in PurePosixPath(rel).parts[:-1])
+def _skip_dir(rel: str, *, git_inventory: bool = False) -> bool:
+    skipped = SKIP_DIRS if git_inventory else SKIP_DIRS | BUILD_DIRS
+    return any(part.lower() in skipped for part in PurePosixPath(rel).parts[:-1])
 def _language(rel: str) -> str | None:
     name = PurePosixPath(rel).name.lower()
     if name in CONFIG_NAMES:
@@ -317,10 +321,10 @@ def _exclusion_reason(rel: str, reason: str | None) -> str | None:
     return None
 
 
-def _candidate(root: Path, rel: str) -> tuple[dict[str, Any] | None, str | None]:
+def _candidate(root: Path, rel: str, *, git_inventory: bool = False) -> tuple[dict[str, Any] | None, str | None]:
     path = root / rel
     fp = _fingerprint(path)
-    if _private(rel) or _skip_dir(rel) or _has_symlink_ancestor(path, root):
+    if _private(rel) or _skip_dir(rel, git_inventory=git_inventory) or _has_symlink_ancestor(path, root):
         return None, "private or symlink path"
     if fp is None:
         return None, "path disappeared"
@@ -333,11 +337,11 @@ def _candidate(root: Path, rel: str) -> tuple[dict[str, Any] | None, str | None]
     if language is None:
         return None, "unsupported format"
     return {"path": rel, "absolute": path, "language": language, "fingerprint": fp}, None
-def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], str | None]:
+def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], list[str], str | None]:
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError, TypeError):
-        return [], [], "Python file could not be parsed"
+        return [], [], [], "Python file could not be parsed"
     symbols: list[dict[str, Any]] = []
     imports: list[list[Any]] = []
     for node in sorted(ast.walk(tree), key=lambda item: getattr(item, "lineno", 0)):
@@ -356,14 +360,11 @@ def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], s
             imports.extend([[alias.name, 0, None] for alias in node.names])
         elif isinstance(node, ast.ImportFrom):
             imports.extend([[node.module or "", int(node.level), alias.name] for alias in node.names])
-    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], None
+    note = f"Python symbol outline capped at {MAX_SYMBOLS} entries" if len(symbols) > MAX_SYMBOLS else None
+    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], _python_exports(tree), note
 
 
-def _python_exports(text: str) -> list[str]:
-    try:
-        tree = ast.parse(text)
-    except (SyntaxError, ValueError, TypeError):
-        return []
+def _python_exports(tree: ast.Module) -> list[str]:
     explicit: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.Assign):
@@ -412,11 +413,11 @@ def _javascript_exports(text: str) -> list[str]:
 def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | None, int, str | None]:
     fp = info["fingerprint"]
     if fp["size"] > MAX_FILE_BYTES:
-        return None, 0, "files over 128 KiB were skipped"
+        return None, 0, "source outline exceeds the 1 MiB file limit; file metadata retained"
     if fp["size"] > remaining:
-        return None, 0, "16 MiB total read budget reached"
+        return None, 0, "64 MiB total read budget reached; file metadata retained"
     if remaining <= 0:
-        return None, 0, "16 MiB total read budget reached"
+        return None, 0, "64 MiB total read budget reached; file metadata retained"
     limit = min(MAX_FILE_BYTES, remaining)
     try:
         with info["absolute"].open("rb") as source:
@@ -427,8 +428,8 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     if consumed > limit:
         current = _fingerprint(info["absolute"])
         if current and current["size"] > MAX_FILE_BYTES:
-            return None, min(consumed, remaining), "files over 128 KiB were skipped"
-        return None, min(consumed, remaining), "16 MiB total read budget reached"
+            return None, min(consumed, remaining), "source outline exceeds the 1 MiB file limit; file metadata retained"
+        return None, min(consumed, remaining), "64 MiB total read budget reached; file metadata retained"
     if b"\0" in data:
         return None, consumed, "binary or non-UTF-8 files were skipped"
     try:
@@ -444,8 +445,7 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     exports: list[str] = []
     if info["language"] == "python":
         analysis = "python-ast"
-        symbols, imports, note = _python_outline(text)
-        exports = _python_exports(text)
+        symbols, imports, exports, note = _python_outline(text)
     elif info["language"] in {"javascript", "typescript"}:
         analysis = "javascript-outline"
         symbols, imports = _javascript_outline(text)
@@ -462,7 +462,22 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     if note:
         entry["parse_note"] = note[:MAX_PARSE_NOTE_CHARS]
     return entry, consumed, note
-def _python_dep(path: str, module: str, level: int, imported: str | None, known: set[str]) -> str | None:
+def _python_modules(known: set[str]) -> dict[str, str | None]:
+    modules: dict[str, str | None] = {}
+    for path in known:
+        if PurePosixPath(path).suffix not in {".py", ".pyw"}:
+            continue
+        parts = PurePosixPath(path).parts
+        for offset in range(len(parts)):
+            suffix = "/".join(parts[offset:])
+            if suffix in modules and modules[suffix] != path:
+                modules[suffix] = None
+            else:
+                modules[suffix] = path
+    return modules
+
+
+def _python_dep(path: str, module: str, level: int, imported: str | None, known: set[str], modules: dict[str, str | None] | None = None) -> str | None:
     source = PurePosixPath(path)
     base = source.parent
     for _ in range(max(0, level - 1)):
@@ -481,10 +496,15 @@ def _python_dep(path: str, module: str, level: int, imported: str | None, known:
         if normalized in known:
             return normalized
     if level == 0:
-        suffixes = {PurePosixPath(candidate).as_posix() for candidate in candidates}
-        matches = sorted(path for path in known if any(path.endswith("/" + suffix) for suffix in suffixes))
-        if len(matches) == 1:
-            return matches[0]
+        for candidate in candidates:
+            active = "src/" + PurePosixPath(candidate).as_posix()
+            if active in known:
+                return active
+        lookup = _python_modules(known) if modules is None else modules
+        for candidate in candidates:
+            match = lookup.get(PurePosixPath(candidate).as_posix())
+            if match:
+                return match
     return None
 
 
@@ -652,6 +672,7 @@ def _javascript_dep(path: str, spec: str, known: set[str], configs: list[dict[st
         if configs:
             return _javascript_alias_dep(path, spec, known, configs)
         return None
+    spec = spec.split("?", 1)[0].split("#", 1)[0]
     base = posixpath.normpath(posixpath.join(PurePosixPath(path).parent.as_posix(), spec))
     return _javascript_candidates(base, known)
 
@@ -756,7 +777,7 @@ def _cochanges(root: Path, head: str, known: set[str]) -> dict[str, list[dict[st
         paths = sorted({path for path in changed if _safe_relative(path)})
         if len(paths) > MAX_COCHANGE_FILES:
             continue
-        paths = [path for path in paths if not _private(path) and not _skip_dir(path)]
+        paths = [path for path in paths if not _private(path) and not _skip_dir(path, git_inventory=True)]
         for path in paths:
             peers = counts.setdefault(path, {})
             for peer in paths:
@@ -783,12 +804,12 @@ def _cochanges_for_known(raw: dict[str, list[dict[str, Any]]], known: set[str]) 
     }
 
 
-def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dict[str, Any]] | None = None, changes: dict[str, str] | None = None, cochanges: dict[str, list[dict[str, Any]]] | None = None) -> dict[str, Any]:
+def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dict[str, Any]] | None = None, changes: dict[str, str] | None = None, cochanges: dict[str, list[dict[str, Any]]] | None = None, modules: dict[str, str | None] | None = None) -> dict[str, Any]:
     dependencies: list[str] = []
     unresolved: list[str] = []
     if entry["language"] == "python":
         for module, level, imported in entry["imports"]:
-            dep = _python_dep(path, module, level, imported, known)
+            dep = _python_dep(path, module, level, imported, known, modules)
             if dep and dep != path and dep not in dependencies:
                 dependencies.append(dep)
             elif not dep:
@@ -814,6 +835,8 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
         "changed": (changes or {}).get(path, ""),
         "cochanges": list((cochanges or {}).get(path, ()))[:MAX_COCHANGE_RESULTS],
     }
+    if entry.get("parse_note"):
+        record["outline_note"] = entry["parse_note"]
     return record
 def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     terms = re.findall(r"[a-z0-9_]+", query.lower())
@@ -999,7 +1022,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     excluded = 0
     excluded_reasons: dict[str, int] = {}
     for rel in inventory:
-        candidate, reason = _candidate(root, rel)
+        candidate, reason = _candidate(root, rel, git_inventory=True)
         if candidate:
             candidates[rel] = candidate
         else:
@@ -1010,14 +1033,29 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             else:
                 skipped += 1
                 _note(notes, reason or "inventory entry skipped")
+    terms = re.findall(r"[a-z0-9_]+", query.lower())
+    order = sorted(candidates, key=lambda path: (
+        -sum(term in path.lower() for term in terms), not _entry_config(path),
+        any(part.lower() in {"test", "tests"} for part in PurePosixPath(path).parts), path,
+    ))
+    inventory_capped = len(order) > MAX_FILES
+    if inventory_capped:
+        skipped += len(order) - MAX_FILES
+        _note(notes, f"file inventory cap reached at {MAX_FILES} files")
+        order = order[:MAX_FILES]
+        candidates = {path: candidates[path] for path in order}
     cached, cache_note = ({}, None) if (refresh or not use_cache) else _load_entries(root, candidates)
     if cache_note and "invalid" in cache_note.lower():
         _note(notes, "invalid cache entries were reparsed")
     elif cache_note and "requires migration" not in cache_note.lower():
         _note(notes, cache_note)
     entries: dict[str, Any] = {}
+    reusable: dict[str, Any] = {}
     remaining = MAX_READ_BYTES
-    for rel, info in candidates.items():
+    pending = 0
+    limited = 0
+    for rel in order:
+        info = candidates[rel]
         entry = cached.get(rel)
         if entry is None:
             entry, consumed, parse_note = _read_parse(info, remaining)
@@ -1025,21 +1063,33 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             if parse_note:
                 _note(notes, parse_note)
             if entry is None:
-                skipped += 1
-                continue
-        elif entry.get("parse_note"):
-            _note(notes, entry["parse_note"])
+                bounded = parse_note and ("read budget" in parse_note or "file limit" in parse_note)
+                if not bounded:
+                    skipped += 1
+                    continue
+                pending += int("read budget" in parse_note)
+                limited += 1
+                entry = {
+                    "fingerprint": info["fingerprint"], "language": info["language"],
+                    "symbols": [], "imports": [], "lines": 0, "analysis": "metadata", "exports": [],
+                    "parse_note": parse_note,
+                }
+            else:
+                reusable[rel] = entry
+        else:
+            reusable[rel] = entry
+            if entry.get("parse_note"):
+                _note(notes, entry["parse_note"])
         entries[rel] = entry
-    budget_hit = any(note.startswith("16 MiB total read budget") for note in notes)
-    if remaining == 0 and len(entries) < len(candidates):
-        _note(notes, "16 MiB total read budget reached")
+    budget_hit = bool(limited) or inventory_capped
     known = set(entries)
     aliases = _load_alias_configs(root, candidates)
     branch, changes, git_state_note = _git_state(root)
     if git_state_note:
         _note(notes, git_state_note)
     cochanges = _cochanges(root, head, known)
-    records = [_record(path, entry, known, aliases, changes, cochanges) for path, entry in entries.items()]
+    modules = _python_modules(known)
+    records = [_record(path, entry, known, aliases, changes, cochanges, modules) for path, entry in entries.items()]
     ranked = _rank(records, query)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
@@ -1056,6 +1106,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         "coverage": {
             "inventory": len(inventory), "indexed": len(selected), "truncated": truncated,
             "skipped": skipped, "excluded": excluded, "excluded_reasons": excluded_reasons,
+            "pending": pending, "limited": limited,
             "notes": notes[:24],
         },
         "files": selected,
@@ -1065,7 +1116,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         model["branch"] = branch
     if use_cache:
         try:
-            _write_json(root, entries)
+            _write_json(root, {path: reusable[path] for path in sorted(reusable)})
         except CodeMapError as exc:
             _note(model["coverage"]["notes"], f"cache unavailable: {exc}")
     return model

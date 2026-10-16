@@ -46,10 +46,10 @@ function normalizeModel(payload) {
   const raw = payload && payload.model && typeof payload.model === "object" ? payload.model : {};
   const coverage = raw.coverage && typeof raw.coverage === "object" ? raw.coverage : {};
   const files = (Array.isArray(raw.files) ? raw.files : []).slice(0, MAX_FILES).filter(file => file && typeof file.path === "string").map(file => ({
-    path: file.path, language: str(file.language, "unknown"), lines: num(file.lines), analysis: str(file.analysis, "metadata"),
-    symbols: (Array.isArray(file.symbols) ? file.symbols : []).slice(0, 128).filter(symbol => symbol && typeof symbol.name === "string").map(symbol => ({ name: symbol.name, kind: str(symbol.kind, "symbol"), line: num(symbol.line), signature: str(symbol.signature) })),
+    path: file.path, language: str(file.language, "unknown"), lines: num(file.lines), analysis: str(file.analysis, "metadata"), outlineNote: str(file.outline_note),
+    symbols: (Array.isArray(file.symbols) ? file.symbols : []).slice(0, 512).filter(symbol => symbol && typeof symbol.name === "string").map(symbol => ({ name: symbol.name, kind: str(symbol.kind, "symbol"), line: num(symbol.line), signature: str(symbol.signature) })),
     dependencies: unique((Array.isArray(file.dependencies) ? file.dependencies : []).filter(path => typeof path === "string")).slice(0, 256),
-    exports: (Array.isArray(file.exports) ? file.exports : []).filter(value => typeof value === "string").slice(0, 128),
+    exports: (Array.isArray(file.exports) ? file.exports : []).filter(value => typeof value === "string").slice(0, 512),
     unresolved: (Array.isArray(file.unresolved_imports) ? file.unresolved_imports : []).filter(value => typeof value === "string").slice(0, 128),
     cochanges: (Array.isArray(file.cochanges) ? file.cochanges : []).filter(value => value && typeof value.path === "string").slice(0, 6).map(value => ({ path: value.path, count: num(value.count) })),
     changed: str(file.changed),
@@ -276,7 +276,7 @@ function renderInspector() {
   refs["detail-breadcrumb"].textContent = "Repository › " + (parent(file.path) || "/");
   refs["detail-summary"].textContent = file.language + (file.lines ? ", " + amount(file.lines, "line") : "") + ". " + amount(file.dependencies.length, "import") + " · " + amount(importedBy.length, "importer") + " · " + amount(file.symbols.length, "symbol") + ".";
   const analysis = file.analysis === "python-ast" ? "Python AST outline" : file.analysis === "javascript-outline" ? "JS/TS outline · bounded import resolution" : "Metadata only · no symbol analysis";
-  refs["analysis-note"].textContent = analysis + (file.changed ? " · " + file.changed : "");
+  refs["analysis-note"].textContent = analysis + (file.changed ? " · " + file.changed : "") + (file.outlineNote ? " · " + file.outlineNote : "");
   if (file.cochanges.length) refs["detail-summary"].append(document.createTextNode(" Often changes with " + base(file.cochanges[0].path) + " (" + count(file.cochanges[0].count) + " recent commit" + (file.cochanges[0].count === 1 ? "" : "s") + ")."));
   refs["detail-import-count"].textContent = count(file.dependencies.length); refs["detail-importer-count"].textContent = count(importedBy.length); refs["detail-symbol-count"].textContent = count(file.symbols.length);
   renderEdges(refs["import-list"], file.dependencies, "→"); renderEdges(refs["importer-list"], importedBy, "←");
@@ -315,7 +315,7 @@ async function openSource(path, line = 0) {
     const fragment = document.createDocumentFragment();
     content.forEach((value, index) => { const row = make("div", undefined, "source-line" + (index + 1 === line ? " is-focus" : "")); row.append(make("span", index + 1, "source-number"), make("span", value || " ", "source-code")); fragment.append(row); });
     refs["source-content"].replaceChildren(fragment); refs["source-meta"].textContent = str(payload.language) + " · " + count(num(payload.lines) || content.length) + " lines · read from disk";
-    refs["source-note"].textContent = payload.truncated ? "Preview limited to 64 KiB. Open the file in your editor to read the remainder." : "Read-only preview · source is not cached by the service.";
+    refs["source-note"].textContent = payload.truncated ? (line > content.length ? "Line " + count(line) + " is beyond this 64 KiB preview. Open the file in your editor." : "Preview limited to 64 KiB. Open the file in your editor to read the remainder.") : "Read-only preview · source is not cached by the service.";
     refs["source-content"].querySelector(".is-focus")?.scrollIntoView({ block: "center" });
   } catch (error) { if (error.name !== "AbortError") { refs["source-content"].replaceChildren(make("p", error.message, "detail-empty")); refs["source-meta"].textContent = "Source preview unavailable"; } }
 }
@@ -328,6 +328,12 @@ async function loadMap() {
   try {
     const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(requestedQuery));
     if (state.project !== project || state.epoch !== epoch) return;
+    if (payload.indexing && !payload.model) {
+      state.status = { ...state.status, indexing: true }; state.error = "";
+      renderStatus();
+      if (!state.model) setOverlay("loading", "", "Indexing source files; the map will appear automatically…");
+      return;
+    }
     const hadModel = Boolean(state.model); state.model = normalizeModel(payload); indexModel(state.model);
     state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision);
     const current = state.projects.find(value => value.id === project); if (current) current.name = state.name;
