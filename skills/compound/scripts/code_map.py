@@ -31,13 +31,22 @@ MAX_FILE_BYTES = 128 * 1024
 MAX_READ_BYTES = 16 * 1024 * 1024
 MAX_SYMBOLS = 24
 MAX_DEPS = 24
+MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 SKIP_DIRS = {".git", "vendor", "node_modules", "build", "dist"}
 PRIVATE_NAMES = {"credentials", "credential", "secrets", "secret", "keys", "id_rsa", "id_ed25519"}
 CONFIG_NAMES = {
     "cargo.toml", "dockerfile", "go.mod", "makefile", "package.json", "pyproject.toml",
     "requirements.txt", "setup.cfg", "setup.py", "tsconfig.json", "vite.config.js", "webpack.config.js",
+}
+NON_CODE_NAMES = {
+    ".codeowners", ".cursorignore", ".dockerignore", ".editorconfig", ".gitattributes", ".gitignore",
+    ".gitmodules", ".npmignore", "authors", "changelog", "copying", "license", "notice", "readme",
+}
+NON_CODE_SUFFIXES = {
+    ".adoc", ".bmp", ".csv", ".gif", ".ico", ".jpeg", ".jpg", ".lock", ".log", ".map", ".md",
+    ".mdc", ".markdown", ".png", ".rst", ".svg", ".text", ".txt", ".webp",
 }
 LANGUAGES = {
     **dict.fromkeys((".py", ".pyw"), "python"),
@@ -195,6 +204,21 @@ def _language(rel: str) -> str | None:
 def _entry_config(rel: str) -> bool:
     name = PurePosixPath(rel).name.lower()
     return name in CONFIG_NAMES or name == "dockerfile" or name.startswith("dockerfile.")
+
+
+def _non_code_path(rel: str) -> bool:
+    path = PurePosixPath(rel)
+    return path.name.lower() in NON_CODE_NAMES or path.suffix.lower() in NON_CODE_SUFFIXES
+
+
+def _exclusion_reason(rel: str, reason: str | None) -> str | None:
+    if reason == "unsupported format" and _non_code_path(rel):
+        return "non-code file"
+    if reason in {"private or symlink path", "non-regular path"}:
+        return reason
+    return None
+
+
 def _candidate(root: Path, rel: str) -> tuple[dict[str, Any] | None, str | None]:
     path = root / rel
     fp = _fingerprint(path)
@@ -281,12 +305,15 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         symbols, imports, note = _python_outline(text)
     elif info["language"] in {"javascript", "typescript"}:
         symbols, imports = _javascript_outline(text)
-    return {
+    entry = {
         "fingerprint": fp,
         "language": info["language"],
         "symbols": symbols,
         "imports": imports,
-    }, consumed, note
+    }
+    if note:
+        entry["parse_note"] = note[:MAX_PARSE_NOTE_CHARS]
+    return entry, consumed, note
 def _python_dep(path: str, module: str, level: int, imported: str | None, known: set[str]) -> str | None:
     source = PurePosixPath(path)
     base = source.parent
@@ -376,9 +403,15 @@ def _valid_fp(value: Any) -> bool:
 
 
 def _valid_entry(value: Any) -> bool:
-    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports"}:
+    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports", "parse_note"}:
         return False
     if not _valid_fp(value.get("fingerprint")) or not isinstance(value.get("language"), str):
+        return False
+    if "parse_note" in value and (
+        not isinstance(value["parse_note"], str)
+        or not value["parse_note"]
+        or len(value["parse_note"]) > MAX_PARSE_NOTE_CHARS
+    ):
         return False
     if not isinstance(value.get("symbols"), list) or len(value["symbols"]) > MAX_SYMBOLS:
         return False
@@ -452,7 +485,12 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         return {}, f"code-map cache is invalid: {exc}"
-    if not isinstance(payload, dict) or payload.get("version") != CACHE_VERSION:
+    if not isinstance(payload, dict):
+        return {}, "code-map cache has an unsupported shape"
+    version = payload.get("version")
+    if version != CACHE_VERSION:
+        if isinstance(version, int) and 0 <= version < CACHE_VERSION:
+            return {}, "code-map cache requires migration"
         return {}, "code-map cache has an unsupported shape"
     raw = payload.get("entries")
     if not isinstance(raw, dict):
@@ -493,17 +531,24 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
 def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool) -> dict[str, Any]:
     candidates: dict[str, dict[str, Any]] = {}
     skipped = 0
+    excluded = 0
+    excluded_reasons: dict[str, int] = {}
     for rel in inventory:
         candidate, reason = _candidate(root, rel)
         if candidate:
             candidates[rel] = candidate
         else:
-            skipped += 1
-            _note(notes, reason or "inventory entry skipped")
+            exclusion = _exclusion_reason(rel, reason)
+            if exclusion:
+                excluded += 1
+                excluded_reasons[exclusion] = excluded_reasons.get(exclusion, 0) + 1
+            else:
+                skipped += 1
+                _note(notes, reason or "inventory entry skipped")
     cached, cache_note = ({}, None) if (refresh or not use_cache) else _load_entries(root, candidates)
     if cache_note and "invalid" in cache_note.lower():
         _note(notes, "invalid cache entries were reparsed")
-    elif cache_note:
+    elif cache_note and "requires migration" not in cache_note.lower():
         _note(notes, cache_note)
     entries: dict[str, Any] = {}
     remaining = MAX_READ_BYTES
@@ -517,6 +562,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             if entry is None:
                 skipped += 1
                 continue
+        elif entry.get("parse_note"):
+            _note(notes, entry["parse_note"])
         entries[rel] = entry
     budget_hit = any(note.startswith("16 MiB total read budget") for note in notes)
     if remaining == 0 and len(entries) < len(candidates):
@@ -536,7 +583,11 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         "root_name": repository_name(root),
         "generated_at": _now(),
         "head": head,
-        "coverage": {"inventory": len(inventory), "indexed": len(selected), "truncated": truncated, "skipped": skipped, "notes": notes[:24]},
+        "coverage": {
+            "inventory": len(inventory), "indexed": len(selected), "truncated": truncated,
+            "skipped": skipped, "excluded": excluded, "excluded_reasons": excluded_reasons,
+            "notes": notes[:24],
+        },
         "files": selected,
         "focus": [record["path"] for record in _rank(selected, query)[:12]],
     }
@@ -550,17 +601,25 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
 
 def _text(model: dict[str, Any], limit: int) -> str:
     coverage = model["coverage"]
-    partial = coverage["truncated"] or coverage["skipped"] or any(
-        note.startswith(("Git inventory unavailable", "Git root unavailable"))
-        for note in coverage["notes"]
+    notes = coverage.get("notes", [])
+    if not isinstance(notes, list):
+        notes = []
+    partial = bool(coverage.get("truncated")) or bool(coverage.get("skipped")) or any(
+        "import links are heuristic" not in note for note in notes if isinstance(note, str)
     )
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",
-        f"Coverage: {coverage['indexed']}/{coverage['inventory']} files indexed; {coverage['skipped']} skipped; {'partial' if partial else 'complete'}",
+        f"Coverage: {coverage.get('indexed', 0)}/{coverage.get('inventory', 0)} files indexed; "
+        f"{coverage.get('excluded', 0)} excluded; {coverage.get('skipped', 0)} skipped; "
+        f"{'partial' if partial else 'complete'}",
         "Source confirmation: metadata only; inspect listed files before changing behavior.",
         "Focus:",
     ]
+    excluded_reasons = coverage.get("excluded_reasons", {})
+    if isinstance(excluded_reasons, dict) and excluded_reasons:
+        summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
+        lines.append("Excluded: " + summary)
     by_path = {file["path"]: file for file in model["files"]}
     for path in model["focus"]:
         file = by_path.get(path)
@@ -574,8 +633,8 @@ def _text(model: dict[str, Any], limit: int) -> str:
         if dependencies:
             line += " deps: " + dependencies
         lines.append(line)
-    if coverage["notes"]:
-        lines.append("Notes: " + "; ".join(coverage["notes"]))
+    if notes:
+        lines.append("Notes: " + "; ".join(notes))
     value = "\n".join(lines)
     if len(value) <= limit:
         return value

@@ -13,7 +13,7 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.8.1"
+VERSION = "0.8.2"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
 SKILLS = ("compound", "map")

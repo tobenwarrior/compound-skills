@@ -55,6 +55,7 @@
         <div class="sidebar-stats"><span id="file-count">0 files</span><span id="edge-count">0 imports</span></div>
         <div id="tree-state" class="tree-state">Loading file index…</div>
         <div id="file-tree" class="file-tree" role="tree" aria-label="Files"></div>
+        <details class="coverage-detail"><summary id="coverage-summary">Index coverage</summary><p id="coverage-detail"></p></details>
         <p id="tree-footer" class="tree-footer">Recorded imports only · no source bodies</p>
       </aside>
 
@@ -65,6 +66,7 @@
             <h2 id="graph-mode">Loading graph…</h2>
           </div>
           <div class="graph-tools">
+            <button id="overview-button" class="tool-button" type="button" hidden>All folders</button>
             <button id="zoom-out" class="tool-button" type="button" aria-label="Zoom out">−</button>
             <button id="zoom-reset" class="tool-button fit-button" type="button">Fit</button>
             <button id="zoom-in" class="tool-button" type="button" aria-label="Zoom in">+</button>
@@ -74,7 +76,7 @@
           <svg id="graph" role="img" aria-label="Interactive dependency graph" tabindex="0">
             <defs>
               <marker id="edge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a6176"></path>
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#9cdb82"></path>
               </marker>
             </defs>
             <g id="graph-world"></g>

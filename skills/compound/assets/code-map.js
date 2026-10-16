@@ -5,7 +5,9 @@ const MAX_FILES = 2000;
 const MAX_GRAPH_NODES = 4000;
 const MAX_RENDERED_EDGES = 8000;
 const SVG_WIDTH = 1000;
-const SVG_HEIGHT = 700;
+let SVG_HEIGHT = 700;
+const OVERVIEW_THRESHOLD = 350;
+const MAX_NEIGHBORHOOD_NODES = 240;
 
 const refs = {
   rootName: document.getElementById("root-name"),
@@ -47,6 +49,9 @@ const refs = {
   zoomOut: document.getElementById("zoom-out"),
   zoomReset: document.getElementById("zoom-reset"),
   zoomIn: document.getElementById("zoom-in"),
+  overview: document.getElementById("overview-button"),
+  coverageSummary: document.getElementById("coverage-summary"),
+  coverageDetail: document.getElementById("coverage-detail"),
   inspectorTitle: document.getElementById("inspector-title"),
   inspectorEmpty: document.getElementById("inspector-empty"),
   fileDetail: document.getElementById("file-detail"),
@@ -123,6 +128,8 @@ function normalizeModel(payload) {
       indexed: Math.max(0, Math.round(safeNumber(rawCoverage.indexed, files.length))),
       truncated: Boolean(rawCoverage.truncated),
       skipped: Math.max(0, Math.round(safeNumber(rawCoverage.skipped))),
+      excluded: Math.max(0, Math.round(safeNumber(rawCoverage.excluded))),
+      excludedReasons: rawCoverage.excluded_reasons && typeof rawCoverage.excluded_reasons === "object" ? Object.entries(rawCoverage.excluded_reasons).map(([reason, count]) => Math.max(0, Math.round(safeNumber(count))) + " " + reason + (Number(count) === 1 ? "" : "s")) : [],
       notes: Array.isArray(rawCoverage.notes) ? rawCoverage.notes.filter(note => typeof note === "string") : [],
     },
     files,
@@ -142,6 +149,7 @@ const state = {
   noticeDismissed: false,
   selectedPath: null,
   collapsedDirs: new Set(),
+  fileLimits: new Map(),
   positions: new Map(),
   view: { x: 0, y: 0, scale: 1 },
   didFit: false,
@@ -153,6 +161,10 @@ const state = {
   visible: document.visibilityState === "visible",
   drag: null,
   suppressClick: false,
+  hoveredId: null,
+  captions: [],
+  visibleCaptions: [],
+  labelFrame: null,
 };
 
 function modelFiles() {
@@ -276,21 +288,23 @@ function renderStatus() {
   refs.liveStatusText.textContent = label;
 }
 
+function coverageIssues(model) {
+  return model.coverage.notes.filter(note => !note.includes("import links are heuristic"));
+}
+
 function partialDetail(model) {
   const parts = [];
-  if (model.coverage.truncated) parts.push("inventory limit reached");
-  if (model.coverage.skipped) parts.push(formatCount(model.coverage.skipped) + " skipped");
-  if (model.files.length > MAX_GRAPH_NODES) parts.push(formatCount(MAX_GRAPH_NODES) + " of " + formatCount(model.files.length) + " files shown in graph");
-  const notes = model.coverage.notes.filter(note => !note.includes("import links are heuristic"));
+  if (model.coverage.truncated) parts.push("scan limit reached");
+  if (model.coverage.skipped) parts.push(formatCount(model.coverage.skipped) + " source files skipped");
+  const notes = coverageIssues(model);
   if (notes.length) parts.push(notes[0]);
-  if (!parts.length) parts.push("the rendered view is bounded");
-  return "Coverage is partial: " + parts.join(" · ") + ". Symbols and imports use bounded heuristics.";
+  return parts.join(" · ");
 }
 
 function renderNotice() {
   const error = state.lastError;
   const model = state.model;
-  const partial = model && (model.coverage.truncated || model.coverage.skipped > 0 || model.coverage.notes.some(note => !note.includes("import links are heuristic")) || model.files.length > MAX_GRAPH_NODES);
+  const partial = model && (model.coverage.truncated || model.coverage.skipped > 0 || coverageIssues(model).length > 0);
   if (state.noticeDismissed && !error) {
     refs.notice.hidden = true;
     return;
@@ -305,7 +319,7 @@ function renderNotice() {
     refs.notice.hidden = false;
     refs.notice.classList.remove("error");
     refs.noticeMark.textContent = "i";
-    refs.noticeTitle.textContent = "Map coverage";
+    refs.noticeTitle.textContent = "Incomplete index";
     refs.noticeDetail.textContent = partialDetail(model);
   } else {
     refs.notice.hidden = true;
@@ -323,8 +337,10 @@ function renderHeader() {
     ? formatCount(files.length) + " / " + formatCount(total) + " files"
     : formatCount(files.length) + " files";
   refs.edgeCount.textContent = formatCount(edgeTotal(allFiles())) + " imports";
+  refs.coverageSummary.textContent = formatCount(total) + " mapped" + (model && model.coverage.excluded ? " · " + formatCount(model.coverage.excluded) + " excluded" : "");
+  refs.coverageDetail.textContent = model ? [formatCount(model.coverage.inventory) + " repository files considered.", ...model.coverage.excludedReasons, ...model.coverage.notes].join(" ") : "Waiting for the file index.";
   refs.treeFooter.textContent = total > MAX_FILES
-    ? "Showing the first " + formatCount(MAX_FILES) + " files · recorded imports only"
+    ? "Browse folders or search all " + formatCount(total) + " files"
     : "Recorded imports only · no source bodies";
 }
 
@@ -338,10 +354,12 @@ function matchesQuery(file) {
 function chooseFile(path, update = true) {
   if (!fileLookup().has(path)) return;
   state.selectedPath = path;
+  state.collapsedDirs.delete(directoryOf(path));
   if (update) updateUrl();
   renderTree();
   renderGraph();
   renderInspector();
+  focusSelection();
 }
 
 function createTreeFile(file) {
@@ -363,9 +381,8 @@ function createTreeFile(file) {
 function renderTree() {
   const sourceFiles = allFiles();
   const allMatching = sourceFiles.filter(matchesQuery);
-  const matching = allMatching.slice(0, MAX_FILES);
   const groups = new Map();
-  matching.forEach(file => {
+  allMatching.forEach(file => {
     const directory = directoryOf(file.path);
     if (!groups.has(directory)) groups.set(directory, []);
     groups.get(directory).push(file);
@@ -373,16 +390,17 @@ function renderTree() {
   groups.forEach(group => group.sort((left, right) => left.path.localeCompare(right.path)));
   refs.treeState.textContent = state.model
     ? (state.query
-      ? formatCount(allMatching.length) + " matching files" + (allMatching.length > matching.length ? " · showing first " + formatCount(MAX_FILES) : "")
+      ? formatCount(allMatching.length) + " matching files"
       : formatCount(sourceFiles.length) + " indexed files")
     : "Loading file index…";
-  if (!state.model || !matching.length) {
+  if (!state.model || !allMatching.length) {
     const empty = make("div", state.model ? "No files match this search." : "No indexed files.");
     empty.className = "detail-empty";
     refs.fileTree.replaceChildren(empty);
     return;
   }
   const fragment = document.createDocumentFragment();
+  let renderedFiles = 0;
   [...groups.keys()].sort((left, right) => left.localeCompare(right)).forEach(directory => {
     const group = make("div");
     group.className = "tree-group";
@@ -405,7 +423,22 @@ function renderTree() {
       renderTree();
     });
     group.append(directoryButton);
-    if (open) filesInDirectory.forEach(file => group.append(createTreeFile(file)));
+    if (open) {
+      const limit = Math.min(state.fileLimits.get(directory) || 50, MAX_FILES - renderedFiles);
+      const shown = filesInDirectory.slice(0, limit);
+      const selected = filesInDirectory.find(file => file.path === state.selectedPath);
+      if (selected && !shown.includes(selected) && limit > 0) shown[shown.length - 1] = selected;
+      shown.forEach(file => group.append(createTreeFile(file)));
+      renderedFiles += shown.length;
+      if (filesInDirectory.length > shown.length) {
+        const more = make("button", renderedFiles < MAX_FILES ? "Show more · " + formatCount(filesInDirectory.length - shown.length) + " remaining" : "Search to find more files");
+        more.type = "button";
+        more.className = "tree-more";
+        more.disabled = renderedFiles >= MAX_FILES;
+        more.addEventListener("click", () => { state.fileLimits.set(directory, limit + 50); renderTree(); });
+        group.append(more);
+      }
+    }
     fragment.append(group);
   });
   refs.fileTree.replaceChildren(fragment);
@@ -459,9 +492,10 @@ function renderInspector() {
   refs.detailSymbolCount.textContent = formatCount(file.symbols.length);
   refs.detailImportCount.textContent = formatCount(file.dependencies.length);
   refs.detailImporterCount.textContent = formatCount(importedBy.length);
-  refs.symbolNote.textContent = file.symbols.length ? "line hints" : "";
+  const hasOutline = ["python", "javascript", "typescript"].includes(file.language);
+  refs.symbolNote.textContent = file.symbols.length ? "line hints" : hasOutline ? "" : "metadata only";
   if (!file.symbols.length) {
-    renderListEmpty(refs.symbolList, "No symbols recorded.");
+    renderListEmpty(refs.symbolList, hasOutline ? "No symbols recorded." : "Symbol and import analysis is unavailable for this language.");
   } else {
     const symbols = file.symbols.slice(0, 160).map(symbol => {
       const item = make("li");
@@ -483,12 +517,6 @@ function renderInspector() {
   else renderListEmpty(refs.importerList, "No importers recorded.");
 }
 
-function hashPath(value) {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
-  return Math.abs(hash);
-}
-
 function clusterDirectory(path) {
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 1) return "(root)";
@@ -496,23 +524,23 @@ function clusterDirectory(path) {
 }
 
 function addNeighborhood(queue, name, lookup, reverse, names, seen) {
-  if (!lookup.has(name) || seen.has(name) || names.length >= MAX_GRAPH_NODES) return;
+  if (!lookup.has(name) || seen.has(name) || names.length >= MAX_NEIGHBORHOOD_NODES) return;
   seen.add(name);
   names.push(name);
   const file = lookup.get(name);
   const neighbors = unique([...file.dependencies, ...(reverse.get(name) || [])]).sort();
   neighbors.forEach(neighbor => {
-    if (!seen.has(neighbor) && names.length < MAX_GRAPH_NODES) queue.push(neighbor);
+    if (!seen.has(neighbor) && names.length < MAX_NEIGHBORHOOD_NODES) queue.push(neighbor);
   });
 }
 
 function buildFileGraph(files, lookup, reverse) {
-  const queryMatches = files.filter(matchesQuery).map(file => file.path);
-  const large = files.length > MAX_GRAPH_NODES;
+  const queryMatches = state.query ? files.filter(matchesQuery).map(file => file.path) : [];
+  const large = files.length > OVERVIEW_THRESHOLD;
   const seeds = unique([
     state.selectedPath,
     ...queryMatches.slice(0, 40),
-    ...(state.model ? state.model.focus : []),
+    ...(state.query || state.selectedPath ? [] : state.model ? state.model.focus : []),
   ].filter(path => lookup.has(path)));
   if (!seeds.length) return null;
   if (!large) {
@@ -527,7 +555,7 @@ function buildFileGraph(files, lookup, reverse) {
   const names = [];
   const seen = new Set();
   seeds.forEach(seed => addNeighborhood(queue, seed, lookup, reverse, names, seen));
-  while (queue.length && names.length < MAX_GRAPH_NODES) addNeighborhood(queue, queue.shift(), lookup, reverse, names, seen);
+  while (queue.length && names.length < MAX_NEIGHBORHOOD_NODES) addNeighborhood(queue, queue.shift(), lookup, reverse, names, seen);
   return { names, mode: state.query ? "search" : state.selectedPath ? "neighborhood" : "focus" };
 }
 
@@ -572,7 +600,7 @@ function planPositions(data) {
         const ring = Math.floor((index - 1) / 18);
         const ringIndex = (index - 1) % 18;
         const ringSize = Math.min(18, data.nodes.length - 1 - ring * 18);
-        const angle = (ringIndex / Math.max(1, ringSize)) * Math.PI * 2 + (hashPath(node.id) % 17) / 17;
+        const angle = (ringIndex / Math.max(1, ringSize)) * Math.PI * 2 - Math.PI / 2 + ring * .28;
         planned.set(node.id, {
           x: SVG_WIDTH / 2 + Math.cos(angle) * (150 + ring * 120),
           y: SVG_HEIGHT / 2 + Math.sin(angle) * (105 + ring * 90),
@@ -601,15 +629,14 @@ function planPositions(data) {
         x: SVG_WIDTH / 2 + Math.cos(angle) * ring,
         y: SVG_HEIGHT / 2 + Math.sin(angle) * ring * .72,
       };
-    const spread = clamp(22 + Math.sqrt(members.length) * 10, 28, 115);
+    const spread = Math.max(40, Math.sqrt(members.length) * 22);
     members.forEach((node, memberIndex) => {
       if (node.id === selectedId) {
         planned.set(node.id, center);
         return;
       }
-      const angleOffset = (hashPath(node.id) % 100) / 100;
-      const localAngle = memberIndex * 2.3999632297 + angleOffset;
-      const localRadius = members.length === 1 ? 0 : Math.min(spread, 18 + Math.sqrt(memberIndex + 1) * 17);
+      const localAngle = memberIndex * 2.3999632297;
+      const localRadius = members.length === 1 ? 0 : spread * Math.sqrt((memberIndex + 1) / members.length);
       planned.set(node.id, {
         x: center.x + Math.cos(localAngle) * localRadius,
         y: center.y + Math.sin(localAngle) * localRadius * .82,
@@ -628,10 +655,71 @@ function ensurePosition(node, planned) {
 
 function applyView() {
   refs.graphWorld.setAttribute("transform", "translate(" + state.view.x + " " + state.view.y + ") scale(" + state.view.scale + ")");
+  scheduleLabels();
+}
+
+function scheduleLabels() {
+  if (state.labelFrame !== null) return;
+  state.labelFrame = window.requestAnimationFrame(() => {
+    state.labelFrame = null;
+    layoutLabels();
+  });
+}
+
+function layoutLabels() {
+  const matrix = refs.graphWorld.getScreenCTM();
+  if (!matrix) return;
+  const scale = Math.hypot(matrix.a, matrix.b);
+  if (!scale) return;
+  const stage = refs.graph.getBoundingClientRect();
+  const padding = 7;
+  const occupied = [];
+  const obstacles = state.captions.filter(entry => entry.priority <= 2).map(entry => {
+    const point = state.positions.get(entry.id);
+    const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
+    const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
+    const radius = entry.radius * scale + 2;
+    return { left: x - radius, right: x + radius, top: y - radius, bottom: y + radius };
+  });
+  const intersects = (rect, other, gap = 0) => rect.left < other.right + gap && rect.right + gap > other.left && rect.top < other.bottom + gap && rect.bottom + gap > other.top;
+  state.visibleCaptions.forEach(entry => entry.caption.setAttribute("display", "none"));
+  // Measure only a bounded set, in screen pixels so labels survive zooming.
+  const rank = entry => entry.priority === 0 ? 0 : entry.id === state.hoveredId ? .5 : entry.priority;
+  const candidates = state.captions.filter(entry => entry.priority < 4 || entry.id === state.hoveredId)
+    .sort((left, right) => rank(left) - rank(right))
+    .filter(entry => {
+      const point = state.positions.get(entry.id);
+      const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
+      const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
+      return x > stage.left && x < stage.right && y > stage.top && y < stage.bottom;
+    }).slice(0, 64);
+  candidates.forEach(entry => {
+    entry.caption.removeAttribute("display");
+    entry.caption.setAttribute("transform", "translate(0 " + (-entry.radius - 9 / scale) + ") scale(" + 1 / scale + ")");
+  });
+  state.visibleCaptions = candidates;
+  const measured = candidates.map(entry => ({ entry, box: entry.caption.getBoundingClientRect() }));
+  measured.forEach(({ entry, box }) => {
+    const placements = [[0, 0], [box.width / 2 + entry.radius * scale + 8, box.height + 7], [-box.width / 2 - entry.radius * scale - 8, box.height + 7], [0, box.height + entry.radius * scale * 2 + 19]];
+    if (entry.priority === 0 || entry.id === state.hoveredId) {
+      placements.push([clamp(box.left, stage.left + padding, stage.right - box.width - padding) - box.left, clamp(box.top, stage.top + padding, stage.bottom - box.height - padding) - box.top]);
+    }
+    const placement = placements.find(([dx, dy], index) => {
+      const rect = { left: box.left + dx, right: box.right + dx, top: box.top + dy, bottom: box.bottom + dy };
+      if (rect.left < stage.left + padding || rect.right > stage.right - padding || rect.top < stage.top + padding || rect.bottom > stage.bottom - padding) return false;
+      if (occupied.some(other => intersects(rect, other, padding))) return false;
+      if (index < 4 && obstacles.some(other => intersects(rect, other))) return false;
+      occupied.push(rect);
+      return true;
+    });
+    if (placement) {
+      entry.caption.setAttribute("transform", "translate(" + placement[0] / scale + " " + (-entry.radius + (placement[1] - 9) / scale) + ") scale(" + 1 / scale + ")");
+    } else entry.caption.setAttribute("display", "none");
+  });
 }
 
 function updateGraphPositions() {
-  refs.graphWorld.querySelectorAll(".graph-node").forEach(node => {
+  refs.graphWorld.querySelectorAll(".graph-node, .graph-caption-anchor").forEach(node => {
     const position = state.positions.get(node.getAttribute("data-node-id"));
     if (position) node.setAttribute("transform", "translate(" + position.x + " " + position.y + ")");
   });
@@ -644,21 +732,37 @@ function updateGraphPositions() {
     edge.setAttribute("x2", target.x);
     edge.setAttribute("y2", target.y);
   });
+  scheduleLabels();
 }
 
 function graphPoint(event) {
-  const rect = refs.graph.getBoundingClientRect();
-  const width = rect.width || SVG_WIDTH;
-  const height = rect.height || SVG_HEIGHT;
-  return {
-    x: ((event.clientX - rect.left) / width) * SVG_WIDTH,
-    y: ((event.clientY - rect.top) / height) * SVG_HEIGHT,
-  };
+  const matrix = refs.graph.getScreenCTM();
+  if (!matrix) return { x: 0, y: 0 };
+  const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+  return { x: point.x, y: point.y };
 }
 
 function worldPoint(event) {
   const point = graphPoint(event);
   return { x: (point.x - state.view.x) / state.view.scale, y: (point.y - state.view.y) / state.view.scale };
+}
+
+function syncGraphViewport() {
+  const rect = refs.graph.getBoundingClientRect();
+  const height = rect.width ? SVG_WIDTH * rect.height / rect.width : SVG_HEIGHT;
+  if (Math.abs(height - SVG_HEIGHT) < 1) return false;
+  SVG_HEIGHT = height;
+  refs.graph.setAttribute("viewBox", "0 0 " + SVG_WIDTH + " " + SVG_HEIGHT);
+  return true;
+}
+
+function focusSelection() {
+  const point = state.positions.get("file:" + state.selectedPath);
+  if (!point) return;
+  state.view.x = SVG_WIDTH / 2 - point.x * state.view.scale;
+  state.view.y = SVG_HEIGHT / 2 - point.y * state.view.scale;
+  state.didFit = true;
+  applyView();
 }
 
 function fitGraph() {
@@ -687,14 +791,24 @@ function setZoom(nextScale, event) {
     state.view.scale = scale;
     state.view.x = screenPoint.x - oldWorld.x * scale;
     state.view.y = screenPoint.y - oldWorld.y * scale;
-  } else state.view.scale = scale;
+  } else {
+    const centerX = (SVG_WIDTH / 2 - state.view.x) / state.view.scale;
+    const centerY = (SVG_HEIGHT / 2 - state.view.y) / state.view.scale;
+    state.view.scale = scale;
+    state.view.x = SVG_WIDTH / 2 - centerX * scale;
+    state.view.y = SVG_HEIGHT / 2 - centerY * scale;
+  }
   state.didFit = true;
   applyView();
 }
 
 function renderGraph() {
+  syncGraphViewport();
   refs.graph.setAttribute("viewBox", "0 0 " + SVG_WIDTH + " " + SVG_HEIGHT);
   refs.graphWorld.replaceChildren();
+  state.captions = [];
+  state.visibleCaptions = [];
+  state.hoveredId = null;
   refs.graphLoading.hidden = true;
   refs.graphError.hidden = true;
   refs.graphEmpty.hidden = true;
@@ -710,6 +824,14 @@ function renderGraph() {
   }
   const sourceFiles = allFiles();
   const files = graphFiles();
+  if (state.query && !sourceFiles.some(matchesQuery)) {
+    refs.graphMode.textContent = "Search results";
+    refs.graphSummary.textContent = "0 matching files";
+    refs.focusSummary.textContent = "Try a file, folder, or symbol name";
+    refs.overview.hidden = sourceFiles.length <= OVERVIEW_THRESHOLD;
+    setGraphEmpty("No files match this search.");
+    return;
+  }
   if (!sourceFiles.length) {
     refs.graphMode.textContent = "Empty project";
     refs.graphSummary.textContent = "0 nodes";
@@ -719,7 +841,7 @@ function renderGraph() {
   }
   const lookup = new Map(files.map(file => [file.path, file]));
   const reverse = reverseLookup(files);
-  const directoryMode = sourceFiles.length > MAX_GRAPH_NODES && !state.selectedPath && !state.query;
+  const directoryMode = sourceFiles.length > OVERVIEW_THRESHOLD && !state.selectedPath && !state.query;
   let data;
   if (directoryMode) {
     const directoryLookup = new Map(sourceFiles.map(file => [file.path, file]));
@@ -747,7 +869,12 @@ function renderGraph() {
       data = { mode: fileGraph.mode, nodes, edges, capped: names.length < files.length };
     }
   }
-  data.capped = Boolean(data.capped || model.files.length > MAX_GRAPH_NODES);
+  data.capped = Boolean(data.capped || data.nodes.length > MAX_GRAPH_NODES);
+  if (data.nodes.length > MAX_GRAPH_NODES) {
+    data.nodes = data.nodes.slice(0, MAX_GRAPH_NODES);
+    const visible = new Set(data.nodes.map(node => node.id));
+    data.edges = data.edges.filter(edge => visible.has(edge.source) && visible.has(edge.target));
+  }
   state.graphData = data;
   const plannedPositions = planPositions(data);
   data.nodes.forEach(node => ensurePosition(node, plannedPositions));
@@ -763,9 +890,7 @@ function renderGraph() {
     lookup.get(state.selectedPath).dependencies.forEach(path => related.add(path));
     (reverse.get(state.selectedPath) || []).forEach(path => related.add(path));
   }
-  const relatedLabels = new Set([state.selectedPath]);
-  [...related].filter(path => path !== state.selectedPath).sort().slice(0, data.nodes.length > 400 ? 0 : 16).forEach(path => relatedLabels.add(path));
-  const queryLabels = new Set(files.filter(matchesQuery).slice(0, 12).map(file => file.path));
+  const hubs = new Set(data.nodes.slice().sort((left, right) => degree.get(right.id) - degree.get(left.id)).slice(0, 12).map(node => node.id));
   const highlightOpacity = Math.min(.8, 3 / Math.sqrt(Math.max(1, degree.get(selectedId) || 1)));
   const selectedEdges = data.edges.filter(edge => edge.source === selectedId || edge.target === selectedId);
   const otherEdges = data.edges.filter(edge => edge.source !== selectedId && edge.target !== selectedId);
@@ -788,11 +913,12 @@ function renderGraph() {
     }
     refs.graphWorld.append(line);
   });
+  const nameCounts = new Map();
+  data.nodes.forEach(node => nameCounts.set(basename(node.path), (nameCounts.get(basename(node.path)) || 0) + 1));
   data.nodes.forEach(node => {
     const position = state.positions.get(node.id);
     const selected = node.id === selectedId;
     const isRelated = node.kind === "file" && related.has(node.path);
-    const showLabel = node.kind === "directory" || selected || (isRelated && relatedLabels.has(node.path)) || (node.kind === "file" && state.query && queryLabels.has(node.path));
     const group = makeSvg("g", {
       class: "graph-node" + (selected ? " selected" : "") + (isRelated && !selected ? " related" : ""),
       "data-node-id": node.id,
@@ -806,23 +932,18 @@ function renderGraph() {
       : selected ? 9 : clamp(3 + Math.sqrt(degree.get(node.id) || 0), 3, 8);
     group.append(makeSvg("circle", { r: radius }));
     group.append(makeSvg("title", {}, node.kind === "directory" ? node.path + " · " + node.count + " files" : node.path));
-    const label = makeSvg("text", { class: "node-label", "text-anchor": "middle", y: "-2" }, node.kind === "directory" ? node.path : basename(node.path));
-    const sublabel = makeSvg("text", { class: node.kind === "directory" ? "node-count" : "node-kind", "text-anchor": "middle", y: "13" }, node.kind === "directory" ? node.count + " files" : lookup.get(node.path).language);
-    if (!showLabel) {
-      label.setAttribute("display", "none");
-      sublabel.setAttribute("display", "none");
-    }
-    group.append(label, sublabel);
-    group.addEventListener("mouseenter", () => {
-      label.removeAttribute("display");
-      sublabel.removeAttribute("display");
-    });
-    group.addEventListener("mouseleave", () => {
-      if (!showLabel) {
-        label.setAttribute("display", "none");
-        sublabel.setAttribute("display", "none");
-      }
-    });
+    const caption = makeSvg("g", { class: "node-caption", display: "none" });
+    const name = node.kind === "directory" ? node.path : nameCounts.get(basename(node.path)) > 1 ? node.path.split("/").slice(-2).join("/") : basename(node.path);
+    caption.append(makeSvg("text", { class: "node-label", "text-anchor": "middle" }, name.length > 44 ? name.slice(0, 41) + "…" : name));
+    if (node.kind === "directory") caption.append(makeSvg("text", { class: "node-count", "text-anchor": "middle", y: "13" }, node.count + " files"));
+    const priority = selected ? 0 : node.kind === "file" && state.query && matchesQuery(node.file) ? 1 : isRelated || node.kind === "directory" ? 2 : hubs.has(node.id) ? 3 : 4;
+    state.captions.push({ id: node.id, caption, radius, priority });
+    const reveal = () => { state.hoveredId = node.id; scheduleLabels(); };
+    const conceal = () => { if (state.hoveredId === node.id) state.hoveredId = null; scheduleLabels(); };
+    group.addEventListener("mouseenter", reveal);
+    group.addEventListener("mouseleave", conceal);
+    group.addEventListener("focus", reveal);
+    group.addEventListener("blur", conceal);
     group.addEventListener("click", () => {
       if (state.suppressClick) return;
       chooseFile(node.kind === "directory" ? node.members[0] : node.path);
@@ -835,10 +956,17 @@ function renderGraph() {
     group.addEventListener("pointerdown", event => beginNodeDrag(event, node.id, group));
     refs.graphWorld.append(group);
   });
+  refs.overview.hidden = sourceFiles.length <= OVERVIEW_THRESHOLD || directoryMode;
+  state.captions.forEach(entry => {
+    const position = state.positions.get(entry.id);
+    const anchor = makeSvg("g", { class: "graph-caption-anchor", "data-node-id": entry.id, transform: "translate(" + position.x + " " + position.y + ")" });
+    anchor.append(entry.caption);
+    refs.graphWorld.append(anchor);
+  });
   const modeLabel = data.mode === "directories" ? "Directory overview" : data.mode === "search" ? "Search neighborhood" : data.mode === "neighborhood" ? "Selected neighborhood" : "Repository graph";
-  const modeKey = data.mode + ":" + (state.selectedPath ? "selected" : "overview") + ":" + (state.query ? "search" : "all");
+  const modeKey = data.mode + ":" + (state.selectedPath || "overview") + ":" + state.query.trim().toLowerCase();
   refs.graphMode.textContent = modeLabel;
-  refs.graphSummary.textContent = formatCount(data.nodes.length) + " nodes · " + formatCount(data.edges.length) + " recorded imports" + (data.edges.length > renderedEdges.length ? " · " + formatCount(renderedEdges.length) + " drawn" : "") + (data.capped ? " · capped" : "");
+  refs.graphSummary.textContent = directoryMode ? formatCount(data.nodes.length) + " folder groups · " + formatCount(sourceFiles.length) + " indexed files" : formatCount(data.nodes.length) + (data.capped ? " / " + formatCount(sourceFiles.length) : "") + " files · " + formatCount(data.edges.length) + " recorded imports" + (data.edges.length > renderedEdges.length ? " · " + formatCount(renderedEdges.length) + " drawn" : "");
   const focusText = model.focus.length
     ? "Focus: " + model.focus.slice(0, 3).join(" · ") + (model.focus.length > 3 ? " · …" : "")
     : "Recorded import metadata · no full call graph";
@@ -900,9 +1028,10 @@ function handlePointerMove(event) {
     state.positions.set(drag.nodeId, { x: point.x - drag.offsetX, y: point.y - drag.offsetY });
     updateGraphPositions();
   } else {
-    const rect = refs.graph.getBoundingClientRect();
-    const dx = ((event.clientX - drag.startX) / (rect.width || SVG_WIDTH)) * SVG_WIDTH;
-    const dy = ((event.clientY - drag.startY) / (rect.height || SVG_HEIGHT)) * SVG_HEIGHT;
+    const point = graphPoint(event);
+    const start = graphPoint({ clientX: drag.startX, clientY: drag.startY });
+    const dx = point.x - start.x;
+    const dy = point.y - start.y;
     state.view.x = drag.viewX + dx;
     state.view.y = drag.viewY + dy;
     applyView();
@@ -945,7 +1074,11 @@ async function loadMap(force = false) {
     const queryMatches = nextModel.files.filter(matchesQuery);
     if (state.query && queryMatches.length === 1) state.selectedPath = queryMatches[0].path;
     else if (previousSelection && lookup.has(previousSelection)) state.selectedPath = previousSelection;
-    else state.selectedPath = nextModel.focus.find(path => lookup.has(path)) || nextModel.files[0]?.path || null;
+    else state.selectedPath = !state.query && nextModel.files.length > OVERVIEW_THRESHOLD ? null : nextModel.focus.find(path => lookup.has(path)) || nextModel.files[0]?.path || null;
+    if (!previousModel && nextModel.files.length > 120) {
+      state.collapsedDirs = new Set(nextModel.files.map(file => directoryOf(file.path)));
+      if (state.selectedPath) state.collapsedDirs.delete(directoryOf(state.selectedPath));
+    }
     state.lastError = "";
     state.noticeDismissed = false;
     renderAll();
@@ -1025,6 +1158,8 @@ async function activateProject(projectId) {
   state.lastError = "";
   state.selectedPath = null;
   state.positions.clear();
+  state.collapsedDirs.clear();
+  state.fileLimits.clear();
   state.view = { x: 0, y: 0, scale: 1 };
   state.didFit = false;
   state.graphModeKey = "";
@@ -1092,6 +1227,8 @@ function installInteractions() {
     updateUrl();
     renderTree();
     renderGraph();
+    renderInspector();
+    if (matching.length === 1) focusSelection();
   });
   document.addEventListener("keydown", event => {
     const active = document.activeElement;
@@ -1108,6 +1245,14 @@ function installInteractions() {
   refs.sidebarClose.addEventListener("click", () => toggleDrawer(refs.sidebar, refs.sidebarButton, false));
   refs.inspectorButton.addEventListener("click", () => toggleDrawer(refs.inspector, refs.inspectorButton, !refs.inspector.classList.contains("is-open")));
   refs.inspectorClose.addEventListener("click", () => toggleDrawer(refs.inspector, refs.inspectorButton, false));
+  refs.overview.addEventListener("click", () => {
+    state.selectedPath = null;
+    state.query = "";
+    refs.fileSearch.value = "";
+    state.didFit = false;
+    updateUrl();
+    renderAll();
+  });
   refs.zoomIn.addEventListener("click", () => setZoom(state.view.scale * 1.2));
   refs.zoomOut.addEventListener("click", () => setZoom(state.view.scale * .83));
   refs.zoomReset.addEventListener("click", () => fitGraph());
@@ -1119,6 +1264,7 @@ function installInteractions() {
   refs.graph.addEventListener("pointerup", finishPointer);
   refs.graph.addEventListener("pointercancel", finishPointer);
   refs.graph.addEventListener("wheel", handleWheel, { passive: false });
+  new ResizeObserver(() => { if (syncGraphViewport()) fitGraph(); else scheduleLabels(); }).observe(refs.graph);
   document.addEventListener("visibilitychange", () => {
     state.visible = document.visibilityState === "visible";
     if (state.visible) startPolling();
