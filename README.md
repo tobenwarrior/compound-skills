@@ -8,6 +8,7 @@ After activation, give normal engineering requests. The optional `compound` comm
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
+- **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
 - **First-repository cleanup:** inspect a repository once before its first coding change, apply safe verified cleanup, and report larger improvements as a backlog.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
@@ -75,7 +76,7 @@ Custom `CODEX_HOME` and `CLAUDE_CONFIG_DIR` locations are respected. Saved Codex
 
 For a smaller scope, `compound setup` applies to one project and `compound session` applies to the current chat. A bare `compound` invocation also activates the chat. Use the same host command prefixes shown above. Session activation writes no files; project setup preserves existing instructions in a managed `AGENTS.md` section and handles Codex overrides and legacy Claude compatibility. See [activation details](skills/compound/references/activation.md).
 
-## Eight engineering workflows
+## Nine engineering workflows
 
 `compound` reads the project's instructions, identifies the task, and opens the relevant guide. It scales effort to uncertainty and impact, using the host's available models and tools.
 
@@ -89,6 +90,7 @@ For a smaller scope, `compound setup` applies to one project and `compound sessi
 | [Review](skills/compound/references/review.md) | Follow the affected contract and return findings with locations, triggering conditions, impact, and evidence |
 | [Verify](skills/compound/references/verify.md) | Match checks to the claim: user behavior, integration, regression, refactoring, performance, or packaging |
 | [Repository hygiene](skills/compound/references/repo-hygiene.md) | Inspect clutter, source-size candidates, script references, ignore rules, and accumulated agent artifacts |
+| [Git and pull requests](skills/compound/references/git.md) | Follow project formats, write clear commit/PR titles and explanations, report verified checks, and preserve human attribution |
 
 Architecture guidance favors simpler responsibilities and less reader effort. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
 
