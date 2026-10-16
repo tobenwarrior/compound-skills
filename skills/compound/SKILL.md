@@ -8,13 +8,22 @@ license: MIT
 
 Turn the requested outcome into the smallest justified change and verify what its users observe. Scale effort to uncertainty and impact.
 
+For visual map requests, including `compound map`, follow the [map utility](../map/SKILL.md) and skip engineering startup.
+
 For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` requests, read [activation](references/activation.md) first.
 
 ## Start
 
 `<installed-skill-dir>` means the directory containing this `SKILL.md`, normally `<plugin-root>/skills/compound`. Resolve relative resources there.
 
-Read the project's instructions. For repository context, run once per task before broad reads: `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --no-cache`. This scans in memory without writing files. See [code maps](references/map.md) for caching, coverage, skips, and visual `map` requests. Read the relevant implementation and name the outcome, constraints, and evidence for success. A request for explanation or review stays read-only. Ask about missing product choices; investigate observable facts with available tools.
+Read the project's instructions. Before broad repository reads, run once per task using the user's whole authorized scope, including initial inspection:
+
+- **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>"`. This starts or reuses the local service and incremental cache.
+- **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --no-cache`. This scans in memory without writes or a service.
+
+For denied local cache or network access, use the host's normal approval flow and retry the cached command once. Keep security settings unchanged; report the local fallback if still unavailable.
+
+See [code maps](references/map.md) for coverage and limits. Read relevant source and name the outcome, constraints, and evidence for success. Explanations and reviews stay read-only. Ask about missing product choices; investigate observable facts with available tools.
 
 Before the first write-authorized engineering task for a repository in this chat, check its onboarding state:
 

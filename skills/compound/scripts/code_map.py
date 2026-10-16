@@ -15,7 +15,6 @@ import stat
 import subprocess
 import sys
 import tempfile
-import webbrowser
 from pathlib import Path, PurePosixPath
 from typing import Any
 try:
@@ -428,6 +427,8 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
         raise CodeMapError("code-map cache exceeds 8 MiB")
     temporary: Path | None = None
     try:
+        if path.exists() and path.stat().st_size == len(encoded) and path.read_bytes() == encoded.encode("utf-8"):
+            return
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, prefix=".code-map-", suffix=".tmp", delete=False) as handle:
             temporary = Path(handle.name)
             handle.write(encoded)
@@ -502,41 +503,6 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     return model
 
 
-def _safe_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=True, separators=(",", ":")).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-def _html_template() -> str:
-    asset = Path(__file__).resolve().parent.parent / "assets" / "code-map.html"
-    try:
-        content = asset.read_text(encoding="utf-8")
-        if "__COMPOUND_MAP_JSON__" in content:
-            return content
-    except (OSError, UnicodeError):
-        pass
-    return "<!doctype html><meta charset='utf-8'><pre id='map'></pre><script>const map=__COMPOUND_MAP_JSON__;document.querySelector('#map').textContent=JSON.stringify(map,null,2)</script>"
-def _write_html(root: Path, model: dict[str, Any]) -> Path:
-    directory, json_path = _cache_location(root, True)
-    path = json_path.with_suffix(".html")
-    if path.is_symlink():
-        raise CodeMapError(f"refusing symlink code-map HTML: {path}")
-    temporary: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, prefix=".code-map-html-", suffix=".tmp", delete=False) as handle:
-            temporary = Path(handle.name)
-            handle.write(_html_template().replace("__COMPOUND_MAP_JSON__", _safe_json(model), 1))
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.chmod(temporary, 0o600)
-        os.replace(temporary, path)
-        temporary = None
-        return path
-    except OSError as exc:
-        raise CodeMapError(f"could not write code-map HTML: {exc}") from exc
-    finally:
-        if temporary:
-            try:
-                temporary.unlink()
-            except OSError:
-                pass
 def _text(model: dict[str, Any], limit: int) -> str:
     coverage = model["coverage"]
     partial = coverage["truncated"] or coverage["skipped"] or any(
@@ -568,10 +534,10 @@ def _text(model: dict[str, Any], limit: int) -> str:
     value = "\n".join(lines)
     if len(value) <= limit:
         return value
-    suffix = "\n[output truncated; inspect JSON or HTML for the bounded full map]"
+    suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
 def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
-    if output_format not in {"text", "json", "html"}:
+    if output_format not in {"text", "json"}:
         raise CodeMapError(f"unsupported output format: {output_format}")
     root_input = _repo_path(repo)
     root, head, inventory, notes = _git_context(root_input)
@@ -581,7 +547,7 @@ def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int =
         return model, _text(model, max_chars)
     if output_format == "json":
         return model, json.dumps(model, ensure_ascii=True, separators=(",", ":"))
-    return model, ""
+    raise CodeMapError("unsupported output format")
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Create a bounded repository code map")
     parser.add_argument("--repo", required=True, metavar="PATH")
@@ -593,33 +559,39 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
     return parser
+def _server_api():
+    try:
+        from . import map_server
+    except ImportError:
+        import map_server
+    return map_server
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.format == "html" and args.no_cache:
-        print("--format html requires a writable cache and cannot be combined with --no-cache", file=sys.stderr)
+        print("the live viewer requires a local service and cannot be combined with --no-cache", file=sys.stderr)
         return 2
     try:
-        model, rendered = build_map(args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files, no_cache=args.no_cache, refresh=args.refresh, output_format=args.format)
         if args.format == "html":
-            root, _, _, _ = _git_context(_repo_path(args.repo))
-            path = _write_html(root, model)
-            sys.stdout.write(str(path))
-            if args.open_html:
-                try:
-                    opened = webbrowser.open(path.as_uri())
-                except Exception as exc:
-                    opened = False
-                    reason = f": {exc}"
-                else:
-                    reason = ""
-                if not opened:
-                    print(f"browser launch failed{reason}; HTML saved at {path}", file=sys.stderr)
-                    return 1
+            url = _server_api().open_map(args.repo, query=args.query, open_browser=args.open_html)
+            sys.stdout.write(url + "\n")
+            return 0
+        if args.no_cache:
+            model, rendered = build_map(args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files, no_cache=True, refresh=args.refresh, output_format=args.format)
         else:
-            sys.stdout.write(rendered)
+            try:
+                model = _server_api().get_model(args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES), refresh=args.refresh)
+            except (OSError, ValueError, ImportError) as exc:
+                print(f"local viewer unavailable; using an in-process map: {exc}", file=sys.stderr)
+                model, _ = build_map(args.repo, query=args.query, max_files=args.max_files, refresh=args.refresh)
+            rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS)) if args.format == "text" else json.dumps(model, ensure_ascii=True, separators=(",", ":"))
+        sys.stdout.write(rendered)
         return 0
-    except CodeMapError as exc:
+    except (CodeMapError, OSError, ValueError, ImportError) as exc:
         print(f"code-map error: {exc}", file=sys.stderr)
         return 2
+
+
 if __name__ == "__main__":
     raise SystemExit(main())

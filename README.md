@@ -7,7 +7,7 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 After activation, give normal engineering requests. The optional `compound` command manages session, project, and global defaults.
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
-- **Automatic code maps:** orient repository work with a compact local map of files, symbols, and import relationships; open an interactive view with `compound map`.
+- **Automatic code maps:** orient repository work with a compact local map of files, symbols, and import relationships; explore a live graph with the `map` command.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
@@ -79,21 +79,25 @@ For a smaller scope, `compound setup` applies to one project and `compound sessi
 
 ## See your codebase
 
-With global or project activation enabled, repository tasks automatically use a focused code map before broad exploration. Unchanged file metadata is reused; changed, added, and deleted files are checked on each run. The text summary is capped at 2,500 characters. Confirm behavior in source and tests.
+With global or project activation enabled, repository tasks automatically use a focused code map before broad exploration. Write-authorized coding work starts or reuses the local map service; read-only analysis uses an in-memory scan without starting it. The agent's text summary is capped at 2,500 characters. Confirm behavior in source and tests.
 
-Open the interactive local view:
+Open the live viewer with its own command:
 
 | App | Command |
 | --- | --- |
-| Codex | `$compound map` |
-| Claude Code | `/compound-skills:compound map` |
-| Cursor | `/compound map` |
+| Codex | `$map` |
+| Claude Code | `/compound-skills:map` |
+| Cursor | `/map` |
 
-Add a focus, for example `map pricing`. Search files, inspect symbols, and follow imports and dependents. The view is a snapshot; run the command again to refresh it. It opens in your normal browser, with no server or external assets.
+Add a focus such as `map pricing`. In Claude Code, `/map` can also resolve when no other skill shares that name. Start a new chat after updating so the new command appears; Claude Code also supports `/reload-plugins`. The older `compound map` form still routes to the same viewer.
 
-The helper uses Python 3.11+ and Git with no new dependencies, watcher, or provider calls. Python and JavaScript/TypeScript receive structural outlines and local import links; other recognized source files appear with limited metadata. Dynamic calls, unresolved imports, excluded files, and scan limits require normal source navigation. This is orientation, not complete semantic understanding.
+The viewer opens at **`http://127.0.0.1:43127/`** in your browser. Explore folder groups, search files and symbols, pan and zoom through the dependency graph, and inspect a file's imports and dependents. One shared local service handles registered projects. The host may request permission for local cache and network access. Reopening the command reuses its service and index; the visible page checks for changes and updates incrementally. No generated HTML files or repeated full rebuilds.
 
-Generated metadata and HTML overwrite prior snapshots in Compound's local user cache, outside your repository. Read-only analysis uses a no-write scan; visual requests write only the local cache. Source bodies are not cached; summaries read by the agent enter its normal chat context. Ignore rules and sensitive-file exclusions apply. Details: [code maps](skills/compound/references/map.md).
+Use `map status` to check the service and `map stop` to stop it. It stays available until stopped or the machine session ends; the next coding or map request starts it again. There is no login agent or scan of all your projects at startup. Set `COMPOUND_MAP_PORT` to choose another local port.
+
+The helper uses Python 3.11+ and Git with no new dependencies, database, filesystem watcher, or provider calls. Python and JavaScript/TypeScript receive structural outlines and local import links; other recognized source files appear with limited metadata. The graph displays up to 4,000 indexed files and 8,000 links, prioritizing the selected file; its inspector uses all indexed relationships. Dynamic calls, unresolved imports, excluded files, and scan limits require normal source navigation.
+
+Metadata stays in Compound's local user cache, outside your repository. Source bodies are not cached or served; summaries read by the agent enter normal chat context. Ignore rules and sensitive-file exclusions apply. The service binds to loopback and serves only its bundled interface and registered map metadata. Details: [code maps](skills/compound/references/map.md).
 
 ## Nine engineering workflows
 
@@ -139,7 +143,7 @@ These findings are review heuristics. They do not prove architectural quality or
 
 ## Inspect the plugin's context cost
 
-The toolkit has one discoverable skill, focused references, and executable checks. There is no required model, MCP server, external plugin, or automatic hook.
+The toolkit has one shared engineering skill, a thin map command, focused references, and executable checks. There is no required model, MCP server, external plugin, or automatic hook.
 
 From a source checkout, stage intended changes when using Git, then run:
 

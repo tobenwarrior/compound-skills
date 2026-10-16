@@ -21,10 +21,19 @@ The earlier guidelines credited [multica-ai/andrej-karpathy-skills](https://gith
 ## Empryo / SoulForge code-map concept
 
 - Source: [public repository](https://github.com/proxysoul/Empryo/tree/c27dac116d2ee1637abfc6634bebf08b5c379454), inspected revision `c27dac116d2ee1637abfc6634bebf08b5c379454`.
-- Inspected: `README.md`, `LICENSE`, `src/core/prompts/shared/soul-map.ts`, `src/core/context/manager.ts`, `src/core/intelligence/repo-map.ts`, and `src/core/intelligence/repo-map-utils.ts`.
-- License: BUSL-1.1. Retained the concept of bounded structural orientation, task-focused retrieval, and source confirmation. The implementation here is original; no source code, prompts, assets, or runtime from that project are bundled.
+- Inspected: `README.md`, `LICENSE`, `src/core/prompts/shared/soul-map.ts`, `src/core/context/manager.ts`, `src/core/intelligence/repo-map.ts`, and `src/core/intelligence/repo-map-utils.ts`; the current desktop surface description and repository availability notes.
+- License: BUSL-1.1. Retained bounded structural orientation, task-focused retrieval, source confirmation, and the folder/graph/file-details interaction model. The current v3 desktop UI is privately developed, as the public README explains. The implementation here is original; no source code, prompts, assets, or runtime from that project are bundled.
 - Adapted into: [code maps](skills/compound/references/map.md), the stdlib helper, and local viewer. Excluded: LSP/Tree-sitter dependencies, watchers, embeddings, databases, provider calls, and claims of complete code understanding.
 - Evidence: ignored local fixtures exercise refresh, exclusions, dependency navigation, output bounds, viewer interactions, and native automatic routing. The package checker reports context cost; map output is bounded separately.
+
+## Claude-Mem local service concept
+
+- Source: [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem/tree/b8fc2ef9bab0dd1438d6cc8699c6884445ad409b), revision `b8fc2ef9bab0dd1438d6cc8699c6884445ad409b`, inspected 2026-10-16.
+- License: Apache-2.0; `NOTICE` attributes Alex Newman and the Claude-Mem project. No source code, prompts, styles, or assets were copied.
+- Inspected: `README.md`, `LICENSE`, `NOTICE`, `package.json`, `docs/public/architecture/overview.mdx`, `docs/public/architecture/worker-service.mdx`, `docs/public/platform-integration.mdx`, `docs/public/hooks-architecture.mdx`, and `src/services/worker/README.md`.
+- Retained: a shared local worker, health check, stable loopback viewer, and incremental updates. Adapted into the original stdlib map service and bundled viewer, with polling instead of an event-stream dependency.
+- Excluded: lifecycle hooks, session capture, memory/search databases, embeddings, provider SDKs, Node/Bun runtime requirements, and the Express/React build stack.
+- Evidence: ignored HTTP fixtures cover process reuse, updates, lifecycle and request boundaries; browser and native host checks exercise the actual viewer and command.
 
 ## Future integrations
 
