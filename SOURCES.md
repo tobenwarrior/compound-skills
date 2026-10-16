@@ -21,10 +21,10 @@ The earlier guidelines credited [multica-ai/andrej-karpathy-skills](https://gith
 ## Empryo / SoulForge code-map concept
 
 - Source: [public repository](https://github.com/proxysoul/Empryo/tree/c27dac116d2ee1637abfc6634bebf08b5c379454), inspected revision `c27dac116d2ee1637abfc6634bebf08b5c379454`.
-- Inspected: `README.md`, `LICENSE`, `src/core/prompts/shared/soul-map.ts`, `src/core/context/manager.ts`, `src/core/intelligence/repo-map.ts`, and `src/core/intelligence/repo-map-utils.ts`; the current desktop surface description and repository availability notes.
-- License: BUSL-1.1. Retained bounded structural orientation, task-focused retrieval, source confirmation, and the folder/graph/file-details interaction model. The current v3 desktop UI is privately developed, as the public README explains. The implementation here is original; no source code, prompts, assets, or runtime from that project are bundled.
+- Inspected: `README.md`, `LICENSE`, `src/core/prompts/shared/soul-map.ts`, `src/core/context/manager.ts`, `src/core/intelligence/repo-map.ts`, and `src/core/intelligence/repo-map-utils.ts`; the current desktop surface description and repository availability notes; [Genome](https://empryo.com/docs/concepts/genome), [desktop](https://empryo.com/docs/surfaces/desktop), and [intelligence](https://empryo.com/docs/concepts/intelligence) documentation inspected 2026-10-16.
+- License: BUSL-1.1. Retained bounded structural orientation, task-focused retrieval, source confirmation, folder/graph/file inspection, Git co-change hints, impact exploration, and import tracing. The current v3 desktop UI is privately developed, as the public README explains. The implementation here is original; no source code, prompts, assets, or runtime from that project are bundled.
 - Adapted into: [code maps](skills/compound/references/map.md), the stdlib helper, and local viewer. Excluded: LSP/Tree-sitter dependencies, watchers, embeddings, databases, provider calls, and claims of complete code understanding.
-- Evidence: ignored local fixtures exercise refresh, exclusions, dependency navigation, output bounds, viewer interactions, and native automatic routing. The package checker reports context cost; map output is bounded separately.
+- Evidence: ignored local fixtures exercise refresh, aliases, Git state, exclusions, bounded source previews, dependency traversal, output bounds, full-network rendering, and native automatic routing. The package checker reports context cost; map output is bounded separately.
 
 ## Claude-Mem local service concept
 

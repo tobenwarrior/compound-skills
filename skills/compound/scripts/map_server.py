@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import codecs
 import contextlib
 import dataclasses
 import datetime as dt
@@ -14,6 +15,7 @@ import json
 import os
 import secrets
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -21,7 +23,7 @@ import threading
 import time
 import urllib.parse
 import webbrowser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 try:
@@ -46,8 +48,21 @@ MAX_QUERY = 512
 MAX_LOG_BYTES = 256 * 1024
 MAX_HANDOFF = 16 * 1024
 INDEX_MAX_FILES = 5000
-ASSET_NAMES = ("code-map.html", "code-map.css", "code-map.js")
-ASSET_TYPES = {"code-map.html": "text/html; charset=utf-8", "code-map.css": "text/css; charset=utf-8", "code-map.js": "text/javascript; charset=utf-8"}
+MAX_SOURCE_BYTES = 64 * 1024
+MAX_SOURCE_PATH = 4096
+MAX_GIT_STATUS_BYTES = 256 * 1024
+REGISTRY_VERSION = 1
+REGISTRY_FILE = "registry.json"
+MAX_REGISTRY_PROJECTS = 32
+MAX_REGISTRY_BYTES = 256 * 1024
+MAX_REGISTRY_NAME = 256
+ASSET_NAMES = ("code-map.html", "code-map.css", "code-map.js", "map-graph.js")
+ASSET_TYPES = {
+    "code-map.html": "text/html; charset=utf-8",
+    "code-map.css": "text/css; charset=utf-8",
+    "code-map.js": "text/javascript; charset=utf-8",
+    "map-graph.js": "text/javascript; charset=utf-8",
+}
 ASSET_DIR = Path(__file__).resolve().parent.parent / "assets"
 
 
@@ -89,6 +104,117 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
 _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 
+def _git_branch(status: bytes) -> str:
+    """Extract only the local branch name from porcelain's bounded header."""
+    header = status.split(b"\n", 1)[0]
+    if not header.startswith(b"## "):
+        return ""
+    try:
+        value = os.fsdecode(header[3:].strip())
+    except (UnicodeDecodeError, ValueError):
+        return ""
+    if value.startswith("No commits yet on "):
+        value = value[len("No commits yet on "):]
+    if value in {"HEAD", "HEAD (no branch)", "(no branch)"}:
+        return ""
+    return value.split("...", 1)[0].split(" [", 1)[0]
+
+
+def _git_state_fingerprint(root: Path) -> tuple[str, str] | None:
+    """Fallback for engines that predate the model's bounded Git state fields."""
+    command = [
+        "git",
+        "-C",
+        str(root),
+        "status",
+        "--porcelain=v1",
+        "--branch",
+        "-z",
+        "--untracked-files=all",
+    ]
+    process: subprocess.Popen[bytes] | None = None
+    stream: Any = None
+    raw = b""
+    truncated = False
+    try:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        stream = process.stdout
+        if stream is None:
+            return None
+        raw = stream.read(MAX_GIT_STATUS_BYTES + 1)
+        if not isinstance(raw, bytes):
+            return None
+        truncated = len(raw) > MAX_GIT_STATUS_BYTES
+        if truncated:
+            with contextlib.suppress(OSError):
+                process.kill()
+        try:
+            process.wait(timeout=float(getattr(engine, "GIT_TIMEOUT", 5)))
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(OSError):
+                process.kill()
+            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                process.wait(timeout=1)
+            return None
+        if process.returncode != 0 and not truncated:
+            return None
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        if process is not None:
+            with contextlib.suppress(OSError):
+                process.kill()
+            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                process.wait(timeout=1)
+        return None
+    finally:
+        if stream is not None:
+            with contextlib.suppress(OSError, ValueError):
+                stream.close()
+    if truncated:
+        raw = raw[:MAX_GIT_STATUS_BYTES]
+    digest = hashlib.sha256()
+    digest.update(raw)
+    digest.update(b"\0truncated=")
+    digest.update(b"1" if truncated else b"0")
+    return _git_branch(raw), digest.hexdigest()
+
+
+def _model_git_state(model: Any) -> tuple[str, str] | None:
+    """Hash branch and indexed status labels without another Git invocation."""
+    if not isinstance(model, dict):
+        return None
+    branch = model.get("branch", "")
+    files = model.get("files")
+    if not isinstance(branch, str) or not isinstance(files, list):
+        return None
+    encoded = bytearray()
+    truncated = False
+    try:
+        branch_bytes = branch.encode("utf-8", "strict")
+    except UnicodeError:
+        return None
+    for record in sorted((item for item in files if isinstance(item, dict)), key=lambda item: str(item.get("path", ""))):
+        path = record.get("path")
+        changed = record.get("changed")
+        if not isinstance(path, str) or not isinstance(changed, str):
+            return None
+        if not changed:
+            continue
+        try:
+            item = path.encode("utf-8", "strict") + b"\0" + changed.encode("utf-8", "strict") + b"\0"
+        except UnicodeError:
+            return None
+        if len(encoded) + len(item) > MAX_GIT_STATUS_BYTES:
+            truncated = True
+            break
+        encoded.extend(item)
+    digest = hashlib.sha256()
+    digest.update(branch_bytes)
+    digest.update(b"\0")
+    digest.update(encoded)
+    digest.update(b"\0truncated=" + (b"1" if truncated else b"0"))
+    return branch, digest.hexdigest()
+
+
 def _port(raw: str | int | None = None) -> int:
     value = os.environ.get("COMPOUND_MAP_PORT", str(DEFAULT_PORT)) if raw is None else str(raw)
     try:
@@ -113,6 +239,141 @@ def _project_id(root: Path) -> str:
     return hashlib.sha256(str(root).encode("utf-8")).hexdigest()
 
 
+def _source_relative(value: Any) -> str:
+    if not isinstance(value, str) or not value or len(value) > MAX_SOURCE_PATH:
+        raise MapServerError("invalid source path")
+    if "\x00" in value or "\\" in value:
+        raise MapServerError("invalid source path")
+    try:
+        normalized = PurePosixPath(value).as_posix()
+    except (TypeError, ValueError):
+        raise MapServerError("invalid source path")
+    if normalized != value or not engine._safe_relative(value):
+        raise MapServerError("invalid source path")
+    parts = PurePosixPath(value).parts
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        raise MapServerError("invalid source path")
+    return value
+
+
+def _source_path(root: Path, relative: str) -> Path:
+    """Validate a repository-relative source path without resolving its leaf."""
+    try:
+        relative = _source_relative(relative)
+        if engine._private(relative) or engine._skip_dir(relative):
+            raise MapServerError("source file unavailable")
+        if engine._has_symlink_ancestor(root, root):
+            raise MapServerError("source file unavailable")
+        root_stat = root.lstat()
+        if not stat.S_ISDIR(root_stat.st_mode):
+            raise MapServerError("source file unavailable")
+        candidate = root.joinpath(*PurePosixPath(relative).parts)
+        candidate.relative_to(root)
+        if engine._has_symlink_ancestor(candidate, root):
+            raise MapServerError("source file unavailable")
+        candidate_stat = candidate.lstat()
+        if not stat.S_ISREG(candidate_stat.st_mode):
+            raise MapServerError("source file unavailable")
+        return candidate
+    except MapServerError:
+        raise
+    except (OSError, RuntimeError, ValueError):
+        raise MapServerError("source file unavailable")
+
+
+def _open_source_fd(root: Path, relative: str) -> int:
+    """Open a validated source path while refusing symlink components where supported."""
+    parts = PurePosixPath(relative).parts
+    if not parts:
+        raise OSError("empty source path")
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    cloexec = getattr(os, "O_CLOEXEC", 0)
+    directory = getattr(os, "O_DIRECTORY", 0)
+    base_flags = os.O_RDONLY | cloexec | nofollow
+    supports_dir_fd = getattr(os, "supports_dir_fd", ())
+    if nofollow and os.open in supports_dir_fd:
+        current = os.open(str(root), base_flags | directory)
+        try:
+            if not stat.S_ISDIR(os.fstat(current).st_mode):
+                raise OSError("source root is not a directory")
+            for component in parts[:-1]:
+                child = os.open(component, base_flags | directory, dir_fd=current)
+                try:
+                    if not stat.S_ISDIR(os.fstat(child).st_mode):
+                        raise OSError("source parent is not a directory")
+                except BaseException:
+                    with contextlib.suppress(OSError):
+                        os.close(child)
+                    raise
+                os.close(current)
+                current = child
+            fd = os.open(parts[-1], base_flags, dir_fd=current)
+            os.close(current)
+            current = -1
+            return fd
+        finally:
+            if current >= 0:
+                with contextlib.suppress(OSError):
+                    os.close(current)
+    # The preflight symlink walk plus O_NOFOLLOW on the leaf is the safest
+    # portable fallback when dirfd operations are unavailable.
+    return os.open(str(root.joinpath(*parts)), base_flags)
+
+
+def _read_source_preview(root: Path, relative: str, language: str) -> dict[str, Any]:
+    _source_path(root, relative)
+    fd = -1
+    try:
+        fd = _open_source_fd(root, relative)
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode):
+            raise OSError("source file is not regular")
+        remaining = MAX_SOURCE_BYTES + 1
+        chunks: list[bytes] = []
+        while remaining:
+            chunk = os.read(fd, remaining)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        data = b"".join(chunks)
+        after = os.fstat(fd)
+        if not stat.S_ISREG(after.st_mode):
+            raise OSError("source file is not regular")
+        if any(getattr(before, field) != getattr(after, field) for field in ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")):
+            raise OSError("source file changed while reading")
+    except (OSError, UnicodeError, ValueError):
+        raise MapServerError("source file unavailable")
+    finally:
+        if fd >= 0:
+            with contextlib.suppress(OSError):
+                os.close(fd)
+
+    if b"\0" in data:
+        raise MapServerError("source file unavailable")
+    truncated = len(data) > MAX_SOURCE_BYTES or after.st_size > MAX_SOURCE_BYTES
+    prefix = data[:MAX_SOURCE_BYTES]
+    try:
+        validator = codecs.getincrementaldecoder("utf-8")("strict")
+        validator.decode(data, final=after.st_size <= len(data))
+        decoder = codecs.getincrementaldecoder("utf-8")("strict")
+        decoder.decode(prefix, final=False)
+        pending, _ = decoder.getstate()
+        if pending:
+            content = prefix[:-len(pending)].decode("utf-8")
+        else:
+            content = prefix.decode("utf-8")
+    except UnicodeDecodeError:
+        raise MapServerError("source file unavailable")
+    return {
+        "path": relative,
+        "content": content,
+        "language": language,
+        "lines": len(content.splitlines()),
+        "truncated": truncated,
+    }
+
+
 def _runtime_for_repo(root: Path, write: bool) -> Path:
     try:
         directory, _ = engine._cache_location(root, write)
@@ -128,6 +389,100 @@ def _runtime_without_repo() -> Path:
     if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
         raise MapServerError(f"refusing unsafe code-map runtime directory: {directory}")
     return directory / "runtime.json"
+
+
+def _registry_path(write: bool = False) -> Path:
+    """Return the private process registry beside the user runtime state."""
+    runtime = _runtime_without_repo()
+    directory = runtime.parent
+    try:
+        if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+            raise MapServerError(f"refusing unsafe code-map registry directory: {directory}")
+        if write:
+            directory.mkdir(parents=True, exist_ok=True)
+            _reject_symlink_chain(directory, "code-map registry parent")
+        path = directory / REGISTRY_FILE
+        if path.is_symlink() or (path.exists() and not path.is_file()):
+            raise MapServerError(f"refusing unsafe code-map registry: {path}")
+        return path
+    except MapServerError:
+        raise
+    except OSError as exc:
+        raise MapServerError(f"could not prepare code-map registry: {exc}") from exc
+
+
+def _registry_string(value: Any, maximum: int) -> str | None:
+    if not isinstance(value, str) or not value or len(value) > maximum:
+        return None
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        return None
+    return value
+
+
+def _read_registry() -> dict[str, dict[str, str]]:
+    """Read only bounded registry metadata; roots are verified on ID lookup."""
+    try:
+        path = _registry_path(False)
+        if not path.exists():
+            return {}
+        if path.stat().st_mode & 0o077:
+            return {}
+        with path.open("rb") as handle:
+            raw = handle.read(MAX_REGISTRY_BYTES + 1)
+        if len(raw) > MAX_REGISTRY_BYTES:
+            return {}
+        value = json.loads(raw.decode("utf-8"))
+    except (MapServerError, OSError, UnicodeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(value, dict) or value.get("version") != REGISTRY_VERSION:
+        return {}
+    records = value.get("projects")
+    if not isinstance(records, list):
+        return {}
+    entries: dict[str, dict[str, str]] = {}
+    for record in records[:MAX_REGISTRY_PROJECTS]:
+        if not isinstance(record, dict):
+            continue
+        project_id = _registry_string(record.get("id"), 64)
+        root = _registry_string(record.get("root"), MAX_SOURCE_PATH)
+        name = _registry_string(record.get("name"), MAX_REGISTRY_NAME)
+        query = record.get("query", "")
+        if project_id is None or len(project_id) != 64 or any(character not in "0123456789abcdef" for character in project_id):
+            continue
+        if root is None or not Path(root).is_absolute() or name is None:
+            continue
+        query = query if isinstance(query, str) else ""
+        if len(query) > MAX_QUERY or any(ord(character) < 32 or ord(character) == 127 for character in query):
+            continue
+        if project_id in entries:
+            continue
+        entries[project_id] = {"id": project_id, "root": root, "name": name, "query": query}
+    return entries
+
+
+def _write_registry(entries: dict[str, dict[str, str]]) -> None:
+    """Atomically save at most the newest bounded set of canonical roots."""
+    path = _registry_path(True)
+    records = list(entries.values())[-MAX_REGISTRY_PROJECTS:]
+    payload = {"version": REGISTRY_VERSION, "projects": records}
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, prefix=".registry-", suffix=".tmp", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            json.dump(payload, handle, ensure_ascii=True, separators=(",", ":"))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+        temporary = None
+    except OSError as exc:
+        raise MapServerError(f"could not write code-map registry: {exc}") from exc
+    finally:
+        if temporary:
+            with contextlib.suppress(OSError):
+                temporary.unlink()
 
 
 def _write_runtime(path: Path, value: dict[str, Any]) -> None:
@@ -368,7 +723,7 @@ def _open_registered(repo: str | os.PathLike[str], query: str, max_files: int, r
 
 def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool = True) -> str:
     """Register a repository and return its stable loopback viewer URL."""
-    url, _, _ = _open_registered(repo, query, 5000)
+    url, _, _ = _open_registered(repo, query, 5000, requery=True)
     if open_browser:
         try:
             opened = webbrowser.open(url)
@@ -408,6 +763,7 @@ class Project:
     error: str | None = None
     updated_at: str = ""
     last_check: float = 0.0
+    git_fingerprint: tuple[str, str] | None = None
 
 
 def _project_model(model: dict[str, Any], query: str, max_files: int) -> dict[str, Any]:
@@ -434,14 +790,91 @@ def _project_model(model: dict[str, Any], query: str, max_files: int) -> dict[st
     return result
 
 
+def _mark_response_cap(model: dict[str, Any]) -> dict[str, Any]:
+    """Record a byte-cap reduction while preserving the model's skip counts."""
+    result = dict(model)
+    coverage = dict(model.get("coverage", {}))
+    coverage["truncated"] = True
+    notes = list(coverage.get("notes", [])) if isinstance(coverage.get("notes", []), list) else []
+    selected = len(model.get("files", [])) if isinstance(model.get("files"), list) else 0
+    note = f"response size cap reached at {selected} files"
+    if note not in notes:
+        notes.append(note)
+    coverage["notes"] = notes[:24]
+    result["coverage"] = coverage
+    return result
+
+
 class MapService:
     def __init__(self, token: str, port: int, assets: dict[str, bytes]):
         self.token = token
         self.port = port
         self.assets = assets
         self.projects: dict[str, Project] = {}
+        self._registry: dict[str, dict[str, str]] = {}
+        self._registry_loaded = False
         self.lock = threading.RLock()
         self.httpd: MapHTTPServer | None = None
+
+    def _load_registry(self) -> None:
+        if not self._registry_loaded:
+            self._registry = _read_registry()
+            self._registry_loaded = True
+
+    def _save_registry(self) -> None:
+        try:
+            _write_registry(self._registry)
+        except (MapServerError, OSError):
+            # The service remains usable when a user cache is unavailable;
+            # registration is simply ephemeral for that invocation.
+            return
+
+    def _remember(self, project: Project) -> None:
+        self._load_registry()
+        self._registry.pop(project.id, None)
+        self._registry[project.id] = {
+            "id": project.id,
+            "root": str(project.root),
+            "name": project.name[:MAX_REGISTRY_NAME],
+            "query": project.query[:MAX_QUERY],
+        }
+        while len(self._registry) > MAX_REGISTRY_PROJECTS:
+            self._registry.pop(next(iter(self._registry)))
+        self._save_registry()
+
+    def _restore(self, project_id: str) -> Project | None:
+        self._load_registry()
+        entry = self._registry.get(project_id)
+        if entry is None:
+            return None
+        try:
+            raw_root = Path(entry["root"])
+            if not raw_root.is_absolute():
+                raise ValueError("registered repository is not absolute")
+            _reject_symlink_chain(raw_root, "registered repository")
+            root = _canonical_repo(raw_root)
+            if _project_id(root) != project_id:
+                raise ValueError("registered repository identity changed")
+            project = Project(project_id, entry["name"], root, entry["query"], INDEX_MAX_FILES)
+        except (OSError, RuntimeError, TypeError, ValueError, KeyError):
+            # Drop invalid, missing, private, or symlinked roots without
+            # exposing their stored path through the HTTP API.
+            self._registry.pop(project_id, None)
+            self._save_registry()
+            return None
+        self.projects[project_id] = project
+        return project
+
+    def project_list(self) -> list[dict[str, str]]:
+        """List safe IDs and display names without validating/indexing roots."""
+        with self.lock:
+            self._load_registry()
+            values: dict[str, dict[str, str]] = {
+                project.id: {"id": project.id, "name": project.name} for project in self.projects.values()
+            }
+            for project_id, entry in self._registry.items():
+                values.setdefault(project_id, {"id": project_id, "name": entry["name"]})
+            return sorted(values.values(), key=lambda item: item["name"])
 
     def _refresh(self, project: Project, force: bool = False) -> None:
         now = time.monotonic()
@@ -455,15 +888,22 @@ class MapService:
         project.indexing = True
         try:
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="json")
+            git_state = _model_git_state(model)
+            if git_state is None and not hasattr(engine, "_git_state"):
+                git_state = _git_state_fingerprint(project.root)
+            if git_state and git_state[0] and "branch" not in model:
+                model["branch"] = git_state[0]
             old = project.model
             stable_old = dict(old) if old else None
             if stable_old is not None:
                 stable_old.pop("generated_at", None)
             stable_new = dict(model)
             stable_new.pop("generated_at", None)
-            if old is None or stable_old != stable_new:
+            if old is None or stable_old != stable_new or (git_state is not None and project.git_fingerprint != git_state):
                 project.revision += 1
             project.model = model
+            if git_state is not None:
+                project.git_fingerprint = git_state
             project.name = model.get("root_name", display_name)
             project.error = None
             project.updated_at = _now()
@@ -477,6 +917,7 @@ class MapService:
     def register(self, root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> Project:
         project_id = _project_id(root)
         with self.lock:
+            self._load_registry()
             project = self.projects.get(project_id)
             if project is None:
                 project = Project(project_id, root.name, root, query[:MAX_QUERY], INDEX_MAX_FILES)
@@ -487,10 +928,15 @@ class MapService:
                 if query_changed:
                     project.query = query[:MAX_QUERY]
                 self._refresh(project, force=refresh or query_changed)
+            self._remember(project)
             return project
 
     def project(self, project_id: str) -> Project | None:
-        return self.projects.get(project_id)
+        with self.lock:
+            if not isinstance(project_id, str) or len(project_id) != 64:
+                return None
+            project = self.projects.get(project_id)
+            return project if project is not None else self._restore(project_id)
 
     def status(self, project: Project) -> dict[str, Any]:
         with self.lock:
@@ -504,6 +950,43 @@ class MapService:
                 return None
             requested = INDEX_MAX_FILES if max_files is None else max(1, min(INDEX_MAX_FILES, int(max_files)))
             return _project_model(project.model, project.query if query is None else query, requested)
+
+    def map_response(self, project: Project, max_files: int | None = None, query: str | None = None) -> tuple[dict[str, Any] | None, bytes]:
+        """Serialize a map response under the transport cap without shrinking the index."""
+        cap = INDEX_MAX_FILES if max_files is None else max(1, min(INDEX_MAX_FILES, int(max_files)))
+        response_capped = False
+        while True:
+            model = self.model(project, cap, query=query)
+            if model is None:
+                return None, b""
+            if response_capped:
+                model = _mark_response_cap(model)
+            payload = {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "model": model}
+            body = _json(payload)
+            if len(body) <= MAX_RESPONSE:
+                return model, body
+            files = model.get("files")
+            if not isinstance(files, list) or len(files) <= 1 or cap <= 1:
+                return model, body
+            response_capped = True
+            next_cap = max(1, cap // 2)
+            if next_cap >= cap:
+                next_cap = max(1, len(files) // 2)
+            cap = next_cap
+
+    def source(self, project: Project, relative: str) -> dict[str, Any]:
+        with self.lock:
+            self._refresh(project)
+            model = project.model
+            if not isinstance(model, dict):
+                raise MapServerError("source file unavailable")
+            files = model.get("files")
+            if not isinstance(files, list):
+                raise MapServerError("source file unavailable")
+            record = next((item for item in files if isinstance(item, dict) and item.get("path") == relative), None)
+            if record is None or not isinstance(record.get("language"), str):
+                raise MapServerError("source file unavailable")
+            return _read_source_preview(project.root, relative, record["language"])
 
 
 class MapHTTPServer(http.server.ThreadingHTTPServer):
@@ -565,9 +1048,32 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             self._respond(200, _json({"service": SERVICE, "protocol": PROTOCOL, "build": BUILD_SIGNATURE, "pid": os.getpid(), "port": self.server.server_port}))
             return
         if parsed.path == "/api/projects":
-            with self.service.lock:
-                projects = [{"id": p.id, "name": p.name} for p in sorted(self.service.projects.values(), key=lambda item: item.name)]
+            projects = self.service.project_list()
             self._respond(200, _json({"projects": projects, "version": BUILD_SIGNATURE}))
+            return
+        if parsed.path == "/api/file":
+            params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+            project_values = params.get("project", [])
+            path_values = params.get("path", [])
+            if len(project_values) != 1 or len(path_values) != 1:
+                self._error(400, "project and source path are required")
+                return
+            try:
+                relative = _source_relative(path_values[0])
+            except MapServerError:
+                self._error(400, "invalid source path")
+                return
+            with self.service.lock:
+                project = self.service.project(project_values[0])
+            if project is None:
+                self._error(404, "unknown project")
+                return
+            try:
+                source = self.service.source(project, relative)
+            except (MapServerError, OSError, TypeError, ValueError):
+                self._error(404, "source file unavailable")
+                return
+            self._respond(200, _json(source))
             return
         if parsed.path in {"/api/status", "/api/map"}:
             project_id = urllib.parse.parse_qs(parsed.query).get("project", [""])[0]
@@ -590,13 +1096,16 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             if not isinstance(query, str) or len(query) > MAX_QUERY:
                 self._error(400, "query is invalid")
                 return
-            model = self.service.model(project, maximum, query=query)
+            model, body = self.service.map_response(project, maximum, query=query)
             if model is None:
                 self._error(503, project.error or "map is unavailable")
                 return
-            self._respond(200, _json({"project": {"id": project.id, "name": project.name}, "revision": project.revision, "model": model}))
+            if len(body) > MAX_RESPONSE:
+                self._error(413, "map response exceeds service limit")
+                return
+            self._respond(200, body)
             return
-        if parsed.path in {"/", "/index.html", "/code-map.html", "/code-map.css", "/code-map.js"}:
+        if parsed.path in {"/", "/index.html", "/code-map.html", "/code-map.css", "/code-map.js", "/map-graph.js"}:
             name = "code-map.html" if parsed.path in {"/", "/index.html"} else parsed.path.rsplit("/", 1)[-1]
             body = self.service.assets.get(name)
             if body is None:

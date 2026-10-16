@@ -1,1283 +1,426 @@
-const SVG_NS = "http://www.w3.org/2000/svg";
-const API = Object.freeze({ projects: "/api/projects", map: "/api/map", status: "/api/status" });
+import { createGraph, groupColor } from "./map-graph.js";
+
 const POLL_MS = 2000;
-const MAX_FILES = 2000;
-const MAX_GRAPH_NODES = 4000;
-const MAX_RENDERED_EDGES = 8000;
-const SVG_WIDTH = 1000;
-let SVG_HEIGHT = 700;
-const OVERVIEW_THRESHOLD = 350;
-const MAX_NEIGHBORHOOD_NODES = 240;
-
-const refs = {
-  rootName: document.getElementById("root-name"),
-  projectSelect: document.getElementById("project-select"),
-  projectName: document.getElementById("project-name"),
-  liveStatus: document.getElementById("live-status"),
-  liveStatusText: document.getElementById("live-status-text"),
-  refresh: document.getElementById("refresh-button"),
-  notice: document.getElementById("notice-strip"),
-  noticeMark: document.getElementById("notice-mark"),
-  noticeTitle: document.getElementById("notice-title"),
-  noticeDetail: document.getElementById("notice-detail"),
-  noticeDismiss: document.getElementById("notice-dismiss"),
-  sidebar: document.getElementById("sidebar"),
-  sidebarButton: document.getElementById("sidebar-button"),
-  sidebarClose: document.getElementById("sidebar-close"),
-  inspector: document.getElementById("inspector"),
-  inspectorButton: document.getElementById("inspector-button"),
-  inspectorClose: document.getElementById("inspector-close"),
-  fileSearch: document.getElementById("file-search"),
-  fileCount: document.getElementById("file-count"),
-  edgeCount: document.getElementById("edge-count"),
-  treeState: document.getElementById("tree-state"),
-  fileTree: document.getElementById("file-tree"),
-  treeFooter: document.getElementById("tree-footer"),
-  graphMode: document.getElementById("graph-mode"),
-  graph: document.getElementById("graph"),
-  graphWorld: document.getElementById("graph-world"),
-  graphLoading: document.getElementById("graph-loading"),
-  loadingDetail: document.getElementById("loading-detail"),
-  graphEmpty: document.getElementById("graph-empty"),
-  emptyDetail: document.getElementById("empty-detail"),
-  graphError: document.getElementById("graph-error"),
-  errorDetail: document.getElementById("error-detail"),
-  retry: document.getElementById("retry-button"),
-  graphTip: document.getElementById("graph-tip"),
-  graphSummary: document.getElementById("graph-summary"),
-  focusSummary: document.getElementById("focus-summary"),
-  zoomOut: document.getElementById("zoom-out"),
-  zoomReset: document.getElementById("zoom-reset"),
-  zoomIn: document.getElementById("zoom-in"),
-  overview: document.getElementById("overview-button"),
-  coverageSummary: document.getElementById("coverage-summary"),
-  coverageDetail: document.getElementById("coverage-detail"),
-  inspectorTitle: document.getElementById("inspector-title"),
-  inspectorEmpty: document.getElementById("inspector-empty"),
-  fileDetail: document.getElementById("file-detail"),
-  detailPath: document.getElementById("detail-path"),
-  detailLanguage: document.getElementById("detail-language"),
-  detailKind: document.getElementById("detail-kind"),
-  detailSymbolCount: document.getElementById("detail-symbol-count"),
-  detailImportCount: document.getElementById("detail-import-count"),
-  detailImporterCount: document.getElementById("detail-importer-count"),
-  symbolNote: document.getElementById("symbol-note"),
-  symbolList: document.getElementById("symbol-list"),
-  importList: document.getElementById("import-list"),
-  importerList: document.getElementById("importer-list"),
-};
-
-const safeString = (value, fallback = "") => typeof value === "string" ? value : fallback;
-const safeNumber = (value, fallback = 0) => {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-};
-const text = (value, fallback = "—") => value === null || value === undefined || value === "" ? fallback : String(value);
-const make = (tag, value) => {
-  const node = document.createElement(tag);
-  if (value !== undefined) node.textContent = String(value);
-  return node;
-};
-const makeSvg = (tag, attributes = {}, value) => {
-  const node = document.createElementNS(SVG_NS, tag);
-  Object.entries(attributes).forEach(([key, attributeValue]) => node.setAttribute(key, String(attributeValue)));
-  if (value !== undefined) node.textContent = String(value);
-  return node;
-};
-const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
+const PAGE_SIZE = 60;
+const MAX_FILES = 5000;
+const API = Object.freeze({ projects: "/api/projects", map: "/api/map", status: "/api/status", file: "/api/file" });
+const ids = ["project-select","refresh-button","sidebar","sidebar-button","sidebar-close","inspector","inspector-button","inspector-close","notice-strip","notice-title","notice-detail","notice-dismiss","sidebar-count","file-search","tree-state","file-tree","clear-folder","show-more","coverage-summary","coverage-detail","root-name","scope-name","graph-mode","graph","graph-tooltip","graph-loading","loading-detail","graph-empty","empty-title","empty-detail","empty-reset","graph-error","error-detail","retry-button","fit-button","zoom-in","zoom-out","zoom-reset","layout-state","layout-light","graph-summary","focus-summary","changed-count","inspector-empty","file-detail","repository-summary","inspector-title","detail-breadcrumb","detail-path","detail-summary","analysis-note","source-button","context-button","path-button","neighborhood-button","impact-button","trace-button","trace-panel","trace-target","trace-files","trace-result","connections-panel","symbols-panel","impact-panel","import-list","importer-list","symbol-list","symbol-note","detail-import-count","detail-importer-count","detail-symbol-count","unresolved-section","unresolved-count","unresolved-list","exports-section","export-list","impact-count","impact-note","impact-list","show-impact","history-back","history-forward","live-status","live-status-text","total-files","total-lines","total-symbols","branch-name","toast","source-dialog","source-title","source-meta","source-content","source-note","source-close"];
+const refs = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+const str = (value, fallback = "") => typeof value === "string" ? value : fallback;
+const num = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+const count = value => Math.round(value).toLocaleString();
+const amount = (value, noun) => count(value) + " " + noun + (value === 1 ? "" : "s");
 const unique = values => [...new Set(values)];
-const basename = path => {
-  const parts = path.split("/");
-  return parts[parts.length - 1] || path;
+const base = path => path.split("/").pop() || path;
+const parent = path => path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+const group = path => path.includes("/") ? path.split("/").slice(0, Math.min(2, path.split("/").length - 1)).join("/") : "/";
+const make = (tag, content, className) => {
+  const node = document.createElement(tag);
+  if (content !== undefined) node.textContent = String(content);
+  if (className) node.className = className;
+  return node;
 };
-const directoryOf = path => {
-  const slash = path.lastIndexOf("/");
-  return slash < 0 ? "" : path.slice(0, slash);
+const params = new URLSearchParams(location.search);
+const state = {
+  projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
+  query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
+  history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
+  trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null,
 };
-const formatCount = value => Number(value).toLocaleString();
-const urlParams = new URLSearchParams(window.location.search);
+const graph = createGraph(refs.graph, {
+  onSelect: id => chooseFile(id),
+  onHover: id => { refs["graph-tooltip"].hidden = !id; refs["graph-tooltip"].textContent = id || ""; },
+  onStats: stats => {
+    state.graphStats = stats;
+    refs["layout-state"].textContent = stats.layoutActive ? "Arranging" : "Settled";
+    refs["layout-light"].dataset.active = String(Boolean(stats.layoutActive));
+    const nodes = num(stats.nodes ?? stats.nodeCount);
+    const edges = state.graphEdges;
+    const drawn = num(stats.drawnEdges ?? edges);
+    refs["graph-summary"].textContent = amount(nodes, "file") + " · " + amount(edges, "import") + (drawn < edges ? " · " + count(drawn) + " drawn" : "");
+    refs.graph.setAttribute("aria-label", "Dependency graph: " + count(nodes) + " files, " + count(edges) + " recorded imports" + (state.selected ? ". Selected " + state.selected : ""));
+  },
+});
 
 function normalizeModel(payload) {
-  const source = payload && payload.model && typeof payload.model === "object" ? payload.model : payload;
-  const raw = source && typeof source === "object" ? source : {};
-  const rawCoverage = raw.coverage && typeof raw.coverage === "object" ? raw.coverage : {};
-  const files = Array.isArray(raw.files) ? raw.files.map(file => {
-    if (!file || typeof file.path !== "string" || !file.path) return null;
-    const symbols = Array.isArray(file.symbols) ? file.symbols.map(symbol => {
-      if (!symbol || typeof symbol.name !== "string") return null;
-      const lineValue = safeNumber(symbol.line, NaN);
-      return {
-        name: symbol.name,
-        kind: safeString(symbol.kind, "symbol"),
-        line: Number.isFinite(lineValue) ? Math.max(0, Math.round(lineValue)) : null,
-        signature: safeString(symbol.signature).slice(0, 128),
-      };
-    }).filter(Boolean) : [];
-    const dependencies = Array.isArray(file.dependencies)
-      ? unique(file.dependencies.filter(dependency => typeof dependency === "string" && dependency))
-      : [];
-    return { path: file.path, language: safeString(file.language, "unknown"), symbols, dependencies };
-  }).filter(Boolean) : [];
-  files.sort((left, right) => left.path.localeCompare(right.path));
-  return {
-    rootName: safeString(raw.root_name, "Code map"),
-    generatedAt: safeString(raw.generated_at),
-    head: safeString(raw.head),
-    coverage: {
-      inventory: Math.max(0, Math.round(safeNumber(rawCoverage.inventory, files.length))),
-      indexed: Math.max(0, Math.round(safeNumber(rawCoverage.indexed, files.length))),
-      truncated: Boolean(rawCoverage.truncated),
-      skipped: Math.max(0, Math.round(safeNumber(rawCoverage.skipped))),
-      excluded: Math.max(0, Math.round(safeNumber(rawCoverage.excluded))),
-      excludedReasons: rawCoverage.excluded_reasons && typeof rawCoverage.excluded_reasons === "object" ? Object.entries(rawCoverage.excluded_reasons).map(([reason, count]) => Math.max(0, Math.round(safeNumber(count))) + " " + reason + (Number(count) === 1 ? "" : "s")) : [],
-      notes: Array.isArray(rawCoverage.notes) ? rawCoverage.notes.filter(note => typeof note === "string") : [],
-    },
-    files,
-    focus: Array.isArray(raw.focus) ? raw.focus.filter(path => typeof path === "string") : [],
-  };
+  const raw = payload && payload.model && typeof payload.model === "object" ? payload.model : {};
+  const coverage = raw.coverage && typeof raw.coverage === "object" ? raw.coverage : {};
+  const files = (Array.isArray(raw.files) ? raw.files : []).slice(0, MAX_FILES).filter(file => file && typeof file.path === "string").map(file => ({
+    path: file.path, language: str(file.language, "unknown"), lines: num(file.lines), analysis: str(file.analysis, "metadata"),
+    symbols: (Array.isArray(file.symbols) ? file.symbols : []).slice(0, 128).filter(symbol => symbol && typeof symbol.name === "string").map(symbol => ({ name: symbol.name, kind: str(symbol.kind, "symbol"), line: num(symbol.line), signature: str(symbol.signature) })),
+    dependencies: unique((Array.isArray(file.dependencies) ? file.dependencies : []).filter(path => typeof path === "string")).slice(0, 256),
+    exports: (Array.isArray(file.exports) ? file.exports : []).filter(value => typeof value === "string").slice(0, 128),
+    unresolved: (Array.isArray(file.unresolved_imports) ? file.unresolved_imports : []).filter(value => typeof value === "string").slice(0, 128),
+    cochanges: (Array.isArray(file.cochanges) ? file.cochanges : []).filter(value => value && typeof value.path === "string").slice(0, 6).map(value => ({ path: value.path, count: num(value.count) })),
+    changed: str(file.changed),
+  })).sort((a, b) => a.path.localeCompare(b.path));
+  return { root: str(raw.root_name, "Code map"), branch: str(raw.branch), head: str(raw.head), files, coverage: {
+    inventory: num(coverage.inventory), excluded: num(coverage.excluded), skipped: num(coverage.skipped), truncated: Boolean(coverage.truncated),
+    notes: (Array.isArray(coverage.notes) ? coverage.notes : []).filter(note => typeof note === "string"),
+    exclusions: coverage.excluded_reasons && typeof coverage.excluded_reasons === "object" ? Object.entries(coverage.excluded_reasons).map(([reason, total]) => count(num(total)) + " " + reason + (Number(total) === 1 ? "" : "s")) : [],
+  } };
 }
 
-const state = {
-  projects: [],
-  projectId: urlParams.get("project") || "",
-  projectName: "",
-  query: urlParams.get("query") || "",
-  model: null,
-  revision: null,
-  status: null,
-  lastError: "",
-  noticeDismissed: false,
-  selectedPath: null,
-  collapsedDirs: new Set(),
-  fileLimits: new Map(),
-  positions: new Map(),
-  view: { x: 0, y: 0, scale: 1 },
-  didFit: false,
-  graphModeKey: "",
-  graphData: { nodes: [], edges: [] },
-  pollTimer: null,
-  statusInFlight: false,
-  mapInFlight: false,
-  visible: document.visibilityState === "visible",
-  drag: null,
-  suppressClick: false,
-  hoveredId: null,
-  captions: [],
-  visibleCaptions: [],
-  labelFrame: null,
-};
-
-function modelFiles() {
-  return state.model ? state.model.files.slice(0, MAX_FILES) : [];
-}
-
-function allFiles() {
-  return state.model ? state.model.files : [];
-}
-
-function graphFiles() {
-  const files = allFiles();
-  if (files.length <= MAX_GRAPH_NODES) return files;
-  const priority = [];
-  const seen = new Set();
-  const add = file => {
-    if (file && !seen.has(file.path)) {
-      seen.add(file.path);
-      priority.push(file);
-    }
-  };
-  if (state.selectedPath) {
-    const lookup = new Map(files.map(file => [file.path, file]));
-    const selected = lookup.get(state.selectedPath);
-    add(selected);
-    if (selected) selected.dependencies.forEach(path => add(lookup.get(path)));
-    files.filter(file => file.dependencies.includes(state.selectedPath)).forEach(add);
+function indexModel(model) {
+  state.lookup = new Map(model.files.map(file => [file.path, file]));
+  state.reverse = new Map(model.files.map(file => [file.path, []]));
+  state.edges = [];
+  for (const file of model.files) for (const dependency of file.dependencies) {
+    if (!state.lookup.has(dependency)) continue;
+    state.reverse.get(dependency).push(file.path);
+    state.edges.push({ source: file.path, target: dependency });
   }
-  files.filter(matchesQuery).slice(0, 160).forEach(add);
-  if (state.model) state.model.focus.forEach(path => add(files.find(file => file.path === path)));
-  files.forEach(add);
-  return priority.slice(0, MAX_GRAPH_NODES);
+  state.reverse.forEach(paths => paths.sort());
 }
 
-function fileLookup() {
-  return new Map(allFiles().map(file => [file.path, file]));
-}
-
-function reverseLookup(files) {
-  const reverse = new Map(files.map(file => [file.path, []]));
-  files.forEach(file => file.dependencies.forEach(dependency => {
-    if (reverse.has(dependency)) reverse.get(dependency).push(file.path);
-  }));
-  reverse.forEach(paths => paths.sort());
-  return reverse;
-}
-
-function edgeTotal(files) {
-  return files.reduce((total, file) => total + file.dependencies.length, 0);
-}
-
-function updateUrl() {
-  const params = new URLSearchParams();
-  if (state.projectId) params.set("project", state.projectId);
-  if (state.query) params.set("query", state.query);
-  const query = params.toString();
-  window.history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
-}
-
-async function fetchJson(url) {
-  const response = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
-  const body = await response.text();
-  if (!response.ok) throw new Error("HTTP " + response.status);
-  if (!body) throw new Error("Empty response");
-  try {
-    return JSON.parse(body);
-  } catch {
-    throw new Error("The map service returned invalid JSON");
-  }
-}
-
-function setLoading(message = "Connecting to the map service…") {
-  refs.loadingDetail.textContent = message;
-  refs.graphLoading.hidden = false;
-  refs.graphEmpty.hidden = true;
-  refs.graphError.hidden = true;
-}
-
-function setGraphError(message) {
-  refs.errorDetail.textContent = message || "The local map service could not be reached.";
-  refs.graphLoading.hidden = true;
-  refs.graphEmpty.hidden = true;
-  refs.graphError.hidden = false;
-}
-
-function setGraphEmpty(message) {
-  refs.emptyDetail.textContent = message;
-  refs.graphLoading.hidden = true;
-  refs.graphError.hidden = true;
-  refs.graphEmpty.hidden = false;
-}
-
-function renderProjects() {
-  const fragment = document.createDocumentFragment();
-  if (!state.projects.length) {
-    const option = make("option", "No projects available");
-    option.value = "";
-    fragment.append(option);
-  } else {
-    state.projects.forEach(project => {
-      const option = make("option", project.name);
-      option.value = project.id;
-      option.selected = project.id === state.projectId;
-      fragment.append(option);
-    });
-  }
-  refs.projectSelect.replaceChildren(fragment);
-}
-
-function renderStatus() {
-  const status = state.status || {};
-  const error = state.lastError || safeString(status.error);
-  const indexing = Boolean(status.indexing);
-  const stateName = error ? "error" : indexing ? "indexing" : state.model ? "live" : "loading";
-  refs.liveStatus.dataset.state = stateName;
-  let label = "Connecting…";
-  if (error) label = "Map unavailable";
-  else if (indexing) label = "Indexing…";
-  else if (state.model && state.revision !== null) label = "Live · r" + state.revision;
-  else if (state.model) label = "Map loaded";
-  refs.liveStatusText.textContent = label;
-}
-
-function coverageIssues(model) {
-  return model.coverage.notes.filter(note => !note.includes("import links are heuristic"));
-}
-
-function partialDetail(model) {
-  const parts = [];
-  if (model.coverage.truncated) parts.push("scan limit reached");
-  if (model.coverage.skipped) parts.push(formatCount(model.coverage.skipped) + " source files skipped");
-  const notes = coverageIssues(model);
-  if (notes.length) parts.push(notes[0]);
-  return parts.join(" · ");
-}
-
-function renderNotice() {
-  const error = state.lastError;
-  const model = state.model;
-  const partial = model && (model.coverage.truncated || model.coverage.skipped > 0 || coverageIssues(model).length > 0);
-  if (state.noticeDismissed && !error) {
-    refs.notice.hidden = true;
-    return;
-  }
-  if (error) {
-    refs.notice.hidden = false;
-    refs.notice.classList.add("error");
-    refs.noticeMark.textContent = "!";
-    refs.noticeTitle.textContent = "Live map update failed";
-    refs.noticeDetail.textContent = error + " The last usable map remains visible.";
-  } else if (partial) {
-    refs.notice.hidden = false;
-    refs.notice.classList.remove("error");
-    refs.noticeMark.textContent = "i";
-    refs.noticeTitle.textContent = "Incomplete index";
-    refs.noticeDetail.textContent = partialDetail(model);
-  } else {
-    refs.notice.hidden = true;
-  }
-}
-
-function renderHeader() {
-  const model = state.model;
-  const title = state.projectName || (model && model.rootName) || "Code map";
-  refs.rootName.textContent = title;
-  refs.projectName.textContent = title;
-  const files = modelFiles();
-  const total = model ? model.files.length : 0;
-  refs.fileCount.textContent = total > files.length
-    ? formatCount(files.length) + " / " + formatCount(total) + " files"
-    : formatCount(files.length) + " files";
-  refs.edgeCount.textContent = formatCount(edgeTotal(allFiles())) + " imports";
-  refs.coverageSummary.textContent = formatCount(total) + " mapped" + (model && model.coverage.excluded ? " · " + formatCount(model.coverage.excluded) + " excluded" : "");
-  refs.coverageDetail.textContent = model ? [formatCount(model.coverage.inventory) + " repository files considered.", ...model.coverage.excludedReasons, ...model.coverage.notes].join(" ") : "Waiting for the file index.";
-  refs.treeFooter.textContent = total > MAX_FILES
-    ? "Browse folders or search all " + formatCount(total) + " files"
-    : "Recorded imports only · no source bodies";
-}
-
-function matchesQuery(file) {
-  const terms = state.query.toLowerCase().split(/\s+/).filter(Boolean);
-  if (!terms.length) return true;
-  const haystack = [file.path, file.language, ...file.symbols.map(symbol => symbol.name + " " + symbol.signature)].join(" ").toLowerCase();
+function matches(file) {
+  const terms = state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const haystack = [file.path, file.language, ...file.symbols.map(symbol => symbol.name)].join(" ").toLowerCase();
   return terms.every(term => haystack.includes(term));
 }
-
-function chooseFile(path, update = true) {
-  if (!fileLookup().has(path)) return;
-  state.selectedPath = path;
-  state.collapsedDirs.delete(directoryOf(path));
-  if (update) updateUrl();
-  renderTree();
-  renderGraph();
-  renderInspector();
-  focusSelection();
+function scopedFiles() { return state.model ? state.model.files.filter(file => !state.folder || group(file.path) === state.folder) : []; }
+function updateUrl() {
+  const next = new URLSearchParams();
+  if (state.project) next.set("project", state.project);
+  if (state.query) next.set("query", state.query);
+  if (state.selected) next.set("file", state.selected);
+  history.replaceState(null, "", location.pathname + (next.size ? "?" + next : ""));
+}
+async function fetchJson(url, signal) {
+  const response = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal });
+  let value;
+  try { value = await response.json(); } catch { throw new Error("The local service returned an unreadable response."); }
+  if (!response.ok) throw new Error(str(value.error, "Local service error (" + response.status + ")"));
+  return value;
+}
+function toast(message) {
+  refs.toast.textContent = message; refs.toast.hidden = false;
+  clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => { refs.toast.hidden = true; }, 2600);
+}
+function drawer(name, open) {
+  if (open) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
+  refs[name].classList.toggle("is-open", open);
+  refs[name + "-button"].setAttribute("aria-expanded", String(open));
+}
+function setOverlay(kind, title, detail) {
+  ["loading", "empty", "error"].forEach(name => { refs["graph-" + name].hidden = name !== kind; });
+  if (kind === "empty") { refs["empty-title"].textContent = title; refs["empty-detail"].textContent = detail; }
+  if (kind === "error") refs["error-detail"].textContent = detail;
+  if (kind === "loading") refs["loading-detail"].textContent = detail;
+}
+function renderProjects() {
+  refs["project-select"].replaceChildren(...state.projects.map(project => {
+    const option = make("option", project.name); option.value = project.id; option.selected = project.id === state.project; return option;
+  }));
+}
+function renderStatus() {
+  const error = state.error || str(state.status?.error);
+  const status = error ? "error" : state.status?.indexing ? "indexing" : state.model ? "live" : "loading";
+  refs["live-status"].dataset.state = status;
+  refs["live-status-text"].textContent = status === "live" ? "Ready" : status === "error" ? "Offline" : status === "indexing" ? "Indexing" : "Connecting";
+  const issues = state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic")) || [];
+  const coverage = state.model?.coverage;
+  const partial = coverage && (coverage.skipped || coverage.truncated || issues.length);
+  const key = error || (partial ? JSON.stringify([coverage.skipped, coverage.truncated, issues]) : "");
+  refs["notice-strip"].hidden = !key || key === state.dismissed;
+  refs["notice-strip"].classList.toggle("error", Boolean(error));
+  refs["notice-title"].textContent = error ? "Update unavailable" : "Incomplete index";
+  refs["notice-detail"].textContent = error ? error + (state.model ? " The last map remains available." : "") : [coverage?.truncated ? "Scan limit reached" : "", coverage?.skipped ? count(coverage.skipped) + " source files skipped" : "", issues[0]].filter(Boolean).join(" · ");
+}
+function renderSummary() {
+  const files = state.model?.files || [];
+  const lines = files.reduce((total, file) => total + file.lines, 0);
+  const symbols = files.reduce((total, file) => total + file.symbols.length, 0);
+  refs["root-name"].textContent = state.name || state.model?.root || "Code map";
+  refs["sidebar-count"].textContent = count(files.length) + " files";
+  refs["changed-count"].textContent = count(files.filter(file => file.changed).length);
+  refs["total-files"].textContent = count(files.length) + " files";
+  refs["total-lines"].textContent = count(lines) + " lines";
+  refs["total-symbols"].textContent = count(symbols) + " symbols";
+  refs["branch-name"].textContent = state.model?.branch ? "⑂ " + state.model.branch : state.model?.head ? state.model.head.slice(0, 8) : "";
+  const coverage = state.model?.coverage;
+  refs["coverage-summary"].textContent = count(files.length) + " indexed" + (coverage?.excluded ? " · " + count(coverage.excluded) + " excluded" : "");
+  refs["coverage-detail"].textContent = coverage ? [count(coverage.inventory) + " repository files considered.", ...coverage.exclusions, ...coverage.notes].join(" ") : "Waiting for the index.";
+  const folders = unique(files.map(file => group(file.path))).length;
+  refs["repository-summary"].replaceChildren(make("span", count(files.length) + " files across " + count(folders) + " folder groups"), make("span", count(state.edges.length) + " recorded imports"), make("span", "Python AST · JS/TS outlines · local metadata"));
 }
 
-function createTreeFile(file) {
-  const button = make("button");
-  button.type = "button";
-  button.className = "tree-file";
-  button.setAttribute("role", "treeitem");
-  button.setAttribute("aria-selected", String(file.path === state.selectedPath));
-  button.title = file.path;
-  const name = make("span", basename(file.path));
-  name.className = "file-name";
-  const language = make("span", file.language);
-  language.className = "file-language";
-  button.append(name, language);
-  button.addEventListener("click", () => chooseFile(file.path));
-  return button;
+function createFileRow(file) {
+  const button = make("button", undefined, "file-row"); button.setAttribute("aria-selected", String(file.path === state.selected)); button.title = file.path;
+  const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(file.path), "row-name"), make("span", parent(file.path) || "/", "row-path"));
+  button.append(make("span", file.language === "python" ? "py" : file.language === "typescript" ? "ts" : "◇", "file-glyph"), copy);
+  if (file.changed) button.append(make("span", file.changed === "untracked" ? "U" : file.changed[0].toUpperCase(), "change-mark"));
+  button.addEventListener("click", () => { chooseFile(file.path); drawer("sidebar", false); }); return button;
 }
-
 function renderTree() {
-  const sourceFiles = allFiles();
-  const allMatching = sourceFiles.filter(matchesQuery);
-  const groups = new Map();
-  allMatching.forEach(file => {
-    const directory = directoryOf(file.path);
-    if (!groups.has(directory)) groups.set(directory, []);
-    groups.get(directory).push(file);
-  });
-  groups.forEach(group => group.sort((left, right) => left.path.localeCompare(right.path)));
-  refs.treeState.textContent = state.model
-    ? (state.query
-      ? formatCount(allMatching.length) + " matching files"
-      : formatCount(sourceFiles.length) + " indexed files")
-    : "Loading file index…";
-  if (!state.model || !allMatching.length) {
-    const empty = make("div", state.model ? "No files match this search." : "No indexed files.");
-    empty.className = "detail-empty";
-    refs.fileTree.replaceChildren(empty);
-    return;
-  }
+  document.querySelectorAll("[data-browse]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.browse === state.browse)));
+  refs["clear-folder"].hidden = !state.folder;
+  const files = scopedFiles().filter(matches);
+  const mode = state.browse === "folders" && state.query ? "files" : state.browse;
+  let items;
+  if (mode === "folders") {
+    const groups = new Map();
+    for (const file of files) { const key = group(file.path); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(file); }
+    items = [...groups].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([name, members]) => ({ name, members }));
+  } else if (mode === "symbols") {
+    const query = state.query.toLowerCase();
+    items = files.flatMap(file => file.symbols.filter(symbol => !query || symbol.name.toLowerCase().includes(query) || file.path.toLowerCase().includes(query)).map(symbol => ({ file, symbol })));
+  } else items = files;
+  const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE)); state.page = state.page >= pages ? 0 : state.page;
   const fragment = document.createDocumentFragment();
-  let renderedFiles = 0;
-  [...groups.keys()].sort((left, right) => left.localeCompare(right)).forEach(directory => {
-    const group = make("div");
-    group.className = "tree-group";
-    const filesInDirectory = groups.get(directory);
-    const open = Boolean(state.query) || !state.collapsedDirs.has(directory);
-    const directoryButton = make("button");
-    directoryButton.type = "button";
-    directoryButton.className = "tree-dir";
-    directoryButton.setAttribute("role", "treeitem");
-    directoryButton.setAttribute("aria-expanded", String(open));
-    const chevron = make("span", open ? "▾" : "▸");
-    chevron.className = "chevron";
-    const label = make("span", directory || "(root)");
-    const count = make("span", filesInDirectory.length);
-    count.className = "dir-count";
-    directoryButton.append(chevron, label, count);
-    directoryButton.addEventListener("click", () => {
-      if (state.collapsedDirs.has(directory)) state.collapsedDirs.delete(directory);
-      else state.collapsedDirs.add(directory);
-      renderTree();
-    });
-    group.append(directoryButton);
-    if (open) {
-      const limit = Math.min(state.fileLimits.get(directory) || 50, MAX_FILES - renderedFiles);
-      const shown = filesInDirectory.slice(0, limit);
-      const selected = filesInDirectory.find(file => file.path === state.selectedPath);
-      if (selected && !shown.includes(selected) && limit > 0) shown[shown.length - 1] = selected;
-      shown.forEach(file => group.append(createTreeFile(file)));
-      renderedFiles += shown.length;
-      if (filesInDirectory.length > shown.length) {
-        const more = make("button", renderedFiles < MAX_FILES ? "Show more · " + formatCount(filesInDirectory.length - shown.length) + " remaining" : "Search to find more files");
-        more.type = "button";
-        more.className = "tree-more";
-        more.disabled = renderedFiles >= MAX_FILES;
-        more.addEventListener("click", () => { state.fileLimits.set(directory, limit + 50); renderTree(); });
-        group.append(more);
-      }
+  for (const item of items.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE)) {
+    if (mode === "folders") {
+      const button = make("button", undefined, "folder-row"); button.setAttribute("aria-pressed", String(item.name === state.folder));
+      const dot = make("canvas", undefined, "folder-dot"); dot.width = dot.height = 8; const ctx = dot.getContext("2d"); ctx.fillStyle = groupColor(item.name); ctx.fillRect(0, 0, 8, 8);
+      button.append(dot, make("span", item.name, "row-label"), make("span", count(item.members.length), "row-count"));
+      button.addEventListener("click", () => { state.folder = item.name; state.browse = "files"; state.page = 0; renderTree(); renderGraph(true); }); fragment.append(button);
+    } else if (mode === "symbols") {
+      const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-selected", String(item.file.path === state.selected));
+      const copy = make("span", undefined, "row-copy"); copy.append(make("span", item.symbol.name, "row-name"), make("span", item.file.path + ":" + item.symbol.line, "row-path"));
+      button.append(make("span", item.symbol.kind === "class" ? "C" : "ƒ", "file-glyph"), copy); button.addEventListener("click", () => { chooseFile(item.file.path); drawer("sidebar", false); openSource(item.file.path, item.symbol.line); }); fragment.append(button);
+    } else fragment.append(createFileRow(item));
+  }
+  if (!items.length) fragment.append(make("p", state.model ? "No matching " + mode + "." : "Reading index…", "detail-empty"));
+  refs["file-tree"].replaceChildren(fragment);
+  refs["tree-state"].textContent = (items.length === 1 ? "1 " + (mode === "symbols" ? "symbol" : mode.slice(0, -1)) : count(items.length) + " " + mode) + (pages > 1 ? " · page " + (state.page + 1) + "/" + pages : "");
+  refs["show-more"].hidden = pages <= 1; refs["show-more"].textContent = state.page + 1 < pages ? "Next " + PAGE_SIZE + " →" : "Back to first page ↻";
+}
+
+function walkDependents(path) {
+  const seen = new Set([path]), queue = [path]; let steps = 0, index = 0;
+  while (index < queue.length && steps < 300000) {
+    for (const next of state.reverse.get(queue[index++]) || []) { steps += 1; if (!seen.has(next)) { seen.add(next); queue.push(next); } }
+  }
+  seen.delete(path); return { paths: seen, limited: index < queue.length };
+}
+function traceImports(start, target) {
+  const previous = new Map([[start, null]]), queue = [start]; let index = 0, steps = 0;
+  while (index < queue.length && steps < 300000) {
+    const path = queue[index++];
+    if (path === target) { const result = []; for (let next = target; next; next = previous.get(next)) result.push(next); return { paths: result.reverse(), limited: false }; }
+    for (const next of state.lookup.get(path)?.dependencies || []) { steps += 1; if (state.lookup.has(next) && !previous.has(next)) { previous.set(next, path); queue.push(next); } }
+  }
+  return { paths: [], limited: index < queue.length };
+}
+function chooseFile(path, record = true) {
+  if (!state.lookup.has(path)) return;
+  state.selected = path; state.trace = []; refs["trace-result"].textContent = "";
+  if (state.folder && group(path) !== state.folder) state.folder = "";
+  if (state.query && !matches(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
+  if (record && state.history[state.historyIndex] !== path) { state.history = state.history.slice(0, state.historyIndex + 1); state.history.push(path); state.historyIndex = state.history.length - 1; }
+  if (state.view === "trace") state.view = "neighbors";
+  state.impact = walkDependents(path); updateUrl(); renderTree(); renderInspector(); renderGraph(); graph.select(path); drawer("inspector", true);
+}
+function renderGraph(fit = false) {
+  if (!state.model) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("loading", "", "Connecting to the local index…"); return; }
+  let files = scopedFiles();
+  const matching = files.filter(matches);
+  if (state.query && !matching.length) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("empty", "No matching files", "Try a file, folder, language, or symbol name."); return; }
+  let allowed;
+  if (state.view === "neighbors") allowed = new Set(state.selected ? [state.selected, ...(state.lookup.get(state.selected)?.dependencies || []), ...(state.reverse.get(state.selected) || [])] : []);
+  if (state.view === "changed") {
+    const changed = files.filter(file => file.changed); allowed = new Set(changed.map(file => file.path));
+    for (const file of changed) { file.dependencies.forEach(path => allowed.add(path)); (state.reverse.get(file.path) || []).forEach(path => allowed.add(path)); }
+  }
+  if (state.view === "impact") allowed = new Set([state.selected, ...state.impact.paths]);
+  if (state.view === "trace") allowed = new Set(state.trace);
+  if (allowed) files = files.filter(file => allowed.has(file.path));
+  if (!files.length) {
+    state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null });
+    setOverlay("empty", state.view === "changed" ? "No indexed source changes" : state.view === "neighbors" ? "Choose a file" : "No files to show", state.view === "changed" ? "Changed source files appear here. Deleted or excluded files require your Git diff." : "Select a file from the sidebar to explore its connections.");
+  } else {
+    setOverlay(null);
+    const visible = new Set(files.map(file => file.path));
+    const traceEdges = new Set(state.trace.slice(1).map((path, index) => state.trace[index] + "\0" + path));
+    const edges = state.view === "all" && !state.folder ? state.edges : state.edges.filter(edge => visible.has(edge.source) && visible.has(edge.target) && (state.view !== "trace" || traceEdges.has(edge.source + "\0" + edge.target)));
+    state.graphEdges = edges.length;
+    let renderEdges = edges;
+    if (edges.length > 120000) {
+      const selectedEdges = [], queryEdges = [], sampledEdges = [];
+      const highlights = new Set(state.query ? matching.map(file => file.path) : []);
+      const stride = Math.ceil(edges.length / 90000);
+      edges.forEach((edge, index) => {
+        if (edge.source === state.selected || edge.target === state.selected) selectedEdges.push(edge);
+        else if (highlights.size && (highlights.has(edge.source) || highlights.has(edge.target)) && queryEdges.length < 20000) queryEdges.push(edge);
+        else if (index % stride === 0 && sampledEdges.length < 90000) sampledEdges.push(edge);
+      });
+      renderEdges = selectedEdges.concat(queryEdges, sampledEdges).slice(0, 120000);
     }
-    fragment.append(group);
-  });
-  refs.fileTree.replaceChildren(fragment);
+    graph.setData({ nodes: files.map(file => ({ id: file.path, path: file.path, group: group(file.path), kind: "file", changed: file.changed })), edges: renderEdges, selected: visible.has(state.selected) ? state.selected : null, query: state.query, mode: state.view, highlightPaths: state.view === "trace" ? state.trace : state.query ? matching.map(file => file.path) : [] });
+    if (fit) graph.fit();
+  }
+  document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === state.view)));
+  const names = { all: "everything", neighbors: "selected neighborhood", changed: "changed files + neighbors", impact: "dependent files", trace: "import trace" };
+  refs["scope-name"].textContent = "/ " + (state.folder ? state.folder + " / " : "") + names[state.view];
+  refs["graph-mode"].textContent = names[state.view]; refs["focus-summary"].textContent = state.view === "trace" ? "RECORDED IMPORT PATH" : "FOLDER GROUPS";
 }
-
-function selectedFileAndReverse() {
-  const files = allFiles();
-  const lookup = new Map(files.map(file => [file.path, file]));
-  const reverse = reverseLookup(files);
-  return { file: state.selectedPath ? lookup.get(state.selectedPath) : null, lookup, reverse };
+function edgeRow(path, arrow) {
+  const item = make("li"), button = make("button", undefined, "edge-row");
+  const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(path), "row-name"), make("span", parent(path) || "/", "row-path"));
+  button.append(make("span", arrow, "edge-arrow"), copy); button.title = path; button.disabled = !state.lookup.has(path); button.addEventListener("click", () => chooseFile(path)); item.append(button); return item;
 }
-
-function renderListEmpty(list, message) {
-  const item = make("li", message);
-  item.className = "detail-empty";
-  list.replaceChildren(item);
+function renderEdges(element, paths, arrow, maximum = 40) {
+  if (!paths.length) { element.replaceChildren(make("li", "No recorded connections.", "detail-empty")); return; }
+  element.replaceChildren(...paths.slice(0, maximum).map(path => edgeRow(path, arrow)));
+  if (paths.length > maximum) {
+    const item = make("li"), more = make("button", "Show " + count(paths.length - maximum) + " more", "show-more"); more.addEventListener("click", () => renderEdges(element, paths, arrow, maximum + 80)); item.append(more); element.append(item);
+  }
 }
-
-function createEdgeItem(path, kind, lookup) {
-  const item = make("li");
-  item.className = "edge-item";
-  const button = make("button");
-  button.type = "button";
-  button.disabled = !lookup.has(path);
-  const kindLabel = make("span", kind);
-  kindLabel.className = "edge-kind";
-  button.append(kindLabel, document.createTextNode(path));
-  if (lookup.has(path)) button.addEventListener("click", () => chooseFile(path));
-  item.append(button);
-  return item;
-}
-
 function renderInspector() {
-  const selected = selectedFileAndReverse();
-  const file = selected.file;
-  const lookup = selected.lookup;
-  const reverse = selected.reverse;
-  if (!file) {
-    refs.inspectorTitle.textContent = "No file selected";
-    refs.inspectorEmpty.hidden = false;
-    refs.fileDetail.hidden = true;
-    return;
-  }
-  const importedBy = reverse.get(file.path) || [];
-  refs.inspectorTitle.textContent = basename(file.path);
-  refs.inspectorEmpty.hidden = true;
-  refs.fileDetail.hidden = false;
-  refs.detailPath.textContent = file.path;
-  refs.detailLanguage.textContent = file.language;
-  refs.detailKind.textContent = state.model && state.model.focus.includes(file.path) ? "focus file" : "indexed file";
-  refs.detailSymbolCount.textContent = formatCount(file.symbols.length);
-  refs.detailImportCount.textContent = formatCount(file.dependencies.length);
-  refs.detailImporterCount.textContent = formatCount(importedBy.length);
-  const hasOutline = ["python", "javascript", "typescript"].includes(file.language);
-  refs.symbolNote.textContent = file.symbols.length ? "line hints" : hasOutline ? "" : "metadata only";
-  if (!file.symbols.length) {
-    renderListEmpty(refs.symbolList, hasOutline ? "No symbols recorded." : "Symbol and import analysis is unavailable for this language.");
-  } else {
-    const symbols = file.symbols.slice(0, 160).map(symbol => {
-      const item = make("li");
-      item.className = "symbol-item";
-      const main = make("span", symbol.signature || symbol.name);
-      main.className = "symbol-main";
-      const metadata = make("span");
-      metadata.className = "symbol-meta";
-      metadata.append(make("span", symbol.kind), make("span", symbol.line === null ? "line unknown" : "line " + symbol.line));
-      item.append(main, metadata);
-      return item;
-    });
-    if (file.symbols.length > symbols.length) symbols.push(make("li", "+ " + (file.symbols.length - symbols.length) + " more symbols"));
-    refs.symbolList.replaceChildren(...symbols);
-  }
-  if (file.dependencies.length) refs.importList.replaceChildren(...file.dependencies.map(path => createEdgeItem(path, "imports", lookup)));
-  else renderListEmpty(refs.importList, "No imports recorded.");
-  if (importedBy.length) refs.importerList.replaceChildren(...importedBy.map(path => createEdgeItem(path, "imported by", lookup)));
-  else renderListEmpty(refs.importerList, "No importers recorded.");
+  const file = state.lookup.get(state.selected);
+  refs["inspector-empty"].hidden = Boolean(file); refs["file-detail"].hidden = !file;
+  refs["history-back"].disabled = state.historyIndex <= 0; refs["history-forward"].disabled = state.historyIndex >= state.history.length - 1;
+  if (!file) return;
+  const importedBy = state.reverse.get(file.path) || [];
+  refs["inspector-title"].textContent = base(file.path); refs["detail-path"].textContent = file.path;
+  refs["detail-breadcrumb"].textContent = "Repository › " + (parent(file.path) || "/");
+  refs["detail-summary"].textContent = file.language + (file.lines ? ", " + amount(file.lines, "line") : "") + ". " + amount(file.dependencies.length, "import") + " · " + amount(importedBy.length, "importer") + " · " + amount(file.symbols.length, "symbol") + ".";
+  const analysis = file.analysis === "python-ast" ? "Python AST outline" : file.analysis === "javascript-outline" ? "JS/TS outline · bounded import resolution" : "Metadata only · no symbol analysis";
+  refs["analysis-note"].textContent = analysis + (file.changed ? " · " + file.changed : "");
+  if (file.cochanges.length) refs["detail-summary"].append(document.createTextNode(" Often changes with " + base(file.cochanges[0].path) + " (" + count(file.cochanges[0].count) + " recent commit" + (file.cochanges[0].count === 1 ? "" : "s") + ")."));
+  refs["detail-import-count"].textContent = count(file.dependencies.length); refs["detail-importer-count"].textContent = count(importedBy.length); refs["detail-symbol-count"].textContent = count(file.symbols.length);
+  renderEdges(refs["import-list"], file.dependencies, "→"); renderEdges(refs["importer-list"], importedBy, "←");
+  refs["unresolved-section"].hidden = !file.unresolved.length; refs["unresolved-count"].textContent = count(file.unresolved.length); refs["unresolved-list"].replaceChildren(...file.unresolved.map(value => make("li", value)));
+  refs["symbol-note"].textContent = file.analysis === "metadata" ? "Only file metadata is available for this language." : file.symbols.length ? "Select a symbol to inspect its source." : "No symbols were recorded. Check index coverage for parsing limits.";
+  refs["symbol-list"].replaceChildren(...file.symbols.map(symbol => {
+    const item = make("li"), button = make("button", undefined, "symbol-button");
+    button.append(make("span", symbol.kind === "class" ? "C" : "ƒ", "symbol-kind"), make("span", symbol.signature || symbol.name, "symbol-name"), make("span", "L" + symbol.line, "symbol-line"));
+    button.addEventListener("click", () => openSource(file.path, symbol.line)); item.append(button); return item;
+  }));
+  refs["exports-section"].hidden = !file.exports.length; refs["export-list"].replaceChildren(...file.exports.map(name => make("li", name)));
+  state.impact = walkDependents(file.path);
+  refs["impact-count"].textContent = (state.impact.limited ? "≥ " : "") + count(state.impact.paths.size);
+  refs["impact-note"].textContent = "Direct and transitive importers. Recorded imports indicate potential impact, not runtime call behavior." + (state.impact.limited ? " Traversal limit reached." : "") + (state.model?.coverage.truncated || state.model?.coverage.skipped ? " Index limits may omit additional dependents." : "");
+  renderEdges(refs["impact-list"], [...state.impact.paths].sort(), "←");
+  document.querySelectorAll("[data-detail]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.detail === state.detail)));
+  ["connections", "symbols", "impact"].forEach(name => { refs[name + "-panel"].hidden = state.detail !== name; });
 }
-
-function clusterDirectory(path) {
-  const parts = path.split("/").filter(Boolean);
-  if (parts.length <= 1) return "(root)";
-  return parts.length > 2 ? parts.slice(0, 2).join("/") : parts[0];
+function contextText(file) {
+  const incoming = state.reverse.get(file.path) || [];
+  const lines = ["Repository: " + state.name, "File: " + file.path, file.language + " · " + count(file.lines) + " lines · " + file.analysis, "Symbols: " + file.symbols.slice(0, 12).map(symbol => symbol.name + ":" + symbol.line).join(", "), "Imports (" + file.dependencies.length + "): " + file.dependencies.slice(0, 12).join(", "), "Imported by (" + incoming.length + "): " + incoming.slice(0, 12).join(", "), "Structural hints only. Confirm behavior in source and tests."];
+  const value = lines.join("\n"); return value.length > 2500 ? value.slice(0, 2450) + "\n[Context trimmed; inspect the map for more.]" : value;
 }
-
-function addNeighborhood(queue, name, lookup, reverse, names, seen) {
-  if (!lookup.has(name) || seen.has(name) || names.length >= MAX_NEIGHBORHOOD_NODES) return;
-  seen.add(name);
-  names.push(name);
-  const file = lookup.get(name);
-  const neighbors = unique([...file.dependencies, ...(reverse.get(name) || [])]).sort();
-  neighbors.forEach(neighbor => {
-    if (!seen.has(neighbor) && names.length < MAX_NEIGHBORHOOD_NODES) queue.push(neighbor);
-  });
+async function copy(value, message) {
+  try { await navigator.clipboard.writeText(value); toast(message); } catch { toast("Clipboard unavailable. Use your browser’s copy controls."); }
 }
-
-function buildFileGraph(files, lookup, reverse) {
-  const queryMatches = state.query ? files.filter(matchesQuery).map(file => file.path) : [];
-  const large = files.length > OVERVIEW_THRESHOLD;
-  const seeds = unique([
-    state.selectedPath,
-    ...queryMatches.slice(0, 40),
-    ...(state.query || state.selectedPath ? [] : state.model ? state.model.focus : []),
-  ].filter(path => lookup.has(path)));
-  if (!seeds.length) return null;
-  if (!large) {
-    const names = files.map(file => file.path);
-    if (state.selectedPath && names.includes(state.selectedPath)) {
-      names.splice(names.indexOf(state.selectedPath), 1);
-      names.unshift(state.selectedPath);
-    }
-    return { names, mode: state.query ? "repository-search" : "repository" };
-  }
-  const queue = [];
-  const names = [];
-  const seen = new Set();
-  seeds.forEach(seed => addNeighborhood(queue, seed, lookup, reverse, names, seen));
-  while (queue.length && names.length < MAX_NEIGHBORHOOD_NODES) addNeighborhood(queue, queue.shift(), lookup, reverse, names, seen);
-  return { names, mode: state.query ? "search" : state.selectedPath ? "neighborhood" : "focus" };
-}
-
-function buildDirectoryGraph(files, lookup) {
-  const directories = new Map();
-  files.forEach(file => {
-    const directory = clusterDirectory(file.path);
-    if (!directories.has(directory)) directories.set(directory, []);
-    directories.get(directory).push(file.path);
-  });
-  const edges = new Set();
-  files.forEach(file => {
-    const source = clusterDirectory(file.path);
-    file.dependencies.forEach(dependency => {
-      if (!lookup.has(dependency)) return;
-      const target = clusterDirectory(dependency);
-      if (source !== target) edges.add(source + "\u0000" + target);
-    });
-  });
-  return {
-    mode: "directories",
-    nodes: [...directories.entries()].map(([path, members]) => ({
-      id: "dir:" + path,
-      path,
-      kind: "directory",
-      members: members.sort(),
-      count: members.length,
-    })),
-    edges: [...edges].map(edge => {
-      const parts = edge.split("\u0000");
-      return { source: "dir:" + parts[0], target: "dir:" + parts[1] };
-    }),
-  };
-}
-
-function planPositions(data) {
-  const planned = new Map();
-  if (data.nodes.length <= 48 && data.mode !== "directories") {
-    data.nodes.forEach((node, index) => {
-      if (index === 0) planned.set(node.id, { x: SVG_WIDTH / 2, y: SVG_HEIGHT / 2 });
-      else {
-        const ring = Math.floor((index - 1) / 18);
-        const ringIndex = (index - 1) % 18;
-        const ringSize = Math.min(18, data.nodes.length - 1 - ring * 18);
-        const angle = (ringIndex / Math.max(1, ringSize)) * Math.PI * 2 - Math.PI / 2 + ring * .28;
-        planned.set(node.id, {
-          x: SVG_WIDTH / 2 + Math.cos(angle) * (150 + ring * 120),
-          y: SVG_HEIGHT / 2 + Math.sin(angle) * (105 + ring * 90),
-        });
-      }
-    });
-    return planned;
-  }
-  const clusters = new Map();
-  data.nodes.forEach(node => {
-    const cluster = node.kind === "directory" ? node.path : clusterDirectory(node.path);
-    if (!clusters.has(cluster)) clusters.set(cluster, []);
-    clusters.get(cluster).push(node);
-  });
-  const orderedClusters = [...clusters.keys()].sort();
-  const selectedId = state.selectedPath ? "file:" + state.selectedPath : "";
-  const selectedCluster = orderedClusters.find(cluster => clusters.get(cluster).some(node => node.id === selectedId));
-  const ring = Math.min(310, 110 + orderedClusters.length * 18);
-  orderedClusters.forEach((cluster, clusterIndex) => {
-    const members = clusters.get(cluster).slice().sort((left, right) => left.id.localeCompare(right.id));
-    const hasSelected = cluster === selectedCluster;
-    const angle = (clusterIndex / Math.max(1, orderedClusters.length)) * Math.PI * 2 - Math.PI / 2;
-    const center = hasSelected
-      ? { x: SVG_WIDTH / 2, y: SVG_HEIGHT / 2 }
-      : {
-        x: SVG_WIDTH / 2 + Math.cos(angle) * ring,
-        y: SVG_HEIGHT / 2 + Math.sin(angle) * ring * .72,
-      };
-    const spread = Math.max(40, Math.sqrt(members.length) * 22);
-    members.forEach((node, memberIndex) => {
-      if (node.id === selectedId) {
-        planned.set(node.id, center);
-        return;
-      }
-      const localAngle = memberIndex * 2.3999632297;
-      const localRadius = members.length === 1 ? 0 : spread * Math.sqrt((memberIndex + 1) / members.length);
-      planned.set(node.id, {
-        x: center.x + Math.cos(localAngle) * localRadius,
-        y: center.y + Math.sin(localAngle) * localRadius * .82,
-      });
-    });
-  });
-  return planned;
-}
-
-function ensurePosition(node, planned) {
-  if (state.positions.has(node.id)) return state.positions.get(node.id);
-  const position = planned.get(node.id) || { x: SVG_WIDTH / 2, y: SVG_HEIGHT / 2 };
-  state.positions.set(node.id, position);
-  return position;
-}
-
-function applyView() {
-  refs.graphWorld.setAttribute("transform", "translate(" + state.view.x + " " + state.view.y + ") scale(" + state.view.scale + ")");
-  scheduleLabels();
-}
-
-function scheduleLabels() {
-  if (state.labelFrame !== null) return;
-  state.labelFrame = window.requestAnimationFrame(() => {
-    state.labelFrame = null;
-    layoutLabels();
-  });
-}
-
-function layoutLabels() {
-  const matrix = refs.graphWorld.getScreenCTM();
-  if (!matrix) return;
-  const scale = Math.hypot(matrix.a, matrix.b);
-  if (!scale) return;
-  const stage = refs.graph.getBoundingClientRect();
-  const padding = 7;
-  const occupied = [];
-  const obstacles = state.captions.filter(entry => entry.priority <= 2).map(entry => {
-    const point = state.positions.get(entry.id);
-    const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
-    const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
-    const radius = entry.radius * scale + 2;
-    return { left: x - radius, right: x + radius, top: y - radius, bottom: y + radius };
-  });
-  const intersects = (rect, other, gap = 0) => rect.left < other.right + gap && rect.right + gap > other.left && rect.top < other.bottom + gap && rect.bottom + gap > other.top;
-  state.visibleCaptions.forEach(entry => entry.caption.setAttribute("display", "none"));
-  // Measure only a bounded set, in screen pixels so labels survive zooming.
-  const rank = entry => entry.priority === 0 ? 0 : entry.id === state.hoveredId ? .5 : entry.priority;
-  const candidates = state.captions.filter(entry => entry.priority < 4 || entry.id === state.hoveredId)
-    .sort((left, right) => rank(left) - rank(right))
-    .filter(entry => {
-      const point = state.positions.get(entry.id);
-      const x = matrix.a * point.x + matrix.c * point.y + matrix.e;
-      const y = matrix.b * point.x + matrix.d * point.y + matrix.f;
-      return x > stage.left && x < stage.right && y > stage.top && y < stage.bottom;
-    }).slice(0, 64);
-  candidates.forEach(entry => {
-    entry.caption.removeAttribute("display");
-    entry.caption.setAttribute("transform", "translate(0 " + (-entry.radius - 9 / scale) + ") scale(" + 1 / scale + ")");
-  });
-  state.visibleCaptions = candidates;
-  const measured = candidates.map(entry => ({ entry, box: entry.caption.getBoundingClientRect() }));
-  measured.forEach(({ entry, box }) => {
-    const placements = [[0, 0], [box.width / 2 + entry.radius * scale + 8, box.height + 7], [-box.width / 2 - entry.radius * scale - 8, box.height + 7], [0, box.height + entry.radius * scale * 2 + 19]];
-    if (entry.priority === 0 || entry.id === state.hoveredId) {
-      placements.push([clamp(box.left, stage.left + padding, stage.right - box.width - padding) - box.left, clamp(box.top, stage.top + padding, stage.bottom - box.height - padding) - box.top]);
-    }
-    const placement = placements.find(([dx, dy], index) => {
-      const rect = { left: box.left + dx, right: box.right + dx, top: box.top + dy, bottom: box.bottom + dy };
-      if (rect.left < stage.left + padding || rect.right > stage.right - padding || rect.top < stage.top + padding || rect.bottom > stage.bottom - padding) return false;
-      if (occupied.some(other => intersects(rect, other, padding))) return false;
-      if (index < 4 && obstacles.some(other => intersects(rect, other))) return false;
-      occupied.push(rect);
-      return true;
-    });
-    if (placement) {
-      entry.caption.setAttribute("transform", "translate(" + placement[0] / scale + " " + (-entry.radius + (placement[1] - 9) / scale) + ") scale(" + 1 / scale + ")");
-    } else entry.caption.setAttribute("display", "none");
-  });
-}
-
-function updateGraphPositions() {
-  refs.graphWorld.querySelectorAll(".graph-node, .graph-caption-anchor").forEach(node => {
-    const position = state.positions.get(node.getAttribute("data-node-id"));
-    if (position) node.setAttribute("transform", "translate(" + position.x + " " + position.y + ")");
-  });
-  refs.graphWorld.querySelectorAll(".graph-edge").forEach(edge => {
-    const source = state.positions.get(edge.getAttribute("data-source"));
-    const target = state.positions.get(edge.getAttribute("data-target"));
-    if (!source || !target) return;
-    edge.setAttribute("x1", source.x);
-    edge.setAttribute("y1", source.y);
-    edge.setAttribute("x2", target.x);
-    edge.setAttribute("y2", target.y);
-  });
-  scheduleLabels();
-}
-
-function graphPoint(event) {
-  const matrix = refs.graph.getScreenCTM();
-  if (!matrix) return { x: 0, y: 0 };
-  const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
-  return { x: point.x, y: point.y };
-}
-
-function worldPoint(event) {
-  const point = graphPoint(event);
-  return { x: (point.x - state.view.x) / state.view.scale, y: (point.y - state.view.y) / state.view.scale };
-}
-
-function syncGraphViewport() {
-  const rect = refs.graph.getBoundingClientRect();
-  const height = rect.width ? SVG_WIDTH * rect.height / rect.width : SVG_HEIGHT;
-  if (Math.abs(height - SVG_HEIGHT) < 1) return false;
-  SVG_HEIGHT = height;
-  refs.graph.setAttribute("viewBox", "0 0 " + SVG_WIDTH + " " + SVG_HEIGHT);
-  return true;
-}
-
-function focusSelection() {
-  const point = state.positions.get("file:" + state.selectedPath);
-  if (!point) return;
-  state.view.x = SVG_WIDTH / 2 - point.x * state.view.scale;
-  state.view.y = SVG_HEIGHT / 2 - point.y * state.view.scale;
-  state.didFit = true;
-  applyView();
-}
-
-function fitGraph() {
-  const nodes = state.graphData.nodes;
-  if (!nodes.length) return;
-  const points = nodes.map(node => state.positions.get(node.id)).filter(Boolean);
-  if (!points.length) return;
-  const minX = Math.min(...points.map(point => point.x));
-  const maxX = Math.max(...points.map(point => point.x));
-  const minY = Math.min(...points.map(point => point.y));
-  const maxY = Math.max(...points.map(point => point.y));
-  const width = Math.max(180, maxX - minX + 150);
-  const height = Math.max(150, maxY - minY + 130);
-  state.view.scale = clamp(Math.min(SVG_WIDTH / width, SVG_HEIGHT / height), .35, 1.5);
-  state.view.x = SVG_WIDTH / 2 - ((minX + maxX) / 2) * state.view.scale;
-  state.view.y = SVG_HEIGHT / 2 - ((minY + maxY) / 2) * state.view.scale;
-  state.didFit = true;
-  applyView();
-}
-
-function setZoom(nextScale, event) {
-  const scale = clamp(nextScale, .35, 2.5);
-  if (event) {
-    const screenPoint = graphPoint(event);
-    const oldWorld = worldPoint(event);
-    state.view.scale = scale;
-    state.view.x = screenPoint.x - oldWorld.x * scale;
-    state.view.y = screenPoint.y - oldWorld.y * scale;
-  } else {
-    const centerX = (SVG_WIDTH / 2 - state.view.x) / state.view.scale;
-    const centerY = (SVG_HEIGHT / 2 - state.view.y) / state.view.scale;
-    state.view.scale = scale;
-    state.view.x = SVG_WIDTH / 2 - centerX * scale;
-    state.view.y = SVG_HEIGHT / 2 - centerY * scale;
-  }
-  state.didFit = true;
-  applyView();
-}
-
-function renderGraph() {
-  syncGraphViewport();
-  refs.graph.setAttribute("viewBox", "0 0 " + SVG_WIDTH + " " + SVG_HEIGHT);
-  refs.graphWorld.replaceChildren();
-  state.captions = [];
-  state.visibleCaptions = [];
-  state.hoveredId = null;
-  refs.graphLoading.hidden = true;
-  refs.graphError.hidden = true;
-  refs.graphEmpty.hidden = true;
-  refs.graphTip.hidden = true;
-  const model = state.model;
-  if (!model) {
-    refs.graphMode.textContent = "Waiting for graph";
-    refs.graphSummary.textContent = "0 nodes";
-    refs.focusSummary.textContent = "Waiting for a map";
-    if (state.lastError) setGraphError(state.lastError);
-    else setLoading();
-    return;
-  }
-  const sourceFiles = allFiles();
-  const files = graphFiles();
-  if (state.query && !sourceFiles.some(matchesQuery)) {
-    refs.graphMode.textContent = "Search results";
-    refs.graphSummary.textContent = "0 matching files";
-    refs.focusSummary.textContent = "Try a file, folder, or symbol name";
-    refs.overview.hidden = sourceFiles.length <= OVERVIEW_THRESHOLD;
-    setGraphEmpty("No files match this search.");
-    return;
-  }
-  if (!sourceFiles.length) {
-    refs.graphMode.textContent = "Empty project";
-    refs.graphSummary.textContent = "0 nodes";
-    refs.focusSummary.textContent = "No indexed files";
-    setGraphEmpty("The selected project has no indexed files yet.");
-    return;
-  }
-  const lookup = new Map(files.map(file => [file.path, file]));
-  const reverse = reverseLookup(files);
-  const directoryMode = sourceFiles.length > OVERVIEW_THRESHOLD && !state.selectedPath && !state.query;
-  let data;
-  if (directoryMode) {
-    const directoryLookup = new Map(sourceFiles.map(file => [file.path, file]));
-    data = buildDirectoryGraph(sourceFiles, directoryLookup);
-  }
-  else {
-    const fileGraph = buildFileGraph(files, lookup, reverse);
-    if (!fileGraph) data = buildDirectoryGraph(files, lookup);
-    else {
-      const names = fileGraph.names;
-      const nodes = names.map(path => ({ id: "file:" + path, path, kind: "file", file: lookup.get(path) }));
-      const visible = new Set(names);
-      const edges = [];
-      const edgeKeys = new Set();
-      names.forEach(path => {
-        const file = lookup.get(path);
-        file.dependencies.forEach(dependency => {
-          if (!visible.has(dependency)) return;
-          const key = path + "\u0000" + dependency;
-          if (edgeKeys.has(key)) return;
-          edgeKeys.add(key);
-          edges.push({ source: "file:" + path, target: "file:" + dependency });
-        });
-      });
-      data = { mode: fileGraph.mode, nodes, edges, capped: names.length < files.length };
-    }
-  }
-  data.capped = Boolean(data.capped || data.nodes.length > MAX_GRAPH_NODES);
-  if (data.nodes.length > MAX_GRAPH_NODES) {
-    data.nodes = data.nodes.slice(0, MAX_GRAPH_NODES);
-    const visible = new Set(data.nodes.map(node => node.id));
-    data.edges = data.edges.filter(edge => visible.has(edge.source) && visible.has(edge.target));
-  }
-  state.graphData = data;
-  const plannedPositions = planPositions(data);
-  data.nodes.forEach(node => ensurePosition(node, plannedPositions));
-  const degree = new Map(data.nodes.map(node => [node.id, 0]));
-  data.edges.forEach(edge => {
-    degree.set(edge.source, (degree.get(edge.source) || 0) + 1);
-    degree.set(edge.target, (degree.get(edge.target) || 0) + 1);
-  });
-  const selectedId = state.selectedPath ? "file:" + state.selectedPath : "";
-  const related = new Set();
-  if (state.selectedPath && lookup.has(state.selectedPath)) {
-    related.add(state.selectedPath);
-    lookup.get(state.selectedPath).dependencies.forEach(path => related.add(path));
-    (reverse.get(state.selectedPath) || []).forEach(path => related.add(path));
-  }
-  const hubs = new Set(data.nodes.slice().sort((left, right) => degree.get(right.id) - degree.get(left.id)).slice(0, 12).map(node => node.id));
-  const highlightOpacity = Math.min(.8, 3 / Math.sqrt(Math.max(1, degree.get(selectedId) || 1)));
-  const selectedEdges = data.edges.filter(edge => edge.source === selectedId || edge.target === selectedId);
-  const otherEdges = data.edges.filter(edge => edge.source !== selectedId && edge.target !== selectedId);
-  const renderedEdges = selectedEdges.concat(otherEdges.slice(0, Math.max(0, MAX_RENDERED_EDGES - selectedEdges.length))).slice(0, MAX_RENDERED_EDGES);
-  renderedEdges.forEach(edge => {
-    const line = makeSvg("line", {
-      class: "graph-edge" + ((edge.source === selectedId || edge.target === selectedId) ? " highlight" : ""),
-      "data-source": edge.source,
-      "data-target": edge.target,
-      "marker-end": "url(#edge-arrow)",
-    });
-    if (edge.source === selectedId || edge.target === selectedId) line.setAttribute("stroke-opacity", String(highlightOpacity));
-    const source = state.positions.get(edge.source);
-    const target = state.positions.get(edge.target);
-    if (source && target) {
-      line.setAttribute("x1", source.x);
-      line.setAttribute("y1", source.y);
-      line.setAttribute("x2", target.x);
-      line.setAttribute("y2", target.y);
-    }
-    refs.graphWorld.append(line);
-  });
-  const nameCounts = new Map();
-  data.nodes.forEach(node => nameCounts.set(basename(node.path), (nameCounts.get(basename(node.path)) || 0) + 1));
-  data.nodes.forEach(node => {
-    const position = state.positions.get(node.id);
-    const selected = node.id === selectedId;
-    const isRelated = node.kind === "file" && related.has(node.path);
-    const group = makeSvg("g", {
-      class: "graph-node" + (selected ? " selected" : "") + (isRelated && !selected ? " related" : ""),
-      "data-node-id": node.id,
-      tabindex: "0",
-      role: "button",
-      "aria-label": node.kind === "directory" ? node.path + " directory, " + node.count + " files" : node.path,
-      transform: "translate(" + position.x + " " + position.y + ")",
-    });
-    const radius = node.kind === "directory"
-      ? clamp(12 + Math.sqrt(node.count || 1) * 2, 14, 28)
-      : selected ? 9 : clamp(3 + Math.sqrt(degree.get(node.id) || 0), 3, 8);
-    group.append(makeSvg("circle", { r: radius }));
-    group.append(makeSvg("title", {}, node.kind === "directory" ? node.path + " · " + node.count + " files" : node.path));
-    const caption = makeSvg("g", { class: "node-caption", display: "none" });
-    const name = node.kind === "directory" ? node.path : nameCounts.get(basename(node.path)) > 1 ? node.path.split("/").slice(-2).join("/") : basename(node.path);
-    caption.append(makeSvg("text", { class: "node-label", "text-anchor": "middle" }, name.length > 44 ? name.slice(0, 41) + "…" : name));
-    if (node.kind === "directory") caption.append(makeSvg("text", { class: "node-count", "text-anchor": "middle", y: "13" }, node.count + " files"));
-    const priority = selected ? 0 : node.kind === "file" && state.query && matchesQuery(node.file) ? 1 : isRelated || node.kind === "directory" ? 2 : hubs.has(node.id) ? 3 : 4;
-    state.captions.push({ id: node.id, caption, radius, priority });
-    const reveal = () => { state.hoveredId = node.id; scheduleLabels(); };
-    const conceal = () => { if (state.hoveredId === node.id) state.hoveredId = null; scheduleLabels(); };
-    group.addEventListener("mouseenter", reveal);
-    group.addEventListener("mouseleave", conceal);
-    group.addEventListener("focus", reveal);
-    group.addEventListener("blur", conceal);
-    group.addEventListener("click", () => {
-      if (state.suppressClick) return;
-      chooseFile(node.kind === "directory" ? node.members[0] : node.path);
-    });
-    group.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      chooseFile(node.kind === "directory" ? node.members[0] : node.path);
-    });
-    group.addEventListener("pointerdown", event => beginNodeDrag(event, node.id, group));
-    refs.graphWorld.append(group);
-  });
-  refs.overview.hidden = sourceFiles.length <= OVERVIEW_THRESHOLD || directoryMode;
-  state.captions.forEach(entry => {
-    const position = state.positions.get(entry.id);
-    const anchor = makeSvg("g", { class: "graph-caption-anchor", "data-node-id": entry.id, transform: "translate(" + position.x + " " + position.y + ")" });
-    anchor.append(entry.caption);
-    refs.graphWorld.append(anchor);
-  });
-  const modeLabel = data.mode === "directories" ? "Directory overview" : data.mode === "search" ? "Search neighborhood" : data.mode === "neighborhood" ? "Selected neighborhood" : "Repository graph";
-  const modeKey = data.mode + ":" + (state.selectedPath || "overview") + ":" + state.query.trim().toLowerCase();
-  refs.graphMode.textContent = modeLabel;
-  refs.graphSummary.textContent = directoryMode ? formatCount(data.nodes.length) + " folder groups · " + formatCount(sourceFiles.length) + " indexed files" : formatCount(data.nodes.length) + (data.capped ? " / " + formatCount(sourceFiles.length) : "") + " files · " + formatCount(data.edges.length) + " recorded imports" + (data.edges.length > renderedEdges.length ? " · " + formatCount(renderedEdges.length) + " drawn" : "");
-  const focusText = model.focus.length
-    ? "Focus: " + model.focus.slice(0, 3).join(" · ") + (model.focus.length > 3 ? " · …" : "")
-    : "Recorded import metadata · no full call graph";
-  refs.focusSummary.textContent = model.head ? focusText + " · " + model.head.slice(0, 12) : focusText;
-  if (state.graphModeKey !== modeKey) {
-    state.graphModeKey = modeKey;
-    state.didFit = false;
-  }
-  if (!state.didFit) fitGraph();
-  else applyView();
-}
-
-function beginNodeDrag(event, nodeId, group) {
-  if (event.button !== 0) return;
-  event.stopPropagation();
-  const point = worldPoint(event);
-  const position = state.positions.get(nodeId);
-  if (!position) return;
-  state.drag = {
-    type: "node",
-    nodeId,
-    group,
-    offsetX: point.x - position.x,
-    offsetY: point.y - position.y,
-    startX: event.clientX,
-    startY: event.clientY,
-    moved: false,
-  };
-  if (group.setPointerCapture) group.setPointerCapture(event.pointerId);
-}
-
-function beginPan(event) {
-  if (event.button !== 0) return;
-  state.drag = { type: "pan", startX: event.clientX, startY: event.clientY, viewX: state.view.x, viewY: state.view.y, moved: false };
-  refs.graph.classList.add("is-panning");
-  if (refs.graph.setPointerCapture) refs.graph.setPointerCapture(event.pointerId);
-}
-
-function finishPointer(event) {
-  if (!state.drag) return;
-  if (state.drag.moved) {
-    state.suppressClick = true;
-    window.setTimeout(() => { state.suppressClick = false; }, 0);
-  }
-  if (state.drag.type === "node" && state.drag.group.releasePointerCapture) {
-    try { state.drag.group.releasePointerCapture(event.pointerId); } catch {}
-  }
-  state.drag = null;
-  refs.graph.classList.remove("is-panning");
-}
-
-function handlePointerMove(event) {
-  const drag = state.drag;
-  if (!drag) return;
-  const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
-  if (distance > 3) drag.moved = true;
-  if (drag.type === "node") {
-    const point = worldPoint(event);
-    state.positions.set(drag.nodeId, { x: point.x - drag.offsetX, y: point.y - drag.offsetY });
-    updateGraphPositions();
-  } else {
-    const point = graphPoint(event);
-    const start = graphPoint({ clientX: drag.startX, clientY: drag.startY });
-    const dx = point.x - start.x;
-    const dy = point.y - start.y;
-    state.view.x = drag.viewX + dx;
-    state.view.y = drag.viewY + dy;
-    applyView();
-  }
-  event.preventDefault();
-}
-
-function handleWheel(event) {
-  event.preventDefault();
-  setZoom(state.view.scale * (event.deltaY < 0 ? 1.12 : .89), event);
-}
-
-function renderAll() {
-  renderHeader();
-  renderProjects();
-  renderStatus();
-  renderNotice();
-  renderTree();
-  renderGraph();
-  renderInspector();
-}
-
-async function loadMap(force = false) {
-  if (!state.projectId || state.mapInFlight) return;
-  state.mapInFlight = true;
-  if (!state.model) setLoading("Loading the selected project map…");
+async function openSource(path, line = 0) {
+  if (!state.lookup.has(path)) return;
+  state.sourceRequest?.abort(); const request = new AbortController(); state.sourceRequest = request;
+  refs["source-title"].textContent = path; refs["source-meta"].textContent = "Reading from this repository…"; refs["source-content"].replaceChildren(make("p", "Loading source…", "detail-empty")); refs["source-note"].textContent = "Source is read only when requested and is not cached by the service.";
+  if (!refs["source-dialog"].open) refs["source-dialog"].showModal();
   try {
-    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(state.projectId));
-    const nextModel = normalizeModel(payload);
-    const previousModel = state.model;
-    const previousSelection = state.selectedPath;
-    state.model = nextModel;
-    state.projectName = safeString(payload && payload.project && payload.project.name, state.projectName || nextModel.rootName);
-    const currentProject = state.projects.find(project => project.id === state.projectId);
-    if (currentProject) currentProject.name = state.projectName;
-    const revision = safeNumber(payload && payload.revision, NaN);
-    if (Number.isFinite(revision)) state.revision = Math.round(revision);
-    if (!previousModel) state.didFit = false;
-    const lookup = new Map(nextModel.files.map(file => [file.path, file]));
-    const queryMatches = nextModel.files.filter(matchesQuery);
-    if (state.query && queryMatches.length === 1) state.selectedPath = queryMatches[0].path;
-    else if (previousSelection && lookup.has(previousSelection)) state.selectedPath = previousSelection;
-    else state.selectedPath = !state.query && nextModel.files.length > OVERVIEW_THRESHOLD ? null : nextModel.focus.find(path => lookup.has(path)) || nextModel.files[0]?.path || null;
-    if (!previousModel && nextModel.files.length > 120) {
-      state.collapsedDirs = new Set(nextModel.files.map(file => directoryOf(file.path)));
-      if (state.selectedPath) state.collapsedDirs.delete(directoryOf(state.selectedPath));
-    }
-    state.lastError = "";
-    state.noticeDismissed = false;
-    renderAll();
-  } catch (error) {
-    state.lastError = error instanceof Error ? error.message : "Map request failed";
-    renderStatus();
-    renderNotice();
-    if (state.model) renderGraph();
-    else setGraphError(state.lastError);
-  } finally {
-    state.mapInFlight = false;
-  }
-  return force;
+    const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodeURIComponent(path), request.signal);
+    if (state.sourceRequest !== request || !refs["source-dialog"].open) return;
+    const content = str(payload.content).split("\n"); if (content.at(-1) === "") content.pop();
+    const fragment = document.createDocumentFragment();
+    content.forEach((value, index) => { const row = make("div", undefined, "source-line" + (index + 1 === line ? " is-focus" : "")); row.append(make("span", index + 1, "source-number"), make("span", value || " ", "source-code")); fragment.append(row); });
+    refs["source-content"].replaceChildren(fragment); refs["source-meta"].textContent = str(payload.language) + " · " + count(num(payload.lines) || content.length) + " lines · read from disk";
+    refs["source-note"].textContent = payload.truncated ? "Preview limited to 64 KiB. Open the file in your editor to read the remainder." : "Read-only preview · source is not cached by the service.";
+    refs["source-content"].querySelector(".is-focus")?.scrollIntoView({ block: "center" });
+  } catch (error) { if (error.name !== "AbortError") { refs["source-content"].replaceChildren(make("p", error.message, "detail-empty")); refs["source-meta"].textContent = "Source preview unavailable"; } }
 }
+function closeSource() { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-dialog"].close(); refs["source-content"].replaceChildren(); }
 
-function applyStatus(payload) {
-  const status = payload && typeof payload === "object" ? payload : {};
-  if (status.project && typeof status.project.name === "string") state.projectName = status.project.name;
-  const revision = safeNumber(status.revision, NaN);
-  state.status = { indexing: Boolean(status.indexing), error: safeString(status.error), updatedAt: safeString(status.updated_at) };
-  if (Number.isFinite(revision)) state.status.revision = Math.round(revision);
-  renderStatus();
-  renderHeader();
-}
-
-async function pollStatus(force = false) {
-  if (!state.visible || !state.projectId || state.statusInFlight) return;
-  state.statusInFlight = true;
+function renderAll() { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }
+async function loadMap() {
+  const project = state.project, epoch = state.epoch, requestedQuery = state.query, key = epoch + ":" + project;
+  if (!project || state.mapBusy === key) return; state.mapBusy = key;
   try {
-    const payload = await fetchJson(API.status + "?project=" + encodeURIComponent(state.projectId));
-    applyStatus(payload);
-    const revision = safeNumber(payload && payload.revision, NaN);
-    const changed = Number.isFinite(revision) && (state.revision === null || Math.round(revision) !== state.revision);
-    const statusError = safeString(payload && payload.error);
-    if (statusError) {
-      state.lastError = statusError;
-      renderNotice();
-      if (!state.model) setGraphError(statusError);
-    } else if (!state.mapInFlight) {
-      state.lastError = "";
-      renderNotice();
+    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(requestedQuery));
+    if (state.project !== project || state.epoch !== epoch) return;
+    const hadModel = Boolean(state.model); state.model = normalizeModel(payload); indexModel(state.model);
+    state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision);
+    const current = state.projects.find(value => value.id === project); if (current) current.name = state.name;
+    if (!state.lookup.has(state.selected)) {
+      const matching = state.model.files.filter(matches);
+      const ranked = matching.slice().sort((a, b) => ((state.reverse.get(b.path)?.length || 0) + b.dependencies.length) - ((state.reverse.get(a.path)?.length || 0) + a.dependencies.length));
+      state.selected = ranked[0]?.path || null;
+      if (state.selected && !state.history.length) { state.history = [state.selected]; state.historyIndex = 0; }
     }
-    if (!state.mapInFlight && (force || !state.model || changed)) await loadMap(force);
-  } catch (error) {
-    state.lastError = error instanceof Error ? error.message : "Status request failed";
-    renderStatus();
-    renderNotice();
-    if (state.model) renderGraph();
-    else setGraphError(state.lastError);
-  } finally {
-    state.statusInFlight = false;
+    if (state.history.some(path => !state.lookup.has(path))) {
+      const current = state.history[state.historyIndex];
+      state.history = state.history.filter(path => state.lookup.has(path));
+      state.historyIndex = state.history.lastIndexOf(current);
+    }
+    if (state.selected && state.history[state.historyIndex] !== state.selected) { state.history.push(state.selected); state.historyIndex = state.history.length - 1; }
+    state.error = ""; state.dismissed = ""; renderAll(); if (!hadModel) graph.fit(); updateUrl();
+  } catch (error) { if (state.epoch === epoch) { state.error = error.message; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
+  finally {
+    if (state.mapBusy === key) state.mapBusy = "";
+    if (state.epoch === epoch && requestedQuery !== state.query && state.model?.coverage.truncated) setTimeout(() => loadMap(), 0);
   }
 }
-
-function stopPolling() {
-  if (state.pollTimer !== null) {
-    window.clearInterval(state.pollTimer);
-    state.pollTimer = null;
-  }
+async function poll(force = false) {
+  if (document.visibilityState !== "visible" || !state.project) return;
+  const epoch = state.epoch, project = state.project, key = epoch + ":" + project;
+  if (state.statusBusy === key) return; state.statusBusy = key;
+  try {
+    const payload = await fetchJson(API.status + "?project=" + encodeURIComponent(project));
+    if (state.epoch !== epoch) return;
+    state.status = payload; state.error = str(payload.error); renderStatus();
+    if (force || !state.model || num(payload.revision) !== state.revision) await loadMap();
+  } catch (error) { if (state.epoch === epoch) { state.error = error.message; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
+  finally { if (state.statusBusy === key) state.statusBusy = ""; }
 }
-
-function startPolling() {
-  stopPolling();
-  if (!state.projectId || !state.visible) return;
-  state.pollTimer = window.setInterval(() => pollStatus(false), POLL_MS);
-  pollStatus(false);
+function startPolling() { clearInterval(state.timer); if (state.project && document.visibilityState === "visible") state.timer = setInterval(() => poll(), POLL_MS); }
+async function activateProject(id) {
+  if (!id) return; state.epoch += 1; state.project = id; state.name = state.projects.find(project => project.id === id)?.name || "";
+  state.model = null; state.revision = null; state.status = null; state.error = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
+  state.lookup = new Map(); state.reverse = new Map(); state.edges = []; closeSource(); renderAll(); updateUrl();
+  await loadMap(); startPolling();
 }
-
-async function activateProject(projectId) {
-  if (!projectId) return;
-  state.projectId = projectId;
-  const project = state.projects.find(candidate => candidate.id === projectId);
-  state.projectName = project ? project.name : "";
-  state.model = null;
-  state.revision = null;
-  state.status = null;
-  state.lastError = "";
-  state.selectedPath = null;
-  state.positions.clear();
-  state.collapsedDirs.clear();
-  state.fileLimits.clear();
-  state.view = { x: 0, y: 0, scale: 1 };
-  state.didFit = false;
-  state.graphModeKey = "";
-  state.noticeDismissed = false;
-  updateUrl();
-  renderAll();
-  setLoading("Loading the selected project map…");
-  await loadMap(true);
-  startPolling();
-}
-
 async function loadProjects() {
   try {
     const payload = await fetchJson(API.projects);
-    const projects = Array.isArray(payload && payload.projects) ? payload.projects.map(project => {
-      if (!project || typeof project.id !== "string" || !project.id) return null;
-      return { id: project.id, name: safeString(project.name, project.id) };
-    }).filter(Boolean) : [];
-    state.projects = unique(projects.map(project => project.id)).map(id => projects.find(project => project.id === id));
-    renderProjects();
-    const fromUrl = state.projects.find(project => project.id === state.projectId);
-    const target = fromUrl || state.projects[0];
-    if (target) await activateProject(target.id);
-    else {
-      state.projectId = "";
-      state.projectName = state.model ? state.model.rootName : "No projects available";
-      renderAll();
-      if (!state.model) setGraphEmpty("The map service has no projects to display.");
-    }
-  } catch (error) {
-    state.lastError = error instanceof Error ? error.message : "Project request failed";
-    renderAll();
-    if (!state.model) setGraphError(state.lastError);
-  }
+    state.projects = (Array.isArray(payload.projects) ? payload.projects : []).filter(project => project && typeof project.id === "string").map(project => ({ id: project.id, name: str(project.name, "Repository") }));
+    const target = state.projects.find(project => project.id === state.project) || state.projects[0];
+    if (target) await activateProject(target.id); else { state.error = "No repository is registered. Open the map from a project chat."; renderStatus(); setOverlay("error", "", state.error); }
+  } catch (error) { state.error = error.message; renderStatus(); setOverlay("error", "", state.error); }
 }
-
-function toggleDrawer(element, button, open) {
-  element.classList.toggle("is-open", open);
-  button.setAttribute("aria-expanded", String(open));
-}
-
+function setView(view) { state.view = view; state.trace = view === "trace" ? state.trace : []; renderGraph(true); }
+function resetScope() { state.folder = ""; state.query = ""; state.view = "all"; state.page = 0; refs["file-search"].value = ""; renderTree(); renderGraph(true); updateUrl(); }
 function installInteractions() {
-  refs.projectSelect.addEventListener("change", event => activateProject(event.target.value));
-  refs.refresh.addEventListener("click", async () => {
-    state.lastError = "";
-    if (!state.model) setLoading("Refreshing the selected project map…");
-    await loadMap(true);
-    await pollStatus(false);
+  refs["project-select"].addEventListener("change", event => { state.selected = null; state.query = ""; refs["file-search"].value = ""; activateProject(event.target.value); });
+  refs["refresh-button"].addEventListener("click", () => poll(true)); refs["retry-button"].addEventListener("click", loadProjects);
+  refs["notice-dismiss"].addEventListener("click", () => { state.dismissed = state.error || JSON.stringify([state.model?.coverage.skipped, state.model?.coverage.truncated, state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic"))]); renderStatus(); });
+  refs["sidebar-button"].addEventListener("click", () => drawer("sidebar", !refs.sidebar.classList.contains("is-open"))); refs["sidebar-close"].addEventListener("click", () => drawer("sidebar", false));
+  refs["inspector-button"].addEventListener("click", () => drawer("inspector", !refs.inspector.classList.contains("is-open"))); refs["inspector-close"].addEventListener("click", () => drawer("inspector", false));
+  refs["file-search"].value = state.query;
+  refs["file-search"].addEventListener("input", event => {
+    state.query = event.target.value; state.page = 0; updateUrl(); renderTree(); renderGraph(true);
+    clearTimeout(state.queryTimer);
+    if (state.model?.coverage.truncated) state.queryTimer = setTimeout(() => loadMap(), 250);
   });
-  refs.retry.addEventListener("click", async () => {
-    state.lastError = "";
-    setLoading("Retrying the map service…");
-    await loadProjects();
+  refs["show-more"].addEventListener("click", () => { state.page += 1; renderTree(); refs["file-tree"].scrollIntoView({ block: "start" }); });
+  refs["clear-folder"].addEventListener("click", resetScope); refs["empty-reset"].addEventListener("click", resetScope);
+  document.querySelectorAll("[data-browse]").forEach(button => button.addEventListener("click", () => { state.browse = button.dataset.browse; state.page = 0; renderTree(); }));
+  document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+  document.querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => { state.detail = button.dataset.detail; renderInspector(); }));
+  refs["neighborhood-button"].addEventListener("click", () => setView("neighbors"));
+  ["impact-button", "show-impact"].forEach(id => refs[id].addEventListener("click", () => { state.detail = "impact"; renderInspector(); setView("impact"); }));
+  refs["trace-button"].addEventListener("click", () => { refs["trace-panel"].hidden = !refs["trace-panel"].hidden; refs["trace-button"].setAttribute("aria-expanded", String(!refs["trace-panel"].hidden)); if (!refs["trace-panel"].hidden) refs["trace-target"].focus(); });
+  refs["trace-target"].addEventListener("input", event => { const query = event.target.value.toLowerCase(); refs["trace-files"].replaceChildren(...(state.model?.files || []).filter(file => file.path.toLowerCase().includes(query)).slice(0, 40).map(file => { const option = make("option"); option.value = file.path; return option; })); });
+  refs["trace-panel"].addEventListener("submit", event => {
+    event.preventDefault(); const target = refs["trace-target"].value.trim();
+    if (!state.selected || !state.lookup.has(target)) { refs["trace-result"].textContent = "Choose a full indexed file path."; return; }
+    const result = traceImports(state.selected, target); state.trace = result.paths;
+    refs["trace-result"].textContent = result.paths.length ? result.paths.join(" → ") : result.limited ? "Trace search limit reached. Narrow the path using a nearer file." : (state.model?.coverage.truncated || state.model?.coverage.skipped ? "No path was found in this partial index. Confirm with source search." : "No recorded import path connects these files.");
+    if (result.paths.length) setView("trace");
   });
-  refs.noticeDismiss.addEventListener("click", () => {
-    state.noticeDismissed = true;
-    renderNotice();
-  });
-  refs.fileSearch.value = state.query;
-  refs.fileSearch.addEventListener("input", event => {
-    state.query = event.target.value;
-    const matching = allFiles().filter(matchesQuery);
-    if (state.query && matching.length === 1) state.selectedPath = matching[0].path;
-    else if (state.query && state.selectedPath && !matching.some(file => file.path === state.selectedPath)) state.selectedPath = null;
-    updateUrl();
-    renderTree();
-    renderGraph();
-    renderInspector();
-    if (matching.length === 1) focusSelection();
-  });
+  refs["source-button"].addEventListener("click", () => openSource(state.selected)); refs["source-close"].addEventListener("click", closeSource);
+  refs["source-dialog"].addEventListener("close", () => { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren(); });
+  refs["context-button"].addEventListener("click", () => { const file = state.lookup.get(state.selected); if (file) copy(contextText(file), "Compact context copied · paste into your chat"); });
+  refs["path-button"].addEventListener("click", () => copy(state.selected || "", "File path copied"));
+  refs["history-back"].addEventListener("click", () => { if (state.historyIndex > 0) chooseFile(state.history[--state.historyIndex], false); });
+  refs["history-forward"].addEventListener("click", () => { if (state.historyIndex + 1 < state.history.length) chooseFile(state.history[++state.historyIndex], false); });
+  refs["zoom-in"].addEventListener("click", () => graph.zoom(1.25)); refs["zoom-out"].addEventListener("click", () => graph.zoom(.8)); refs["zoom-reset"].addEventListener("click", () => graph.fit()); refs["fit-button"].addEventListener("click", () => graph.fit());
+  document.addEventListener("visibilitychange", () => { clearInterval(state.timer); if (document.visibilityState === "visible") { startPolling(); poll(); } });
   document.addEventListener("keydown", event => {
-    const active = document.activeElement;
-    if (event.key === "/" && active !== refs.fileSearch && !["INPUT", "SELECT", "TEXTAREA"].includes(active.tagName)) {
-      event.preventDefault();
-      refs.fileSearch.focus();
-    }
-    if (event.key === "Escape") {
-      toggleDrawer(refs.sidebar, refs.sidebarButton, false);
-      toggleDrawer(refs.inspector, refs.inspectorButton, false);
-    }
-  });
-  refs.sidebarButton.addEventListener("click", () => toggleDrawer(refs.sidebar, refs.sidebarButton, !refs.sidebar.classList.contains("is-open")));
-  refs.sidebarClose.addEventListener("click", () => toggleDrawer(refs.sidebar, refs.sidebarButton, false));
-  refs.inspectorButton.addEventListener("click", () => toggleDrawer(refs.inspector, refs.inspectorButton, !refs.inspector.classList.contains("is-open")));
-  refs.inspectorClose.addEventListener("click", () => toggleDrawer(refs.inspector, refs.inspectorButton, false));
-  refs.overview.addEventListener("click", () => {
-    state.selectedPath = null;
-    state.query = "";
-    refs.fileSearch.value = "";
-    state.didFit = false;
-    updateUrl();
-    renderAll();
-  });
-  refs.zoomIn.addEventListener("click", () => setZoom(state.view.scale * 1.2));
-  refs.zoomOut.addEventListener("click", () => setZoom(state.view.scale * .83));
-  refs.zoomReset.addEventListener("click", () => fitGraph());
-  refs.graph.addEventListener("pointerdown", event => {
-    if (event.target.closest && event.target.closest(".graph-node")) return;
-    beginPan(event);
-  });
-  refs.graph.addEventListener("pointermove", handlePointerMove);
-  refs.graph.addEventListener("pointerup", finishPointer);
-  refs.graph.addEventListener("pointercancel", finishPointer);
-  refs.graph.addEventListener("wheel", handleWheel, { passive: false });
-  new ResizeObserver(() => { if (syncGraphViewport()) fitGraph(); else scheduleLabels(); }).observe(refs.graph);
-  document.addEventListener("visibilitychange", () => {
-    state.visible = document.visibilityState === "visible";
-    if (state.visible) startPolling();
-    else stopPolling();
+    if (refs["source-dialog"].open) return;
+    if (event.key === "Escape") { drawer("sidebar", false); drawer("inspector", false); return; }
+    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+    if (event.key === "/") { event.preventDefault(); drawer("sidebar", true); refs["file-search"].focus(); }
+    if (event.key.toLowerCase() === "f") graph.fit();
   });
 }
-
-function boot() {
-  refs.fileSearch.value = state.query;
-  setLoading();
-  renderAll();
-  installInteractions();
-  loadProjects();
-}
-
-boot();
+installInteractions(); renderAll(); loadProjects();

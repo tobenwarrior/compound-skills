@@ -7,7 +7,7 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 After activation, give normal engineering requests. The optional `compound` command manages session, project, and global defaults.
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
-- **Automatic code maps:** orient repository work with a compact local map of files, symbols, and import relationships; explore a live graph with the `map` command.
+- **Automatic code maps:** orient agent work with compact structural context, then explore an interactive repository graph with source previews, Git changes, impact analysis, and import tracing.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
@@ -91,13 +91,19 @@ Open the live viewer with its own command:
 
 Add a focus such as `map pricing`. In Claude Code, `/map` can also resolve when no other skill shares that name. Start a new chat after updating so the new command appears; Claude Code also supports `/reload-plugins`. The older `compound map` form still routes to the same viewer.
 
-The viewer opens at **`http://127.0.0.1:43127/`** in your browser. Use the compact terminal-style interface to explore folder groups, search files and symbols, pan and zoom through the dependency graph, and inspect a file's imports and dependents. One shared local service handles registered projects. The host may request permission for local cache and network access. Reopening the command reuses its service and index; the visible page checks for changes and updates incrementally. No generated HTML files or repeated full rebuilds.
+The viewer opens at **`http://127.0.0.1:43127/`**. Its terminal-style workspace includes:
 
-Use `map status` to check the service and `map stop` to stop it. It stays available until stopped or the machine session ends; the next coding or map request starts it again. There is no login agent or scan of all your projects at startup. Set `COMPOUND_MAP_PORT` to choose another local port.
+- **A full repository graph:** folder colors, organic clusters, zoom, pan, drag, search highlights, and readable labels. Explore up to 5,000 indexed files; drawing is capped at 20,000 links, with counts showing the complete indexed relationships.
+- **Useful navigation:** browse folders, files, or symbols; inspect imports and importers; move backward and forward through selected files.
+- **Impact and trace:** find direct and transitive importers, or follow a shortest recorded import path between two files. These are structural dependency views, not a complete runtime call graph.
+- **Git awareness:** see changed files and their neighbors, the current branch, and files that often changed together in recent commits.
+- **Source and context:** open an indexed file's read-only source preview, jump to a symbol's line, or copy at most 2,500 characters of focused context into your chat.
 
-The helper uses Python 3.11+ and Git with no new dependencies, database, filesystem watcher, or provider calls. Python and JavaScript/TypeScript receive structural outlines and local import links; other recognized source files appear with limited metadata. Large repositories open as folder groups; search or select a file to explore up to 240 nearby files and 8,000 links. Labels avoid overlap, and selecting a file centers it. The inspector uses all indexed relationships. Dynamic calls, unresolved imports, excluded files, and scan limits require normal source navigation.
+One local service handles registered projects and incrementally refreshes their metadata while the page is visible. Reopening `map` reuses its index; saved project links survive service restarts and restore on demand. The host may request local cache and network access. Use `map status` to inspect the service and `map stop` to stop it. It runs until stopped or the machine session ends; the next coding or map request starts it again. It does not scan every project at login. Set `COMPOUND_MAP_PORT` for another local port.
 
-Metadata stays in Compound's local user cache, outside your repository. Source bodies are not cached or served; summaries read by the agent enter normal chat context. Ignore rules and sensitive-file exclusions apply. The service binds to loopback and serves only its bundled interface and registered map metadata. Details: [code maps](skills/compound/references/map.md).
+Python 3.11+ and Git are required. There are no new runtime dependencies, model calls, database, filesystem watcher, or frontend framework. Python receives AST outlines; JavaScript/TypeScript receives bounded outlines, exports, and local import resolution, including supported `tsconfig`/`jsconfig` aliases. Other languages have limited metadata. Unknown or dynamic imports, parser limits, and scan failures remain visible. This plugin does not bundle a language server or claim Empryo's full semantic editing capabilities.
+
+Metadata stays in the local user cache outside your repository. Normal map responses contain no source bodies. Clicking **Source** reads only the requested indexed file, limited to a 64 KiB preview; the service does not cache source bodies. Ignore rules, private-file exclusions, and symlink checks apply. The service binds to loopback and rejects foreign origins. Summaries copied into a chat become part of that chat's context. Details: [code maps](skills/compound/references/map.md).
 
 ## Nine engineering workflows
 

@@ -11,10 +11,12 @@ import json
 import os
 import posixpath
 import re
+import selectors
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.parse
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -29,11 +31,22 @@ DEFAULT_MAX_FILES = 2000
 MAX_FILES = 5000
 MAX_FILE_BYTES = 128 * 1024
 MAX_READ_BYTES = 16 * 1024 * 1024
-MAX_SYMBOLS = 24
-MAX_DEPS = 24
+MAX_SYMBOLS = 128
+MAX_DEPS = 256
+MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 4
+CACHE_VERSION = 5
+ANALYSIS_KINDS = {"python-ast", "javascript-outline", "metadata"}
+MAX_ALIAS_CONFIGS = 8
+MAX_ALIAS_CONFIG_BYTES = 64 * 1024
+MAX_ALIAS_RULES = 64
+MAX_ALIAS_TARGETS = 8
+MAX_COCHANGE_COMMITS = 30
+MAX_COCHANGE_FILES = 60
+MAX_COCHANGE_RESULTS = 6
+MAX_GIT_LOG_BYTES = 1024 * 1024
+MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
 SKIP_DIRS = {".git", "vendor", "node_modules", "build", "dist"}
 PRIVATE_NAMES = {"credentials", "credential", "secrets", "secret", "keys", "id_rsa", "id_ed25519"}
 CONFIG_NAMES = {
@@ -73,6 +86,12 @@ JS_SYMBOLS = (
     (re.compile(r"^\s*(?:export\s+)?(?:type|enum)\s+([A-Za-z_$][\w$]*)"), "type"),
     (re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\("), "function"),
 )
+JS_EXPORT_DECL = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:async\s+)?(?:function|class|interface|type|enum|const|let|var)\s+([A-Za-z_$][\w$]*)",
+    re.MULTILINE,
+)
+JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^}]*)\}")
+_COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
     pass
 def _now() -> str:
@@ -156,15 +175,94 @@ def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
         return supplied, "", [], ["Git root unavailable; use native search to inspect this repository"]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
-    inventory_result = _git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z")
-    if inventory_result is None or inventory_result.returncode != 0:
-        return root, head, [], ["Git inventory unavailable; use native search to inspect this repository"]
+    inventory_data = _bounded_git_output(
+        root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES
+    )
+    if inventory_data is None:
+        return root, head, [], ["Git inventory unavailable or exceeded the bounded output limit; inspect with native search"]
     inventory = []
-    for raw in inventory_result.stdout.split(b"\0"):
+    for raw in inventory_data.split(b"\0"):
         rel = os.fsdecode(raw) if raw else ""
         if _safe_relative(rel):
             inventory.append(PurePosixPath(rel).as_posix())
     return root, head, sorted(set(inventory)), []
+
+
+def _git_branch(root: Path) -> str:
+    result = _git(root, "symbolic-ref", "--quiet", "--short", "HEAD")
+    if result is None or result.returncode != 0:
+        return ""
+    try:
+        branch = os.fsdecode(result.stdout).strip()
+    except (UnicodeDecodeError, ValueError):
+        return ""
+    if not branch or any(ord(character) < 32 or ord(character) == 127 for character in branch):
+        return ""
+    return branch[:256]
+
+
+def _git_changes_result(root: Path) -> tuple[dict[str, str], str | None]:
+    """Return bounded porcelain statuses keyed by the current path.
+
+    The inventory remains authoritative for which files enter the model, so a
+    deleted path can never become a metadata-only ghost in the result.
+    """
+    raw_status = _bounded_git_output(
+        root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"], MAX_GIT_LOG_BYTES
+    )
+    if raw_status is None:
+        return {}, "Git status unavailable or exceeded the bounded output limit; changed-file metadata is unavailable"
+    changes: dict[str, str] = {}
+    parts = raw_status.split(b"\0")
+    index = 0
+    while index < len(parts):
+        raw = parts[index]
+        index += 1
+        if not raw:
+            continue
+        try:
+            record = os.fsdecode(raw)
+        except (UnicodeDecodeError, ValueError):
+            continue
+        if len(record) < 3:
+            continue
+        status = record[:2]
+        path = PurePosixPath(record[3:]).as_posix()
+        if not _safe_relative(path):
+            continue
+        if "R" in status:
+            # In NUL-delimited porcelain output the second path is the old
+            # name. The first path is the current destination.
+            if index < len(parts):
+                index += 1
+            kind = "renamed"
+        elif "C" in status:
+            if index < len(parts):
+                index += 1
+            kind = "added"
+        elif "?" in status:
+            kind = "untracked"
+        elif "A" in status:
+            kind = "added"
+        elif "D" in status:
+            kind = "deleted"
+        elif any(character in status for character in "MTUX"):
+            kind = "modified"
+        else:
+            continue
+        changes[path] = kind
+    return changes, None
+
+
+def _git_changes(root: Path) -> dict[str, str]:
+    return _git_changes_result(root)[0]
+
+
+def _git_state(root: Path) -> tuple[str, dict[str, str], str | None]:
+    changes, note = _git_changes_result(root)
+    return _git_branch(root), changes, note
+
+
 def _fingerprint(path: Path) -> dict[str, int] | None:
     try:
         value = path.lstat()
@@ -258,7 +356,38 @@ def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], s
             imports.extend([[alias.name, 0, None] for alias in node.names])
         elif isinstance(node, ast.ImportFrom):
             imports.extend([[node.module or "", int(node.level), alias.name] for alias in node.names])
-    return symbols[:MAX_SYMBOLS], imports[: MAX_DEPS * 2], None
+    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], None
+
+
+def _python_exports(text: str) -> list[str]:
+    try:
+        tree = ast.parse(text)
+    except (SyntaxError, ValueError, TypeError):
+        return []
+    explicit: list[str] = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+        else:
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "__all__" for target in targets):
+            try:
+                value = ast.literal_eval(node.value)
+            except (ValueError, TypeError, SyntaxError):
+                value = ()
+            if isinstance(value, (list, tuple)):
+                explicit = [item for item in value if isinstance(item, str)]
+            break
+    if explicit:
+        return list(dict.fromkeys(explicit))[:MAX_SYMBOLS]
+    names = [
+        node.name for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        and not node.name.startswith("_")
+    ]
+    return list(dict.fromkeys(names))[:MAX_SYMBOLS]
 def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
     symbols: list[dict[str, Any]] = []
     for line, source in enumerate(text.splitlines(), 1):
@@ -269,7 +398,17 @@ def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
                 break
         if len(symbols) == MAX_SYMBOLS:
             break
-    return symbols, (JS_IMPORT.findall(text) + JS_REQUIRE.findall(text))[: MAX_DEPS * 2]
+    return symbols, (JS_IMPORT.findall(text) + JS_REQUIRE.findall(text))[:MAX_IMPORTS]
+
+
+def _javascript_exports(text: str) -> list[str]:
+    names = JS_EXPORT_DECL.findall(text)
+    for group in JS_EXPORT_LIST.findall(text):
+        for item in group.split(","):
+            source = item.strip().split(" as ", 1)[0].strip()
+            if re.fullmatch(r"[A-Za-z_$][\w$]*", source):
+                names.append(source)
+    return list(dict.fromkeys(names))[:MAX_SYMBOLS]
 def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | None, int, str | None]:
     fp = info["fingerprint"]
     if fp["size"] > MAX_FILE_BYTES:
@@ -301,15 +440,24 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     symbols: list[dict[str, Any]] = []
     imports: list[Any] = []
     note = None
+    analysis = "metadata"
+    exports: list[str] = []
     if info["language"] == "python":
+        analysis = "python-ast"
         symbols, imports, note = _python_outline(text)
+        exports = _python_exports(text)
     elif info["language"] in {"javascript", "typescript"}:
+        analysis = "javascript-outline"
         symbols, imports = _javascript_outline(text)
+        exports = _javascript_exports(text)
     entry = {
         "fingerprint": fp,
         "language": info["language"],
         "symbols": symbols,
         "imports": imports,
+        "lines": len(text.splitlines()),
+        "analysis": analysis,
+        "exports": exports,
     }
     if note:
         entry["parse_note"] = note[:MAX_PARSE_NOTE_CHARS]
@@ -338,10 +486,121 @@ def _python_dep(path: str, module: str, level: int, imported: str | None, known:
         if len(matches) == 1:
             return matches[0]
     return None
-def _javascript_dep(path: str, spec: str, known: set[str]) -> str | None:
-    if not spec.startswith("."):
+
+
+def _config_relative(config_dir: PurePosixPath, value: Any) -> str | None:
+    if not isinstance(value, str) or not value or len(value) > 512:
         return None
-    base = posixpath.normpath(posixpath.join(PurePosixPath(path).parent.as_posix(), spec))
+    candidate = posixpath.normpath(posixpath.join(config_dir.as_posix(), value))
+    if candidate == ".." or candidate.startswith("../") or candidate.startswith("/"):
+        return None
+    return PurePosixPath(candidate).as_posix()
+
+
+def _strip_jsonc(text: str) -> str:
+    """Remove JSONC comments without interpreting config code."""
+    output: list[str] = []
+    index = 0
+    in_string = False
+    escaped = False
+    while index < len(text):
+        character = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if in_string:
+            output.append(character)
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            index += 1
+            continue
+        if character == '"':
+            in_string = True
+            output.append(character)
+            index += 1
+        elif character == "/" and following == "/":
+            index += 2
+            while index < len(text) and text[index] not in "\r\n":
+                index += 1
+        elif character == "/" and following == "*":
+            index += 2
+            while index + 1 < len(text) and text[index:index + 2] != "*/":
+                if text[index] in "\r\n":
+                    output.append(text[index])
+                index += 1
+            index = min(len(text), index + 2)
+        else:
+            output.append(character)
+            index += 1
+    return re.sub(r",(\s*[}\]])", r"\1", "".join(output))
+
+
+def _load_alias_configs(root: Path, candidates: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    configs: list[dict[str, Any]] = []
+    names = {"tsconfig.json", "jsconfig.json"}
+    for rel, info in sorted(candidates.items()):
+        if len(configs) >= MAX_ALIAS_CONFIGS or PurePosixPath(rel).name.lower() not in names:
+            continue
+        try:
+            if info["fingerprint"]["size"] > MAX_ALIAS_CONFIG_BYTES:
+                continue
+            with info["absolute"].open("rb") as source:
+                data = source.read(MAX_ALIAS_CONFIG_BYTES + 1)
+            if len(data) > MAX_ALIAS_CONFIG_BYTES or _fingerprint(info["absolute"]) != info["fingerprint"]:
+                continue
+            text = data.decode("utf-8")
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                payload = json.loads(_strip_jsonc(text))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict) or not isinstance(payload.get("compilerOptions"), dict):
+            continue
+        compiler = payload["compilerOptions"]
+        config_dir = PurePosixPath(rel).parent
+        base_url = _config_relative(config_dir, compiler.get("baseUrl"))
+        paths_base = PurePosixPath(base_url) if base_url is not None else config_dir
+        raw_paths = compiler.get("paths")
+        paths: list[tuple[str, list[str]]] = []
+        if isinstance(raw_paths, dict):
+            for pattern, targets in list(raw_paths.items())[:MAX_ALIAS_RULES]:
+                if not isinstance(pattern, str) or not pattern or len(pattern) > 512 or pattern.count("*") > 1:
+                    continue
+                if not isinstance(targets, list):
+                    continue
+                normalized = [
+                    target for target in (_config_relative(paths_base, value) for value in targets[:MAX_ALIAS_TARGETS])
+                    if target is not None
+                ]
+                if normalized:
+                    paths.append((pattern, normalized))
+        if base_url or paths:
+            configs.append({"directory": config_dir.as_posix(), "base_url": base_url, "paths": paths})
+    return configs
+
+
+def _alias_match(spec: str, pattern: str) -> str | None:
+    if "*" not in pattern:
+        return "" if spec == pattern else None
+    prefix, suffix = pattern.split("*", 1)
+    if not spec.startswith(prefix) or (suffix and not spec.endswith(suffix)):
+        return None
+    end = len(spec) - len(suffix) if suffix else len(spec)
+    value = spec[len(prefix):end]
+    return value if value else None
+
+
+def _config_applies(config: dict[str, Any], path: str) -> bool:
+    directory = config["directory"]
+    parent = PurePosixPath(path).parent.as_posix()
+    return directory in {"", "."} or parent == directory or parent.startswith(directory + "/")
+
+
+def _javascript_candidates(base: str, known: set[str]) -> str | None:
+    base = posixpath.normpath(base)
     if base == ".." or base.startswith("../") or base.startswith("/"):
         return None
     suffix = PurePosixPath(base).suffix.lower()
@@ -358,22 +617,204 @@ def _javascript_dep(path: str, spec: str, known: set[str]) -> str | None:
         candidates += [base + ext for ext in extensions]
     candidates += [f"{base}/index{ext}" for ext in extensions]
     for candidate in candidates:
-        if PurePosixPath(candidate).as_posix() in known:
-            return PurePosixPath(candidate).as_posix()
+        normalized = PurePosixPath(candidate).as_posix()
+        if normalized in known:
+            return normalized
     return None
-def _record(path: str, entry: dict[str, Any], known: set[str]) -> dict[str, Any]:
+
+
+def _javascript_alias_dep(path: str, spec: str, known: set[str], configs: list[dict[str, Any]]) -> str | None:
+    applicable = sorted(
+        (config for config in configs if _config_applies(config, path)),
+        key=lambda config: (len(config["directory"].split("/")), config["directory"]),
+        reverse=True,
+    )
+    for config in applicable:
+        rules = sorted(config["paths"], key=lambda item: ("*" not in item[0], len(item[0])), reverse=True)
+        for pattern, targets in rules:
+            wildcard = _alias_match(spec, pattern)
+            if wildcard is None:
+                continue
+            for target in targets:
+                candidate = target.replace("*", wildcard)
+                dependency = _javascript_candidates(candidate, known)
+                if dependency:
+                    return dependency
+        if config["base_url"]:
+            dependency = _javascript_candidates(posixpath.join(config["base_url"], spec), known)
+            if dependency:
+                return dependency
+    return None
+
+
+def _javascript_dep(path: str, spec: str, known: set[str], configs: list[dict[str, Any]] | None = None) -> str | None:
+    if not spec.startswith("."):
+        if configs:
+            return _javascript_alias_dep(path, spec, known, configs)
+        return None
+    base = posixpath.normpath(posixpath.join(PurePosixPath(path).parent.as_posix(), spec))
+    return _javascript_candidates(base, known)
+
+
+def _python_import_spec(module: str, level: int, imported: str | None) -> str:
+    if level:
+        return "." * level + (module or "")
+    return module or imported or ""
+
+
+def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int) -> bytes | None:
+    process: subprocess.Popen[bytes] | None = None
+    selector: selectors.BaseSelector | None = None
+    try:
+        process = subprocess.Popen(
+            ["git", "-C", str(root), *arguments],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        assert process.stdout is not None
+        selector = selectors.DefaultSelector()
+        selector.register(process.stdout, selectors.EVENT_READ)
+        chunks: list[bytes] = []
+        size = 0
+        deadline = time.monotonic() + GIT_TIMEOUT
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired("git log", GIT_TIMEOUT)
+            if not selector.select(remaining):
+                raise subprocess.TimeoutExpired("git log", GIT_TIMEOUT)
+            block = os.read(process.stdout.fileno(), min(65536, max_bytes + 1 - size))
+            if not block:
+                break
+            chunks.append(block)
+            size += len(block)
+            if size > max_bytes:
+                process.kill()
+                process.wait(timeout=1)
+                return None
+        data = b"".join(chunks)
+        if len(data) > max_bytes:
+            process.kill()
+            process.wait(timeout=1)
+            return None
+        process.wait(timeout=max(0.0, deadline - time.monotonic()))
+        return data if process.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        if process is not None:
+            try:
+                process.kill()
+                process.wait(timeout=1)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        return None
+    finally:
+        if selector is not None:
+            selector.close()
+        if process is not None and process.stdout is not None:
+            process.stdout.close()
+
+
+def _bounded_git_log(root: Path) -> bytes:
+    return _bounded_git_output(
+        root,
+        ["log", f"-n{MAX_COCHANGE_COMMITS}", "--no-renames", "--name-only", "--format=commit:%H", "-z"],
+        MAX_GIT_LOG_BYTES,
+    ) or b""
+
+
+def _cochanges(root: Path, head: str, known: set[str]) -> dict[str, list[dict[str, Any]]]:
+    """Return top cochanged paths from a small, HEAD-keyed history cache."""
+    if not head:
+        return {}
+    key = (str(root), head)
+    cached = _COCHANGE_CACHE.get(key)
+    if cached is not None:
+        return _cochanges_for_known(cached, known)
+    counts: dict[str, dict[str, int]] = {}
+    current: list[str] = []
+    commits: list[list[str]] = []
+    after_marker = False
+    for raw in _bounded_git_log(root).split(b"\0"):
+        try:
+            token = os.fsdecode(raw)
+        except (UnicodeDecodeError, ValueError):
+            continue
+        if token.startswith("commit:"):
+            if current:
+                commits.append(current)
+            current = []
+            after_marker = True
+        elif token:
+            if after_marker and token.startswith("\n"):
+                token = token[1:]
+            after_marker = False
+            if token:
+                current.append(PurePosixPath(token).as_posix())
+    if current:
+        commits.append(current)
+    for changed in commits[:MAX_COCHANGE_COMMITS]:
+        paths = sorted({path for path in changed if _safe_relative(path)})
+        if len(paths) > MAX_COCHANGE_FILES:
+            continue
+        paths = [path for path in paths if not _private(path) and not _skip_dir(path)]
+        for path in paths:
+            peers = counts.setdefault(path, {})
+            for peer in paths:
+                if peer != path:
+                    peers[peer] = peers.get(peer, 0) + 1
+    result = {
+        path: [
+            {"path": peer, "count": count}
+            for peer, count in sorted(peers.items(), key=lambda item: (-item[1], item[0]))
+        ]
+        for path, peers in counts.items()
+    }
+    _COCHANGE_CACHE[key] = result
+    while len(_COCHANGE_CACHE) > 8:
+        _COCHANGE_CACHE.pop(next(iter(_COCHANGE_CACHE)))
+    return _cochanges_for_known(result, known)
+
+
+def _cochanges_for_known(raw: dict[str, list[dict[str, Any]]], known: set[str]) -> dict[str, list[dict[str, Any]]]:
+    return {
+        path: [item for item in peers if item.get("path") in known][:MAX_COCHANGE_RESULTS]
+        for path, peers in raw.items()
+        if path in known
+    }
+
+
+def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dict[str, Any]] | None = None, changes: dict[str, str] | None = None, cochanges: dict[str, list[dict[str, Any]]] | None = None) -> dict[str, Any]:
     dependencies: list[str] = []
+    unresolved: list[str] = []
     if entry["language"] == "python":
         for module, level, imported in entry["imports"]:
             dep = _python_dep(path, module, level, imported, known)
             if dep and dep != path and dep not in dependencies:
                 dependencies.append(dep)
+            elif not dep:
+                spec = _python_import_spec(module, level, imported)
+                if spec and spec not in unresolved:
+                    unresolved.append(spec)
     elif entry["language"] in {"javascript", "typescript"}:
         for spec in entry["imports"]:
-            dep = _javascript_dep(path, spec, known)
+            dep = _javascript_dep(path, spec, known, aliases)
             if dep and dep != path and dep not in dependencies:
                 dependencies.append(dep)
-    return {"path": path, "language": entry["language"], "symbols": entry["symbols"][:MAX_SYMBOLS], "dependencies": dependencies[:MAX_DEPS]}
+            elif not dep and spec not in unresolved:
+                unresolved.append(spec)
+    record = {
+        "path": path,
+        "language": entry["language"],
+        "symbols": entry["symbols"][:MAX_SYMBOLS],
+        "dependencies": dependencies[:MAX_DEPS],
+        "lines": entry["lines"],
+        "analysis": entry["analysis"],
+        "exports": entry["exports"][:MAX_SYMBOLS],
+        "unresolved_imports": unresolved[:MAX_DEPS],
+        "changed": (changes or {}).get(path, ""),
+        "cochanges": list((cochanges or {}).get(path, ()))[:MAX_COCHANGE_RESULTS],
+    }
+    return record
 def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     terms = re.findall(r"[a-z0-9_]+", query.lower())
     by_path = {record["path"]: record for record in records}
@@ -383,17 +824,27 @@ def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
             if dependency in reverse:
                 reverse[dependency].add(record["path"])
     scores: dict[str, int] = {}
+    base_scores: dict[str, int] = {}
     for path, record in by_path.items():
         names = " ".join(symbol["name"] + " " + symbol.get("signature", "") for symbol in record["symbols"]).lower()
         score = sum(5 for term in terms if term in path.lower()) + sum(4 for term in terms if term in names)
         if not terms and _entry_config(path):
             score += 6
+        base_scores[path] = score
+        degree = len(record.get("dependencies", ())) + len(reverse[path])
+        score += min(2, (degree + 3) // 4)
+        if record.get("changed") in {"added", "modified", "untracked", "renamed"}:
+            score += 1
         scores[path] = score
-    matched = [path for path, score in scores.items() if score]
+    matched = [path for path, score in base_scores.items() if score]
     for path in matched:
         for neighbor in set(by_path[path]["dependencies"]) | reverse[path]:
             if neighbor in scores:
                 scores[neighbor] = max(scores[neighbor], 2)
+        for cochange in by_path[path].get("cochanges", ()):
+            neighbor = cochange.get("path") if isinstance(cochange, dict) else None
+            if neighbor in scores:
+                scores[neighbor] = max(scores[neighbor], 1)
     return sorted(records, key=lambda record: (-scores[record["path"]], not _entry_config(record["path"]), record["path"]))
 def _note(notes: list[str], value: str) -> None:
     if value and value not in notes:
@@ -403,9 +854,20 @@ def _valid_fp(value: Any) -> bool:
 
 
 def _valid_entry(value: Any) -> bool:
-    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports", "parse_note"}:
+    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports", "parse_note", "lines", "analysis", "exports"}:
         return False
     if not _valid_fp(value.get("fingerprint")) or not isinstance(value.get("language"), str):
+        return False
+    if not isinstance(value.get("lines"), int) or value["lines"] < 0:
+        return False
+    if value.get("analysis") not in ANALYSIS_KINDS:
+        return False
+    expected_analysis = {
+        "python": "python-ast",
+        "javascript": "javascript-outline",
+        "typescript": "javascript-outline",
+    }.get(value["language"], "metadata")
+    if value["analysis"] != expected_analysis:
         return False
     if "parse_note" in value and (
         not isinstance(value["parse_note"], str)
@@ -422,8 +884,11 @@ def _valid_entry(value: Any) -> bool:
             return False
         if "signature" in symbol and not isinstance(symbol["signature"], str):
             return False
+    exports = value.get("exports")
+    if not isinstance(exports, list) or len(exports) > MAX_SYMBOLS or not all(isinstance(item, str) for item in exports):
+        return False
     imports = value.get("imports")
-    if not isinstance(imports, list) or len(imports) > MAX_DEPS * 2:
+    if not isinstance(imports, list) or len(imports) > MAX_IMPORTS:
         return False
     if value["language"] == "python":
         return all(isinstance(item, list) and len(item) == 3 and isinstance(item[0], str) and isinstance(item[1], int) and item[1] >= 0 and (item[2] is None or isinstance(item[2], str)) for item in imports)
@@ -569,7 +1034,12 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     if remaining == 0 and len(entries) < len(candidates):
         _note(notes, "16 MiB total read budget reached")
     known = set(entries)
-    records = [_record(path, entry, known) for path, entry in entries.items()]
+    aliases = _load_alias_configs(root, candidates)
+    branch, changes, git_state_note = _git_state(root)
+    if git_state_note:
+        _note(notes, git_state_note)
+    cochanges = _cochanges(root, head, known)
+    records = [_record(path, entry, known, aliases, changes, cochanges) for path, entry in entries.items()]
     ranked = _rank(records, query)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
@@ -591,6 +1061,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         "files": selected,
         "focus": [record["path"] for record in _rank(selected, query)[:12]],
     }
+    if branch:
+        model["branch"] = branch
     if use_cache:
         try:
             _write_json(root, entries)
@@ -625,8 +1097,14 @@ def _text(model: dict[str, Any], limit: int) -> str:
         file = by_path.get(path)
         if not file:
             continue
-        symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in file["symbols"])
-        dependencies = ", ".join(json.dumps(dep, ensure_ascii=True) for dep in file["dependencies"])
+        symbol_values = file["symbols"][:8]
+        symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)
+        if len(file["symbols"]) > len(symbol_values):
+            symbols += f" (+{len(file['symbols']) - len(symbol_values)} more symbols)"
+        dependency_values = file["dependencies"][:12]
+        dependencies = ", ".join(json.dumps(dep, ensure_ascii=True) for dep in dependency_values)
+        if len(file["dependencies"]) > len(dependency_values):
+            dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
         line = f"- {json.dumps(path, ensure_ascii=True)} [{file['language']}]"
         if symbols:
             line += " symbols: " + symbols
