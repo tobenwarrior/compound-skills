@@ -48,10 +48,10 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "For engineering tasks, use the installed Compound Skills `compound` skill by default; "
-    "load only the references relevant to the task. Respect project-specific guidance and "
-    "the user's scope. If the installed skill is missing, report that and follow the "
-    "project's conventions.",
+    "For engineering work, including commit/PR drafts, load the installed Compound Skills "
+    "`compound` skill before starting; use the host's skill tool when available. "
+    "Read only relevant references. Respect project instructions and user scope. "
+    "If unavailable, report it and follow project conventions.",
     END_MARKER,
 )
 

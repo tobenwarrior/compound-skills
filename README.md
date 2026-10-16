@@ -48,7 +48,7 @@ Optional command: `/compound-skills:compound`. Choose an activation mode below.
 
 Optional command: `/compound`. See [Cursor's plugin documentation](https://cursor.com/docs/plugins).
 
-After installation, start a **new chat** in each app before using the commands. Claude Code can also load the install with `/reload-plugins`. If a plugin is missing after installation, reopen the app and check its plugin manager.
+After installation, start a **new chat** in each app before using the commands. Claude Code can also load the install with `/reload-plugins`. If a plugin is missing after installation, reopen the app and check its plugin manager. After updating from 0.6.0 or earlier, repeat global setup once to refresh saved routing.
 
 ## Enable once, then work normally
 

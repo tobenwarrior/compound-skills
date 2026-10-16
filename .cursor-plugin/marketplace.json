@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Compact engineering guidance for architecture, implementation, debugging, refactoring, and review.",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "plugins": [
     {
