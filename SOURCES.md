@@ -18,6 +18,14 @@ The repository hygiene checker originated in lucas-skills and is maintained here
 
 The earlier guidelines credited [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), derived from Andrej Karpathy's observations about coding agents. That repository declares MIT in its README, but no standalone license notice was available when inspected. Its guideline and example files are not bundled; the new engineering entrypoint is rewritten. Preserve this lineage rather than presenting those earlier ideas as original.
 
+## Empryo / SoulForge code-map concept
+
+- Source: [public repository](https://github.com/proxysoul/Empryo/tree/c27dac116d2ee1637abfc6634bebf08b5c379454), inspected revision `c27dac116d2ee1637abfc6634bebf08b5c379454`.
+- Inspected: `README.md`, `LICENSE`, `src/core/prompts/shared/soul-map.ts`, `src/core/context/manager.ts`, `src/core/intelligence/repo-map.ts`, and `src/core/intelligence/repo-map-utils.ts`.
+- License: BUSL-1.1. Retained the concept of bounded structural orientation, task-focused retrieval, and source confirmation. The implementation here is original; no source code, prompts, assets, or runtime from that project are bundled.
+- Adapted into: [code maps](skills/compound/references/map.md), the stdlib helper, and local viewer. Excluded: LSP/Tree-sitter dependencies, watchers, embeddings, databases, provider calls, and claims of complete code understanding.
+- Evidence: ignored local fixtures exercise refresh, exclusions, dependency navigation, output bounds, viewer interactions, and native automatic routing. The package checker reports context cost; map output is bounded separately.
+
 ## Future integrations
 
 Follow the [maintainer integration guide](CONTRIBUTING.md). Add a short entry recording source, immutable revision or content hash, license/notice, inspected material, accepted and rejected ideas, destination, and the behavioral/context evidence supporting the decision. Current packaging guidance comes from the official [OpenAI](https://developers.openai.com/plugins/build/plugins), [Cursor](https://cursor.com/docs/reference/plugins), and [Claude Code](https://code.claude.com/docs/en/plugins-reference) documentation.

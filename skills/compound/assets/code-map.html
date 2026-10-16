@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compound code map</title>
+<style>
+:root{color-scheme:light;--ink:#172033;--muted:#667085;--line:#dfe4ec;--panel:#fff;--wash:#f5f7fa;--accent:#3458d1;--accent-wash:#eaf0ff;--shadow:0 8px 24px rgba(22,32,51,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #9db4ff;outline-offset:2px}
+.topbar{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:22px clamp(16px,4vw,48px);background:var(--panel);border-bottom:1px solid var(--line)}h1,h2,h3,p{margin:0}.topbar h1{font-size:24px;letter-spacing:-.02em}.eyebrow,.muted,.section-head p,.subtle{color:var(--muted)}.eyebrow{text-transform:uppercase;font-size:11px;letter-spacing:.12em;font-weight:700;margin-bottom:4px}.top-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}.badge{display:inline-flex;align-items:center;border:1px solid #cbd5ee;border-radius:999px;color:#3151ad;background:var(--accent-wash);font-size:12px;padding:3px 9px;white-space:nowrap}
+.layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:16px;max-width:1500px;margin:0 auto;padding:16px clamp(16px,4vw,48px)}.sidebar,.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}.sidebar{align-self:start;padding:14px;position:sticky;top:16px}.search{display:grid;gap:6px;font-weight:700;margin-bottom:14px}.search input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:#fff}.panel-head,.section-head,.pager{display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-head{margin-bottom:8px}.file-list{display:grid;gap:4px;list-style:none;padding:0;margin:0;max-height:calc(100vh - 210px);overflow:auto}.file-list button,.table-file,.link-button{display:block;width:100%;text-align:left;border:0;background:transparent;color:inherit;border-radius:7px;padding:7px 8px}.file-list button:hover,.file-list button[aria-selected=true],.table-file:hover,.link-button:hover{background:var(--accent-wash);color:#24429e}.file-row{display:flex;align-items:center;gap:7px;min-width:0}.file-row .path{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-row .subtle{margin-left:auto;font-size:11px}.pager{margin-top:10px;font-size:12px;color:var(--muted)}.pager button{border:1px solid var(--line);border-radius:7px;background:#fff;padding:5px 8px;color:var(--ink)}.pager button:disabled{cursor:default;opacity:.45}
+.content{display:grid;gap:16px;min-width:0}.panel{padding:16px}.section-head{margin-bottom:12px}.section-head h2{font-size:16px}.section-head h3,h3{font-size:13px}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.metric{border:1px solid var(--line);border-radius:8px;padding:9px;background:#fbfcfe}.metric strong{display:block;font-size:18px}.metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.notes{display:grid;gap:4px;margin:12px 0 0;padding-left:18px;color:var(--muted);font-size:12px}.hint,.empty{color:var(--muted);font-size:12px}.hint{margin-top:12px;padding:9px 10px;border-left:3px solid #9db4ff;background:#f7f9ff}.focus-line{margin-top:10px;display:flex;gap:6px;align-items:flex-start;font-size:12px}.focus-line strong{white-space:nowrap}.focus-paths{color:var(--muted);overflow-wrap:anywhere}.graph-wrap{position:relative;min-height:300px;border:1px solid var(--line);border-radius:9px;background:#fbfcfe;display:grid;place-items:center;overflow:hidden}.graph-wrap svg{width:100%;height:320px;display:block}.graph-edge{stroke:#b9c3d5;stroke-width:1.5}.graph-node{cursor:pointer}.graph-node circle{fill:#fff;stroke:#8d9aba;stroke-width:2}.graph-node.selected circle{fill:var(--accent-wash);stroke:var(--accent);stroke-width:3}.graph-node text{fill:var(--ink);font-size:11px;text-anchor:middle;dominant-baseline:middle;pointer-events:none}.graph-empty{position:absolute;text-align:center;padding:20px}.table-scroll{overflow:auto}.map-table{width:100%;border-collapse:collapse;font-size:12px}.map-table th,.map-table td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.map-table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}.table-file{padding:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#24429e}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.detail-list{list-style:none;padding:0;margin:7px 0 0;display:grid;gap:4px}.detail-list li{min-width:0}.symbol{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid #eef1f5}.symbol code,.dependency{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.symbol code{font-weight:600}.symbol .kind{color:var(--muted);font-size:11px}.symbol .line{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap}.link-button{padding:5px 6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#24429e;overflow-wrap:anywhere}.empty-state{padding:16px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media (max-width:850px){.topbar{display:block}.top-actions{justify-content:flex-start;margin-top:12px}.layout{grid-template-columns:1fr}.sidebar{position:static}.file-list{max-height:260px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.layout{padding:10px}.panel{padding:12px}.detail-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{padding:16px 10px}.graph-wrap svg{height:280px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div><p class="eyebrow">Compound snapshot</p><h1 id="title">Code map</h1><p id="meta" class="muted"></p></div>
+  <div class="top-actions"><span id="state" class="badge"></span><span class="badge">Heuristics: language · symbols · dependencies</span></div>
+</header>
+<main class="layout">
+  <aside class="sidebar" aria-label="File browser">
+    <label class="search">Search files<input id="search" type="search" placeholder="Path, language, or symbol" autocomplete="off"></label>
+    <div class="panel-head"><strong>Files</strong><span id="list-count" class="subtle"></span></div>
+    <ul id="file-list" class="file-list" role="listbox" aria-label="Indexed files"></ul>
+    <div class="pager"><button id="prev" type="button">Previous</button><span id="page"></span><button id="next" type="button">Next</button></div>
+  </aside>
+  <section class="content">
+    <section class="panel" aria-labelledby="coverage-heading">
+      <div class="section-head"><h2 id="coverage-heading">Coverage</h2><span class="badge">Snapshot</span></div>
+      <div id="coverage-grid" class="metrics"></div><ul id="coverage-notes" class="notes"></ul>
+      <div class="focus-line"><strong>Focus</strong><span id="focus-paths" class="focus-paths"></span></div>
+      <p class="hint">Dependency and symbol edges are heuristic. Re-run the snapshot after source changes for a fresh view.</p>
+    </section>
+    <section class="panel" aria-labelledby="graph-heading">
+      <div class="section-head"><div><h2 id="graph-heading">Dependency neighborhood</h2><p id="graph-caption" class="muted"></p></div><span id="graph-badge" class="badge">0 nodes</span></div>
+      <div class="graph-wrap"><svg id="graph" viewBox="0 0 760 320" role="img" aria-label="Dependency neighborhood"></svg><p id="graph-empty" class="graph-empty" hidden></p></div>
+    </section>
+    <section class="panel" aria-labelledby="index-heading">
+      <div class="section-head"><div><h2 id="index-heading">Map index</h2><p id="table-count" class="muted"></p></div><span class="badge">Bounded view</span></div>
+      <div class="table-scroll"><table class="map-table"><caption class="sr-only">Files in the code map</caption><thead><tr><th>File</th><th>Language</th><th>Symbols</th><th>Dependencies</th></tr></thead><tbody id="map-table-body"></tbody></table></div>
+      <div class="pager"><button id="prev-table" type="button">Previous</button><span id="table-page"></span><button id="next-table" type="button">Next</button></div>
+    </section>
+    <section class="panel" aria-labelledby="detail-heading">
+      <div class="section-head"><div><h2 id="detail-path">File detail</h2><p id="detail-meta" class="muted"></p></div><span id="detail-badge" class="badge">No file selected</span></div>
+      <div class="detail-grid"><div><h3 id="symbols-heading">Symbols</h3><ul id="symbols" class="detail-list" aria-labelledby="symbols-heading"></ul></div><div><h3 id="dependencies-heading">Dependencies and importers</h3><ul id="dependencies" class="detail-list" aria-labelledby="dependencies-heading"></ul></div></div>
+    </section>
+  </section>
+</main>
+<script type="application/json" id="map-data">__COMPOUND_MAP_JSON__</script>
+<script>
+(() => {
+  "use strict";
+  const EMPTY={root_name:"Code map",generated_at:"",coverage:{inventory:0,indexed:0,truncated:false,skipped:0,notes:[]},files:[],focus:[]};
+  const raw=document.getElementById("map-data").textContent.trim();
+  let input=EMPTY;
+  try{if(raw)input=JSON.parse(raw)}catch(_){input=EMPTY}
+  const text=value=>value==null?"—":String(value);
+  const el=(tag,className,value)=>{const node=document.createElement(tag);
+  if(className)node.className=className;
+  if(value!==undefined)node.textContent=value;
+  return node};
+  const normalize=value=>{const source=value&&typeof value==="object"?value:{};
+  const c=source.coverage&&typeof source.coverage==="object"?source.coverage:{};
+  const files=Array.isArray(source.files)?source.files.map(file=>{if(!file||typeof file.path!=="string")return null;
+  return{path:file.path,language:text(file.language),symbols:Array.isArray(file.symbols)?file.symbols.filter(s=>s&&typeof s.name==="string").map(s=>({name:s.name,kind:text(s.kind),line:s.line,signature:typeof s.signature==="string"?s.signature.slice(0,128):""})):[],dependencies:Array.isArray(file.dependencies)?file.dependencies.filter(d=>typeof d==="string"):[]}}).filter(Boolean):[];
+  return{root_name:text(source.root_name||EMPTY.root_name),generated_at:text(source.generated_at),coverage:{inventory:c.inventory??files.length,indexed:c.indexed??files.length,truncated:Boolean(c.truncated),skipped:c.skipped??0,notes:Array.isArray(c.notes)?c.notes.filter(n=>typeof n==="string"):[]},files,focus:Array.isArray(source.focus)?source.focus.filter(p=>typeof p==="string"):[]}};
+  const model=normalize(input),MAX_FILES=2000,PAGE_SIZE=60,files=model.files.slice(0,MAX_FILES),bounded=model.files.length>files.length,pathMap=new Map(files.map(file=>[file.path,file])),reverse=new Map(files.map(file=>[file.path,[]]));
+  files.forEach(file=>file.dependencies.forEach(dep=>{if(reverse.has(dep))reverse.get(dep).push(file.path)}));
+  const $=id=>document.getElementById(id),title=$("title"),meta=$("meta"),state=$("state"),search=$("search"),fileList=$("file-list"),listCount=$("list-count"),page=$("page"),tablePage=$("table-page"),tableBody=$("map-table-body"),tableCount=$("table-count"),graph=$("graph"),graphEmpty=$("graph-empty"),graphCaption=$("graph-caption"),graphBadge=$("graph-badge"),detailPath=$("detail-path"),detailMeta=$("detail-meta"),detailBadge=$("detail-badge"),symbols=$("symbols"),dependencies=$("dependencies");
+  title.textContent=model.root_name;
+  meta.textContent=model.generated_at?"Generated "+model.generated_at+" UTC":"Snapshot time unavailable";
+  const partial=model.coverage.truncated||bounded||model.coverage.skipped>0||model.coverage.notes.length>0;
+  state.textContent=partial?"Partial snapshot":"Complete snapshot";
+  const metric=(label,value)=>{const box=el("div","metric");
+  box.append(el("strong",null,text(value)),el("span",null,label));
+  return box};
+  $("coverage-grid").replaceChildren(metric("Inventory",model.coverage.inventory),metric("Indexed",model.coverage.indexed),metric("Skipped",model.coverage.skipped),metric("Files shown",files.length));
+  const notes=$("coverage-notes");
+  (model.coverage.notes.length?model.coverage.notes:[bounded?"The viewer caps this render at 2,000 files.":"No coverage notes recorded."]).forEach(note=>notes.append(el("li",null,note)));
+  $("focus-paths").textContent=model.focus.length?model.focus.join(" · "):"No focus paths recorded";
+  let filtered=files.slice(),currentPage=0,selectedPath=null;
+  const emptyList=(node,message)=>node.replaceChildren(el("li","empty-state",message));
+  const choose=path=>{if(!pathMap.has(path))return;
+  selectedPath=path;
+  renderBrowsers();
+  renderDetail(path);
+  renderGraph(path)};
+  const fileButton=(file,table)=>{const button=el("button",table?"table-file":"",file.path);
+  button.type="button";
+  if(!table){button.setAttribute("role","option");
+  button.setAttribute("aria-selected",String(file.path===selectedPath));
+  const row=el("span","file-row");
+  row.append(el("span","path",file.path),el("span","subtle",file.language));
+  button.replaceChildren(row)}button.addEventListener("click",()=>choose(file.path));
+  return button};
+  const renderBrowsers=()=>{const pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
+  currentPage=Math.min(currentPage,pages-1);
+  const batch=filtered.slice(currentPage*PAGE_SIZE,(currentPage+1)*PAGE_SIZE);
+  listCount.textContent=filtered.length+" match"+(filtered.length===1?"":"es");
+  tableCount.textContent="Showing "+(filtered.length?currentPage*PAGE_SIZE+1:0)+"–"+Math.min((currentPage+1)*PAGE_SIZE,filtered.length)+" of "+filtered.length+" matching files";
+  page.textContent="Page "+(currentPage+1)+" of "+pages;
+  tablePage.textContent="Page "+(currentPage+1)+" of "+pages;
+  $("prev").disabled=$("prev-table").disabled=currentPage===0;
+  $("next").disabled=$("next-table").disabled=currentPage>=pages-1;
+  if(!batch.length){emptyList(fileList,filtered.length?"No files on this page.":"No indexed files match this search.");
+  tableBody.replaceChildren();
+  const row=el("tr");
+  const cell=el("td",null,filtered.length?"No files on this page.":"No indexed files.");
+  cell.colSpan=4;
+  row.append(cell);
+  tableBody.append(row);
+  return}const listFragment=document.createDocumentFragment(),tableFragment=document.createDocumentFragment();
+  batch.forEach(file=>{const li=el("li");
+  li.append(fileButton(file,false));
+  listFragment.append(li);
+  const row=el("tr"),pathCell=el("td"),language=el("td",null,file.language),sym=el("td",null,file.symbols.length),deps=el("td",null,file.dependencies.length);
+  pathCell.append(fileButton(file,true));
+  row.append(pathCell,language,sym,deps);
+  tableFragment.append(row)});
+  fileList.replaceChildren(listFragment);
+  tableBody.replaceChildren(tableFragment)};
+  const renderDetail=path=>{const file=pathMap.get(path);
+  if(!file){detailPath.textContent="File detail";
+  detailMeta.textContent="Select an indexed file to inspect symbols and edges.";
+  detailBadge.textContent="No file selected";
+  emptyList(symbols,"No symbols to show.");
+  emptyList(dependencies,"No dependencies to show.");
+  return}const imported=reverse.get(path)||[];
+  detailPath.textContent=file.path;
+  detailMeta.textContent=file.language+" · "+file.symbols.length+" symbol"+(file.symbols.length===1?"":"s")+" · "+file.dependencies.length+" dependenc"+(file.dependencies.length===1?"y":"ies");
+  detailBadge.textContent=imported.length+" importer"+(imported.length===1?"":"s");
+  if(file.symbols.length){symbols.replaceChildren(...file.symbols.map(symbol=>{const item=el("li","symbol");
+  item.append(el("code",null,symbol.signature||symbol.name),el("span","kind",symbol.kind),el("span","line","L"+text(symbol.line)));
+  return item}))}else emptyList(symbols,"No symbols recorded.");
+  const edgeItems=[];
+  file.dependencies.forEach(dep=>edgeItems.push({path:dep,label:"imports"}));
+  imported.forEach(importer=>edgeItems.push({path:importer,label:"imported by"}));
+  if(edgeItems.length){dependencies.replaceChildren(...edgeItems.map(edge=>{const item=el("li");
+  const button=el("button","link-button",edge.label+": "+edge.path);
+  button.type="button";
+  if(pathMap.has(edge.path))button.addEventListener("click",()=>choose(edge.path));
+  else button.disabled=true;
+  item.append(button);
+  return item}))}else emptyList(dependencies,"No dependency edges recorded.")};
+  const svgNode=(tag,attrs,value)=>{const node=document.createElementNS("http://www.w3.org/2000/svg",tag);
+  Object.entries(attrs).forEach(([key,val])=>node.setAttribute(key,String(val)));
+  if(value!==undefined)node.textContent=value;
+  return node};
+  const shortPath=path=>path.length>30?"…"+path.slice(-29):path;
+  const renderGraph=path=>{graph.replaceChildren();
+  const file=pathMap.get(path);
+  if(!file){graphEmpty.hidden=false;
+  graphEmpty.textContent=files.length?"Select a file to view its dependency neighborhood.":"No graph is available until files are indexed.";
+  graphCaption.textContent="";
+  graphBadge.textContent="0 nodes";
+  return}graphEmpty.hidden=true;
+  const names=[path,...file.dependencies,...(reverse.get(path)||[])].filter((name,index,array)=>array.indexOf(name)===index&&pathMap.has(name)).slice(0,30),nodes=names.map(name=>pathMap.get(name)),positions=nodes.map((_,index)=>index?{x:380+Math.cos((index-1)*Math.PI*2/(nodes.length-1))*Math.min(125,25+nodes.length*4),y:160+Math.sin((index-1)*Math.PI*2/(nodes.length-1))*Math.min(105,20+nodes.length*3)}:{x:380,y:160}),index=new Map(names.map((name,i)=>[name,i]));
+  const edge=(from,to)=>{if(index.has(from)&&index.has(to)){const a=positions[index.get(from)],b=positions[index.get(to)];
+  graph.append(svgNode("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:"graph-edge"}))}};
+  file.dependencies.forEach(dep=>edge(path,dep));
+  (reverse.get(path)||[]).forEach(importer=>edge(importer,path));
+  nodes.forEach((node,i)=>{const group=svgNode("g",{class:"graph-node"+(i===0?" selected":""),tabindex:0,role:"button","aria-label":node.path});
+  group.append(svgNode("circle",{cx:positions[i].x,cy:positions[i].y,r:i===0?30:25}),svgNode("text",{x:positions[i].x,y:positions[i].y},shortPath(node.path)));
+  group.addEventListener("click",()=>choose(node.path));
+  group.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();
+  choose(node.path)}});
+  graph.append(group)});
+  graphCaption.textContent=file.path+" · "+file.dependencies.length+" outgoing · "+(reverse.get(path)||[]).length+" incoming";
+  graphBadge.textContent=nodes.length+" node"+(nodes.length===1?"":"s")+(names.length===30?" · capped":"")};
+  const setPage=delta=>{currentPage+=delta;
+  renderBrowsers()};
+  $("prev").addEventListener("click",()=>setPage(-1));
+  $("prev-table").addEventListener("click",()=>setPage(-1));
+  $("next").addEventListener("click",()=>setPage(1));
+  $("next-table").addEventListener("click",()=>setPage(1));
+  search.addEventListener("input",()=>{const query=search.value.trim().toLowerCase();
+  filtered=files.filter(file=>(file.path+" "+file.language+" "+file.symbols.map(symbol=>symbol.name).join(" ")).toLowerCase().includes(query));
+  currentPage=0;
+  renderBrowsers()});
+  const initial=model.focus.find(path=>pathMap.has(path))||files[0]?.path;
+  if(initial)selectedPath=initial;
+  renderBrowsers();
+  renderDetail(selectedPath);
+  renderGraph(selectedPath);
+  })();
+  </script>
+</body>
+</html>

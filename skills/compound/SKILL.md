@@ -14,7 +14,7 @@ For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` r
 
 `<installed-skill-dir>` means the directory containing this `SKILL.md`, normally `<plugin-root>/skills/compound`. Resolve relative resources there.
 
-Read the project's instructions and relevant implementation. Name the outcome, constraints, and evidence that would establish success. A request for explanation or review stays read-only. Ask about missing product choices; investigate observable facts with available tools.
+Read the project's instructions. For repository context, run once per task before broad reads: `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --no-cache`. This scans in memory without writing files. See [code maps](references/map.md) for caching, coverage, skips, and visual `map` requests. Read the relevant implementation and name the outcome, constraints, and evidence for success. A request for explanation or review stays read-only. Ask about missing product choices; investigate observable facts with available tools.
 
 Before the first write-authorized engineering task for a repository in this chat, check its onboarding state:
 

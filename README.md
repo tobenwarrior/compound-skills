@@ -7,6 +7,7 @@ A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practic
 After activation, give normal engineering requests. The optional `compound` command manages session, project, and global defaults.
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
+- **Automatic code maps:** orient repository work with a compact local map of files, symbols, and import relationships; open an interactive view with `compound map`.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
@@ -75,6 +76,24 @@ Custom `CODEX_HOME` and `CLAUDE_CONFIG_DIR` locations are respected. Saved Codex
 `disable global` removes the managed Codex and Claude defaults. For Cursor, change `compound-default` to Manual or disable it in Customize. Independent project defaults remain in place.
 
 For a smaller scope, `compound setup` applies to one project and `compound session` applies to the current chat. A bare `compound` invocation also activates the chat. Use the same host command prefixes shown above. Session activation writes no files; project setup preserves existing instructions in a managed `AGENTS.md` section and handles Codex overrides and legacy Claude compatibility. See [activation details](skills/compound/references/activation.md).
+
+## See your codebase
+
+With global or project activation enabled, repository tasks automatically use a focused code map before broad exploration. Unchanged file metadata is reused; changed, added, and deleted files are checked on each run. The text summary is capped at 2,500 characters. Confirm behavior in source and tests.
+
+Open the interactive local view:
+
+| App | Command |
+| --- | --- |
+| Codex | `$compound map` |
+| Claude Code | `/compound-skills:compound map` |
+| Cursor | `/compound map` |
+
+Add a focus, for example `map pricing`. Search files, inspect symbols, and follow imports and dependents. The view is a snapshot; run the command again to refresh it. It opens in your normal browser, with no server or external assets.
+
+The helper uses Python 3.11+ and Git with no new dependencies, watcher, or provider calls. Python and JavaScript/TypeScript receive structural outlines and local import links; other recognized source files appear with limited metadata. Dynamic calls, unresolved imports, excluded files, and scan limits require normal source navigation. This is orientation, not complete semantic understanding.
+
+Generated metadata and HTML overwrite prior snapshots in Compound's local user cache, outside your repository. Read-only analysis uses a no-write scan; visual requests write only the local cache. Source bodies are not cached; summaries read by the agent enter its normal chat context. Ignore rules and sensitive-file exclusions apply. Details: [code maps](skills/compound/references/map.md).
 
 ## Nine engineering workflows
 
