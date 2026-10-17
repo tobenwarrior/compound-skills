@@ -269,7 +269,11 @@ def _status(identity: Identity, action: str) -> dict[str, object]:
     return _result(action, identity, "unseen", False)
 
 
-def _claim(identity: Identity, supplied_token: str | None) -> dict[str, object]:
+def _claim(
+    identity: Identity,
+    supplied_token: str | None,
+    refresh: bool = False,
+) -> dict[str, object]:
     _, database, exists = _prepare_state(True)
     connection = _connect(database, False)
     try:
@@ -278,7 +282,7 @@ def _claim(identity: Identity, supplied_token: str | None) -> dict[str, object]:
         now = _now()
         if row is not None:
             state, _, lease_until = row
-            if state == "completed":
+            if state == "completed" and not refresh:
                 connection.commit()
                 return _result("claim", identity, "already_completed", False)
             if lease_until is not None and lease_until > now:
@@ -352,6 +356,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("action", nargs="?", choices=("status", "claim", "complete", "release"))
     parser.add_argument("--repo", metavar="PATH")
     parser.add_argument("--token", metavar="TOKEN")
+    parser.add_argument("--refresh", action="store_true")
     return parser
 
 
@@ -368,6 +373,8 @@ def main(argv: list[str] | None = None) -> int:
         return _emit(_error(action, "action must be status, claim, complete, or release"))
     if not args.repo:
         return _emit(_error(action, "--repo is required"))
+    if args.refresh and action != "claim":
+        return _emit(_error(action, "--refresh is only valid for claim"))
     if action == "status" and args.token is not None:
         return _emit(_error(action, "--token is not valid for status"))
     if action in {"complete", "release"} and not args.token:
@@ -377,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
         if action == "status":
             return _emit(_status(identity, action))
         if action == "claim":
-            return _emit(_claim(identity, args.token))
+            return _emit(_claim(identity, args.token, args.refresh))
         return _emit(_complete_or_release(identity, action, args.token))
     except SetupError as exc:
         return _emit(_error(action, str(exc)))

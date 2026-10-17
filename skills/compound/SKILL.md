@@ -31,7 +31,7 @@ Before the first write-authorized engineering task for a repository in this chat
 python3 <installed-skill-dir>/scripts/onboarding.py status --repo <repo-root>
 ```
 
-If it is not completed, follow [first-use onboarding](references/onboarding.md). Read-only requests and activation-only operations do not trigger cleanup. Remember completion for this chat; later chats check the shared local record.
+Follow [repository assessment](references/onboarding.md) when not completed, and on every explicit project `setup`. Read-only requests, `setup global`, and activation-only modes skip cleanup. Remember completion for this chat; later chats check shared state.
 
 Before each stage, read its matching reference below; switch when the task changes.
 

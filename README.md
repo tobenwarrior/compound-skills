@@ -11,7 +11,7 @@ After activation, give normal engineering requests. The optional `compound` comm
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
-- **First-repository cleanup:** inspect a repository once before its first coding change, apply safe verified cleanup, and report larger improvements as a backlog.
+- **Existing-project cleanup:** run `compound setup` to reassess architecture, dependencies, scripts, docs, tests, and Git conventions—even after prior setup. Apply verified cleanup and report larger decisions. New projects retain automatic first-use onboarding.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
 - **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and delete superseded material as the toolkit evolves.
 
@@ -75,7 +75,19 @@ Custom `CODEX_HOME` and `CLAUDE_CONFIG_DIR` locations are respected. Saved Codex
 
 `disable global` removes the managed Codex and Claude defaults. For Cursor, change `compound-default` to Manual or disable it in Customize. Independent project defaults remain in place.
 
-For a smaller scope, `compound setup` applies to one project and `compound session` applies to the current chat. A bare `compound` invocation also activates the chat. Use the same host command prefixes shown above. Session activation writes no files; project setup preserves existing instructions in a managed `AGENTS.md` section and handles Codex overrides and legacy Claude compatibility. See [activation details](skills/compound/references/activation.md).
+## Reassess an existing project
+
+Run in the project you want to clean up:
+
+| Codex | Cursor | Claude Code |
+| --- | --- | --- |
+| `$compound setup` | `/compound setup` | `/compound-skills:compound setup` |
+
+Each explicit project setup enables guidance and reruns assessment, even when previously completed. The agent inspects the code map, architecture, dependencies, scripts, docs, tests, and Git conventions; applies justified cleanup; and verifies the diff with relevant checks. Proven obsolete or redundant material is removed rather than archived. Useful regression tests stay; a large test suite alone is not bloat. Existing unfinished work is preserved, and uncertain deletions or major redesigns are reported for a separate decision. Another active assessment is allowed to finish first.
+
+Setup applies to the current project, not every repository on the machine. Global setup only enables defaults; new repositories receive automatic first-use onboarding during normal coding work. Subsequent work follows the engineering guidance without repeating a command. Project setup preserves unrelated instructions in managed routing sections and handles Codex overrides and legacy Claude compatibility. See [assessment details](skills/compound/references/onboarding.md).
+
+For chat-only activation, use `compound session` or a bare `compound` invocation with the same host prefixes; it writes no files. See [activation details](skills/compound/references/activation.md).
 
 ## See your codebase
 
@@ -123,7 +135,7 @@ Metadata stays in the local user cache outside your repository. Normal map respo
 
 Architecture guidance favors simpler responsibilities, less reader effort, and short comments only where intent or constraints need explaining. A long file alone is insufficient reason to split it. Independent work can be delegated when useful and supported; returned artifacts still need inspection.
 
-After activation, Compound guides engineering tasks without a repeated command. Its one-time onboarding pass provides bounded cleanup before the first coding change; later work follows the task you authorize. Explanations and reviews stay read-only. It does not run background restructuring.
+After activation, Compound guides engineering tasks without a repeated command. Automatic onboarding provides bounded first-use cleanup; explicit project `setup` requests another assessment. Later work follows the task you authorize. Explanations and reviews stay read-only. It does not run background restructuring.
 
 ## Try it on your project
 

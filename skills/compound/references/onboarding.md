@@ -1,31 +1,31 @@
-# First-use repository onboarding
+# Repository assessment and onboarding
 
-Run one bounded inspection and cleanup pass before a repository's first write-authorized engineering task. This is part of the engineering preference, not a background process. Explicit read-only scope, project instructions, and user opt-outs take priority. Read-only tasks do not claim or update onboarding state.
+Explicit project `setup` requests a fresh assessment and verified cleanup, even when previously completed. Normal coding work runs one bounded first-use pass before the repository's first write-authorized task. Respect project instructions, read-only scope, and user opt-outs; global setup and activation-only modes do not request cleanup.
 
-Use the installed [state helper](../scripts/onboarding.py) with the intended repository root. It resolves a canonical checkout identity and shares completion across Codex, Cursor, and Claude Code through machine-local state. It writes no project marker. A completed record suppresses automatic onboarding, not later reviews or explicitly requested cleanup.
+Use the installed [state helper](../scripts/onboarding.py) with the intended repository root. Its canonical checkout identity shares completion across Codex, Cursor, and Claude Code through machine-local state, without a project marker. A completed record suppresses automatic onboarding only.
 
 ## One pass
 
-1. Read project instructions, repository layout, build/test configuration, and current Git status. Record pre-existing changed and untracked paths. Do not change those paths as part of cleanup; the requested task retains its normal authorization.
+1. Read project instructions and record changed and untracked paths before writes. Preserve those paths during cleanup and keep unknown untracked content visible to Git; explicit setup may update only its managed routing sections within existing instruction files. Use the core code-map startup before broad reads, then inspect layout, entrypoints, build/test configuration, and project conventions.
 2. Claim the pass atomically:
 
    ```bash
    python3 <installed-skill-dir>/scripts/onboarding.py claim --repo <repo-root>
    ```
 
-   Read the JSON. If already completed or another session owns the lease, continue the user's task without a duplicate pass. Retain a granted token for completion or release. For a sandbox write denial, request the host's normal approval for that state operation and retry once. Respect denials and managed policy. If storage remains unavailable, report that once and skip cleanup; do not move state into the project or loosen permissions.
-3. Read [repository hygiene](repo-hygiene.md) and run its read-only audit with `--json --no-baseline`. Inspect actual responsibilities, callers, configuration, and existing checks. Audit warnings are candidates, not proof that a file is useless or that an architecture needs splitting.
-4. Apply high-confidence, behavior-preserving cleanup in a reviewable diff. Examples include missing ignore entries for generated files the project uses and small simplifications supported by callers and tests. Preserve all pre-existing changed and untracked paths, including generated artifacts. Preserve user work, source, documentation, dependencies, and unknown artifacts. Defer broad redesign, migrations, dependency upgrades, public-contract changes, and speculative deletion. Keep a short actionable backlog instead of expanding the task indefinitely.
-5. Verify cleanup with the relevant existing checks and inspect the diff, checking recorded changed and untracked paths remain unchanged by cleanup. An audit that produces findings (exit `0` or `1`) ran successfully; findings may remain as backlog. Complete only after inspection and cleanup verification:
+   For explicit project `setup`, append `--refresh` to reopen completed state. Read the JSON: `busy` defers assessment without stealing the active lease; `already_completed` skips automatic onboarding. Retain a granted token for completion or release. For a sandbox write denial, request normal host approval and retry once. If state remains unavailable, report incomplete assessment and skip cleanup; do not move state into the project or loosen permissions.
+3. Read [repository hygiene](repo-hygiene.md) and run its read-only audit with `--json --no-baseline`. Review responsibilities and boundaries, callers, duplication, dead code, dependencies, scripts, docs, test value, and Git conventions. Use focused source reads and project configuration; audit warnings are candidates, not proof. Establish a baseline with documented checks before cleanup. Load [refactoring](refactor.md) for structural changes and [Git guidance](git.md) when drafting commits or PRs.
+4. Apply high-confidence, behavior-preserving cleanup in a reviewable diff. Add ignores for known project outputs and simplify or remove proven obsolete or redundant source, docs, and tests together with their callers. Delete superseded copies rather than archive them. Preserve user work and unknown artifacts. Defer broad redesign, migrations, dependency upgrades, public-contract changes, and uncertain deletions as a short actionable backlog.
+5. Run relevant checks after cleanup and compare with the baseline. Inspect the diff and confirm protected paths are unchanged by cleanup. Audit findings (exit `0` or `1`) may remain as backlog; configuration errors (exit `2`) are not a successful assessment. Complete only after inspection and verification:
 
    ```bash
    python3 <installed-skill-dir>/scripts/onboarding.py complete --repo <repo-root> --token <claim-token>
    ```
 
-   Findings that cannot be safely fixed can remain in the reported backlog; completion is not a claim that the repository is perfect. If the audit cannot run, reports a configuration error (exit `2`), or cleanup cannot be verified, release the claim so a later task can retry:
+   If assessment cannot run or cleanup cannot be verified, release the claim so a later task can retry:
 
    ```bash
    python3 <installed-skill-dir>/scripts/onboarding.py release --repo <repo-root> --token <claim-token>
    ```
 
-Report what was inspected, changed, verified, and deferred, then continue the user's requested task. Do not stage, commit, push, install dependencies, or change external services merely because onboarding ran. Those actions retain their normal authorization. The helper only tracks state; it never audits or cleans the repository itself.
+Report what was inspected, changed, verified, preserved, and deferred, then continue any supplied task. Completion records a verified pass, not a perfect repository. Do not stage, commit, push, install dependencies, or change external services merely because assessment ran; those actions retain their normal authorization. The helper tracks state; the agent performs the assessment and cleanup.

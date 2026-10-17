@@ -1,6 +1,6 @@
 # Activation
 
-These modes choose when Compound guides engineering work; they do not authorize unrelated changes.
+These modes choose when Compound guides engineering work. Explicit project `setup` also requests a fresh assessment and verified cleanup.
 
 ## Current chat
 
@@ -28,7 +28,7 @@ It manages a small routing section in the Codex home's `AGENTS.md` and existing 
 
 Cursor carries the routing rule in the native plugin. Install at user scope and leave its `compound-default` rule set to Always in Customize → Rules. Global setup reports Cursor as host-managed; it cannot verify or change that UI setting. If available, inspect it through the host UI; otherwise explain this one-time installation requirement. Do not edit Cursor's private database or claim Cursor is configured from a file written by the helper.
 
-`setup` alone configures the intended project. Establish its root from the task and repository; ask only if ambiguous:
+`setup` alone enables guidance and assesses the intended project, including previously completed projects. Establish its root from the task and repository; ask only if ambiguous. Read project instructions and record existing changed and untracked paths before writes:
 
 ```bash
 python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <project-root>
@@ -36,9 +36,9 @@ python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <pr
 
 Project setup manages `AGENTS.md`, an existing nonempty root `AGENTS.override.md`, and a project Claude rule when legacy Claude instructions shadow `AGENTS.md`. It changes no global defaults.
 
-Read the JSON result and report scope, changed files, and warnings. Preserve unrelated instructions. Conflicting unmanaged files, symlinks, and malformed markers need resolution before setup can finish. Do not claim complete setup after an error or partial result. Enable the current chat preference too, distinguishing it from saved setup results.
+Read the JSON result. After successful project enable, even when routing was already enabled, run the core code-map startup and follow [repository assessment](onboarding.md) in explicit setup mode (`claim --refresh`). Global setup, session activation, status, and disable do not run this pass. Preserve unrelated instructions; stop cleanup on routing errors or partial results. Report routing, assessment, changes, checks, and deferred findings separately; a busy lease means assessment is deferred. Enable the current chat preference too.
 
-The plugin must be installed and enabled at user scope in each app for global use. Setup configures routing; it does not install plugins or verify native runtime loading. New chats load defaults under normal host settings; project guidance and explicit user choices take priority. Saved Codex and Claude rules are machine-local; Cursor follows the plugin installation scope. These are model instructions, not guaranteed enforcement or background refactoring.
+The plugin must be installed and enabled at user scope in each app for global use. Setup does not install plugins or verify native runtime loading. New chats load defaults under normal host settings; project guidance and explicit user choices take priority. Saved Codex and Claude rules are machine-local; Cursor follows the plugin installation scope. These are model instructions, not guaranteed enforcement or background refactoring.
 
 ## Inspect or remove defaults
 

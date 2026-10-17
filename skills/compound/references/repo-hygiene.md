@@ -34,6 +34,10 @@ discovery, external callers, and runtime configuration. Use `rg` and relevant
 tests as evidence, but an `rg` no-match result is not grounds by itself to
 remove a file.
 
+## Test value
+
+Keep tests that protect contracts, regressions, failures, and boundaries. Assess test configuration, CI discovery, behavior covered, duplication, and runtime; count, age, length, or a search no-match does not establish uselessness. Remove or consolidate tests only with evidence that their behavior is retired or already protected, then rerun relevant checks. Application tests normally stay versioned; Compound's own ignored development tests are a plugin-packaging choice, not a rule for consuming projects.
+
 ## Configuration and baselines
 
 Configuration is read from `.repo-audit.toml`, or from `[tool.repo_audit]` in
