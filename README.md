@@ -4,14 +4,14 @@
 
 A compact engineering plugin for **Codex, Cursor, and Claude Code**. Get practical guidance for architecture, implementation, debugging, refactoring, and review—and a process for improving that guidance as you discover better skills.
 
-After activation, give normal engineering requests. The optional `compound` command manages session, project, and global defaults.
+After activation, give normal engineering requests. The setup shortcuts manage project and global defaults; `compound` also supports chat activation and other modes.
 
 - **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
 - **Automatic code maps:** orient agent work with compact structural context, then explore an interactive repository graph with source previews, Git changes, impact analysis, and import tracing.
 - **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
 - **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
 - **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or limit activation to one project or chat.
-- **Existing-project cleanup:** run `compound setup` to reassess architecture, dependencies, scripts, docs, tests, and Git conventions—even after prior setup. Apply verified cleanup and report larger decisions. New projects retain automatic first-use onboarding.
+- **Existing-project cleanup:** run the `setup` shortcut to reassess architecture, dependencies, scripts, docs, tests, and Git conventions—even after prior setup. Apply verified cleanup and report larger decisions. New projects retain automatic first-use onboarding.
 - **Focused context:** load the relevant reference when needed; keep a shared source across all three hosts.
 - **Knowledge that compounds:** retain useful ideas, replace weaker guidance, and delete superseded material as the toolkit evolves.
 
@@ -57,9 +57,11 @@ After the user-scope installs above, run global setup **once from any one app**.
 
 | Action | Codex | Cursor | Claude Code |
 | --- | --- | --- | --- |
-| All projects on this machine | `$compound setup global` | `/compound setup global` | `/compound-skills:compound setup global` |
-| Check global defaults | `$compound status global` | `/compound status global` | `/compound-skills:compound status global` |
+| All projects on this machine | `$setup-global` | `/setup-global` | `/compound-skills:setup-global` |
+| Check global defaults | `$status-global` | `/status-global` | `/compound-skills:status-global` |
 | Remove global defaults | `$compound disable global` | `/compound disable global` | `/compound-skills:compound disable global` |
+
+The three shortcuts `setup`, `setup-global`, and `status-global` appear separately in autocomplete. `disable global` remains an argument after `compound`. Existing `compound setup`, `compound setup global`, and `compound status global` forms still work.
 
 Global setup saves the Codex and Claude defaults together and adds only Compound’s local state directory to the native Codex/Cursor write-path lists so first-use completion can be remembered. Cursor includes its default in the plugin: install at user scope and keep the `compound-default` rule set to **Always** in Customize → Rules. New chats across your projects use Compound without repeating a command or adding files to every repository. Only a small routing rule stays active; detailed guidance loads when relevant.
 
@@ -81,7 +83,7 @@ Run in the project you want to clean up:
 
 | Codex | Cursor | Claude Code |
 | --- | --- | --- |
-| `$compound setup` | `/compound setup` | `/compound-skills:compound setup` |
+| `$setup` | `/setup` | `/compound-skills:setup` |
 
 Each explicit project setup enables guidance and reruns assessment, even when previously completed. The agent inspects the code map, architecture, dependencies, scripts, docs, tests, and Git conventions; applies justified cleanup; and verifies the diff with relevant checks. Proven obsolete or redundant material is removed rather than archived. Useful regression tests stay; a large test suite alone is not bloat. Existing unfinished work and the Git index are preserved. Cleanup uses exact working-tree deletions; uncertain deletions or major redesigns are reported for a separate decision. Another active assessment is allowed to finish first.
 

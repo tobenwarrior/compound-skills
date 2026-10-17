@@ -2,7 +2,7 @@
 
 Work directly on `main` in this checkout. Commit and push verified checkpoints. Create branches or worktrees only when the owner explicitly requests them.
 
-Maintain two public skills: `compound` is the shared engineering core and `map` is a thin utility that reuses its guidance and shared runtime. Keep host command directories consolidated; do not add extra discoverable workflows. Put conditional detail in the responsible reference and consolidate overlap before adding files. For owner-requested skill integrations or model compaction in this repository, read [CONTRIBUTING.md](CONTRIBUTING.md); this maintainer workflow is not a plugin command.
+Maintain five public entrypoints: shared engineering core `compound`, map utility `map`, and thin shortcuts `setup`, `setup-global`, and `status-global`. Shortcuts delegate to the core; do not duplicate workflows or add separate host command directories. Put conditional detail in the responsible reference and consolidate overlap before adding files. For owner-requested skill integrations or model compaction in this repository, read [CONTRIBUTING.md](CONTRIBUTING.md); this maintainer workflow is not a plugin command.
 
 Stage intended changes, then run `python3 scripts/check.py --json` before completing them. The checker measures package structure and context cost; behavioral evaluation still needs representative tasks and actual outputs.
 
