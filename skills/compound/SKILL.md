@@ -50,6 +50,7 @@ Before each stage, read its matching reference below; switch when the task chang
 
 - Model meaningful states and ownership explicitly. Derive redundant state; validate external data where it enters.
 - Prefer interfaces that hide real complexity. Remove needless pass-through layers and speculative options.
+- For frontend work, keep every tooltip to at most two visible lines at supported viewport sizes and zoom levels. Use concise copy and move longer explanations to optional details. Verify rendered tooltips; do not satisfy the limit by clipping or hiding their text.
 - Organize by responsibility and reader effort. File length alone does not justify a split. Use short comments only for non-obvious intent or constraints.
 - Reduce shared mutable state. When retries are possible, define what repeating an operation means.
 - Trace fixes to a demonstrated cause. Check behavior through the interface its consumers use.
