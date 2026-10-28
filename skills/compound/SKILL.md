@@ -21,7 +21,7 @@ Read the project's instructions. Before broad repository reads, use a fresh host
 - **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>"`. This starts or reuses the local service and incremental cache.
 - **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.
 
-For symbol definitions or references, prefer host-native navigation. If unavailable, use the bounded, read-only lookup in [code maps](references/map.md); its occurrences are lexical, not semantic references.
+For symbol definitions or references, prefer host-native navigation. If unavailable, [code maps](references/map.md) offers bounded lexical lookup and an opt-in adapter for a user-authorized, trusted language server; lexical occurrences are not semantic references.
 
 For denied local cache or network access, use the host's normal approval flow and retry the cached command once. Keep security settings unchanged; report the local fallback if still unavailable.
 

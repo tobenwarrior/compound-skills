@@ -34,9 +34,15 @@ except ImportError:  # pragma: no cover - Windows has no fcntl
 try:
     from . import code_map as engine
     from .onboarding import _reject_symlink_chain, _state_paths
+    from .safe_open import open_regular_nofollow
+    from .reference_cache import IdentifierPostingsCache
+    from . import symbol_lookup as lookup_engine
 except ImportError:  # direct script execution
     import code_map as engine
     from onboarding import _reject_symlink_chain, _state_paths
+    from safe_open import open_regular_nofollow
+    from reference_cache import IdentifierPostingsCache
+    import symbol_lookup as lookup_engine
 
 
 SERVICE = "compound-code-map"
@@ -92,6 +98,10 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
         Path(engine.__file__),
         Path(engine.__file__).with_name("workspace_imports.py"),
         Path(engine.__file__).with_name("language_outlines.py"),
+        Path(engine.__file__).with_name("language_imports.py"),
+        Path(engine.__file__).with_name("safe_open.py"),
+        Path(engine.__file__).with_name("symbol_lookup.py"),
+        Path(engine.__file__).with_name("reference_cache.py"),
     ):
         try:
             digest.update(script.read_bytes())
@@ -325,32 +335,10 @@ def _open_source_fd(root: Path, relative: str) -> int:
     nofollow = getattr(os, "O_NOFOLLOW", 0)
     cloexec = getattr(os, "O_CLOEXEC", 0)
     directory = getattr(os, "O_DIRECTORY", 0)
-    base_flags = os.O_RDONLY | cloexec | nofollow
+    base_flags = os.O_RDONLY | cloexec | nofollow | getattr(os, "O_NONBLOCK", 0)
     supports_dir_fd = getattr(os, "supports_dir_fd", ())
-    if nofollow and os.open in supports_dir_fd:
-        current = os.open(str(root), base_flags | directory)
-        try:
-            if not stat.S_ISDIR(os.fstat(current).st_mode):
-                raise OSError("source root is not a directory")
-            for component in parts[:-1]:
-                child = os.open(component, base_flags | directory, dir_fd=current)
-                try:
-                    if not stat.S_ISDIR(os.fstat(child).st_mode):
-                        raise OSError("source parent is not a directory")
-                except BaseException:
-                    with contextlib.suppress(OSError):
-                        os.close(child)
-                    raise
-                os.close(current)
-                current = child
-            fd = os.open(parts[-1], base_flags, dir_fd=current)
-            os.close(current)
-            current = -1
-            return fd
-        finally:
-            if current >= 0:
-                with contextlib.suppress(OSError):
-                    os.close(current)
+    if nofollow and os.open in supports_dir_fd and os.name == "posix":
+        return open_regular_nofollow(root, relative)
     # The preflight symlink walk plus O_NOFOLLOW on the leaf is the safest
     # portable fallback when dirfd operations are unavailable.
     return os.open(str(root.joinpath(*parts)), base_flags)
@@ -814,6 +802,19 @@ def get_text(repo: str | os.PathLike[str], query: str = "", max_files: int = 200
     return _agent_response(repo, query, max_files, refresh, max_chars)
 
 
+def get_lookup(repo: str | os.PathLike[str], symbol: str, **options: Any) -> dict[str, Any]:
+    """Use the explicitly authorized local service for a bounded lexical lookup."""
+    max_files = int(options.get("max_files", lookup_engine.DEFAULT_MAX_FILES))
+    _, runtime, root = _open_registered(repo, "", max_files, requery=False)
+    request = {**options, "project": _project_id(root), "symbol": symbol}
+    timeout = min(30.0, max(10.0, float(options.get("max_seconds", lookup_engine.DEFAULT_TIMEOUT)) + 10.0))
+    status, value, raw = _request(runtime["port"], "POST", "/api/lookup", runtime["token"], request, timeout=timeout)
+    if status != 200 or value is None:
+        detail = raw.decode("utf-8", "replace")[:300]
+        raise MapServerError(f"map lookup unavailable ({status}): {detail}")
+    return value
+
+
 @dataclasses.dataclass
 class Project:
     id: str
@@ -884,6 +885,8 @@ class MapService:
         self._registry_loaded = False
         self.lock = threading.RLock()
         self._index_slots = threading.BoundedSemaphore(MAX_INDEX_WORKERS)
+        self._lookup_slots = threading.BoundedSemaphore(2)
+        self._reference_cache = IdentifierPostingsCache(max_entries=2000)
         self.httpd: MapHTTPServer | None = None
 
     def _load_registry(self) -> None:
@@ -952,7 +955,9 @@ class MapService:
             if not candidates:
                 return
             _, project_id = min(candidates)
-            self.projects.pop(project_id, None)
+            evicted = self.projects.pop(project_id, None)
+            if evicted is not None:
+                self._reference_cache.invalidate_root(evicted.root)
 
     def project_list(self) -> list[dict[str, str]]:
         """List safe IDs and display names without validating/indexing roots."""
@@ -1135,6 +1140,24 @@ class MapService:
                 next_cap = max(1, len(files) // 2)
             cap = next_cap
 
+    def lookup(self, project: Project, request: dict[str, Any]) -> dict[str, Any]:
+        """Run a bounded authenticated lookup with memory-only postings."""
+        if not self._lookup_slots.acquire(blocking=False):
+            raise MapServerError("lookup service busy")
+        try:
+            return lookup_engine.lookup_symbols(
+                project.root, request.get("symbol"),
+                max_files=int(request.get("max_files", lookup_engine.DEFAULT_MAX_FILES)),
+                max_results=int(request.get("max_results", lookup_engine.DEFAULT_MAX_RESULTS)),
+                max_seconds=float(request.get("max_seconds", lookup_engine.DEFAULT_TIMEOUT)),
+                max_file_bytes=int(request.get("max_file_bytes", lookup_engine.DEFAULT_MAX_FILE_BYTES)),
+                max_total_bytes=int(request.get("max_total_bytes", lookup_engine.DEFAULT_MAX_TOTAL_BYTES)),
+                max_output_bytes=int(request.get("max_output_bytes", lookup_engine.DEFAULT_MAX_OUTPUT_BYTES)),
+                reference_cache=self._reference_cache,
+            )
+        finally:
+            self._lookup_slots.release()
+
     def source(self, project: Project, relative: str) -> dict[str, Any]:
         self._refresh(project)
         with project.lock:
@@ -1303,7 +1326,7 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
         if not self._route_guard():
             return
         parsed = urllib.parse.urlsplit(self.path)
-        if parsed.path not in {"/api/register", "/api/shutdown"}:
+        if parsed.path not in {"/api/register", "/api/shutdown", "/api/lookup"}:
             self._error(404, "not found")
             return
         if not self._authorized():
@@ -1327,6 +1350,21 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
         if parsed.path == "/api/shutdown":
             self._respond(200, _json({"stopping": True}))
             threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
+        if parsed.path == "/api/lookup":
+            project = self.service.project(value.get("project"))
+            if project is None:
+                self._error(404, "unknown project")
+                return
+            try:
+                result = self.service.lookup(project, value)
+            except MapServerError as exc:
+                self._error(503, str(exc)[:500])
+                return
+            except (OSError, TypeError, ValueError, OverflowError) as exc:
+                self._error(400, str(exc).replace(str(project.root), "<repository>")[:500])
+                return
+            self._respond(200, _json(result))
             return
         raw_root = value.get("root")
         if not isinstance(raw_root, str) or not raw_root:

@@ -17,13 +17,17 @@ import re
 import stat
 import sys
 import time
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
 
 try:
     from . import code_map
+    from .safe_open import open_regular_nofollow as _open_regular_nofollow
+    from .reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
 except ImportError:  # direct script execution
     import code_map
+    from safe_open import open_regular_nofollow as _open_regular_nofollow
+    from reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
 
 DEFAULT_MAX_FILES = 1000
 MAX_FILES = 5000
@@ -73,40 +77,7 @@ def _identifier_pattern(symbol: str) -> re.Pattern[str]:
     return re.compile(r"(?<![\w$])" + re.escape(symbol) + r"(?![\w$])")
 
 
-def _open_regular_nofollow(root: Path, relative: str) -> int:
-    """Open a repository-relative regular file without following any symlink."""
-    if not code_map._safe_relative(relative) or not relative:
-        raise OSError("unsafe relative path")
-    parts = PurePosixPath(relative).parts
-    if not parts or any(part in {".", ".."} for part in parts):
-        raise OSError("unsafe relative path")
-    if os.open not in getattr(os, "supports_dir_fd", set()) or not hasattr(os, "O_NOFOLLOW"):
-        # Fail closed on platforms where component-wise no-follow opening is
-        # unavailable. The code-map metadata is still returned to the caller.
-        raise OSError("safe no-follow file access is unavailable")
 
-    nofollow = os.O_NOFOLLOW
-    directory_flag = getattr(os, "O_DIRECTORY", 0)
-    close_fds: list[int] = []
-    try:
-        directory_fd = os.open(root, os.O_RDONLY | directory_flag | nofollow)
-        close_fds.append(directory_fd)
-        for part in parts[:-1]:
-            directory_fd = os.open(
-                part, os.O_RDONLY | directory_flag | nofollow, dir_fd=directory_fd
-            )
-            close_fds.append(directory_fd)
-        file_fd = os.open(parts[-1], os.O_RDONLY | nofollow, dir_fd=directory_fd)
-        if not stat.S_ISREG(os.fstat(file_fd).st_mode):
-            os.close(file_fd)
-            raise OSError("not a regular file")
-        return file_fd
-    finally:
-        for descriptor in reversed(close_fds):
-            try:
-                os.close(descriptor)
-            except OSError:
-                pass
 
 
 def _read_reference_text(
@@ -311,6 +282,7 @@ def lookup_symbols(
     max_total_bytes: int = DEFAULT_MAX_TOTAL_BYTES,
     max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
     no_cache: bool = False,
+    reference_cache: IdentifierPostingsCache | None = None,
 ) -> dict[str, Any]:
     """Return exact code-map definitions and bounded lexical occurrence locations.
 
@@ -333,7 +305,18 @@ def lookup_symbols(
         # Reuse the existing, Git-ignore-aware inventory to locate the canonical
         # worktree root. No non-Git filesystem walk is attempted.
         git_root, head, inventory, inventory_notes = code_map._git_context(root)
-        bounded_inventory = inventory[:file_limit]
+        if len(inventory) > file_limit:
+            normalized_name = "".join(character for character in name.casefold() if character.isalnum())
+            preferred: list[str] = []
+            remaining: list[str] = []
+            for path in inventory:
+                normalized_path = "".join(character for character in path.casefold() if character.isalnum())
+                group = preferred if normalized_name and normalized_name in normalized_path else remaining
+                if len(group) < file_limit:
+                    group.append(path)
+            bounded_inventory = (preferred + remaining)[:file_limit]
+        else:
+            bounded_inventory = inventory
         model_notes = list(inventory_notes)
         inventory_capped = len(inventory) > len(bounded_inventory)
         if inventory_capped:
@@ -395,12 +378,13 @@ def lookup_symbols(
     deadline = time.monotonic() + timeout
     references: list[dict[str, Any]] = []
     scanned_files = 0
+    cached_files = 0
     reference_bytes = 0
+    reference_considered = 0
     reference_notes: list[str] = []
     references_truncated = False
     reference_timed_out = False
-    max_model_files = min(len(model_files), file_limit)
-    for record in model_files[:max_model_files]:
+    for record in model_files[:file_limit]:
         if time.monotonic() >= deadline:
             reference_timed_out = True
             reference_notes.append("reference scan timed out")
@@ -413,16 +397,62 @@ def lookup_symbols(
         if candidate is None:
             reference_notes.append("changed, private, symlink, or unsupported paths were skipped")
             continue
-        remaining = total_byte_limit - reference_bytes
-        text, consumed, note = _read_reference_text(
-            git_root,
-            relative,
-            candidate["fingerprint"],
-            max_file_bytes=file_byte_limit,
-            remaining_bytes=remaining,
-            deadline=deadline,
-        )
+        remaining = total_byte_limit - reference_considered
+        fingerprint = candidate["fingerprint"]
+        loaded: dict[str, Any] = {}
+        lines = None
+        if reference_cache is not None and not no_cache and fingerprint["size"] <= file_byte_limit and fingerprint["size"] <= remaining:
+            def load_text() -> str:
+                text, consumed, note = _read_reference_text(
+                    git_root, relative, fingerprint, max_file_bytes=file_byte_limit,
+                    remaining_bytes=remaining, deadline=deadline,
+                )
+                loaded.update(text=text, consumed=consumed, note=note)
+                if text is None:
+                    raise OSError(note or "source unavailable")
+                return text
+            try:
+                lines = reference_cache.lookup(git_root, relative, fingerprint, load_text, name, deadline=deadline)
+            except (UnsupportedSymbolError, OSError):
+                pass
+        if time.monotonic() >= deadline:
+            if loaded:
+                reference_bytes += loaded.get("consumed", 0)
+                reference_considered += loaded.get("consumed", 0)
+            reference_timed_out = True
+            reference_notes.append("reference scan timed out")
+            break
+        if lines is not None:
+            consumed = loaded.get("consumed", 0)
+            reference_bytes += consumed
+            reference_considered += consumed if loaded else fingerprint["size"]
+            if code_map._fingerprint(git_root / relative) != fingerprint:
+                reference_notes.append("file changed during reference scan")
+                continue
+            if not loaded:
+                cached_files += 1
+            scanned_files += 1
+            for line_number in lines:
+                if len(references) == result_limit:
+                    references_truncated = True
+                    break
+                references.append({"path": relative, "line": line_number})
+            if references_truncated:
+                break
+            continue
+        if time.monotonic() >= deadline:
+            reference_timed_out = True
+            reference_notes.append("reference scan timed out")
+            break
+        if loaded:
+            text, consumed, note = loaded["text"], loaded["consumed"], loaded["note"]
+        else:
+            text, consumed, note = _read_reference_text(
+                git_root, relative, fingerprint, max_file_bytes=file_byte_limit,
+                remaining_bytes=remaining, deadline=deadline,
+            )
         reference_bytes += consumed
+        reference_considered += consumed
         if note:
             if note == "reference scan timed out":
                 reference_timed_out = True
@@ -498,6 +528,8 @@ def lookup_symbols(
                 "files_scanned": scanned_files,
                 "files_considered": len(model_files),
                 "bytes_read": reference_bytes,
+                "bytes_considered": reference_considered,
+                "cached_files": cached_files,
                 "results_truncated": references_truncated,
                 "timed_out": reference_timed_out,
                 "notes": reference_notes,
@@ -535,9 +567,14 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-file-bytes", type=int, default=DEFAULT_MAX_FILE_BYTES)
     parser.add_argument("--max-total-bytes", type=int, default=DEFAULT_MAX_TOTAL_BYTES)
     parser.add_argument("--max-output-bytes", type=int, default=DEFAULT_MAX_OUTPUT_BYTES)
-    parser.add_argument(
+    cache_options = parser.add_mutually_exclusive_group()
+    cache_options.add_argument(
         "--no-cache", action="store_true",
         help="bypass the code-map cache (default is to use it read-only)",
+    )
+    cache_options.add_argument(
+        "--service", action="store_true",
+        help="start or reuse the authorized local service and its memory-only postings cache",
     )
     return parser
 
@@ -545,17 +582,23 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        result = lookup_symbols(
-            args.repo,
-            args.symbol,
-            max_files=args.max_files,
-            max_results=args.max_results,
-            max_seconds=args.timeout,
-            max_file_bytes=args.max_file_bytes,
-            max_total_bytes=args.max_total_bytes,
-            max_output_bytes=args.max_output_bytes,
-            no_cache=args.no_cache,
-        )
+        options = {
+            "max_files": args.max_files, "max_results": args.max_results,
+            "max_seconds": args.timeout, "max_file_bytes": args.max_file_bytes,
+            "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
+        }
+        if args.service:
+            try:
+                try:
+                    from . import map_server
+                except ImportError:
+                    import map_server
+                result = map_server.get_lookup(args.repo, args.symbol, **options)
+            except (OSError, ValueError, ImportError) as exc:
+                print(f"local lookup service unavailable; using a read-only scan: {exc}", file=sys.stderr)
+                result = lookup_symbols(args.repo, args.symbol, **options)
+        else:
+            result = lookup_symbols(args.repo, args.symbol, no_cache=args.no_cache, **options)
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2

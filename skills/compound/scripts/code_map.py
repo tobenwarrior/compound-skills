@@ -24,10 +24,14 @@ try:
     from .onboarding import _reject_symlink_chain, _state_paths
     from .workspace_imports import load_workspace_packages, resolve_workspace_import
     from .language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
+    from .safe_open import open_regular_nofollow
+    from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink_chain, _state_paths
     from workspace_imports import load_workspace_packages, resolve_workspace_import
     from language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
+    from safe_open import open_regular_nofollow
+    from language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 
 DEFAULT_MAX_CHARS = 2500
 MAX_CHARS = 12000
@@ -427,7 +431,22 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         return None, 0, "64 MiB total read budget reached; file metadata retained"
     limit = min(MAX_FILE_BYTES, remaining)
     try:
-        with info["absolute"].open("rb") as source:
+        absolute = Path(info["absolute"])
+        if os.name == "posix" and hasattr(os, "O_NOFOLLOW") and os.open in getattr(os, "supports_dir_fd", ()):
+            root = absolute
+            for _ in PurePosixPath(info["path"]).parts:
+                root = root.parent
+            fd = open_regular_nofollow(root, info["path"])
+        else:
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+            fd = os.open(absolute, flags)
+        with os.fdopen(fd, "rb") as source:
+            opened = os.fstat(source.fileno())
+            if not stat.S_ISREG(opened.st_mode) or any(
+                getattr(opened, attr) != fp[key]
+                for key, attr in (("size", "st_size"), ("inode", "st_ino"), ("mtime_ns", "st_mtime_ns"), ("ctime_ns", "st_ctime_ns"))
+            ):
+                return None, 0, "changing files were skipped after re-stat"
             data = source.read(limit + 1)
     except OSError:
         return None, 0, "unreadable files were skipped"
@@ -469,6 +488,8 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         "analysis": analysis,
         "exports": exports,
     }
+    if info["language"] in {"go", "rust"} or PurePosixPath(info["path"]).name == "go.mod":
+        entry["native_imports"] = extract_language_metadata(info["path"], text)
     if note:
         entry["parse_note"] = note[:MAX_PARSE_NOTE_CHARS]
     return entry, consumed, note
@@ -842,9 +863,10 @@ def _cochanges_for_known(raw: dict[str, list[dict[str, Any]]], known: set[str]) 
     }
 
 
-def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dict[str, Any]] | None = None, changes: dict[str, str] | None = None, cochanges: dict[str, list[dict[str, Any]]] | None = None, modules: dict[str, str | None] | None = None, packages: dict[str, Any] | None = None) -> dict[str, Any]:
+def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dict[str, Any]] | None = None, changes: dict[str, str] | None = None, cochanges: dict[str, list[dict[str, Any]]] | None = None, modules: dict[str, str | None] | None = None, packages: dict[str, Any] | None = None, native_index: dict[str, Any] | None = None) -> dict[str, Any]:
     dependencies: list[str] = []
     unresolved: list[str] = []
+    native_capped = False
     if entry["language"] == "python":
         for module, level, imported in entry["imports"]:
             dep = _python_dep(path, module, level, imported, known, modules)
@@ -863,6 +885,27 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
                 dependencies.append(dep)
             elif not dep and spec not in unresolved:
                 unresolved.append(spec)
+    elif entry["language"] in {"go", "rust"} and native_index:
+        metadata = entry.get("native_imports", {})
+        specs = metadata.get("go_imports", []) if entry["language"] == "go" else metadata.get("rust_uses", [])
+        if entry["language"] == "rust":
+            dependencies.extend(rust_module_dependencies(path, native_index))
+        seen_dependencies = set(dependencies)
+        for spec in specs:
+            targets = resolve_go_import(spec, path, native_index) if entry["language"] == "go" else resolve_rust_import(spec, path, native_index)
+            if targets:
+                for dep in targets:
+                    if dep in seen_dependencies:
+                        continue
+                    if len(dependencies) >= MAX_DEPS:
+                        native_capped = True
+                        break
+                    seen_dependencies.add(dep)
+                    dependencies.append(dep)
+                if native_capped:
+                    break
+            elif spec not in unresolved:
+                unresolved.append(spec)
     record = {
         "path": path,
         "language": entry["language"],
@@ -877,6 +920,8 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
     }
     if entry.get("parse_note"):
         record["outline_note"] = entry["parse_note"]
+    if native_capped:
+        record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), f"local import links capped at {MAX_DEPS}")))
     return record
 def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     terms = re.findall(r"[a-z0-9_]+", query.lower())
@@ -916,12 +961,18 @@ def _valid_fp(value: Any) -> bool:
     return isinstance(value, dict) and all(isinstance(value.get(key), int) and value[key] >= 0 for key in ("ctime_ns", "inode", "size", "mtime_ns"))
 
 
-def _valid_entry(value: Any) -> bool:
-    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports", "parse_note", "lines", "analysis", "exports"}:
+def _valid_entry(value: Any, relative: str = "") -> bool:
+    if not isinstance(value, dict) or set(value) - {"fingerprint", "language", "symbols", "imports", "parse_note", "lines", "analysis", "exports", "native_imports"}:
         return False
     if not _valid_fp(value.get("fingerprint")) or not isinstance(value.get("language"), str):
         return False
     if not isinstance(value.get("lines"), int) or value["lines"] < 0:
+        return False
+    native_required = bool(relative) and (value["language"] in {"go", "rust"} or PurePosixPath(relative).name == "go.mod")
+    native = value.get("native_imports")
+    if native_required and (_sanitize_metadata(relative, native) != native or not isinstance(native, dict)):
+        return False
+    if not native_required and native is not None:
         return False
     if value.get("analysis") not in ANALYSIS_KINDS:
         return False
@@ -1026,7 +1077,7 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     reusable: dict[str, Any] = {}
     for path_name, entry in raw.items():
         current = candidates.get(path_name)
-        if isinstance(path_name, str) and current and _valid_entry(entry) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"]:
+        if isinstance(path_name, str) and current and _valid_entry(entry, path_name) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"]:
             reusable[path_name] = entry
     return reusable, None
 def _write_json(root: Path, entries: dict[str, Any]) -> None:
@@ -1130,7 +1181,13 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         _note(notes, git_state_note)
     cochanges = _cochanges(root, head, known)
     modules = _python_modules(known)
-    records = [_record(path, entry, known, aliases, changes, cochanges, modules, packages) for path, entry in entries.items()]
+    native_metadata = {path: entry["native_imports"] for path, entry in entries.items() if "native_imports" in entry}
+    native_index = build_local_import_index(root, native_metadata, known) if native_metadata else None
+    if native_index and native_index.get("partial"):
+        _note(notes, "Go/Rust local import resolution is partial; inspect unresolved imports")
+    records = [_record(path, entry, known, aliases, changes, cochanges, modules, packages, native_index) for path, entry in entries.items()]
+    if any("local import links capped" in record.get("outline_note", "") for record in records):
+        _note(notes, "Go/Rust local import link cap reached")
     ranked = _rank(records, query)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
@@ -1140,7 +1197,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     if any(info["language"] in {"python", "javascript", "typescript"} for info in candidates.values()):
         _note(notes, "Python and JavaScript/TypeScript import links are heuristic and incomplete; aliases, dynamic imports, and unresolved modules need native search")
     if any(info["language"] in SUPPORTED_LANGUAGES for info in candidates.values()):
-        _note(notes, "Other language symbol outlines are heuristic; imports and semantic references require native search")
+        _note(notes, "Other language symbol outlines and Go/Rust import links are heuristic; verify with native search")
     selected = sorted(ranked[:max_files], key=lambda record: record["path"])
     model = {
         "root_name": repository_name(root),
