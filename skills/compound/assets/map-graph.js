@@ -151,6 +151,7 @@ export function createGraph(canvas, options = {}) {
     hidden: Boolean(ownerDocument && ownerDocument.visibilityState === "hidden"),
     pointer: null,
     resizeObserver: null,
+    themeObserver: null,
     lastDrawMs: 0,
     visibleLabels: 0,
     labelOverlaps: 0,
@@ -455,11 +456,15 @@ export function createGraph(canvas, options = {}) {
       accepted.push(item);
       remember(rect, item);
     }
+    const lightTheme = ownerDocument?.documentElement && typeof ownerWindow.getComputedStyle === "function"
+      && ownerWindow.getComputedStyle(ownerDocument.documentElement).colorScheme === "light";
     accepted.forEach(({ rect, candidate, value }) => {
       const important = candidate.node.id === state.selected || candidate.node.id === state.hovered;
-      context.fillStyle = important ? "rgba(12, 18, 30, 0.92)" : "rgba(12, 18, 30, 0.78)";
+      context.fillStyle = lightTheme
+        ? important ? "rgba(215, 229, 251, 0.96)" : "rgba(255, 255, 255, 0.88)"
+        : important ? "rgba(12, 18, 30, 0.92)" : "rgba(12, 18, 30, 0.78)";
       context.fillRect(rect.x, rect.y, rect.width, rect.height);
-      context.fillStyle = important ? "#f7fbff" : "#c3cfdd";
+      context.fillStyle = lightTheme ? important ? "#1e3f76" : "#39495c" : important ? "#f7fbff" : "#c3cfdd";
       context.fillText(value, rect.x + 4, rect.y + rect.height / 2);
     });
     context.restore();
@@ -1154,6 +1159,12 @@ export function createGraph(canvas, options = {}) {
     state.resizeObserver = new ownerWindow.ResizeObserver(resize);
     state.resizeObserver.observe(canvas);
   }
+  if (typeof ownerWindow.MutationObserver === "function" && ownerDocument?.documentElement) {
+    state.themeObserver = new ownerWindow.MutationObserver(scheduleFrame);
+    state.themeObserver.observe(ownerDocument.documentElement, {
+      attributes: true, attributeFilter: ["data-ds-dark-theme", "data-yh-style", "style", "class"],
+    });
+  }
 
   function destroy() {
     if (state.destroyed) return;
@@ -1166,6 +1177,7 @@ export function createGraph(canvas, options = {}) {
     if (ownerDocument && typeof ownerDocument.removeEventListener === "function") ownerDocument.removeEventListener("visibilitychange", handleVisibility);
     if (typeof ownerWindow.removeEventListener === "function") ownerWindow.removeEventListener("resize", resize);
     if (state.resizeObserver && typeof state.resizeObserver.disconnect === "function") state.resizeObserver.disconnect();
+    if (state.themeObserver) state.themeObserver.disconnect();
     if (canvas.style) canvas.style.touchAction = oldTouchAction;
     if (typeof canvas.setAttribute === "function") {
       if (oldRole === null) canvas.removeAttribute("role");

@@ -278,13 +278,13 @@ function renderInspector() {
   refs["inspector-title"].textContent = base(file.path); refs["detail-path"].textContent = file.path;
   refs["detail-breadcrumb"].textContent = "Repository › " + (parent(file.path) || "/");
   refs["detail-summary"].textContent = file.language + (file.lines ? ", " + amount(file.lines, "line") : "") + ". " + amount(file.dependencies.length, "import") + " · " + amount(importedBy.length, "importer") + " · " + amount(file.symbols.length, "symbol") + ".";
-  const analysis = file.analysis === "python-ast" ? "Python AST outline" : file.analysis === "javascript-outline" ? "JS/TS outline · bounded import resolution" : "Metadata only · no symbol analysis";
+  const analysis = file.analysis === "python-ast" ? "Python AST outline" : file.analysis === "javascript-outline" ? "JS/TS outline · bounded import resolution" : file.analysis === "heuristic-outline" ? "Heuristic symbol outline · imports unavailable" : "Metadata only · no symbol analysis";
   refs["analysis-note"].textContent = analysis + (file.changed ? " · " + file.changed : "") + (file.outlineNote ? " · " + file.outlineNote : "");
   if (file.cochanges.length) refs["detail-summary"].append(document.createTextNode(" Often changes with " + base(file.cochanges[0].path) + " (" + count(file.cochanges[0].count) + " recent commit" + (file.cochanges[0].count === 1 ? "" : "s") + ")."));
   refs["detail-import-count"].textContent = count(file.dependencies.length); refs["detail-importer-count"].textContent = count(importedBy.length); refs["detail-symbol-count"].textContent = count(file.symbols.length);
   renderEdges(refs["import-list"], file.dependencies, "→"); renderEdges(refs["importer-list"], importedBy, "←");
   refs["unresolved-section"].hidden = !file.unresolved.length; refs["unresolved-count"].textContent = count(file.unresolved.length); refs["unresolved-list"].replaceChildren(...file.unresolved.map(value => make("li", value)));
-  refs["symbol-note"].textContent = file.analysis === "metadata" ? "Only file metadata is available for this language." : file.symbols.length ? "Select a symbol to inspect its source." : "No symbols were recorded. Check index coverage for parsing limits.";
+  refs["symbol-note"].textContent = file.analysis === "metadata" ? "Only file metadata is available for this language." : file.symbols.length ? (file.analysis === "heuristic-outline" ? "Heuristic declarations; select a symbol to inspect its source." : "Select a symbol to inspect its source.") : "No symbols were recorded. Check index coverage for parsing limits.";
   refs["symbol-list"].replaceChildren(...file.symbols.map(symbol => {
     const item = make("li"), button = make("button", undefined, "symbol-button");
     button.append(make("span", symbol.kind === "class" ? "C" : "ƒ", "symbol-kind"), make("span", symbol.signature || symbol.name, "symbol-name"), make("span", "L" + symbol.line, "symbol-line"));

@@ -23,9 +23,11 @@ from typing import Any
 try:
     from .onboarding import _reject_symlink_chain, _state_paths
     from .workspace_imports import load_workspace_packages, resolve_workspace_import
+    from .language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink_chain, _state_paths
     from workspace_imports import load_workspace_packages, resolve_workspace_import
+    from language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
 
 DEFAULT_MAX_CHARS = 2500
 MAX_CHARS = 12000
@@ -39,7 +41,7 @@ MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
 CACHE_VERSION = 7
-ANALYSIS_KINDS = {"python-ast", "javascript-outline", "metadata"}
+ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
 MAX_ALIAS_RULES = 2048
@@ -122,7 +124,7 @@ def _repo_path(raw: str | os.PathLike[str]) -> Path:
 def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
     try:
         return subprocess.run(
-            ["git", "-C", str(path), *args], capture_output=True, check=False, timeout=GIT_TIMEOUT
+            ["git", "--no-optional-locks", "-C", str(path), *args], capture_output=True, check=False, timeout=GIT_TIMEOUT
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -455,6 +457,9 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         analysis = "javascript-outline"
         symbols, imports = _javascript_outline(text)
         exports = _javascript_exports(text)
+    elif info["language"] in SUPPORTED_LANGUAGES:
+        analysis = "heuristic-outline"
+        symbols, note = _language_outline(text, info["language"], MAX_SYMBOLS)
     entry = {
         "fingerprint": fp,
         "language": info["language"],
@@ -721,7 +726,7 @@ def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int) -> byt
     selector: selectors.BaseSelector | None = None
     try:
         process = subprocess.Popen(
-            ["git", "-C", str(root), *arguments],
+            ["git", "--no-optional-locks", "-C", str(root), *arguments],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
         )
@@ -924,7 +929,7 @@ def _valid_entry(value: Any) -> bool:
         "python": "python-ast",
         "javascript": "javascript-outline",
         "typescript": "javascript-outline",
-    }.get(value["language"], "metadata")
+    }.get(value["language"], "heuristic-outline" if value["language"] in SUPPORTED_LANGUAGES else "metadata")
     if value["analysis"] != expected_analysis:
         return False
     if "parse_note" in value and (
@@ -1051,7 +1056,7 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
                 temporary.unlink()
             except OSError:
                 pass
-def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool) -> dict[str, Any]:
+def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True) -> dict[str, Any]:
     candidates: dict[str, dict[str, Any]] = {}
     skipped = 0
     excluded = 0
@@ -1134,6 +1139,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         _note(notes, f"file cap reached at {max_files} files")
     if any(info["language"] in {"python", "javascript", "typescript"} for info in candidates.values()):
         _note(notes, "Python and JavaScript/TypeScript import links are heuristic and incomplete; aliases, dynamic imports, and unresolved modules need native search")
+    if any(info["language"] in SUPPORTED_LANGUAGES for info in candidates.values()):
+        _note(notes, "Other language symbol outlines are heuristic; imports and semantic references require native search")
     selected = sorted(ranked[:max_files], key=lambda record: record["path"])
     model = {
         "root_name": repository_name(root),
@@ -1146,11 +1153,11 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             "notes": notes[:24],
         },
         "files": selected,
-        "focus": [record["path"] for record in _rank(selected, query)[:12]],
+        "focus": [record["path"] for record in ranked[:min(12, max_files)]],
     }
     if branch:
         model["branch"] = branch
-    if use_cache:
+    if use_cache and write_cache:
         try:
             _write_json(root, {path: reusable[path] for path in sorted(reusable)})
         except CodeMapError as exc:
@@ -1158,7 +1165,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     return model
 
 
-def _text(model: dict[str, Any], limit: int) -> str:
+def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     coverage = model["coverage"]
     notes = coverage.get("notes", [])
     if not isinstance(notes, list):
@@ -1179,12 +1186,20 @@ def _text(model: dict[str, Any], limit: int) -> str:
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.append("Excluded: " + summary)
+    terms = re.findall(r"[a-z0-9_]+", query.lower())
     by_path = {file["path"]: file for file in model["files"]}
     for path in model["focus"]:
         file = by_path.get(path)
         if not file:
             continue
-        symbol_values = file["symbols"][:8]
+        if terms:
+            def relevance(symbol: dict[str, Any]) -> int:
+                name = symbol["name"].lower()
+                signature = symbol.get("signature", "").lower()
+                return sum(2 * (term in name) + (term in signature) for term in terms)
+            symbol_values = sorted(file["symbols"], key=relevance, reverse=True)[:8]
+        else:
+            symbol_values = file["symbols"][:8]
         symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)
         if len(file["symbols"]) > len(symbol_values):
             symbols += f" (+{len(file['symbols']) - len(symbol_values)} more symbols)"
@@ -1205,15 +1220,17 @@ def _text(model: dict[str, Any], limit: int) -> str:
         return value
     suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
-def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
+def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
+    if no_cache and cache_read_only:
+        raise CodeMapError("--no-cache and --cache-read-only are mutually exclusive")
     if output_format not in {"text", "json"}:
         raise CodeMapError(f"unsupported output format: {output_format}")
     root_input = _repo_path(repo)
     root, head, inventory, notes = _git_context(root_input)
-    model = _build(root, head, inventory, notes, query, _clamp(int(max_files), 1, MAX_FILES), not no_cache, refresh)
+    model = _build(root, head, inventory, notes, query, _clamp(int(max_files), 1, MAX_FILES), not no_cache, refresh, write_cache=not cache_read_only)
     max_chars = _clamp(int(max_chars), 500, MAX_CHARS)
     if output_format == "text":
-        return model, _text(model, max_chars)
+        return model, _text(model, max_chars, query)
     if output_format == "json":
         return model, json.dumps(model, ensure_ascii=True, separators=(",", ":"))
     raise CodeMapError("unsupported output format")
@@ -1222,7 +1239,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", required=True, metavar="PATH")
     parser.add_argument("--query", default="", metavar="TEXT")
     parser.add_argument("--format", choices=("text", "json", "html"), default="text")
-    parser.add_argument("--no-cache", action="store_true")
+    cache_options = parser.add_mutually_exclusive_group()
+    cache_options.add_argument("--no-cache", action="store_true")
+    cache_options.add_argument("--cache-read-only", action="store_true")
     parser.add_argument("--refresh", action="store_true")
     parser.add_argument("--open", action="store_true", dest="open_html")
     parser.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
@@ -1241,20 +1260,47 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "html" and args.no_cache:
         print("the live viewer requires a local service and cannot be combined with --no-cache", file=sys.stderr)
         return 2
+    if args.format == "html" and args.cache_read_only:
+        print("the live viewer requires a local service and cannot be combined with --cache-read-only", file=sys.stderr)
+        return 2
     try:
         if args.format == "html":
             url = _server_api().open_map(args.repo, query=args.query, open_browser=args.open_html)
             sys.stdout.write(url + "\n")
             return 0
-        if args.no_cache:
-            model, rendered = build_map(args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files, no_cache=True, refresh=args.refresh, output_format=args.format)
+        if args.no_cache or args.cache_read_only:
+            model, rendered = build_map(
+                args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files,
+                no_cache=args.no_cache, cache_read_only=args.cache_read_only, refresh=args.refresh,
+                output_format=args.format,
+            )
+        elif args.format == "text":
+            try:
+                service = _server_api()
+                try:
+                    rendered = service.get_text(
+                        args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES),
+                        max_chars=_clamp(args.max_chars, 500, MAX_CHARS), refresh=args.refresh,
+                    )
+                except AttributeError:
+                    # Older local viewers may not expose the summary endpoint yet.
+                    model = service.get_model(args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES), refresh=args.refresh)
+                    rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
+                else:
+                    if not isinstance(rendered, str):
+                        model = service.get_model(args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES), refresh=args.refresh)
+                        rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
+            except (OSError, ValueError, ImportError) as exc:
+                print(f"local viewer unavailable; using an in-process map: {exc}", file=sys.stderr)
+                model, _ = build_map(args.repo, query=args.query, max_files=args.max_files, refresh=args.refresh)
+                rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
         else:
             try:
                 model = _server_api().get_model(args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES), refresh=args.refresh)
             except (OSError, ValueError, ImportError) as exc:
                 print(f"local viewer unavailable; using an in-process map: {exc}", file=sys.stderr)
                 model, _ = build_map(args.repo, query=args.query, max_files=args.max_files, refresh=args.refresh)
-            rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS)) if args.format == "text" else json.dumps(model, ensure_ascii=True, separators=(",", ":"))
+            rendered = json.dumps(model, ensure_ascii=True, separators=(",", ":"))
         sys.stdout.write(rendered)
         return 0
     except (CodeMapError, OSError, ValueError, ImportError) as exc:

@@ -87,7 +87,12 @@ def _json(value: Any) -> bytes:
 def _build_assets() -> tuple[dict[str, bytes], str]:
     assets: dict[str, bytes] = {}
     digest = hashlib.sha256()
-    for script in (Path(__file__), Path(engine.__file__), Path(engine.__file__).with_name("workspace_imports.py")):
+    for script in (
+        Path(__file__),
+        Path(engine.__file__),
+        Path(engine.__file__).with_name("workspace_imports.py"),
+        Path(engine.__file__).with_name("language_outlines.py"),
+    ):
         try:
             digest.update(script.read_bytes())
         except OSError:
@@ -496,8 +501,13 @@ def _write_registry(entries: dict[str, dict[str, str]]) -> None:
     path = _registry_path(True)
     records = list(entries.values())[-MAX_REGISTRY_PROJECTS:]
     payload = {"version": REGISTRY_VERSION, "projects": records}
+    encoded = _json(payload)
     temporary: Path | None = None
     try:
+        if path.exists():
+            info = path.stat()
+            if info.st_mode & 0o077 == 0 and info.st_size == len(encoded) and path.read_bytes() == encoded:
+                return
         with tempfile.NamedTemporaryFile(
             mode="w", encoding="utf-8", dir=path.parent, prefix=".registry-", suffix=".tmp", delete=False
         ) as handle:
@@ -765,8 +775,7 @@ def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool =
     return url
 
 
-def get_model(repo: str | os.PathLike[str], query: str = "", max_files: int = 2000, refresh: bool = False) -> dict[str, Any]:
-    """Return the canonical metadata model through the persistent service."""
+def _agent_response(repo: str | os.PathLike[str], query: str, max_files: int, refresh: bool, max_chars: int | None = None) -> Any:
     _, runtime, root = _open_registered(repo, query, max_files, refresh=refresh, requery=True)
     project = _project_id(root)
     deadline = time.monotonic() + MODEL_WAIT
@@ -782,16 +791,27 @@ def get_model(repo: str | os.PathLike[str], query: str = "", max_files: int = 20
         if time.monotonic() >= deadline:
             raise MapServerError("map index did not become ready before the bounded wait")
         time.sleep(0.1)
-    path = "/api/map?" + urllib.parse.urlencode({
-        "project": project,
-        "query": query[:MAX_QUERY],
-        "max_files": max(1, min(RESPONSE_MAX_FILES, int(max_files))),
-    })
+    params = {"project": project, "query": query[:MAX_QUERY], "max_files": max(1, min(RESPONSE_MAX_FILES, int(max_files)))}
+    key = "model" if max_chars is None else "text"
+    if max_chars is not None:
+        params["max_chars"] = engine._clamp(int(max_chars), 500, engine.MAX_CHARS)
+    path = ("/api/map?" if max_chars is None else "/api/summary?") + urllib.parse.urlencode(params)
     status, value, raw = _request(runtime["port"], "GET", path, runtime["token"])
-    if status != 200 or not value or not isinstance(value.get("model"), dict):
+    expected_type = dict if max_chars is None else str
+    if status != 200 or not value or not isinstance(value.get(key), expected_type):
         detail = raw.decode("utf-8", "replace")[:300]
-        raise MapServerError(f"map model unavailable ({status}): {detail}")
-    return value["model"]
+        raise MapServerError(f"map {key} unavailable ({status}): {detail}")
+    return value[key]
+
+
+def get_model(repo: str | os.PathLike[str], query: str = "", max_files: int = 2000, refresh: bool = False) -> dict[str, Any]:
+    """Return the canonical metadata model through the persistent service."""
+    return _agent_response(repo, query, max_files, refresh)
+
+
+def get_text(repo: str | os.PathLike[str], query: str = "", max_files: int = 2000, max_chars: int = 2500, refresh: bool = False) -> str:
+    """Return bounded agent context without transferring the full metadata model."""
+    return _agent_response(repo, query, max_files, refresh, max_chars)
 
 
 @dataclasses.dataclass
@@ -823,7 +843,7 @@ def _project_model(model: dict[str, Any], query: str, max_files: int) -> dict[st
     selected = sorted(ranked[:max_files], key=lambda record: record.get("path", ""))
     result = dict(model)
     result["files"] = selected
-    result["focus"] = [record["path"] for record in engine._rank(selected, query[:MAX_QUERY])[:12]]
+    result["focus"] = [record["path"] for record in ranked[:min(12, max_files)]]
     coverage = dict(model.get("coverage", {}))
     response_skipped = max(0, len(ranked) - len(selected))
     coverage["available"] = len(ranked)
@@ -950,12 +970,17 @@ class MapService:
         self._index_slots.acquire()
         try:
             before = _inventory_fingerprint(project.root)
+            display_name = engine.repository_name(project.root)
             with project.lock:
                 pending = bool(project.model and project.model.get("coverage", {}).get("pending"))
                 unchanged = project.model is not None and project.inventory_fingerprint == before
                 if not force and unchanged and not pending and not project.error:
+                    if project.name != display_name or project.model.get("root_name") != display_name:
+                        project.model = {**project.model, "root_name": display_name}
+                        project.name = display_name
+                        project.revision += 1
+                        project.updated_at = _now()
                     return
-            display_name = engine.repository_name(project.root)
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text")
             after = _inventory_fingerprint(project.root)
             git_state = _model_git_state(model)
@@ -1035,7 +1060,7 @@ class MapService:
                     query_changed = requery and project.query != query[:MAX_QUERY]
                     if query_changed:
                         project.query = query[:MAX_QUERY]
-                force = refresh or query_changed
+                force = refresh
             self._remember(project)
             self._evict_loaded(keep=project)
         self._refresh(project, force=force)
@@ -1078,6 +1103,14 @@ class MapService:
     def model(self, project: Project, max_files: int | None = None, query: str | None = None) -> dict[str, Any] | None:
         model, _, _, _, _ = self._model_snapshot(project, max_files, query)
         return model
+
+    def summary_response(self, project: Project, max_files: int | None, query: str, max_chars: int) -> tuple[dict[str, Any] | None, bytes]:
+        """Render bounded agent context inside the service rather than sending the index."""
+        model, project_info, revision, indexing, error = self._model_snapshot(project, max_files, query)
+        if model is None:
+            return None, _json({"project": project_info, "revision": revision, "indexing": indexing, "error": error, "model": None})
+        text = engine._text(model, engine._clamp(max_chars, 500, engine.MAX_CHARS), query)
+        return model, _json({"project": project_info, "revision": revision, "text": text})
 
     def map_response(self, project: Project, max_files: int | None = None, query: str | None = None) -> tuple[dict[str, Any] | None, bytes]:
         """Serialize a map response under the transport cap without shrinking the index."""
@@ -1205,14 +1238,14 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
                 return
             self._respond(200, _json(source))
             return
-        if parsed.path in {"/api/status", "/api/map"}:
-            project_id = urllib.parse.parse_qs(parsed.query).get("project", [""])[0]
+        if parsed.path in {"/api/status", "/api/map", "/api/summary"}:
+            params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+            project_id = params.get("project", [""])[0]
             with self.service.lock:
                 project = self.service.project(project_id)
             if project is None:
                 self._error(404, "unknown project")
                 return
-            params = urllib.parse.parse_qs(parsed.query)
             if parsed.path == "/api/status":
                 self._respond(200, _json(self.service.status(project)))
                 return
@@ -1226,7 +1259,15 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             if not isinstance(query, str) or len(query) > MAX_QUERY:
                 self._error(400, "query is invalid")
                 return
-            model, body = self.service.map_response(project, maximum, query=query)
+            if parsed.path == "/api/summary":
+                try:
+                    max_chars = int(params.get("max_chars", [engine.DEFAULT_MAX_CHARS])[0])
+                except ValueError:
+                    self._error(400, "invalid max_chars")
+                    return
+                model, body = self.service.summary_response(project, maximum, query, max_chars)
+            else:
+                model, body = self.service.map_response(project, maximum, query=query)
             if model is None:
                 try:
                     pending = json.loads(body.decode("utf-8"))

@@ -28,7 +28,8 @@
         <div class="graph-toolbar"><div class="view-tabs" role="group" aria-label="Graph view"><button data-view="all" aria-pressed="true">Everything</button><button data-view="neighbors" aria-pressed="false">Neighborhood</button><button data-view="changed" aria-pressed="false">Changed <span id="changed-count">0</span></button></div><button id="fit-button" class="text-button" title="Fit graph (F)" aria-label="Fit graph">Fit ↗</button></div>
         <div class="graph-breadcrumb"><span id="root-name">Code map</span><span id="scope-name">/ everything</span><span id="graph-mode" class="sr-only">Repository graph</span></div>
         <div id="graph-stage" class="graph-stage">
-          <canvas id="graph" tabindex="0" role="img" aria-label="Interactive dependency graph. Browse files in the sidebar to select a file."></canvas>
+          <canvas id="graph" tabindex="0" role="img" aria-describedby="graph-help" aria-label="Interactive dependency graph. Browse files in the sidebar to select a file."></canvas>
+                      <p id="graph-help" class="sr-only">Drag to pan and scroll to zoom. Select a node to inspect a file. Press F to fit the graph or slash to focus file search.</p>
           <div id="graph-tooltip" class="graph-tooltip" hidden></div>
           <div id="graph-loading" class="graph-overlay"><span class="spinner"></span><strong>Reading your codebase</strong><p id="loading-detail">Connecting to the local index…</p></div>
           <div id="graph-empty" class="graph-overlay" hidden><strong id="empty-title">No files to show</strong><p id="empty-detail"></p><button id="empty-reset" class="primary-button">Show everything</button></div>
@@ -53,9 +54,9 @@
         </div>
       </aside>
     </main>
-    <footer class="statusbar"><span id="live-status" data-state="loading"><i></i><span id="live-status-text">Connecting</span></span><span id="total-files">0 files</span><span id="total-lines">0 lines</span><span id="total-symbols">0 symbols</span><span class="status-spacer"></span><span id="branch-name"></span></footer>
+    <footer class="statusbar"><span id="live-status" data-state="loading" role="status" aria-live="polite"><i></i><span id="live-status-text">Connecting</span></span><span id="total-files">0 files</span><span id="total-lines">0 lines</span><span id="total-symbols">0 symbols</span><span class="status-spacer"></span><span id="branch-name"></span></footer>
     <div id="toast" class="toast" role="status" hidden></div>
-    <dialog id="source-dialog" class="source-dialog"><header><div><strong id="source-title"></strong><p id="source-meta"></p></div><button id="source-close" aria-label="Close source preview">×</button></header><div id="source-content" class="source-content"></div><p id="source-note" class="source-note"></p></dialog>
+    <dialog id="source-dialog" class="source-dialog" aria-labelledby="source-title"><header><div><strong id="source-title"></strong><p id="source-meta"></p></div><button id="source-close" aria-label="Close source preview">×</button></header><div id="source-content" class="source-content"></div><p id="source-note" class="source-note"></p></dialog>
   </div>
   <script type="module" src="./code-map.js"></script>
 </body>
