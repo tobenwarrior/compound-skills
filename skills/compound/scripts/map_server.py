@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Small authenticated loopback service for the Compound code-map viewer."""
+"""Loopback-only service for the Compound code-map viewer.
+
+Control calls require the runtime token; reads are limited to the loopback host.
+"""
 
 from __future__ import annotations
 
