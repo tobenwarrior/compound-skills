@@ -109,13 +109,23 @@ python3 -B "$COMPOUND_SKILL_DIR/scripts/lsp_lookup.py" --repo . --file src/main.
 | [Repository hygiene](skills/compound/references/repo-hygiene.md) | Audit root clutter, oversized files, unreferenced scripts, and ignore gaps |
 | [Git and pull requests](skills/compound/references/git.md) | Write clear commit/PR titles, report verified checks, and keep human attribution |
 
-## Benchmark: navigation and bug fix
+## Benchmarks
 
-![Codex navigation and bug-fix benchmark: median time and input tokens with and without Compound on one synthetic task.](skills/compound/assets/benchmarks/agent-comparison.svg)
+These offline comparisons find symbol locations in the same 103-file synthetic repository. Each result is the median of 15 timed runs: five each for Python, TypeScript, and Rust. All 60 runs returned the expected locations. Run them yourself with Python 3, Git, and `rg`:
 
-On this task, all five completed runs fixed the bug and passed 14 tests. The Compound runs took longer and used more input tokens in this small sample. The task used a synthetic Python repository and Codex CLI 0.162.1 on macOS arm64; the comparison includes Compound's skill guidance and map generation, not just the map. Three runs used ordinary repository tools; two used Compound. The map runs used different map commands and included map-tool files inside the fixture; copying those files was outside the timed runs. This result does not isolate the map's effect or predict performance on other projects. Input-token totals include cached input.
+```sh
+python3 -B scripts/benchmark_navigation_tools.py --files-per-language 20 --repetitions 5
+```
 
-Use `$map` to explore a repository visually, or Compound's focused map to orient an agent before it inspects source.
+### Find a definition
+
+![Definition-location tool benchmark: rg 0.016 seconds versus Compound lookup 0.619 seconds, with 15 of 15 correct per mode.](skills/compound/assets/benchmarks/definition.svg)
+
+### Find lexical occurrences
+
+![Lexical-occurrence tool benchmark: rg 0.017 seconds versus Compound lookup 0.712 seconds, with 15 of 15 correct per mode.](skills/compound/assets/benchmarks/references.svg)
+
+The `rg` baseline scans for the requested locations; Compound's no-cache lookup also builds map metadata and returns definitions and lexical occurrences. These are *tool* timings from one synthetic fixture, not an agent benchmark or a warm-cache comparison. They show that direct search was faster for these small queries; they do not establish whether map context helps an agent on larger tasks.
 
 ## Repository hygiene
 
