@@ -109,56 +109,13 @@ python3 -B "$COMPOUND_SKILL_DIR/scripts/lsp_lookup.py" --repo . --file src/main.
 | [Repository hygiene](skills/compound/references/repo-hygiene.md) | Audit root clutter, oversized files, unreferenced scripts, and ignore gaps |
 | [Git and pull requests](skills/compound/references/git.md) | Write clear commit/PR titles, report verified checks, and keep human attribution |
 
-## Benchmarks
+## Benchmark: navigation and bug fix
 
-Use Compound for repository orientation and task-specific engineering guidance; use `$map` to explore the codebase visually. These measurements illustrate specific workloads, not a guarantee of results on other repositories or hosts. The agent task compares runs with and without Compound; the other two sections measure Compound's own behavior and footprint.
+![Codex navigation and bug-fix benchmark: median time and input tokens with and without Compound on one synthetic task.](skills/compound/assets/benchmarks/agent-comparison.svg)
 
-### Reported agent navigation & bug-fix benchmark
+On this task, all five completed runs fixed the bug and passed 14 tests. The Compound runs took longer and used more input tokens in this small sample. The task used a synthetic Python repository and Codex CLI 0.162.1 on macOS arm64; the comparison includes Compound's skill guidance and map generation, not just the map. Three runs used ordinary repository tools; two used Compound. The map runs used different map commands and included map-tool files inside the fixture; copying those files was outside the timed runs. This result does not isolate the map's effect or predict performance on other projects. Input-token totals include cached input.
 
-![Agent benchmark: Codex and Claude completed the task with and without Compound; Compound reduced wall time and input tokens in these runs.](skills/compound/assets/benchmarks/agent-comparison.svg)
-
-The original run records and reproduction commands are not included in this repository, so the host labels and methodology could not be independently verified. The table reports one result per configuration.
-
-In the reported runs, Codex used **29.7% less time and 25.8% fewer input tokens** with Compound; Claude used **11.7% less time and 54.2% fewer input tokens**. All four runs passed 4/4 checks. Output tokens increased for Claude, from 1,259 to 1,484. These are reported results for this task, not an estimate of typical savings.
-
-Measured on a 40-file multi-package Python repository where fixing a settlement clamping bug requires tracing a 3-hop call chain (`tests/test_settlement.py` → `src/checkout/pipeline.py` → `src/billing/invoice.py` → `src/ledger/adjustments.py`), adding a regression test, and passing `unittest` (4/4 grading checks):
-
-| Host | Mode | Correct | Wall time | Steps | Input / output tokens |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Codex CLI (`0.162.1`) | Without Compound | 4/4 | 40.06 s | 8 | 130,150 / 712 |
-| Codex CLI (`0.162.1`) | With Compound | 4/4 | **28.16 s** | 7 | **96,601** / 690 |
-| Claude Code (`2.1.312`, `sonnet`) | Without Compound | 4/4 | 17.31 s | 8 | 123,501 / 1,259 |
-| Claude Code (`2.1.312`, `sonnet`) | With Compound | 4/4 | **15.28 s** | 8 | **56,613** / 1,484 |
-
-### Code-map & symbol-lookup microbenchmark
-
-![Code-map benchmark: cold, warm, and incremental map times and files parsed, plus cold and in-memory symbol-lookup ranges.](skills/compound/assets/benchmarks/code-map.svg)
-
-The warm map took **0.090 s versus 0.214 s cold** (58% less time) and parsed no source files; after one edit, the incremental map parsed one file. These compare cache states within Compound, not navigation without Compound. Lookup ranges cover five different language queries; they are lexical matches, not semantic references.
-
-Reproduce with `python3 -B scripts/benchmark_code_map.py --files-per-language 20 --repetitions 3` (macOS arm64, Python 3.14.5, 103 generated files / 331,745 B across Python, JS, TS, Go, and Rust):
-
-| Operation | Time | Files parsed | Source bytes read | Result |
-| --- | ---: | ---: | ---: | --- |
-| Cold map build | 0.214 s | 103 | 331,745 B | 5/5 declarations, 2/2 Go/Rust edges, 952 B summary |
-| Warm map cache (median) | 0.090 s | 0 | 0 B | Reuses validated metadata cache |
-| Incremental map (1 file edit) | 0.157 s | 1 | 230 B | Reparses changed file only |
-| Symbol lookup (cold, 5 languages) | 0.225–0.434 s | 103 | 663,528 B | 5/5 definitions, 20/20 lexical occurrences |
-| Symbol lookup (in-memory postings) | 0.102–0.268 s | 0 | 0 B | 102 cached files, ~1.9 KB JSON per query |
-
-### Package context footprint
-
-![Context footprint: 58 discovery-description words, 791 entrypoint words, and 3,911 reference words at different loading stages.](skills/compound/assets/benchmarks/context-footprint.svg)
-
-These are source word counts at different loading stages, not a comparison with another tool or a token count. Host behavior and task-specific loading can vary; the entrypoint and reference totals cover all five skills and all 12 guides respectively, not the amount loaded for every task.
-
-Reproduce with `python3 scripts/check.py --json`:
-
-| Surface | Loading | Words | UTF-8 bytes |
-| --- | --- | ---: | ---: |
-| Discovery descriptions (5 skills) | Always visible | 58 | 391 B |
-| Skill entrypoints (`compound` + 4 shortcuts) | On invocation, by skill | 791 | 6,043 B |
-| Workflow references (12 guides) | On demand per task | 3,911 | 28,571 B |
+Use `$map` to explore a repository visually, or Compound's focused map to orient an agent before it inspects source.
 
 ## Repository hygiene
 

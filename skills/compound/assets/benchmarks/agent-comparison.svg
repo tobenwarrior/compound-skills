@@ -1,79 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
-  <title id="title">Native agent navigation and bug-fix benchmark</title>
-  <desc id="desc">Reported wall-time comparison for Codex CLI and Claude Code with and without Compound. The repository does not include the original run records. Every reported run scored four out of four correct. Reported Codex CLI time is 40.06 seconds without Compound and 28.16 seconds with Compound; reported Claude Code time is 17.31 seconds without and 15.28 seconds with.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="770" viewBox="0 0 1280 770" role="img" aria-labelledby="title description">
+  <title id="title">Codex navigation and bug-fix comparison</title>
+  <desc id="description">On a single synthetic Python bug-fix task, three runs without Compound had median wall time 80.07 seconds and 257,336 input tokens. Two runs with Compound guidance and code map had median wall time 117.94 seconds and 492,126 input tokens. All five completed runs passed 14 tests. The map runs used different map queries and included map files in the fixture, so this is not an isolated measurement of the map alone.</desc>
   <defs>
-    <linearGradient id="teal" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0" stop-color="#15c99b"/>
-      <stop offset="1" stop-color="#24c9e7"/>
-    </linearGradient>
-    <filter id="glow" x="-30%" y="-100%" width="160%" height="300%">
-      <feGaussianBlur stdDeviation="9" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <linearGradient id="accent" x1="0" x2="1"><stop stop-color="#15c99b"/><stop offset="1" stop-color="#24c9e7"/></linearGradient>
     <style>
-      .title { font: 700 42px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f3f7fa; }
-      .subtitle { font: 400 18px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #9ca8b2; }
-      .section { font: 700 22px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f3f7fa; }
-      .label { font: 600 17px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f3f7fa; }
-      .small { font: 400 14px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #9ca8b2; }
-      .value { font: 700 19px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f3f7fa; }
-      .value-teal { font: 700 19px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #21d7b0; }
-      .mono { font: 600 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #d8e0e5; }
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f2f6f8; }
+      .title { font-size: 40px; font-weight: 700; }
+      .subtitle { font-size: 19px; fill: #9daab2; }
+      .section { font-size: 24px; font-weight: 700; }
+      .label { font-size: 21px; font-weight: 600; }
+      .value { font-size: 27px; font-weight: 700; }
+      .accent { fill: #20d3b0; }
+      .note { font-size: 17px; fill: #aebac1; }
     </style>
   </defs>
-
-  <rect width="1280" height="820" fill="#0a0f14"/>
-  <rect x="0" y="0" width="1280" height="5" fill="#ff8265"/>
-  <text x="64" y="78" class="title">Native agent navigation &amp; bug-fix benchmark</text>
-  <text x="64" y="114" class="subtitle">40-file Python repository · one bug-fix task · four grading checks</text>
-  <rect x="780" y="92" width="436" height="34" rx="17" fill="#241d1b" stroke="#ff8265" stroke-width="1"/>
-  <text x="998" y="114" text-anchor="middle" style="font:700 13px Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif; fill:#ffad99; letter-spacing:.4px">REPORTED RESULTS · RUN RECORDS NOT IN REPOSITORY</text>
-  <line x1="64" y1="145" x2="1216" y2="145" stroke="#29333b" stroke-width="2"/>
-
-  <text x="64" y="193" class="section">Wall time · lower is better</text>
-  <text x="64" y="220" class="small">Values are transcribed from the README table; the original run records are not included here.</text>
-
-  <rect x="64" y="246" width="1152" height="394" rx="14" fill="#111820" stroke="#2a353d" stroke-width="2"/>
-  <text x="96" y="282" class="small">HOST / MODE</text>
-  <text x="340" y="282" class="small">WALL TIME (SECONDS)</text>
-  <text x="812" y="282" class="small">EXACT</text>
-  <text x="932" y="282" class="small">INPUT / OUTPUT TOKENS</text>
-  <line x1="96" y1="296" x2="1184" y2="296" stroke="#2a353d" stroke-width="1"/>
-  <line x1="340" y1="305" x2="340" y2="602" stroke="#29343c" stroke-width="1"/>
-  <line x1="800" y1="305" x2="800" y2="602" stroke="#29343c" stroke-width="1"/>
-  <line x1="918" y1="305" x2="918" y2="602" stroke="#29343c" stroke-width="1"/>
-
-  <text x="96" y="329" class="label">Codex CLI <tspan class="mono">0.162.1</tspan></text>
-  <text x="116" y="367" class="small">Without Compound</text>
-  <text x="116" y="413" class="small">With Compound</text>
-  <rect x="340" y="351" width="450" height="22" rx="11" fill="#202a31"/>
-  <rect x="340" y="351" width="401" height="22" rx="11" fill="#68747d"/>
-  <rect x="340" y="397" width="450" height="22" rx="11" fill="#202a31"/>
-  <rect x="340" y="397" width="282" height="22" rx="11" fill="url(#teal)" filter="url(#glow)"/>
-  <text x="812" y="369" class="value">40.06 s</text>
-  <text x="812" y="415" class="value-teal">28.16 s</text>
-  <text x="932" y="369" class="mono">130,150 / 712</text>
-  <text x="932" y="415" class="mono">96,601 / 690</text>
-
-  <text x="96" y="466" class="label">Claude Code <tspan class="small">2.1.312 · sonnet</tspan></text>
-  <text x="116" y="504" class="small">Without Compound</text>
-  <text x="116" y="550" class="small">With Compound</text>
-  <rect x="340" y="488" width="450" height="22" rx="11" fill="#202a31"/>
-  <rect x="340" y="488" width="173" height="22" rx="11" fill="#68747d"/>
-  <rect x="340" y="534" width="450" height="22" rx="11" fill="#202a31"/>
-  <rect x="340" y="534" width="153" height="22" rx="11" fill="url(#teal)" filter="url(#glow)"/>
-  <text x="812" y="506" class="value">17.31 s</text>
-  <text x="812" y="552" class="value-teal">15.28 s</text>
-  <text x="932" y="506" class="mono">123,501 / 1,259</text>
-  <text x="932" y="552" class="mono">56,613 / 1,484</text>
-
-  <line x1="96" y1="583" x2="1184" y2="583" stroke="#2a353d" stroke-width="1"/>
-  <text x="96" y="612" class="small">Correct: <tspan class="value">4 / 4</tspan> in every run · Steps: <tspan class="value">8 → 7</tspan> Codex · <tspan class="value">8 → 8</tspan> Claude</text>
-
-  <rect x="64" y="676" width="1152" height="86" rx="14" fill="#111820" stroke="#2a353d" stroke-width="2"/>
-  <circle cx="100" cy="719" r="8" fill="#68747d"/>
-  <text x="120" y="725" class="small">Without Compound</text>
-  <circle cx="330" cy="719" r="8" fill="#21d7b0"/>
-  <text x="350" y="725" class="small">With Compound</text>
-  <text x="640" y="725" class="small">Bars share a 0–45 second scale · exact values are printed beside each bar</text>
+  <rect width="1280" height="770" fill="#0a0f14"/>
+  <rect width="1280" height="5" fill="#ff8265"/>
+  <text x="64" y="72" class="title">Code navigation + bug fix</text>
+  <text x="64" y="110" class="subtitle">Codex CLI 0.162.1 · one synthetic Python task · median per completed run</text>
+  <line x1="64" y1="140" x2="1216" y2="140" stroke="#29333b" stroke-width="2"/>
+  <text x="64" y="191" class="section">Wall time</text>
+  <text x="64" y="240" class="label">Without Compound</text>
+  <rect x="340" y="215" width="545" height="34" rx="10" fill="#202a31"/>
+  <rect x="340" y="215" width="291" height="34" rx="10" fill="#808b91"/>
+  <text x="925" y="241" class="value">80.07 s</text>
+  <text x="64" y="303" class="label">With Compound</text>
+  <rect x="340" y="278" width="545" height="34" rx="10" fill="#202a31"/>
+  <rect x="340" y="278" width="428" height="34" rx="10" fill="url(#accent)"/>
+  <text x="925" y="304" class="value accent">117.94 s</text>
+  <text x="64" y="376" class="section">Input tokens <tspan class="note">(including cached input)</tspan></text>
+  <text x="64" y="425" class="label">Without Compound</text>
+  <rect x="340" y="400" width="545" height="34" rx="10" fill="#202a31"/>
+  <rect x="340" y="400" width="255" height="34" rx="10" fill="#808b91"/>
+  <text x="925" y="426" class="value">257,336</text>
+  <text x="64" y="488" class="label">With Compound</text>
+  <rect x="340" y="463" width="545" height="34" rx="10" fill="#202a31"/>
+  <rect x="340" y="463" width="488" height="34" rx="10" fill="url(#accent)"/>
+  <text x="925" y="489" class="value accent">492,126</text>
+  <line x1="64" y1="540" x2="1216" y2="540" stroke="#29333b" stroke-width="2"/>
+  <text x="64" y="592" class="value accent">14 / 14</text>
+  <text x="64" y="623" class="note">tests passed in every run</text>
+  <text x="390" y="592" class="value">3 vs 2</text>
+  <text x="390" y="623" class="note">completed runs</text>
+  <text x="680" y="592" class="value">One task</text>
+  <text x="680" y="623" class="note">synthetic repository</text>
+  <text x="64" y="690" class="note">Compound runs included skill guidance and a code map; map-tool files were inside the fixture.</text>
+  <text x="64" y="718" class="note">A small, uneven sample of one setup; results do not establish an isolated map effect.</text>
 </svg>
