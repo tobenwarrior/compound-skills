@@ -254,11 +254,12 @@ export function createGraph(canvas, options = {}) {
   /** Resolve the page's theme tokens so the canvas matches light and dark surfaces. */
   function readTheme() {
     const fallback = { text: "#18202a", dim: "#657180", accent: "#315fbd", halo: "#f5f7fa", font: "sans-serif", changed: "#d99a2b" };
-    if (typeof ownerWindow.getComputedStyle !== "function" || !ownerDocument || !canvas.parentNode) return fallback;
+    const stage = canvas.parentElement;
+    if (typeof ownerWindow.getComputedStyle !== "function" || !ownerDocument || !stage) return fallback;
     if (!state.probe) {
       state.probe = ownerDocument.createElement("i");
       state.probe.hidden = true;
-      canvas.parentNode.appendChild(state.probe);
+      stage.appendChild(state.probe);
     }
     const resolve = (variable, value) => {
       state.probe.style.color = `var(${variable}, ${value})`;
@@ -266,7 +267,7 @@ export function createGraph(canvas, options = {}) {
     };
     const canvasStyle = ownerWindow.getComputedStyle(canvas);
     const dark = canvasStyle.colorScheme === "dark";
-    const background = ownerWindow.getComputedStyle(canvas.parentNode).backgroundColor;
+    const background = ownerWindow.getComputedStyle(stage).backgroundColor;
     const opaque = background && background !== "transparent" && !/rgba\(.*,\s*0\)$/.test(background);
     return {
       text: resolve("--text", fallback.text),
@@ -324,10 +325,22 @@ export function createGraph(canvas, options = {}) {
     return { x: (minX + maxX) / 2, y: (minY + maxY) / 2, scale };
   }
 
+  /** Return where the camera is heading, so new moves build on an unfinished ease. */
+  function targetView() {
+    const goal = state.goal;
+    if (!goal) return state.view;
+    if (!goal.anchor) return goal;
+    return {
+      scale: goal.scale,
+      x: goal.anchor.wx - (goal.anchor.sx - state.width / 2) / goal.scale,
+      y: goal.anchor.wy - (goal.anchor.sy - state.height / 2) / goal.scale,
+    };
+  }
+
   /** Return a camera goal that keeps the selected node inside the viewport, or null. */
   function revealSelected(center, margin = 34) {
     if (state.selected < 0) return null;
-    const view = state.goal && !state.goal.anchor ? state.goal : state.view;
+    const view = targetView();
     const px = (state.x[state.selected] - view.x) * view.scale + state.width / 2;
     const py = (state.y[state.selected] - view.y) * view.scale + state.height / 2;
     const edge = center ? 72 : margin;
@@ -618,7 +631,7 @@ export function createGraph(canvas, options = {}) {
   }
 
   /** Place labels below their nodes in priority order, skipping any that would collide. */
-  function paintLabels(ctx, theme, candidates, alphaOf, strongOf) {
+  function paintLabels(ctx, theme, candidates, alphaOf, strongOf, focusT = 0) {
     const { width, height } = state;
     const cell = 64;
     const placed = new Map();
@@ -649,7 +662,7 @@ export function createGraph(canvas, options = {}) {
         wide = ctx.measureText(value).width * widen;
       }
       const x0 = clamp(screenX(state.x[i]) - wide / 2 - 2, 0, Math.max(0, width - wide - 4));
-      const y0 = clamp(screenY(state.y[i]) + nodeRadius(i, state.focusT) * state.view.scale + 2, 0, Math.max(0, height - 15));
+      const y0 = clamp(screenY(state.y[i]) + nodeRadius(i, focusT) * state.view.scale + 2, 0, Math.max(0, height - 15));
       const rect = { x0, y0, x1: x0 + wide + 4, y1: y0 + 15 };
       const overlaps = visit(rect, key => (placed.get(key) || []).some(other => (
         rect.x0 < other.x1 && rect.x1 > other.x0 && rect.y0 < other.y1 && rect.y1 > other.y0
@@ -764,7 +777,7 @@ export function createGraph(canvas, options = {}) {
     }
     if (focus !== selected) ring(ctx, focus, theme.text, 0.75 * focusT, 2.5, 1.3, focusT);
     neighbors.sort((left, right) => state.radius[right] - state.radius[left] || left - right);
-    paintLabels(ctx, theme, [focus, ...neighbors], i => (i === focus ? 1 : focusT), i => i === focus || i === selected);
+    paintLabels(ctx, theme, [focus, ...neighbors], i => (i === focus ? 1 : focusT), i => i === focus || i === selected, focusT);
   }
 
   function draw(emitStats = false) {
@@ -854,7 +867,7 @@ export function createGraph(canvas, options = {}) {
     for (let steps = 0; state.layoutActive && steps < 2 && now() - started < 10; steps += 1) layoutStep();
     if (state.layoutActive && !state.cameraInteracted) {
       const goal = state.fitTracking ? fitTarget() : revealSelected(false);
-      if (goal) setCamera(goal, !state.didFit);
+      if (goal) setCamera(goal, !state.didFit || !animate());
     }
     const cameraMoving = stepCamera(dt);
     const transitioning = stepTransitions(dt);
@@ -877,9 +890,8 @@ export function createGraph(canvas, options = {}) {
     const multiplier = finite(factor, 1);
     if (!(multiplier > 0)) return api;
     Object.assign(state, { cameraInteracted: true, fitTracking: false, inertia: null });
-    const current = state.goal && state.goal.anchor ? state.goal.scale : state.view.scale;
     const world = worldPoint(anchorX, anchorY);
-    setCamera({ scale: current * multiplier, anchor: { sx: anchorX, sy: anchorY, wx: world.x, wy: world.y } });
+    setCamera({ scale: targetView().scale * multiplier, anchor: { sx: anchorX, sy: anchorY, wx: world.x, wy: world.y } });
     return api;
   }
 
@@ -932,7 +944,6 @@ export function createGraph(canvas, options = {}) {
       appear: previous.empty && n && animate() ? 0 : state.appear,
       colors: [], byColor: [], changedNodes: [],
     });
-    setCursor("");
 
     // Compressed adjacency: neighbors of node i are adj[adjStart[i] .. adjStart[i + 1]).
     const degree = new Int32Array(n + 1);
@@ -1015,6 +1026,7 @@ export function createGraph(canvas, options = {}) {
     // Carry hover, drag, and selection across refreshes so polling never interrupts a gesture.
     const keep = id => (id !== null && index.has(id) ? index.get(id) : -1);
     state.hovered = keep(carried.hovered);
+    if (carried.hovered !== null && state.hovered < 0) callback(onHover, null);
     setFocus(keep(carried.focus));
     if (state.focus < 0) state.focusT = 0;
     if (state.ripple) state.ripple.node = keep(carried.ripple);
@@ -1023,6 +1035,7 @@ export function createGraph(canvas, options = {}) {
       if (state.gesture.node < 0) Object.assign(state.gesture, { type: "pan", dragging: false });
       else if (state.gesture.dragging) state.fixed[state.gesture.node] = 1;
     }
+    setCursor(state.gesture && state.gesture.dragging ? "grabbing" : state.hovered >= 0 ? "pointer" : "");
     state.selected = keep(normalized.selectedId || null);
     markNeighbors(state.selectedNeighbor, state.selected, 1);
     orderEdges();
@@ -1032,7 +1045,7 @@ export function createGraph(canvas, options = {}) {
     }
     if (!state.didFit && n) fit();
     const reveal = revealSelected(selectionChanged);
-    if (reveal) setCamera(reveal, !state.didFit);
+    if (reveal) setCamera(reveal, !state.didFit || !animate());
     if (!topologySame) startLayout();
     draw(true);
     return api;
@@ -1090,6 +1103,11 @@ export function createGraph(canvas, options = {}) {
   function handlePointerDown(event) {
     if (state.destroyed || (event.button !== undefined && event.button > 0)) return;
     const point = pointerPoint(event);
+    // A primary pointer starts a fresh gesture, even if an earlier release was never delivered.
+    if (event.isPrimary && state.pointers.size) {
+      releaseDrag(state.gesture);
+      state.pointers.clear();
+    }
     state.pointers.set(event.pointerId, point);
     if (typeof canvas.setPointerCapture === "function") {
       try { canvas.setPointerCapture(event.pointerId); } catch (_error) { /* optional */ }
@@ -1200,10 +1218,11 @@ export function createGraph(canvas, options = {}) {
   }
 
   function handleKey(event) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     const pan = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
     if (pan) {
       Object.assign(state, { cameraInteracted: true, fitTracking: false });
-      const view = state.goal && !state.goal.anchor ? state.goal : state.view;
+      const view = targetView();
       setCamera({ x: view.x + (pan[0] * 120) / view.scale, y: view.y + (pan[1] * 120) / view.scale, scale: view.scale });
     } else if (event.key === "+" || event.key === "=") zoom(1.25);
     else if (event.key === "-" || event.key === "_") zoom(0.8);
@@ -1238,6 +1257,7 @@ export function createGraph(canvas, options = {}) {
     [canvas, "pointermove", handlePointerMove],
     [canvas, "pointerup", handlePointerUp],
     [canvas, "pointercancel", handlePointerUp],
+    [canvas, "lostpointercapture", handlePointerUp],
     [canvas, "pointerleave", handlePointerLeave],
     [canvas, "wheel", handleWheel, { passive: false }],
     [canvas, "keydown", handleKey],
