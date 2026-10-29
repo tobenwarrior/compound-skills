@@ -226,7 +226,7 @@ export function createGraph(canvas, options = {}) {
     // Drawing.
     theme: null, probe: null, cache: null, sceneVersion: 0, sceneKey: "", lastKey: "", labelFont: "",
     bounds: { left: 0, right: 0, top: 0, bottom: 0 }, edgeLists: [0, 1, 2].map(() => new Int32Array(0)),
-    drawnEdges: 0, visibleLabels: 0, lastDrawMs: 0, stats: null, statsSignature: "",
+    drawnEdges: 0, visibleLabels: 0, lastDrawMs: 0, statsSignature: "",
     resizeObserver: null, themeObserver: null,
   };
 
@@ -821,9 +821,18 @@ export function createGraph(canvas, options = {}) {
     context.globalAlpha = 1;
 
     state.lastDrawMs = now() - started;
-    const selectedPosition = selected >= 0 ? { x: screenX(state.x[selected]), y: screenY(state.y[selected]) } : null;
-    state.stats = {
-      nodes: n,
+    const signature = `${state.layoutActive}|${n}|${state.edgeTotal}|${state.drawnEdges}|${selected}`;
+    if (emitStats || signature !== state.statsSignature) {
+      state.statsSignature = signature;
+      callback(onStats, getStats());
+    }
+  }
+
+  /** Report live camera and layout state with the counts from the latest frame. */
+  function getStats() {
+    const { view, selected } = state;
+    return {
+      nodes: state.n,
       edges: state.edgeTotal,
       retainedEdges: state.retainedEdges,
       edgeLimit: MAX_RELATIONSHIPS,
@@ -841,14 +850,9 @@ export function createGraph(canvas, options = {}) {
       fitTracking: state.fitTracking,
       cameraInteracted: state.cameraInteracted,
       drawMs: state.lastDrawMs,
-      selectedPosition,
+      selectedPosition: selected >= 0 ? { x: screenX(state.x[selected]), y: screenY(state.y[selected]) } : null,
       view: { x: view.x, y: view.y, scale: view.scale, width: state.width, height: state.height },
     };
-    const signature = `${state.layoutActive}|${n}|${state.edgeTotal}|${state.drawnEdges}|${selected}`;
-    if (emitStats || signature !== state.statsSignature) {
-      state.statsSignature = signature;
-      callback(onStats, getStats());
-    }
   }
 
   // Frame loop --------------------------------------------------------------
@@ -1299,15 +1303,6 @@ export function createGraph(canvas, options = {}) {
     Object.assign(state, { frame: null, cache: null, nodes: [], n: 0 });
     state.index.clear();
     state.memory.clear();
-  }
-
-  function getStats() {
-    if (!state.stats) draw();
-    return {
-      ...state.stats,
-      view: { ...state.stats.view },
-      selectedPosition: state.stats.selectedPosition ? { ...state.stats.selectedPosition } : null,
-    };
   }
 
   const api = { setData, select, fit, zoom, destroy, getStats };
