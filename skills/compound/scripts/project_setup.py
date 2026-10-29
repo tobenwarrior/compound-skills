@@ -460,14 +460,11 @@ def _global_disable_plans(context: GlobalContext) -> list[tuple[TargetState, str
     for host in context.hosts:
         if host.name == "cursor":
             continue
-        for target in host.targets:
-            state = target
+        for state in host.targets:
             if not state.exists or state.markers is None:
                 continue
             new_text = _remove_block(state.text or "", state.markers, GLOBAL_BLOCK_LINES)
-            remove_file = False
-            if host.name == "claude":
-                remove_file = not new_text.strip()
+            remove_file = not new_text.strip()
             if remove_file or new_text != (state.text or ""):
                 plans.append((state, new_text, remove_file))
     return plans
@@ -495,13 +492,13 @@ def _global_host_status(host: GlobalHost) -> str:
 
 def _global_status_name(context: GlobalContext) -> str:
     bases = {_global_host_status(host).removesuffix("-with-warnings") for host in context.hosts}
-    if not bases:
+    # Host-managed hosts set the aggregate only when no helper-managed host is selected.
+    helper_bases = bases - {"host-managed"}
+    if not helper_bases:
+        base = "host-managed" if bases else "disabled"
+    elif helper_bases == {"disabled"}:
         base = "disabled"
-    elif bases == {"disabled"}:
-        base = "disabled"
-    elif bases == {"host-managed"}:
-        base = "host-managed"
-    elif bases <= {"enabled", "host-managed"}:
+    elif helper_bases == {"enabled"}:
         base = "enabled"
     else:
         base = "partial"
@@ -655,7 +652,7 @@ def _planned_disable(context: Context) -> list[tuple[TargetState, str, bool]]:
         if not state.exists or state.markers is None:
             continue
         new_text = _remove_block(state.text or "", state.markers)
-        remove_file = state is context.fallback and new_text == ""
+        remove_file = not new_text.strip()
         if remove_file or new_text != (state.text or ""):
             plans.append((state, new_text, remove_file))
     return plans
@@ -716,7 +713,7 @@ def _apply(plans: Iterable[tuple[TargetState, str, bool]]) -> tuple[bool, tuple[
     staged = _stage(plans)
     changed_paths: list[str] = []
     try:
-        # Replace all staged files before deleting a managed fallback file.
+        # Replace all staged files before deleting any emptied file.
         for item in staged:
             if item.remove_file:
                 continue
