@@ -115,7 +115,7 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
     except OSError:
         pass
 
-    ignored = {".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache", "tests", "test"}
+    ignored = {".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache"}
     paths = []
 
     def unreadable(exc: OSError) -> None:
@@ -124,7 +124,8 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
 
     for directory, directories, files in os.walk(root, followlinks=False, onerror=unreadable):
         parent = Path(directory)
-        directories[:] = [name for name in directories if name not in ignored]
+        # Mirror .gitignore: caches at any depth, development tests only at the package root.
+        directories[:] = [name for name in directories if name not in ignored and not (parent == root and name == "tests")]
         paths.extend(parent / name for name in files if name not in ignored)
         paths.extend(parent / name for name in directories if safe_is_symlink(root, parent / name, errors))
     return sorted(paths, key=lambda path: relative(root, path))
