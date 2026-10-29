@@ -67,12 +67,7 @@ MODEL_WAIT = 30.0
 MAX_LOADED_PROJECTS = 8
 MAX_INDEX_WORKERS = 4
 ASSET_NAMES = ("code-map.html", "code-map.css", "code-map.js", "map-graph.js")
-ASSET_TYPES = {
-    "code-map.html": "text/html; charset=utf-8",
-    "code-map.css": "text/css; charset=utf-8",
-    "code-map.js": "text/javascript; charset=utf-8",
-    "map-graph.js": "text/javascript; charset=utf-8",
-}
+ASSET_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
 ASSET_DIR = Path(__file__).resolve().parent.parent / "assets"
 
 
@@ -93,16 +88,8 @@ def _json(value: Any) -> bytes:
 def _build_assets() -> tuple[dict[str, bytes], str]:
     assets: dict[str, bytes] = {}
     digest = hashlib.sha256()
-    for script in (
-        Path(__file__),
-        Path(engine.__file__),
-        Path(engine.__file__).with_name("workspace_imports.py"),
-        Path(engine.__file__).with_name("language_outlines.py"),
-        Path(engine.__file__).with_name("language_imports.py"),
-        Path(engine.__file__).with_name("safe_open.py"),
-        Path(engine.__file__).with_name("symbol_lookup.py"),
-        Path(engine.__file__).with_name("reference_cache.py"),
-    ):
+    modules = ("workspace_imports", "language_outlines", "language_imports", "safe_open", "symbol_lookup", "reference_cache")
+    for script in (Path(__file__), Path(engine.__file__), *(Path(engine.__file__).with_name(f"{name}.py") for name in modules)):
         try:
             digest.update(script.read_bytes())
         except OSError:
@@ -114,9 +101,7 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
         except OSError:
             value = b""
         assets[name] = value
-        digest.update(name.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(value)
+        digest.update(name.encode("utf-8") + b"\0" + value)
     return assets, digest.hexdigest()[:24]
 
 
@@ -1318,7 +1303,7 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             if body is None:
                 self._error(404, "asset unavailable")
                 return
-            self._respond(200, body, ASSET_TYPES[name])
+            self._respond(200, body, ASSET_TYPES[PurePosixPath(name).suffix])
             return
         self._error(404, "not found")
 
