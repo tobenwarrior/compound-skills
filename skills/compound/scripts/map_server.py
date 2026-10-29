@@ -126,16 +126,7 @@ def _git_branch(status: bytes) -> str:
 
 def _git_state_fingerprint(root: Path) -> tuple[str, str] | None:
     """Fallback for engines that predate the model's bounded Git state fields."""
-    command = [
-        "git",
-        "-C",
-        str(root),
-        "status",
-        "--porcelain=v1",
-        "--branch",
-        "-z",
-        "--untracked-files=all",
-    ]
+    command = ["git", "-C", str(root), "status", "--porcelain=v1", "--branch", "-z", "--untracked-files=all"]
     process: subprocess.Popen[bytes] | None = None
     stream: Any = None
     raw = b""
@@ -374,13 +365,7 @@ def _read_source_preview(root: Path, relative: str, language: str) -> dict[str, 
             content = prefix.decode("utf-8")
     except UnicodeDecodeError:
         raise MapServerError("source file unavailable")
-    return {
-        "path": relative,
-        "content": content,
-        "language": language,
-        "lines": len(content.splitlines()),
-        "truncated": truncated,
-    }
+    return {"path": relative, "content": content, "language": language, "lines": len(engine.split_lines(content)), "truncated": truncated}
 
 
 def _runtime_for_repo(root: Path, write: bool) -> Path:
@@ -710,13 +695,8 @@ def _ensure_service(root: Path) -> dict[str, Any]:
 
 
 def _register(runtime: dict[str, Any], root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> dict[str, Any]:
-    status, value, raw = _request(
-        runtime["port"],
-        "POST",
-        "/api/register",
-        runtime["token"],
-        {"root": str(root), "query": query[:MAX_QUERY], "max_files": max(1, min(5000, int(max_files))), "refresh": bool(refresh), "requery": bool(requery)},
-    )
+    request = {"root": str(root), "query": query[:MAX_QUERY], "max_files": max(1, min(5000, int(max_files))), "refresh": bool(refresh), "requery": bool(requery)}
+    status, value, raw = _request(runtime["port"], "POST", "/api/register", runtime["token"], request)
     if status != 200 or value is None:
         detail = raw.decode("utf-8", "replace")[:300]
         raise MapServerError(f"map registration failed ({status}): {detail}")
@@ -814,6 +794,7 @@ class Project:
     updated_at: str = ""
     last_check: float = 0.0
     git_fingerprint: tuple[str, str] | None = None
+    rerun: bool | None = None
     last_used: float = 0.0
     inventory_fingerprint: str | None = None
     lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
@@ -893,12 +874,7 @@ class MapService:
             name = project.name[:MAX_REGISTRY_NAME]
             query = project.query[:MAX_QUERY]
         self._registry.pop(project.id, None)
-        self._registry[project.id] = {
-            "id": project.id,
-            "root": str(project.root),
-            "name": name,
-            "query": query,
-        }
+        self._registry[project.id] = {"id": project.id, "root": str(project.root), "name": name, "query": query}
         while len(self._registry) > MAX_REGISTRY_PROJECTS:
             self._registry.pop(next(iter(self._registry)))
         self._save_registry()
@@ -957,6 +933,17 @@ class MapService:
             return sorted(values.values(), key=lambda item: item["name"])
 
     def _refresh_worker(self, project: Project, force: bool = False) -> None:
+        # A request that arrives mid-build queues one more pass and keeps the project
+        # indexing until it finishes, so waiting callers never receive older files.
+        while True:
+            self._index_once(project, force)
+            with project.lock:
+                if project.rerun is None:
+                    project.indexing = False
+                    return
+                force, project.rerun = project.rerun, None
+
+    def _index_once(self, project: Project, force: bool) -> None:
         self._index_slots.acquire()
         try:
             before = _inventory_fingerprint(project.root)
@@ -1005,26 +992,27 @@ class MapService:
                 with self.lock:
                     with project.lock:
                         project.last_check = time.monotonic()
-                        project.indexing = False
                     self._remember(project)
                     self._evict_loaded(keep=project)
             finally:
                 self._index_slots.release()
 
-    def _refresh(self, project: Project, force: bool = False) -> None:
-        """Queue one bounded index build without holding the service lock."""
+    def _refresh(self, project: Project, force: bool = False, recheck: bool = False) -> None:
+        """Queue one bounded index build without holding the service lock.
+
+        Polls check at most every 2 seconds; explicit requests (recheck) always check.
+        """
         with project.lock:
             now = time.monotonic()
-            if project.indexing or (not force and now - project.last_check < 2.0):
+            if project.indexing:
+                if force or recheck:
+                    project.rerun = bool(force or project.rerun)
+                return
+            if not force and not recheck and now - project.last_check < 2.0:
                 return
             project.last_check = now
             project.indexing = True
-        worker = threading.Thread(
-            target=self._refresh_worker,
-            args=(project, force),
-            name="compound-map-index",
-            daemon=True,
-        )
+        worker = threading.Thread(target=self._refresh_worker, args=(project, force), name="compound-map-index", daemon=True)
         try:
             worker.start()
         except RuntimeError as exc:
@@ -1055,7 +1043,7 @@ class MapService:
                 force = refresh
             self._remember(project)
             self._evict_loaded(keep=project)
-        self._refresh(project, force=force)
+        self._refresh(project, force=force, recheck=True)
         return project
 
     def project(self, project_id: str) -> Project | None:

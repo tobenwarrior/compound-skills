@@ -126,7 +126,7 @@ def _read_candidate(root: Path, rel: str, info: dict, limit: int) -> tuple[str |
         if len(data) > limit or (before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns):
             return None, len(data)
         try:
-            return data.decode("utf-8"), len(data)
+            return data.decode("utf-8-sig"), len(data)
         except UnicodeError:
             return None, len(data)
     except (OSError, ValueError, TypeError, KeyError, OverflowError):

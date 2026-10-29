@@ -24,8 +24,10 @@ try:
     from . import code_map
     from .safe_open import open_regular_nofollow as _open_regular_nofollow
     from .reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
+    from .language_outlines import split_lines
 except ImportError:  # direct script execution
     import code_map
+    from language_outlines import split_lines
     from safe_open import open_regular_nofollow as _open_regular_nofollow
     from reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
 
@@ -132,7 +134,7 @@ def _read_reference_text(
     if b"\0" in data:
         return None, total, "binary files were skipped"
     try:
-        return data.decode("utf-8"), total, None
+        return data.decode("utf-8-sig"), total, None
     except UnicodeDecodeError:
         return None, total, "non-UTF-8 files were skipped"
 
@@ -463,7 +465,7 @@ def lookup_symbols(
             continue
         scanned_files += 1
         assert text is not None
-        for line_number, line in enumerate(text.splitlines(), 1):
+        for line_number, line in enumerate(split_lines(text), 1):
             if time.monotonic() >= deadline:
                 reference_timed_out = True
                 if "reference scan timed out" not in reference_notes:

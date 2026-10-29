@@ -64,6 +64,16 @@ _COMMENT_STYLES = {
 }
 
 
+def split_lines(text: str) -> list[str]:
+    """Split on \\n, \\r\\n, and \\r only, as editors, compilers, and Git count lines.
+
+    str.splitlines() also breaks on form feeds and Unicode separators, which
+    would shift every later line number.
+    """
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    return lines[:-1] if lines[-1] == "" else lines
+
+
 def _mask_comments_and_strings(source: str, language: str) -> str:
     """Blank comments/literals while preserving offsets and line numbers."""
     chars = list(source)
@@ -284,7 +294,7 @@ def outline(text: str, language: str, max_symbols: int = 512) -> tuple[list[dict
         text = text[:MAX_SOURCE_CHARS]
         notes.append(f"Input truncated at {MAX_SOURCE_CHARS} characters.")
     masked = _mask_comments_and_strings(text, language)
-    lines = masked.splitlines()
+    lines = split_lines(masked)
     declarations: list[dict] = []
     type_names: set[str] = set()
     candidates: list[tuple[int, str, str]] = []

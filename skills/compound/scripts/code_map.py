@@ -23,13 +23,13 @@ from typing import Any
 try:
     from .onboarding import _reject_symlink_chain, _state_paths
     from .workspace_imports import load_workspace_packages, resolve_workspace_import
-    from .language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
+    from .language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline, split_lines
     from .safe_open import open_regular_nofollow
     from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink_chain, _state_paths
     from workspace_imports import load_workspace_packages, resolve_workspace_import
-    from language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline
+    from language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline, split_lines
     from safe_open import open_regular_nofollow
     from language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 
@@ -402,7 +402,7 @@ def _python_exports(tree: ast.Module) -> list[str]:
     return list(dict.fromkeys(names))[:MAX_SYMBOLS]
 def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
     symbols: list[dict[str, Any]] = []
-    for line, source in enumerate(text.splitlines(), 1):
+    for line, source in enumerate(split_lines(text), 1):
         for expression, kind in JS_SYMBOLS:
             match = expression.search(source)
             if match:
@@ -459,7 +459,8 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     if b"\0" in data:
         return None, consumed, "binary or non-UTF-8 files were skipped"
     try:
-        text = data.decode("utf-8")
+        # utf-8-sig drops a byte-order mark, which would otherwise hide line-1 declarations.
+        text = data.decode("utf-8-sig")
     except UnicodeDecodeError:
         return None, consumed, "binary or non-UTF-8 files were skipped"
     if _fingerprint(info["absolute"]) != fp:
@@ -484,7 +485,7 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         "language": info["language"],
         "symbols": symbols,
         "imports": imports,
-        "lines": len(text.splitlines()),
+        "lines": len(split_lines(text)),
         "analysis": analysis,
         "exports": exports,
     }
@@ -612,7 +613,7 @@ def _load_alias_configs(root: Path, candidates: dict[str, dict[str, Any]]) -> li
                 data = source.read(MAX_ALIAS_CONFIG_BYTES + 1)
             if len(data) > MAX_ALIAS_CONFIG_BYTES or _fingerprint(absolute) != info["fingerprint"]:
                 return None
-            text = data.decode("utf-8")
+            text = data.decode("utf-8-sig")
             payload = json.loads(_strip_jsonc(text))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError, KeyError):
             return None

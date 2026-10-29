@@ -21,6 +21,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Callable
 
+try:
+    from .language_outlines import split_lines
+except ImportError:  # direct script execution
+    from language_outlines import split_lines
+
 
 _TOKEN_RE = re.compile(r"[\w$]+")
 _MAX_FILE_TOKENS = 32_768
@@ -93,7 +98,7 @@ def _build_postings(text: str, deadline: float | None = None) -> dict[str, tuple
     """Build deduplicated line postings, returning None past conservative caps."""
     accumulated: dict[str, list[int]] = {}
     token_count = 0
-    for line_number, line in enumerate(text.splitlines(), 1):
+    for line_number, line in enumerate(split_lines(text), 1):
         if deadline is not None and time.monotonic() >= deadline:
             return None
         seen_on_line: set[str] = set()
