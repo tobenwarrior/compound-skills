@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="952" viewBox="0 0 1280 952" role="img" aria-labelledby="title desc">
+<title id="title">Same agent. Better habits.</title>
+<desc id="desc">Workflow comparison. Finding the right code: without Compound, It searches and opens files as it goes; with Compound, Starts from a map of the files, symbols, and imports behind your task. Fixing a bug: without Compound, You spell out the steps, or it picks its own; with Compound, Reproduce, find the cause, add a regression test, re-run the failure. Refactoring: without Compound, You ask it to confirm nothing changed; with Compound, Records behavior first, then proves it still matches. Saying “done”: without Compound, You ask what was actually tested; with Compound, Reports what ran, what it proved, and what is still unverified. Commits and PRs: without Compound, You restate your style each time; with Compound, Clear titles, real check results, no AI co-author lines. Joining an old project: without Compound, Cleanup happens if you ask for it; with Compound, First edit starts a check-up with verified, high-confidence cleanup. Every new chat: without Compound, You repeat your preferences; with Compound, Set up once for Codex, Cursor, and Claude Code.</desc>
+<defs>
+<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
+<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
+</defs>
+<style>
+text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
+.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
+.sub{font-size:18px;fill:#6b6f78}
+.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
+.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
+.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.without{font-size:16px;fill:#6b6f78}
+.with{font-size:16px;font-weight:550}
+.badge{font-size:13px;font-weight:650;fill:#147a43}
+.label{font-size:19px;font-weight:600}
+.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.green{fill:#147a43}
+.note{font-size:16px;fill:#6b6f78}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
+</style>
+<rect width="1280" height="952" rx="28" fill="#fdf8ee"/>
+<rect width="1280" height="952" rx="28" fill="url(#glowGreen)"/>
+<rect width="1280" height="952" rx="28" fill="url(#glowGold)"/>
+<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="88" class="title">Same agent. Better habits.</text>
+<text x="76" y="124" class="sub">What changes in the workflow when Compound is on. A comparison of steps, not of speed.</text>
+<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
+<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
+<text x="1137" y="92" class="badge">Workflow</text>
+<text x="372" y="212" class="head">WITHOUT COMPOUND</text>
+<text x="770" y="212" class="headg">WITH COMPOUND</text>
+<rect x="40" y="230" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="278" class="task">Finding the right code</text>
+<circle cx="356" cy="266" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="266" class="without">It searches and opens files</text>
+<text x="372" y="287" class="without">as it goes</text>
+<rect x="742" y="240" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="264" r="9" fill="#147a43"/><path d="M757.5 264l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="266" class="with">Starts from a map of the files, symbols,</text>
+<text x="782" y="287" class="with">and imports behind your task</text>
+<rect x="40" y="322" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="370" class="task">Fixing a bug</text>
+<circle cx="356" cy="358" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="358" class="without">You spell out the steps,</text>
+<text x="372" y="379" class="without">or it picks its own</text>
+<rect x="742" y="332" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="356" r="9" fill="#147a43"/><path d="M757.5 356l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="358" class="with">Reproduce, find the cause, add a</text>
+<text x="782" y="379" class="with">regression test, re-run the failure</text>
+<rect x="40" y="414" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="462" class="task">Refactoring</text>
+<circle cx="356" cy="450" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="450" class="without">You ask it to confirm</text>
+<text x="372" y="471" class="without">nothing changed</text>
+<rect x="742" y="424" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="448" r="9" fill="#147a43"/><path d="M757.5 448l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="450" class="with">Records behavior first, then proves</text>
+<text x="782" y="471" class="with">it still matches</text>
+<rect x="40" y="506" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="554" class="task">Saying “done”</text>
+<circle cx="356" cy="542" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="542" class="without">You ask what was</text>
+<text x="372" y="563" class="without">actually tested</text>
+<rect x="742" y="516" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="540" r="9" fill="#147a43"/><path d="M757.5 540l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="542" class="with">Reports what ran, what it proved,</text>
+<text x="782" y="563" class="with">and what is still unverified</text>
+<rect x="40" y="598" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="646" class="task">Commits and PRs</text>
+<circle cx="356" cy="634" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="634" class="without">You restate your style</text>
+<text x="372" y="655" class="without">each time</text>
+<rect x="742" y="608" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="632" r="9" fill="#147a43"/><path d="M757.5 632l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="634" class="with">Clear titles, real check results,</text>
+<text x="782" y="655" class="with">no AI co-author lines</text>
+<rect x="40" y="690" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="738" class="task">Joining an old project</text>
+<circle cx="356" cy="726" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="726" class="without">Cleanup happens if</text>
+<text x="372" y="747" class="without">you ask for it</text>
+<rect x="742" y="700" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="724" r="9" fill="#147a43"/><path d="M757.5 724l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="726" class="with">First edit starts a check-up with</text>
+<text x="782" y="747" class="with">verified, high-confidence cleanup</text>
+<rect x="40" y="782" width="1200" height="82" rx="20" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="830" class="task">Every new chat</text>
+<circle cx="356" cy="818" r="4.5" fill="#a7aaa1"/>
+<text x="372" y="818" class="without">You repeat your</text>
+<text x="372" y="839" class="without">preferences</text>
+<rect x="742" y="792" width="486" height="62" rx="14" fill="#e5f3e9"/>
+<circle cx="762" cy="816" r="9" fill="#147a43"/><path d="M757.5 816l3 3 6-6.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="782" y="818" class="with">Set up once for Codex, Cursor,</text>
+<text x="782" y="839" class="with">and Claude Code</text>
+<text x="76" y="904" class="note">Every step on the left works when you ask for it. Compound makes the right-hand habits the default.</text>
+</svg>

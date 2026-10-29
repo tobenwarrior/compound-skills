@@ -1,136 +1,92 @@
 # Compound Skills
 
-**Build cleaner software. Keep your agent's context focused.**
+**Good engineering habits for your coding agent, plus a live map of your code.**
 
-A compact engineering plugin for **Codex, Cursor, and Claude Code** providing practical workflows for architecture, implementation, debugging, refactoring, and review, paired with a zero-dependency local code map and symbol navigator.
+Compound Skills is a free, open-source plugin for **Codex, Cursor, and Claude Code**. Turn it on once and your agent works the same careful way in every project: it looks before it edits, proves a bug before fixing it, and tells you what it actually checked.
 
-- **Clearer architecture:** design around callers, explicit ownership, meaningful states, and interfaces that hide complexity.
-- **Automatic code maps:** orient agent work with compact structural context, then explore an interactive repository graph with source previews, Git changes, impact analysis, and import tracing.
-- **Evidence behind changes:** reproduce failures, preserve behavior during refactoring, and verify observable results.
-- **Consistent commits and PRs:** concrete titles, concise explanations, truthful validation, and no AI co-author credits across all three apps.
-- **Set up once:** make Compound the default across all your projects in Codex, Cursor, and Claude Code, or scope activation to one project or chat.
-- **Existing-project cleanup:** run `setup` to reassess architecture, dependencies, scripts, docs, tests, and Git conventions, applying verified cleanup while reporting larger decisions.
-- **Focused context:** keep only a tiny routing rule always active; load detailed workflow references on demand.
+![The Compound code map of the open-source Hono repository. Hovering context.ts lights up every file it connects to and fades the rest.](.github/assets/code-map.svg)
+
+## Why use it
+
+![Seven everyday tasks compared without and with Compound, from finding the right code to starting a new chat.](.github/assets/with-compound.svg)
+
+- **Light on context.** Only a one-paragraph rule and five one-line skill descriptions are always loaded. The detailed guides load only when a task needs them.
+- **Local.** The code map is built and served on your machine. It needs only Python 3.11+ and Git.
+- **One setup, three apps.** The same habits apply in Codex, Cursor, and Claude Code.
 
 ## Install
 
 Install once at **User** scope in each app you use, then start a new chat (or run `/reload-plugins` in Claude Code).
 
-### Codex
+**Codex**
 
 ```sh
 codex plugin marketplace add tobenwarrior/compound-skills
 codex plugin add compound-skills@compound-skills
 ```
 
-### Claude Code
+**Claude Code**
 
 ```text
 /plugin marketplace add tobenwarrior/compound-skills
 /plugin install compound-skills@compound-skills
 ```
 
-### Cursor
+**Cursor**
 
 1. Open **Customize → Plugins → Add → From GitHub Repository**.
 2. Enter `https://github.com/tobenwarrior/compound-skills`, choose **User** scope, then **Import**.
-3. Click **Add** or **Install** beside `compound-skills`. See [Cursor's plugin docs](https://cursor.com/docs/plugins).
+3. Click **Add** or **Install** beside `compound-skills`, and keep its `compound-default` rule set to **Always** in **Customize → Rules** (set it to **Manual** to turn Compound off). See [Cursor's plugin docs](https://cursor.com/docs/plugins).
 
-## Enable once, then work normally
+## Use it
 
-Run global setup **once from any one app**:
-
-| Action | Codex | Cursor | Claude Code |
+| What you want | Codex | Cursor | Claude Code |
 | --- | --- | --- | --- |
-| Enable across all projects | `$setup-global` | `/setup-global` | `/compound-skills:setup-global` |
-| Check global defaults | `$status-global` | `/status-global` | `/compound-skills:status-global` |
-| Remove global defaults | `$compound disable global` | `/compound disable global` | `/compound-skills:compound disable global` |
+| Turn it on for every project (once, from any app) | `$setup-global` | `/setup-global` | `/compound-skills:setup-global` |
+| Check that it is on | `$status-global` | `/status-global` | `/compound-skills:status-global` |
+| Review and tidy the current project | `$setup` | `/setup` | `/compound-skills:setup` |
+| Open the code map | `$map` | `/map` | `/compound-skills:map` |
+| Use it in this chat only | `$compound` | `/compound` | `/compound-skills:compound` |
+| Remove the global setting | `$compound disable global` | `/compound disable global` | `/compound-skills:compound disable global` |
 
-Global setup configures Codex and Claude Code together and adds Compound's local state directory to the native Codex/Cursor write-path lists so first-use onboarding completion is remembered. In Cursor, keep the bundled `compound-default` rule set to **Always** in **Customize → Rules**.
+After that, just ask for what you want. The first time your agent edits a project, Compound runs a short check-up: it reviews the structure and tests, applies only high-confidence cleanup, verifies it, and leaves your uncommitted work alone. Questions and reviews stay read-only. Details: [activation](skills/compound/references/activation.md) and [check-up](skills/compound/references/onboarding.md).
 
-| App | Global rule |
+## The code map
+
+![The Impact view for url.ts in Hono: the 220 files that depend on it, drawn as a graph.](.github/assets/code-map-impact.svg)
+
+- **Explore it.** Hover a file to light up its connections, drag it to pull its neighbors along, and scroll or pinch to zoom.
+- **See what a change touches.** **Impact** shows every file that depends on the one you picked, **Trace** finds how two files connect, and **Changed** shows your Git edits and their neighbors.
+- **Read without switching apps.** Search files, folders, and symbols, preview source, and copy a compact summary into your chat.
+- **Your agent uses it too.** Before broad reads, the agent asks the same map which files matter for the task. It can also find where a symbol is defined and mentioned, or ask a language server you trust.
+- **Languages.** Imports are linked for Python, JavaScript, TypeScript, Go, and Rust. Symbols are outlined for those plus Java, C, C++, C#, Ruby, PHP, Swift, and Kotlin.
+
+The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache, outside the repository. Coverage and limits: [code maps](skills/compound/references/map.md).
+
+## Nine workflows
+
+Compound loads one short guide for each stage of the work.
+
+| Workflow | What your agent does |
 | --- | --- |
-| Codex | `~/.codex/AGENTS.md` (plus existing nonempty `AGENTS.override.md`) |
-| Cursor | Bundled `compound-default` rule (`Always` in user-scoped plugin) |
-| Claude Code | `~/.claude/rules/compound-skills.md` |
+| [Investigate](skills/compound/references/investigate.md) | Traces how the code really behaves before answering |
+| [Design and implement](skills/compound/references/design.md) | Starts from how callers will use it and makes states and ownership explicit |
+| [Debug](skills/compound/references/debug.md) | Reproduces the bug, finds the cause, and adds a regression test |
+| [Refactor](skills/compound/references/refactor.md) | Records current behavior, then proves it did not change |
+| [Performance](skills/compound/references/performance.md) | Measures before and after on the same workload |
+| [Review](skills/compound/references/review.md) | Reports concrete problems with location, trigger, and impact |
+| [Verify](skills/compound/references/verify.md) | Runs checks that could prove the change wrong and says what is unverified |
+| [Repository hygiene](skills/compound/references/repo-hygiene.md) | Flags clutter, oversized files, unused scripts, and `.gitignore` gaps |
+| [Git and pull requests](skills/compound/references/git.md) | Writes clear commits and PRs with real check results and human authorship |
 
-Before the first write-authorized task in a repository, Compound runs a bounded onboarding pass (stored in `~/.cache/compound-skills/onboarding.sqlite3` or `COMPOUND_SKILLS_STATE_DIR`): inspect structure and checks, audit hygiene, apply high-confidence cleanup, and verify changes while preserving uncommitted work. Read-only requests stay read-only. Details: [onboarding](skills/compound/references/onboarding.md) and [activation](skills/compound/references/activation.md).
+## What we have measured
 
-## Reassess an existing project
+![Code map build time, median of 5 runs: 0.094 seconds on the first run, 0.033 seconds when nothing changed, and 0.037 seconds after editing one file.](.github/assets/map-cache.svg)
 
-| Codex | Cursor | Claude Code |
-| --- | --- | --- |
-| `$setup` | `/setup` | `/compound-skills:setup` |
+The map remembers what it has already read, so later runs re-read only the files that changed. Reproduce it with `python3 -B scripts/benchmark_code_map.py --files-per-language 20 --repetitions 3`.
 
-Reruns project assessment even after prior setup: inspects the code map, architecture, dependencies, scripts, docs, tests, and Git conventions; applies verified cleanup; and preserves unfinished work and the Git index. For chat-only activation without writing files, run `compound session` or bare `compound`.
-
-## See your codebase
-
-| App | Command |
-| --- | --- |
-| Codex | `$map` |
-| Claude Code | `/compound-skills:map` (or `/map`) |
-| Cursor | `/map` |
-
-Pass an optional focus query such as `map pricing`. The live viewer opens at **`http://127.0.0.1:43127/`** (`COMPOUND_MAP_PORT` overrides):
-
-- **Interactive repository graph:** folder colors, organic clusters, zoom/pan/drag, search highlights, up to 5,000 indexed files and 20,000 drawn links.
-- **Structural navigation:** browse folders, files, or symbols; inspect direct and transitive importers; trace shortest recorded import paths.
-- **Git & source preview:** view changed files, branch state, co-change neighbors, and read-only 64 KiB source previews; copy up to 2,500 characters of focused context.
-
-Use `map status` to inspect the loopback service and `map stop` to stop it. Python 3.11+ and Git are required, with zero runtime dependencies. Python receives AST outlines; JS/TS receives outlines, exports, and local import resolution (`tsconfig`/`jsconfig` aliases and workspace packages); Go and Rust receive declaration outlines and bounded local module/import edges; Java, C/C++, C#, Ruby, PHP, Swift, and Kotlin receive heuristic declaration outlines. Each pass reads at most 64 MiB (1 MiB per file), keeping metadata outside the repository and honoring ignore, private-file, and no-follow symlink checks. Details: [code maps](skills/compound/references/map.md).
-
-### Agent navigation helpers
-
-Set `COMPOUND_SKILL_DIR` to the installed `compound` skill directory:
-
-```sh
-# Exact-name outline matches and bounded lexical occurrences (read-only)
-python3 -B "$COMPOUND_SKILL_DIR/scripts/symbol_lookup.py" --repo . --symbol Example
-
-# Repeated-query acceleration via local service in-memory postings cache
-python3 -B "$COMPOUND_SKILL_DIR/scripts/symbol_lookup.py" --repo . --symbol Example --service
-
-# Optional semantic definitions and references via an explicitly specified local LSP server
-python3 -B "$COMPOUND_SKILL_DIR/scripts/lsp_lookup.py" --repo . --file src/main.cpp --line 4 --column 5 --server-command-json '["clangd","--background-index=false"]'
-```
-
-## Nine engineering workflows
-
-| Workflow | Focus |
-| --- | --- |
-| [Investigate](skills/compound/references/investigate.md) | Trace behavior through callers, configuration, state, and side effects |
-| [Design and implement](skills/compound/references/design.md) | Start from caller examples, explicit ownership, and valid states |
-| [Debug](skills/compound/references/debug.md) | Reproduce the failure, isolate root cause, and add a regression check |
-| [Refactor](skills/compound/references/refactor.md) | Preserve behavior baselines while simplifying responsibilities and layers |
-| [Performance](skills/compound/references/performance.md) | Measure a representative baseline, isolate bottlenecks, and verify correctness |
-| [Review](skills/compound/references/review.md) | Report concrete findings with locations, trigger conditions, and impact |
-| [Verify](skills/compound/references/verify.md) | Match verification to the behavioral, integration, or packaging claim |
-| [Repository hygiene](skills/compound/references/repo-hygiene.md) | Audit root clutter, oversized files, unreferenced scripts, and ignore gaps |
-| [Git and pull requests](skills/compound/references/git.md) | Write clear commit/PR titles, report verified checks, and keep human attribution |
-
-## Benchmarks
-
-These offline comparisons find symbol locations in the same 103-file synthetic repository. Each result is the median of 15 timed runs: five each for Python, TypeScript, and Rust. All 60 runs returned the expected locations. Run them yourself with Python 3, Git, and `rg`:
-
-```sh
-python3 -B scripts/benchmark_navigation_tools.py --files-per-language 20 --repetitions 5
-```
-
-### Find a definition
-
-![Definition-location tool benchmark: rg 0.016 seconds versus Compound lookup 0.619 seconds, with 15 of 15 correct per mode.](skills/compound/assets/benchmarks/definition.svg)
-
-### Find lexical occurrences
-
-![Lexical-occurrence tool benchmark: rg 0.017 seconds versus Compound lookup 0.712 seconds, with 15 of 15 correct per mode.](skills/compound/assets/benchmarks/references.svg)
-
-The `rg` baseline scans for the requested locations; Compound's no-cache lookup also builds map metadata and returns definitions and lexical occurrences. These are *tool* timings from one synthetic fixture, not an agent benchmark or a warm-cache comparison. They show that direct search was faster for these small queries; they do not establish whether map context helps an agent on larger tasks.
-
-## Repository hygiene
-
-The bundled [checker](skills/compound/scripts/repo_audit.py) audits root clutter, scratch paths, file-size thresholds, worktrees, `.gitignore` gaps, and unreferenced scripts, with JSON output, strict mode, and baseline tracking (`--write-baseline`). See [repository hygiene](skills/compound/references/repo-hygiene.md) and [maintainer guide](CONTRIBUTING.md).
+This compares Compound with itself. A fair test of an agent working with versus without Compound has not been run yet, so this README makes no claim that Compound makes agents faster. The workflow comparison under [Why use it](#why-use-it) shows how the work changes, not how fast it is.
 
 ## Credits
 
-Adapted selectively from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), with lineage from earlier Karpathy-inspired guidelines. See [SOURCES.md](SOURCES.md), [third-party notices](THIRD_PARTY_NOTICES.md), and [MIT license](LICENSE).
+Adapted selectively from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), with lineage from earlier Karpathy-inspired guidelines. See [SOURCES.md](SOURCES.md), [third-party notices](THIRD_PARTY_NOTICES.md), and the [MIT license](LICENSE).
