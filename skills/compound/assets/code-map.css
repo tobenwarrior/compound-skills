@@ -1094,7 +1094,7 @@ kbd {
   }
 }
 
-/* Standalone dark material, aligned with Y Harness platform aliases. */
+/* Standalone dark surface palette and semantic tokens. */
 :root {
   --bg:#17181a;
   --panel:#222326;
