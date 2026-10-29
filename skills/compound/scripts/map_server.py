@@ -660,7 +660,7 @@ def _prepare_log(directory: Path) -> Path:
 
 def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
     log_path = _prepare_log(runtime_path.parent)
-    command = [sys.executable, str(Path(__file__).resolve()), "serve", "--port", str(port)]
+    command = [sys.executable, "-B", str(Path(__file__).resolve()), "serve", "--port", str(port)]
     handoff = _json({"repo": str(root)})
     if len(handoff) > MAX_HANDOFF:
         raise MapServerError("repository handoff is too large")
@@ -1035,6 +1035,8 @@ class MapService:
 
     def register(self, root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> Project:
         project_id = _project_id(root)
+        # The saved registry rejects control characters, and ranking only reads word characters.
+        query = "".join(" " if ord(character) < 32 or ord(character) == 127 else character for character in query)
         with self.lock:
             self._load_registry()
             project = self.projects.get(project_id)
@@ -1459,14 +1461,15 @@ def _stop() -> int:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Serve the Compound code-map viewer on loopback")
-    commands = parser.add_subparsers(dest="command", required=True)
-    opening = commands.add_parser("open")
+    commands = parser.add_subparsers(dest="command", required=True, metavar="{open,status,stop}")
+    opening = commands.add_parser("open", help="start or reuse the viewer and print its URL")
     opening.add_argument("--repo", required=True)
     opening.add_argument("--query", default="")
     opening.add_argument("--no-open", action="store_true")
-    commands.add_parser("status")
-    commands.add_parser("stop")
-    serving = commands.add_parser("serve", help=argparse.SUPPRESS)
+    commands.add_parser("status", help="report whether the shared viewer service is running")
+    commands.add_parser("stop", help="stop the shared viewer service for every project")
+    # Internal: `open` launches the service with this subcommand.
+    serving = commands.add_parser("serve")
     serving.add_argument("--port", type=int, default=None)
     return parser
 
