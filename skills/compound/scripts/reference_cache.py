@@ -28,6 +28,8 @@ except ImportError:  # direct script execution
 
 
 _TOKEN_RE = re.compile(r"[\w$]+")
+# Shell and PHP write `$` before a name instead of inside it, so `$NAME` also counts as NAME there.
+SIGIL_SUFFIXES = (".sh", ".bash", ".zsh", ".fish", ".php")
 _MAX_FILE_TOKENS = 32_768
 _MAX_FILE_IDENTIFIERS = 8_192
 _MAX_IDENTIFIER_CHARS = 256
@@ -94,7 +96,7 @@ def _canonical_key(root: os.PathLike[str] | str, relative: str) -> tuple[str, st
     return canonical_root, posixpath.normpath(relative)
 
 
-def _build_postings(text: str, deadline: float | None = None) -> dict[str, tuple[int, ...]] | None:
+def _build_postings(text: str, deadline: float | None = None, sigils: bool = False) -> dict[str, tuple[int, ...]] | None:
     """Build deduplicated line postings, returning None past conservative caps."""
     accumulated: dict[str, list[int]] = {}
     token_count = 0
@@ -109,16 +111,17 @@ def _build_postings(text: str, deadline: float | None = None) -> dict[str, tuple
             token = match.group(0)
             if len(token) > _MAX_IDENTIFIER_CHARS:
                 return None
-            if token in seen_on_line:
-                continue
-            seen_on_line.add(token)
-            lines = accumulated.get(token)
-            if lines is None:
-                if len(accumulated) >= _MAX_FILE_IDENTIFIERS:
-                    return None
-                accumulated[token] = [line_number]
-            else:
-                lines.append(line_number)
+            for name in (token, token.lstrip("$")) if sigils and token.startswith("$") else (token,):
+                if not name or name in seen_on_line:
+                    continue
+                seen_on_line.add(name)
+                lines = accumulated.get(name)
+                if lines is None:
+                    if len(accumulated) >= _MAX_FILE_IDENTIFIERS:
+                        return None
+                    accumulated[name] = [line_number]
+                else:
+                    lines.append(line_number)
     return {token: tuple(lines) for token, lines in accumulated.items()}
 
 
@@ -222,7 +225,7 @@ class IdentifierPostingsCache:
                 postings = (
                     None
                     if encoded_size > self.max_file_bytes
-                    else _build_postings(text, deadline)
+                    else _build_postings(text, deadline, relative.endswith(SIGIL_SUFFIXES))
                 )
             result = None if postings is None else postings.get(symbol, ())
             entry_size = 0

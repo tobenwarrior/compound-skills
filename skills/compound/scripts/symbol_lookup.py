@@ -23,13 +23,13 @@ from typing import Any
 try:
     from . import code_map
     from .safe_open import open_regular_nofollow as _open_regular_nofollow
-    from .reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
+    from .reference_cache import SIGIL_SUFFIXES, IdentifierPostingsCache, UnsupportedSymbolError
     from .language_outlines import split_lines
 except ImportError:  # direct script execution
     import code_map
     from language_outlines import split_lines
     from safe_open import open_regular_nofollow as _open_regular_nofollow
-    from reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
+    from reference_cache import SIGIL_SUFFIXES, IdentifierPostingsCache, UnsupportedSymbolError
 
 DEFAULT_MAX_FILES = 1000
 MAX_FILES = 5000
@@ -73,10 +73,11 @@ def _valid_symbol(value: str) -> str:
     return value
 
 
-def _identifier_pattern(symbol: str) -> re.Pattern[str]:
-    # `$` is a valid identifier character in JS/TS; `\w` covers Unicode letters
-    # and underscores. Boundaries avoid reporting `needle` inside `needle_more`.
-    return re.compile(r"(?<![\w$])" + re.escape(symbol) + r"(?![\w$])")
+def _identifier_pattern(symbol: str, sigils: bool = False) -> re.Pattern[str]:
+    # `$` is a valid identifier character in JS/TS but a sigil before shell and PHP
+    # names; `\w` covers Unicode letters and underscores. Boundaries avoid
+    # reporting `needle` inside `needle_more`.
+    return re.compile((r"(?<!\w)" if sigils else r"(?<![\w$])") + re.escape(symbol) + r"(?![\w$])")
 
 
 
@@ -313,7 +314,7 @@ def lookup_symbols(
     total_byte_limit = _bounded_int(max_total_bytes, 1, MAX_TOTAL_BYTES)
     output_byte_limit = _bounded_int(max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES)
     timeout = _bounded_timeout(max_seconds)
-    pattern = _identifier_pattern(name)
+    patterns = (_identifier_pattern(name), _identifier_pattern(name, sigils=True))
 
     try:
         root = code_map._repo_path(repo)
@@ -502,6 +503,7 @@ def lookup_symbols(
             continue
         scanned_files += 1
         assert text is not None
+        pattern = patterns[relative.endswith(SIGIL_SUFFIXES)]
         for line_number, line in enumerate(split_lines(text), 1):
             if time.monotonic() >= deadline:
                 reference_timed_out = True
