@@ -667,22 +667,26 @@ def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool =
     return url
 
 
-def _agent_response(repo: str | os.PathLike[str], query: str, max_files: int, refresh: bool, max_chars: int | None = None) -> Any:
-    _, runtime, root = _open_registered(repo, query, max_files, refresh=refresh, requery=True)
-    project = _project_id(root)
+def _wait_for_index(runtime: dict[str, Any], project: str) -> dict[str, Any]:
     deadline = time.monotonic() + MODEL_WAIT
     while True:
         status, value, raw = _request(runtime["port"], "GET", "/api/status?" + urllib.parse.urlencode({"project": project}), runtime["token"])
         if status != 200 or value is None:
             detail = raw.decode("utf-8", "replace")[:300]
             raise MapServerError(f"map index unavailable ({status}): {detail}")
-        if value.get("error") and not value.get("indexing"):
-            raise MapServerError(f"map index failed: {value['error']}")
         if not value.get("indexing"):
-            break
+            return value
         if time.monotonic() >= deadline:
             raise MapServerError("map index did not become ready before the bounded wait")
         time.sleep(0.1)
+
+
+def _agent_response(repo: str | os.PathLike[str], query: str, max_files: int, refresh: bool, max_chars: int | None = None) -> Any:
+    _, runtime, root = _open_registered(repo, query, max_files, refresh=refresh, requery=True)
+    project = _project_id(root)
+    error = _wait_for_index(runtime, project).get("error")
+    if error:
+        raise MapServerError(f"map index failed: {error}")
     params = {"project": project, "query": query[:MAX_QUERY], "max_files": max(1, min(RESPONSE_MAX_FILES, int(max_files)))}
     key = "model" if max_chars is None else "text"
     if max_chars is not None:
@@ -710,7 +714,10 @@ def get_lookup(repo: str | os.PathLike[str], symbol: str, **options: Any) -> dic
     """Use the explicitly authorized local service for a bounded lexical lookup."""
     max_files = int(options.get("max_files", lookup_engine.DEFAULT_MAX_FILES))
     _, runtime, root = _open_registered(repo, "", max_files, requery=False)
-    request = {**options, "project": _project_id(root), "symbol": symbol}
+    project = _project_id(root)
+    # The lookup reads the cache this index pass writes, so a cold service builds the model once.
+    _wait_for_index(runtime, project)
+    request = {**options, "project": project, "symbol": symbol}
     timeout = min(30.0, max(10.0, float(options.get("max_seconds", lookup_engine.DEFAULT_TIMEOUT)) + 10.0))
     status, value, raw = _request(runtime["port"], "POST", "/api/lookup", runtime["token"], request, timeout=timeout)
     if status != 200 or value is None:
