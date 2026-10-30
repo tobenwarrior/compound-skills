@@ -50,7 +50,8 @@ def open_regular_nofollow(root: os.PathLike[str] | str, relative: str) -> int:
 
     nofollow = os.O_NOFOLLOW
     directory_flag = getattr(os, "O_DIRECTORY", 0)
-    common_flags = os.O_RDONLY | directory_flag | nofollow | getattr(os, "O_CLOEXEC", 0)
+    # O_PATH needs only search permission, so a traversable but unlistable ancestor still works.
+    common_flags = getattr(os, "O_PATH", os.O_RDONLY) | directory_flag | nofollow | getattr(os, "O_CLOEXEC", 0)
     directory_fd = os.open(canonical_root.anchor, common_flags)
     try:
         if not stat.S_ISDIR(os.fstat(directory_fd).st_mode):
