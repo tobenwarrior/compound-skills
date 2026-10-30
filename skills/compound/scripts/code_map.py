@@ -57,6 +57,8 @@ MAX_COCHANGE_FILES = 60
 MAX_COCHANGE_RESULTS = 6
 MAX_GIT_LOG_BYTES = 1024 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
+INVENTORY_CAP_NOTE = "Git inventory capped at 4 MiB of paths; later files are not indexed"
+MAX_CACHE_BYTES = 8 * 1024 * 1024
 SKIP_DIRS = {".git", "vendor", "node_modules"}
 BUILD_DIRS = {"build", "dist"}
 SKIP_AND_BUILD_DIRS = SKIP_DIRS | BUILD_DIRS
@@ -198,16 +200,21 @@ def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
     inventory_data = _bounded_git_output(
-        root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES
+        root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True
     )
     if inventory_data is None:
-        return root, head, [], ["Git inventory unavailable or exceeded the bounded output limit; inspect with native search"]
+        return root, head, [], ["Git inventory unavailable; inspect with native search"]
+    notes = []
+    if len(inventory_data) > MAX_GIT_INVENTORY_BYTES:
+        # Keep the complete entries read so far instead of mapping nothing.
+        inventory_data = inventory_data[:inventory_data.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES) + 1]
+        notes.append(INVENTORY_CAP_NOTE)
     inventory = []
     for raw in inventory_data.split(b"\0"):
         rel = os.fsdecode(raw) if raw else ""
         if _safe_relative(rel):
             inventory.append(PurePosixPath(rel).as_posix())
-    return root, head, sorted(set(inventory)), []
+    return root, head, sorted(set(inventory)), notes
 
 
 def _git_branch(root: Path) -> str:
@@ -788,7 +795,8 @@ def _python_import_spec(module: str, level: int, imported: str | None) -> str:
     return module or imported or ""
 
 
-def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int) -> bytes | None:
+def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False) -> bytes | None:
+    """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
     process: subprocess.Popen[bytes] | None = None
     selector: selectors.BaseSelector | None = None
     try:
@@ -817,7 +825,7 @@ def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int) -> byt
             if size > max_bytes:
                 process.kill()
                 process.wait(timeout=1)
-                return None
+                return b"".join(chunks) if keep_prefix else None
         data = b"".join(chunks)
         if len(data) > max_bytes:
             process.kill()
@@ -1105,7 +1113,7 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     if not path.exists():
         return {}, None
     try:
-        if path.stat().st_size > 8 * 1024 * 1024:
+        if path.stat().st_size > MAX_CACHE_BYTES:
             return {}, "code-map cache is too large"
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -1130,9 +1138,15 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
     directory, path = _cache_location(root, True)
     if path.exists() and path.is_symlink():
         raise CodeMapError(f"refusing symlink code-map cache: {path}")
-    encoded = json.dumps({"version": CACHE_VERSION, "entries": entries}, ensure_ascii=True, separators=(",", ":"))
-    if len(encoded.encode("utf-8")) > 8 * 1024 * 1024:
-        raise CodeMapError("code-map cache exceeds 8 MiB")
+    # Store the entries that fit, so a large repository keeps most of its cache instead of none.
+    parts: list[str] = []
+    size = len(f'{{"version":{CACHE_VERSION},"entries":{{}}}}')
+    for name, entry in entries.items():
+        part = json.dumps(name, ensure_ascii=True) + ":" + json.dumps(entry, ensure_ascii=True, separators=(",", ":"))
+        if size + len(part) + 1 <= MAX_CACHE_BYTES:
+            parts.append(part)
+            size += len(part) + 1
+    encoded = f'{{"version":{CACHE_VERSION},"entries":{{{",".join(parts)}}}}}'
     temporary: Path | None = None
     try:
         if path.exists() and path.stat().st_size == len(encoded) and path.read_bytes() == encoded.encode("utf-8"):
@@ -1218,7 +1232,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             if entry.get("parse_note"):
                 _note(notes, entry["parse_note"])
         entries[rel] = entry
-    budget_hit = bool(limited) or inventory_capped
+    budget_hit = bool(limited) or inventory_capped or INVENTORY_CAP_NOTE in notes
     known = set(entries)
     aliases = _load_alias_configs(root, candidates)
     packages = load_workspace_packages(root, candidates)
