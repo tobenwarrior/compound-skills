@@ -301,7 +301,7 @@ def _legacy_shadow_files(root: Path) -> tuple[Path, ...]:
     found: list[Path] = []
     ancestor = root
     primary = root / "AGENTS.md"
-    user_claude_memory = Path.home() / ".claude" / "CLAUDE.md"
+    user_claude_memory = Path.home().resolve() / ".claude" / "CLAUDE.md"
     while True:
         for relative in ("CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"):
             candidate = ancestor / relative
