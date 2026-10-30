@@ -1338,6 +1338,14 @@ def _serve(repo: str | None, port: int) -> int:
     httpd.service = service  # type: ignore[attr-defined]
     service.httpd = httpd
     runtime = {"pid": os.getpid(), "port": actual_port, "token": token, "build_signature": BUILD_SIGNATURE, "build": BUILD_SIGNATURE}
+
+    def keep_runtime() -> None:
+        # The CLI finds this service only through its runtime file, so restore it after a cache cleanup.
+        if not runtime_path.exists():
+            with contextlib.suppress(MapServerError, OSError):
+                _write_runtime(_runtime_for_repo(root, True), runtime)
+
+    httpd.service_actions = keep_runtime  # type: ignore[method-assign]
     try:
         _write_runtime(runtime_path, runtime)
         for signal_name in (signal.SIGINT, signal.SIGTERM):
