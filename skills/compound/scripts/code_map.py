@@ -44,7 +44,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 12
+CACHE_VERSION = 13
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -106,6 +106,11 @@ JS_IMPORT_CLAUSE = re.compile(
     r"|export(?:\s+|(?=[{*]))(?:type\s+)?" + _JS_BINDINGS + r"from\s*)"
     r"['\"]([^'\"\n]{1,1024})['\"]"
 )
+_JS_TOKEN = re.compile(r"//[^\r\n]*|/\*[\s\S]*?(?:\*/|\Z)|'(?:[^'\\\r\n]|\\[\s\S])*'?|\"(?:[^\"\\\r\n]|\\[\s\S])*\"?|[`{}/]")
+_JS_TEMPLATE_TEXT = re.compile(r"(?:[^`\\$]|\\[\s\S]|\$(?!\{))*")
+_JS_REGEX = re.compile(r"/(?![*/])(?:[^/\\\[\r\n]|\\.|\[(?:[^\]\\\r\n]|\\.)*\])+/")
+_JS_REGEX_KEYWORD = re.compile(r"\b(?:return|typeof|case|do|else|in|of|new|delete|void|throw|yield|await)\Z")
+_JS_BLANK = re.compile(r"[^\r\n]")
 JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
 JS_SYMBOLS = (
     (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)"), "function"),
@@ -438,6 +443,52 @@ def _python_exports(tree: ast.Module) -> list[str]:
         and not node.name.startswith("_")
     ]
     return list(dict.fromkeys(names))[:MAX_SYMBOLS]
+def _mask_javascript(text: str) -> str:
+    """Blank comments, template text and regular expressions, keeping offsets, newlines and quoted strings."""
+    out: list[str] = []
+    kept = 0
+    braces: list[bool] = []  # one per open brace: True when it closes a template's ${...}
+    i = 0
+
+    def mask(start: int, end: int) -> None:
+        nonlocal kept
+        out.append(text[kept:start])
+        out.append(_JS_BLANK.sub(" ", text[start:end]))
+        kept = end
+
+    def template_text(start: int) -> int:
+        end = _JS_TEMPLATE_TEXT.match(text, start).end()
+        mask(start, end)
+        if text.startswith("${", end):
+            braces.append(True)
+            return end + 2
+        return end + 1
+
+    while token := _JS_TOKEN.search(text, i):
+        value, start, i = token.group(), token.start(), token.end()
+        if value[:2] in ("//", "/*"):
+            mask(start, i)
+        elif value == "`":
+            i = template_text(i)
+        elif value == "{":
+            braces.append(False)
+        elif value == "}":
+            if braces and braces.pop():
+                i = template_text(i)
+        elif value == "/":
+            before = start - 1
+            while before >= 0 and text[before] in " \t\r\n":
+                before -= 1
+            # A slash after an operator or keyword starts a regular expression; after a value it divides.
+            if before < 0 or text[before] in "(,=:[!&|?{};+-*%<>~^" or _JS_REGEX_KEYWORD.search(text, max(0, before - 9), before + 1):
+                regex = _JS_REGEX.match(text, start)
+                if regex:
+                    mask(start + 1, regex.end() - 1)
+                    i = regex.end()
+    out.append(text[kept:])
+    return "".join(out)
+
+
 def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str], str | None]:
     symbols: list[dict[str, Any]] = []
     for line, source in enumerate(split_lines(text), 1):
@@ -524,8 +575,9 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
             symbols, imports, exports, note = _python_outline(text)
         elif info["language"] in {"javascript", "typescript"}:
             analysis = "javascript-outline"
-            symbols, imports, note = _javascript_outline(text)
-            exports = _javascript_exports(text)
+            code = _mask_javascript(text)
+            symbols, imports, note = _javascript_outline(code)
+            exports = _javascript_exports(code)
         elif info["language"] in SUPPORTED_LANGUAGES:
             analysis = "heuristic-outline"
             symbols, note = _language_outline(text, info["language"], MAX_SYMBOLS)
