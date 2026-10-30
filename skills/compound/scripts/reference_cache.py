@@ -103,9 +103,6 @@ def _build_postings(text: str, deadline: float | None = None, sigils: bool = Fal
             return None
         seen_on_line: set[str] = set()
         for match in _TOKEN_RE.finditer(line):
-            token_count += 1
-            if token_count > _MAX_FILE_TOKENS:
-                return None
             token = match.group(0)
             if len(token) > _MAX_IDENTIFIER_CHARS:
                 return None
@@ -113,6 +110,10 @@ def _build_postings(text: str, deadline: float | None = None, sigils: bool = Fal
             if sigils and "$" in token:
                 # The scan's sigil boundary lets a name start after any `$`, as in `backup_$NAME` or `$$NAME`.
                 names += tuple(token[index + 1:] for index, char in enumerate(token) if char == "$")
+            # Count names, not words, so a word dense with `$` cannot multiply the work and memory the cap bounds.
+            token_count += len(names)
+            if token_count > _MAX_FILE_TOKENS:
+                return None
             for name in names:
                 if not name or name in seen_on_line:
                     continue
