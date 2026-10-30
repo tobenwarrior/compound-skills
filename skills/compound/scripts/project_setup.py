@@ -300,8 +300,8 @@ def _legacy_shadow_files(root: Path) -> tuple[Path, ...]:
             if candidate == user_claude_memory:
                 continue
             try:
-                # A link to AGENTS.md loads its routing instead of shadowing it.
-                if candidate.is_file() and not (primary.exists() and candidate.samefile(primary)):
+                # A symlink to AGENTS.md still loads it after enable replaces the file; a hard link keeps the old text.
+                if candidate.is_file() and candidate.resolve() != primary:
                     found.append(candidate)
             except OSError as exc:
                 raise SetupError(f"could not inspect legacy instruction file {candidate}: {exc}") from exc
