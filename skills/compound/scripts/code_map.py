@@ -694,17 +694,15 @@ def _javascript_candidates(base: str, known: set[str]) -> str | None:
     base = posixpath.normpath(base)
     if base == ".." or base.startswith("../") or base.startswith("/"):
         return None
+    if base in known:
+        return base
     suffix = PurePosixPath(base).suffix.lower()
     extensions = (".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs", ".json")
     candidates: list[str] = []
-    if suffix:
-        stem = base[:-len(suffix)]
-        if base in known:
-            return base
-        if suffix in {".js", ".jsx", ".mjs", ".cjs"}:
-            candidates += [stem + ext for ext in extensions if ext != suffix]
-        candidates.append(base)
-    else:
+    if suffix in {".js", ".jsx", ".mjs", ".cjs"}:
+        candidates += [base[:-len(suffix)] + ext for ext in extensions if ext != suffix]
+    if suffix not in extensions:
+        # Resolvers append extensions to dotted names such as ./app.module or ./vite.config.
         candidates += [base + ext for ext in extensions]
     candidates += [f"{base}/index{ext}" for ext in extensions]
     for candidate in candidates:
