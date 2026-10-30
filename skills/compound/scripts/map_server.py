@@ -552,7 +552,7 @@ def _request(port: int, method: str, path: str, token: str | None = None, body: 
 
 
 def _health(runtime: dict[str, Any]) -> dict[str, Any] | None:
-    """Return the service's health, {} when its port answers otherwise, or None when nothing listens."""
+    """Return the service's health, {} when its port is reachable but gives no valid health answer, or None when nothing listens."""
     try:
         status, value, _ = _request(runtime["port"], "GET", "/api/health", runtime["token"])
     except MapServerError as exc:
@@ -1148,6 +1148,8 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
     def _headers(self, content_type: str) -> None:
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(self._body)))
+        if self.close_connection:
+            self.send_header("Connection", "close")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'")
