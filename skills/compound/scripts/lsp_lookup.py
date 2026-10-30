@@ -29,9 +29,11 @@ from typing import Any, Sequence
 
 try:
     from . import code_map
+    from .language_outlines import split_lines
     from .safe_open import open_regular_nofollow
 except ImportError:  # direct script execution
     import code_map
+    from language_outlines import split_lines
     from safe_open import open_regular_nofollow
 
 DEFAULT_TIMEOUT = 8.0
@@ -174,7 +176,8 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
     if b"\0" in data:
         raise LspLookupError("binary source files cannot be opened by the language server")
     try:
-        text = data.decode("utf-8")
+        # Editors hide a byte-order mark, so columns and didOpen text exclude it.
+        text = data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         raise LspLookupError("source file is not valid UTF-8") from exc
     if code_map._private(relative) or code_map._skip_dir(relative, git_inventory=True):
@@ -182,18 +185,22 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
     return text, _language_id(relative, candidate["language"])
 
 
-def _lsp_position(text: str, line: int, column: int, encoding: str) -> dict[str, int]:
+def _line_prefix(text: str, line: int, column: int) -> str:
+    """Return the line text before a 1-based code-point position, which must exist."""
     if isinstance(line, bool) or isinstance(column, bool) or not isinstance(line, int) or not isinstance(column, int):
         raise LspLookupError("line and column must be integers")
     if line < 1 or column < 1:
         raise LspLookupError("line and column are 1-based positive integers")
-    lines = text.split("\n")
+    lines = split_lines(text)
     if line > len(lines):
         raise LspLookupError("line is past the end of the source file")
-    content = lines[line - 1].removesuffix("\r")
+    content = lines[line - 1]
     if column > len(content) + 1:
         raise LspLookupError("column is past the end of the source line")
-    prefix = content[: column - 1]
+    return content[: column - 1]
+
+
+def _lsp_position(prefix: str, line: int, encoding: str) -> dict[str, int]:
     if encoding == "utf-8":
         character = len(prefix.encode("utf-8"))
     elif encoding == "utf-16":
@@ -573,6 +580,7 @@ def lookup_lsp(
     output_limit = _bounded_int(max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES, "max_output_bytes")
     command = _server_argv_or_error(server_command)
     text, language = _indexed_source(root, relative)
+    prefix = _line_prefix(text, line, column)
 
     try:
         inventory_root, _head, inventory_list, notes = code_map._git_context(root)
@@ -636,7 +644,7 @@ def lookup_lsp(
         if missing:
             raise LspLookupError("language server lacks required capability: " + ", ".join(missing))
         encoding = _position_encoding(capabilities)
-        position = _lsp_position(text, line, column, encoding)
+        position = _lsp_position(prefix, line, encoding)
         rpc.notify("initialized", {})
         rpc.notify(
             "textDocument/didOpen",
