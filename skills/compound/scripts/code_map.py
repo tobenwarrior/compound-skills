@@ -175,6 +175,17 @@ def repository_name(root: Path) -> str:
 def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
+def _git_inventory(root: Path) -> tuple[bytes | None, bool]:
+    """Return whole NUL-terminated paths within MAX_GIT_INVENTORY_BYTES, tracked first, and whether the cap cut any."""
+    data = _bounded_git_output(root, ["ls-files", "--cached", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
+    if data is not None and len(data) <= MAX_GIT_INVENTORY_BYTES:
+        # Untracked paths only fill what tracked ones leave, so an unignored dependency folder cannot crowd out source.
+        others = _bounded_git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES - len(data), keep_prefix=True)
+        data = None if others is None else data + others
+    if data is None or len(data) <= MAX_GIT_INVENTORY_BYTES:
+        return data, False
+    # Keep the complete entries read so far instead of mapping nothing.
+    return data[:data.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES) + 1], True
 def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
     root_result = _git(supplied, "rev-parse", "--show-toplevel")
     if root_result is None or root_result.returncode != 0:
@@ -185,16 +196,10 @@ def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
         return supplied, "", [], ["Git root unavailable; use native search to inspect this repository"]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
-    inventory_data = _bounded_git_output(
-        root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True
-    )
+    inventory_data, capped = _git_inventory(root)
     if inventory_data is None:
         return root, head, [], ["Git inventory unavailable; inspect with native search"]
-    notes = []
-    if len(inventory_data) > MAX_GIT_INVENTORY_BYTES:
-        # Keep the complete entries read so far instead of mapping nothing.
-        inventory_data = inventory_data[:inventory_data.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES) + 1]
-        notes.append(INVENTORY_CAP_NOTE)
+    notes = [INVENTORY_CAP_NOTE] if capped else []
     inventory = []
     for raw in inventory_data.split(b"\0"):
         rel = os.fsdecode(raw) if raw else ""
