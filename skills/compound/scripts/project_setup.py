@@ -631,6 +631,10 @@ def _planned_enable(context: Context) -> list[tuple[TargetState, str, bool]]:
 
     if context.legacy_shadows:
         fallback = context.fallback
+        user_claude = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude").resolve()
+        if context.root / ".claude" == user_claude:
+            # Claude loads rules there for every project, so this would be a global default.
+            raise SetupError(f"refusing to write project Claude rule into user Claude configuration: {fallback.path}")
         if fallback.markers is not None:
             new_text = _replace_block(fallback.text or "", fallback.markers)
         elif (fallback.text or "").strip():
