@@ -144,6 +144,9 @@ def _read_reference_text(
 
 def _budget_exempt(git_root: Path, path: str) -> bool:
     """Whether _build excludes this inventory path, so it needs no file-budget slot."""
+    # _candidate's first rule, checked without its filesystem calls: vendored folders can be most of the inventory.
+    if code_map._private(path) or code_map._skip_dir(path, git_inventory=True):
+        return True
     candidate, reason = code_map._candidate(git_root, path, git_inventory=True)
     return candidate is None and code_map._exclusion_reason(path, reason) is not None
 
