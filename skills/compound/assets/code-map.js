@@ -103,7 +103,7 @@ function toast(message) {
   refs.toast.textContent = message; refs.toast.hidden = false;
   clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => { refs.toast.hidden = true; }, 2600);
 }
-// Where a panel has no room beside the graph it floats over it, and only a floating panel makes way for the other one or closes first on Escape.
+// True while code-map.css makes the panel a drawer over the graph, the only state it gives position:fixed. A docked inspector stays open beside the Files drawer, and Escape closes that drawer first.
 const floating = name => getComputedStyle(refs[name]).position === "fixed";
 function drawer(name, open) {
   if (open && (name === "inspector" || floating("inspector"))) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
@@ -457,9 +457,9 @@ function installInteractions() {
   document.addEventListener("visibilitychange", () => { clearInterval(state.timer); if (document.visibilityState === "visible") { startPolling(); poll(); } });
   document.addEventListener("keydown", event => {
     if (refs["source-dialog"].open) return;
-    if (event.key === "Escape") { drawer(refs.sidebar.classList.contains("is-open") && floating("sidebar") ? "sidebar" : "inspector", false); return; }
+    if (event.key === "Escape") { const files = refs.sidebar.classList.contains("is-open") && floating("sidebar"); drawer("sidebar", false); if (!files) drawer("inspector", false); return; }
     if (event.ctrlKey || event.metaKey || event.altKey || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
-    if (event.key === "/") { event.preventDefault(); drawer("sidebar", true); refs["file-search"].focus(); }
+    if (event.key === "/") { event.preventDefault(); if (floating("sidebar")) drawer("sidebar", true); refs["file-search"].focus(); }
     if (event.key.toLowerCase() === "f") graph.fit();
   });
 }
