@@ -932,7 +932,8 @@ class MapService:
                 project.model = model
                 # A concurrent edit must force another build on the next check.
                 project.inventory_fingerprint = after if before == after else None
-                project.stalled = unchanged and bool(pending) and model.get("coverage", {}).get("pending", 0) >= pending
+                # A refresh parses from an empty cache, so its pending count says nothing about progress.
+                project.stalled = not refresh and unchanged and bool(pending) and model.get("coverage", {}).get("pending", 0) >= pending
                 if git_state is not None:
                     project.git_fingerprint = git_state
                 project.name = model.get("root_name", display_name)
