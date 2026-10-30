@@ -94,6 +94,117 @@ def split_lines(text: str) -> list[str]:
     return lines[:-1] if lines[-1] == "" else lines
 
 
+# JavaScript and TypeScript: matched on text whose comments, templates and regular expressions are masked.
+JS_IMPORT_KEYWORD = re.compile(r"\b(?:import|export)\b")
+# Matched from each keyword with bounded parts that stop at the characters ending them, so cost stays linear.
+_JS_BINDINGS = r"(?:\*\s*(?:as\s+[\w$]+\s*)?|\{[^{}'\"`]{0,8192}\}\s*)"
+JS_IMPORT_CLAUSE = re.compile(
+    r"(?:import(?:\s+|(?=[{*]))(?:(?:type|source|defer)\s+)?(?:(?:[\w$]+\s*,\s*)?(?:" + _JS_BINDINGS + r"|[\w$]+\s+)from\s*)?"
+    r"|export(?:\s+|(?=[{*]))(?:type\s+)?" + _JS_BINDINGS + r"from\s*)"
+    r"['\"]([^'\"\n]{1,1024})['\"]"
+)
+_JS_TOKEN = re.compile(r"//[^\r\n]*|/\*[\s\S]*?(?:\*/|\Z)|'(?:[^'\\\r\n]|\\[\s\S])*'?|\"(?:[^\"\\\r\n]|\\[\s\S])*\"?|[`{}/]")
+_JS_TEMPLATE_TEXT = re.compile(r"(?:[^`\\$]|\\[\s\S]|\$(?!\{))*")
+_JS_REGEX = re.compile(r"/(?![*/])(?:[^/\\\[\r\n]|\\.|\[(?:[^\]\\\r\n]|\\.)*\])+/")
+_JS_REGEX_KEYWORD = re.compile(r"\b(?:return|typeof|case|do|else|in|of|new|delete|void|throw|yield|await)\Z")
+_JS_BLANK = re.compile(r"[^\r\n]")
+JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
+JS_SYMBOLS = (
+    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)"), "function"),
+    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?class\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)"), "class"),
+    (re.compile(r"^\s*(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)"), "interface"),
+    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?type\s+([A-Za-z_$][\w$]*)\s*[=<]"), "type"),
+    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const\s+)?enum\s+([A-Za-z_$][\w$]*)"), "type"),
+    (re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\("), "function"),
+    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
+)
+JS_EXPORT_DECL = re.compile(
+    r"^[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function\*?|(?:abstract\s+)?class|interface|type|(?:const\s+)?enum|const|let|var)\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)",
+    re.MULTILINE,
+)
+JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
+
+
+def mask_javascript(text: str) -> str:
+    """Blank comments, template text and regular expressions, keeping offsets, newlines and quoted strings."""
+    out: list[str] = []
+    kept = 0
+    braces: list[bool] = []  # one per open brace: True when it closes a template's ${...}
+    i = 0
+
+    def mask(start: int, end: int) -> None:
+        nonlocal kept
+        out.append(text[kept:start])
+        out.append(_JS_BLANK.sub(" ", text[start:end]))
+        kept = end
+
+    def template_text(start: int) -> int:
+        end = _JS_TEMPLATE_TEXT.match(text, start).end()
+        mask(start, end)
+        if text.startswith("${", end):
+            braces.append(True)
+            return end + 2
+        return end + 1
+
+    while token := _JS_TOKEN.search(text, i):
+        value, start, i = token.group(), token.start(), token.end()
+        if value[:2] in ("//", "/*"):
+            mask(start, i)
+        elif value == "`":
+            i = template_text(i)
+        elif value == "{":
+            braces.append(False)
+        elif value == "}":
+            if braces and braces.pop():
+                i = template_text(i)
+        elif value == "/":
+            before = start - 1
+            while before >= 0 and text[before] in " \t\r\n":
+                before -= 1
+            # A slash after an operator or keyword starts a regular expression; after a value it divides.
+            if before < 0 or text[before] in "(,=:[!&|?{};+-*%<>~^" or _JS_REGEX_KEYWORD.search(text, max(0, before - 9), before + 1):
+                regex = _JS_REGEX.match(text, start)
+                if regex:
+                    mask(start + 1, regex.end() - 1)
+                    i = regex.end()
+    out.append(text[kept:])
+    return "".join(out)
+
+
+def javascript_outline(text: str, max_imports: int) -> tuple[list[dict], list[str], str | None]:
+    """Symbols and import specifiers of masked JavaScript/TypeScript, with a note when either is capped."""
+    symbols: list[dict] = []
+    for line, source in enumerate(split_lines(text), 1):
+        for expression, kind in JS_SYMBOLS:
+            match = expression.search(source)
+            if match:
+                symbols.append({"name": match.group(1), "kind": kind, "line": line})
+                break
+        if len(symbols) > MAX_SYMBOLS:
+            break
+    imports: list[str] = []
+    end = 0
+    for keyword in JS_IMPORT_KEYWORD.finditer(text):
+        clause = JS_IMPORT_CLAUSE.match(text, keyword.start()) if keyword.start() >= end else None
+        if clause:
+            imports.append(clause.group(1))
+            end = clause.end()
+    imports += JS_CALL_IMPORT.findall(text)
+    notes = [f"JavaScript/TypeScript symbol outline capped at {MAX_SYMBOLS} entries" if len(symbols) > MAX_SYMBOLS else "",
+             f"local import links capped at {max_imports} import entries" if len(imports) > max_imports else ""]
+    return symbols[:MAX_SYMBOLS], imports[:max_imports], "; ".join(filter(None, notes)) or None
+
+
+def javascript_exports(text: str) -> list[str]:
+    names = JS_EXPORT_DECL.findall(text)
+    for group in JS_EXPORT_LIST.findall(text):
+        for item in group.split(","):
+            exported = item.strip().removeprefix("type ").split(" as ")[-1].strip()  # `a as b` exports b
+            if re.fullmatch(r"[A-Za-z_$][\w$]*", exported):
+                names.append(exported)
+    return list(dict.fromkeys(names))[:MAX_SYMBOLS]
+
+
 def _heredoc_end(source: str, start: int, terminator: str, indented: bool, php: bool) -> int:
     """Offset just after the line that closes a heredoc whose body starts at ``start``."""
     pos = start
