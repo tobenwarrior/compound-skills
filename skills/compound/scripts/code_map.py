@@ -1205,7 +1205,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
                 entry = {
                     "fingerprint": info["fingerprint"], "language": info["language"],
                     "symbols": [], "imports": [], "lines": 0, "analysis": "metadata", "exports": [],
-                    **({"parse_note": parse_note} if parse_note else {}),
+                    "parse_note": parse_note or "line count not read: 1 MiB file limit or 64 MiB total read budget reached",
                 }
             else:
                 reusable[rel] = entry
