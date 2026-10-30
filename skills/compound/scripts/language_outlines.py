@@ -106,7 +106,8 @@ JS_IMPORT_CLAUSE = re.compile(
 )
 _JS_TOKEN = re.compile(r"//[^\r\n]*|/\*[\s\S]*?(?:\*/|\Z)|'(?:[^'\\\r\n]|\\[\s\S])*'?|\"(?:[^\"\\\r\n]|\\[\s\S])*\"?|[`{}/]")
 _JS_TEMPLATE_TEXT = re.compile(r"(?:[^`\\$]|\\[\s\S]|\$(?!\{))*")
-_JS_REGEX = re.compile(r"/(?![*/])(?:[^/\\\[\r\n]|\\.|\[(?:[^\]\\\r\n]|\\.)*\])+/")
+_JS_REGEX = re.compile(r"/(?![*/])(?:[^/\\\[\r\n]|\\[^\r\n]|\[(?:[^\]\\\r\n]|\\[^\r\n])*\])+/")
+_JS_PLAIN_REGEX = re.compile(r"/(?:[^/\\\[\]\r\n]|\\[^\r\n])+/")
 _JS_REGEX_KEYWORD = re.compile(r"\b(?:return|typeof|case|do|else|in|of|new|delete|void|throw|yield|await)\Z")
 _JS_BLANK = re.compile(r"[^\r\n]")
 JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
@@ -131,6 +132,7 @@ def mask_javascript(text: str) -> str:
     out: list[str] = []
     kept = 0
     braces: list[bool] = []  # one per open brace: True when it closes a template's ${...}
+    unclosed_line_end = 0  # end of a line on which a regular expression did not close
     i = 0
 
     def mask(start: int, end: int) -> None:
@@ -164,10 +166,14 @@ def mask_javascript(text: str) -> str:
                 before -= 1
             # A slash after an operator or keyword starts a regular expression; after a value it divides.
             if before < 0 or text[before] in "(,=:[!&|?{};+-*%<>~^" or _JS_REGEX_KEYWORD.search(text, max(0, before - 9), before + 1):
-                regex = _JS_REGEX.match(text, start)
+                # Once a literal fails on a line, later slashes there sit in its classes and fail with it from the next bracket, so only bracket-free literals are tried.
+                regex = (_JS_REGEX if start >= unclosed_line_end else _JS_PLAIN_REGEX).match(text, start)
                 if regex:
                     mask(start + 1, regex.end() - 1)
                     i = regex.end()
+                elif start >= unclosed_line_end:
+                    line_end = _LINE_END.search(text, start)
+                    unclosed_line_end = line_end.start() if line_end else len(text)
     out.append(text[kept:])
     return "".join(out)
 
