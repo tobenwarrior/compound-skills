@@ -28,7 +28,7 @@ const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
   query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
   history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
-  trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null,
+  trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null, sourceReturn: null, used: "",
 };
 const graph = createGraph(refs.graph, {
   onSelect: id => chooseFile(id),
@@ -106,9 +106,15 @@ function toast(message) {
 // True while code-map.css makes the panel a drawer over the graph, the only state it gives position:fixed. A docked inspector stays open beside the Files drawer, and Escape closes that drawer first.
 const floating = name => getComputedStyle(refs[name]).position === "fixed";
 function drawer(name, open) {
-  if (open && (name === "inspector" || floating("inspector"))) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
+  if (open && (name === "inspector" || floating("inspector"))) {
+    const other = name === "sidebar" ? "inspector" : "sidebar";
+    // A floating panel hides as it closes, so focus in it moves to the button of the panel taking its place. Safari focuses no tapped button, which leaves focus there.
+    if (floating(other) && refs[other].contains(document.activeElement)) refs[name + "-button"].focus();
+    refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false");
+  }
   refs[name].classList.toggle("is-open", open);
   refs[name + "-button"].setAttribute("aria-expanded", String(open));
+  if (open) state.used = name;
   if (!open && refs[name].contains(document.activeElement)) refs[name + "-button"].focus();
 }
 function setOverlay(kind, title, detail) {
@@ -145,7 +151,9 @@ function renderSummary() {
   const symbols = files.reduce((total, file) => total + file.symbols.length, 0);
   refs["root-name"].textContent = state.name || state.model?.root || "Code map";
   refs["sidebar-count"].textContent = count(files.length) + " files";
-  refs["changed-count"].textContent = count(files.filter(file => file.changed).length);
+  // Beside a docked inspector at the narrowest widths three digits no longer fit, so code-map.css leaves such a count to screen readers there.
+  const changed = files.filter(file => file.changed).length;
+  refs["changed-count"].textContent = count(changed); refs["changed-count"].classList.toggle("is-long", changed >= 100);
   refs["total-files"].textContent = count(files.length) + " files";
   refs["total-lines"].textContent = count(lines) + " lines";
   refs["total-symbols"].textContent = count(symbols) + " symbols";
@@ -224,7 +232,7 @@ function chooseFile(path, record = true) {
   if (state.query && !matcher()(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
   if (record && state.history[state.historyIndex] !== path) { state.history = state.history.slice(0, state.historyIndex + 1); state.history.push(path); state.historyIndex = state.history.length - 1; }
   if (state.view === "trace") state.view = "neighbors";
-  state.impact = walkDependents(path); updateUrl(); renderTree(); renderInspector(); renderGraph(); graph.select(path); drawer("inspector", true);
+  state.impact = walkDependents(path); updateUrl(); keepingFocus(() => { renderTree(); renderInspector(); renderGraph(); }); graph.select(path); drawer("inspector", true);
 }
 function renderGraph(fit = false) {
   if (!state.model) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("loading", "", "Connecting to the local index…"); return; }
@@ -324,7 +332,7 @@ async function openSource(path, line = 0) {
   if (!state.lookup.has(path)) return;
   state.sourceRequest?.abort(); const request = new AbortController(); state.sourceRequest = request;
   refs["source-title"].textContent = path; refs["source-meta"].textContent = "Reading from this repository…"; refs["source-content"].replaceChildren(make("p", "Loading source…", "detail-empty")); refs["source-note"].textContent = "Source is read only when requested and is not cached by the service.";
-  if (!refs["source-dialog"].open) refs["source-dialog"].showModal();
+  if (!refs["source-dialog"].open) { state.sourceReturn = rowFinder(document.activeElement); refs["source-dialog"].showModal(); }
   try {
     const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodePath(path), request.signal);
     if (state.sourceRequest !== request || !refs["source-dialog"].open) return;
@@ -338,14 +346,19 @@ async function openSource(path, line = 0) {
 }
 function closeSource() { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-dialog"].close(); refs["source-content"].replaceChildren(); }
 
-function renderAll() {
-  const active = document.activeElement, list = active?.closest("#file-tree, .edge-list, .symbol-list");
-  // Refreshes change the counts and line numbers rows show, so focus returns by key, and by position among rows sharing a key, such as two run methods.
-  const key = node => node.dataset.key || node.title || node.textContent, twins = () => [...list.querySelectorAll("button")].filter(button => key(button) === key(active));
-  const repeat = list ? twins().indexOf(active) : -1;
-  renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph();
-  if (list && !list.contains(active)) twins()[repeat]?.focus();
+// Re-renders replace list rows and change the counts and line numbers they show, so a row is found again by its list, its key, and its position among rows sharing that key, such as two run methods.
+function rowFinder(row) {
+  const list = row?.closest?.("#file-tree, .edge-list, .symbol-list"); if (!list) return () => null;
+  const key = node => node.dataset.key || node.title || node.textContent, twins = () => [...list.querySelectorAll("button")].filter(button => key(button) === key(row)), repeat = twins().indexOf(row);
+  return () => list.contains(row) ? row : twins()[repeat];
 }
+// Runs a re-render that may replace the focused row, then focuses the row now in its place, which is no use of its panel.
+function keepingFocus(render) {
+  const active = document.activeElement, find = rowFinder(active), used = state.used;
+  render();
+  if (!active?.isConnected) { find()?.focus(); state.used = used; }
+}
+function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
   refs["trace-panel"].hidden = true; refs["trace-button"].setAttribute("aria-expanded", "false");
@@ -425,8 +438,9 @@ function installInteractions() {
   refs["notice-dismiss"].addEventListener("click", () => { state.dismissed = state.error || JSON.stringify([state.model?.coverage.skipped, state.model?.coverage.truncated, state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic") && !note.includes("response file cap"))]); renderStatus(); });
   refs["sidebar-button"].addEventListener("click", () => drawer("sidebar", !refs.sidebar.classList.contains("is-open"))); refs["sidebar-close"].addEventListener("click", () => drawer("sidebar", false));
   refs["inspector-button"].addEventListener("click", () => drawer("inspector", !refs.inspector.classList.contains("is-open"))); refs["inspector-close"].addEventListener("click", () => drawer("inspector", false));
-  // Narrowing until the docked inspector floats again would stack it and a Files drawer opened beside it, so the panel in use keeps the screen: the inspector while it holds focus or its source preview is open, otherwise Files, opened last.
-  addEventListener("resize", () => { if (refs.sidebar.classList.contains("is-open") && refs.inspector.classList.contains("is-open") && floating("inspector")) drawer(refs.inspector.contains(document.activeElement) || refs["source-dialog"].open ? "sidebar" : "inspector", false); });
+  // Narrowing until the docked inspector floats again would stack it and a Files drawer opened beside it, so the panel used last keeps the screen. Opening a panel, or a tap, focus or scroll in it, counts as use, since Safari focuses no tapped button.
+  for (const name of ["sidebar", "inspector"]) for (const type of ["pointerdown", "focusin", "wheel"]) refs[name].addEventListener(type, () => { state.used = name; }, { capture: true, passive: true });
+  addEventListener("resize", () => { if (refs.sidebar.classList.contains("is-open") && refs.inspector.classList.contains("is-open") && floating("inspector")) drawer(state.used === "inspector" ? "sidebar" : "inspector", false); });
   refs["file-search"].value = state.query;
   refs["file-search"].addEventListener("input", event => {
     state.query = event.target.value; state.page = 0; updateUrl(); renderTree(); renderGraph(true);
@@ -450,7 +464,11 @@ function installInteractions() {
     if (result.paths.length) setView("trace");
   });
   refs["source-button"].addEventListener("click", () => openSource(state.selected)); refs["source-close"].addEventListener("click", closeSource);
-  refs["source-dialog"].addEventListener("close", () => { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren(); });
+  refs["source-dialog"].addEventListener("close", () => {
+    state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren();
+    // The dialog returns focus to its opener, but a refresh may have replaced that row, which leaves focus on the closed dialog, so it goes to the row now in its place, or to Source.
+    if (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement)) for (const target of [state.sourceReturn?.(), refs["source-button"], refs["inspector-button"]]) { target?.focus(); if (document.activeElement === target) break; }
+  });
   refs["context-button"].addEventListener("click", () => { const file = state.lookup.get(state.selected); if (file) copy(contextText(file), "Compact context copied · paste into your chat"); });
   refs["path-button"].addEventListener("click", () => copy(state.selected || "", "File path copied"));
   refs["history-back"].addEventListener("click", () => { if (state.historyIndex > 0) chooseFile(state.history[--state.historyIndex], false); });

@@ -1184,12 +1184,12 @@ kbd { background:var(--raised); color:var(--muted); padding:2px 5px; }
   .view-tabs button { font-size:9px; }
   .statusbar { gap:9px; }
 }
-/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's, so each view tab starts from its label's width instead of an equal third, and up to 660px the Changed count gives way, since a long one, such as every file before a first commit, would push the labels out. */
+/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's, so each view tab starts from its label's width instead of an equal third, and up to 660px a Changed count of three digits or more, such as every file before a first commit, is hidden like .sr-only, since it would push the labels out. */
 @media(min-width:561px) and (max-width:760px) {
   .workspace:has(.inspector.is-open) .view-tabs button { flex:1 1 auto; }
 }
 @media(min-width:561px) and (max-width:660px) {
-  .workspace:has(.inspector.is-open) #changed-count { display:none; }
+  .workspace:has(.inspector.is-open) #changed-count.is-long { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 }
 @media(min-width:561px) and (max-width:620px) {
   .workspace:has(.inspector.is-open) .graph-toolbar { gap:5px; }
