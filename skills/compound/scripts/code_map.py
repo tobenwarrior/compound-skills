@@ -59,6 +59,8 @@ MAX_GIT_LOG_BYTES = 1024 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
 SKIP_DIRS = {".git", "vendor", "node_modules"}
 BUILD_DIRS = {"build", "dist"}
+SKIP_AND_BUILD_DIRS = SKIP_DIRS | BUILD_DIRS
+PRIVATE_KEY_PART = re.compile(r"(?:^|[-_.])key(?:[-_.]|$)")
 PRIVATE_NAMES = {"credentials", "credential", "secrets", "secret", "keys", "id_rsa", "id_ed25519"}
 CONFIG_NAMES = {
     "cargo.toml", "dockerfile", "go.mod", "makefile", "package.json", "pyproject.toml", "procfile",
@@ -296,32 +298,37 @@ def _has_symlink_ancestor(path: Path, root: Path) -> bool:
             current = current.parent
     except OSError:
         return True
+# Callers pass normalized POSIX paths, so string splits stand in for PurePosixPath.
 def _private(rel: str) -> bool:
-    for part in PurePosixPath(rel).parts:
+    for part in rel.split("/"):
         lower = part.lower()
         if part.startswith(".env") or lower in PRIVATE_NAMES or "credential" in lower or "secret" in lower:
             return True
-        if lower.endswith((".pem", ".key", ".p12", ".pfx")) or re.search(r"(?:^|[-_.])key(?:[-_.]|$)", lower):
+        if lower.endswith((".pem", ".key", ".p12", ".pfx")) or "key" in lower and PRIVATE_KEY_PART.search(lower):
             return True
     return False
 def _skip_dir(rel: str, *, git_inventory: bool = False) -> bool:
-    skipped = SKIP_DIRS if git_inventory else SKIP_DIRS | BUILD_DIRS
-    return any(part.lower() in skipped for part in PurePosixPath(rel).parts[:-1])
+    skipped = SKIP_DIRS if git_inventory else SKIP_AND_BUILD_DIRS
+    return any(part.lower() in skipped for part in rel.split("/")[:-1])
+def _name_and_suffix(rel: str) -> tuple[str, str]:
+    name = rel.rpartition("/")[2].lower()
+    dot = name.rfind(".")
+    return name, name[dot:] if 0 < dot < len(name) - 1 else ""
 def _language(rel: str) -> str | None:
-    name = PurePosixPath(rel).name.lower()
+    name, suffix = _name_and_suffix(rel)
     if name in CONFIG_NAMES:
         return "python" if name.endswith(".py") else "javascript" if name.endswith(".js") else "config"
     if name == "dockerfile" or name.startswith("dockerfile."):
         return "config"
-    return LANGUAGES.get(PurePosixPath(rel).suffix.lower())
+    return LANGUAGES.get(suffix)
 def _entry_config(rel: str) -> bool:
     name = PurePosixPath(rel).name.lower()
     return name in CONFIG_NAMES or name == "dockerfile" or name.startswith("dockerfile.")
 
 
 def _non_code_path(rel: str) -> bool:
-    path = PurePosixPath(rel)
-    return path.name.lower() in NON_CODE_NAMES or path.suffix.lower() in NON_CODE_SUFFIXES
+    name, suffix = _name_and_suffix(rel)
+    return name in NON_CODE_NAMES or suffix in NON_CODE_SUFFIXES
 
 
 def _exclusion_reason(rel: str, reason: str | None) -> str | None:
