@@ -28,8 +28,6 @@ except ImportError:  # direct script execution
 
 
 _TOKEN_RE = re.compile(r"[\w$]+")
-# Shell and PHP write `$` before a name instead of inside it, so `$NAME` also counts as NAME there.
-SIGIL_SUFFIXES = (".sh", ".bash", ".zsh", ".fish", ".php")
 _MAX_FILE_TOKENS = 32_768
 _MAX_FILE_IDENTIFIERS = 8_192
 _MAX_IDENTIFIER_CHARS = 256
@@ -136,8 +134,9 @@ class IdentifierPostingsCache:
     tuple of one-based line numbers, or ``None`` when caching/scanning should
     fall back (currently only for a file beyond the configured size or index
     limits). ``text_or_loader`` may be source text or a zero-argument callable;
-    it is invoked only on a cache miss. Fingerprint changes evict the prior
-    postings for that path. Call :meth:`invalidate` when a path is deleted.
+    it is invoked only on a cache miss. With ``sigils=True`` a name may also
+    start after any ``$`` in a word. Fingerprint or ``sigils`` changes evict the
+    prior postings for that path. Call :meth:`invalidate` when a path is deleted.
     """
 
     def __init__(
@@ -178,6 +177,7 @@ class IdentifierPostingsCache:
         symbol: str,
         *,
         deadline: float | None = None,
+        sigils: bool = False,
     ) -> tuple[int, ...] | None:
         """Return exact lexical match lines, loading text only on a cache miss."""
         if not isinstance(symbol, str) or not _TOKEN_RE.fullmatch(symbol):
@@ -185,7 +185,7 @@ class IdentifierPostingsCache:
         if not isinstance(text_or_loader, str) and not callable(text_or_loader):
             raise TypeError("text_or_loader must be text or a zero-argument callable")
         key = _canonical_key(root, relative)
-        frozen_fingerprint = _freeze(fingerprint)
+        frozen_fingerprint = _freeze((fingerprint, sigils))
 
         while True:
             with self._lock:
@@ -229,7 +229,7 @@ class IdentifierPostingsCache:
                 postings = (
                     None
                     if encoded_size > self.max_file_bytes
-                    else _build_postings(text, deadline, relative.endswith(SIGIL_SUFFIXES))
+                    else _build_postings(text, deadline, sigils)
                 )
             result = None if postings is None else postings.get(symbol, ())
             entry_size = 0

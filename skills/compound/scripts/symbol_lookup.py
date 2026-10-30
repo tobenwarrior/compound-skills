@@ -23,13 +23,13 @@ from typing import Any
 try:
     from . import code_map
     from .safe_open import open_regular_nofollow as _open_regular_nofollow
-    from .reference_cache import SIGIL_SUFFIXES, IdentifierPostingsCache, UnsupportedSymbolError
+    from .reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
     from .language_outlines import split_lines
 except ImportError:  # direct script execution
     import code_map
     from language_outlines import split_lines
     from safe_open import open_regular_nofollow as _open_regular_nofollow
-    from reference_cache import SIGIL_SUFFIXES, IdentifierPostingsCache, UnsupportedSymbolError
+    from reference_cache import IdentifierPostingsCache, UnsupportedSymbolError
 
 DEFAULT_MAX_FILES = 1000
 MAX_FILES = 5000
@@ -48,6 +48,8 @@ READ_CHUNK_BYTES = 64 * 1024
 
 # These are data/config formats, not source languages for the lexical scan.
 _NON_SOURCE_LANGUAGES = {"config", "json", "yaml", "toml", "xml", "ini", "properties"}
+# Shell, PHP and these formats write `$` before a name instead of inside it, so `$NAME` also counts as NAME there.
+_SIGIL_LANGUAGES = _NON_SOURCE_LANGUAGES | {"shell", "php"}
 
 
 class SymbolLookupError(ValueError):
@@ -438,6 +440,7 @@ def lookup_symbols(
             continue
         remaining = total_byte_limit - reference_considered
         fingerprint = candidate["fingerprint"]
+        sigils = candidate["language"] in _SIGIL_LANGUAGES
         loaded: dict[str, Any] = {}
         lines = None
         if reference_cache is not None and not no_cache and fingerprint["size"] <= file_byte_limit and fingerprint["size"] <= remaining:
@@ -451,7 +454,7 @@ def lookup_symbols(
                     raise OSError(note or "source unavailable")
                 return text
             try:
-                lines = reference_cache.lookup(git_root, relative, fingerprint, load_text, name, deadline=deadline)
+                lines = reference_cache.lookup(git_root, relative, fingerprint, load_text, name, deadline=deadline, sigils=sigils)
             except (UnsupportedSymbolError, OSError):
                 pass
         if time.monotonic() >= deadline:
@@ -503,7 +506,7 @@ def lookup_symbols(
             continue
         scanned_files += 1
         assert text is not None
-        pattern = patterns[relative.endswith(SIGIL_SUFFIXES)]
+        pattern = patterns[sigils]
         for line_number, line in enumerate(split_lines(text), 1):
             if time.monotonic() >= deadline:
                 reference_timed_out = True
