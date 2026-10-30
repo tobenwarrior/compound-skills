@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,7 @@ MARKETPLACES = {
 CURSOR_RULES_PATH = "./.cursor-plugin/rules/"
 CURSOR_RULE_PATH = ".cursor-plugin/rules/compound-default.mdc"
 PRIVATE_PATTERNS = (
-    ("private_path", re.compile(r"/(?:Users|home|private/tmp|var/folders)/[^\s'\"`<>]+")),
+    ("private_path", re.compile(r"/(?:Users|home|root|tmp|private/tmp|var/folders)/[^\s'\"`<>]+")),
     ("windows_private_path", re.compile(r"(?i)\b[A-Z]:\\Users\\[^\s'\"`<>]+")),
     ("openai_token", re.compile(r"\bsk-[A-Za-z0-9_-]{16,}\b")),
     ("github_token", re.compile(r"\b(?:gh[pousr]_|github_pat_)[A-Za-z0-9_]{16,}\b")),
@@ -43,7 +44,7 @@ PRIVATE_PATTERNS = (
         "credential_assignment",
         re.compile(
             r"(?i)\b(?:api[_-]?key|access[_-]?token|secret[_-]?key|password)"
-            r"\s*[:=]\s*['\"]?[A-Za-z0-9][^\s'\"]{7,}"
+            r"['\"]?\s*[:=]\s*['\"]?[A-Za-z0-9][^\s'\"]{7,}"
         ),
     ),
 )
@@ -68,6 +69,14 @@ def inside(path: Path, root: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def regular_or_link(path: Path) -> bool:
+    try:
+        mode = path.lstat().st_mode
+    except OSError:
+        return True  # reported as unreadable when it is read
+    return stat.S_ISREG(mode) or stat.S_ISLNK(mode)
 
 
 def safe_is_symlink(root: Path, path: Path, errors: list[dict[str, str]] | None = None) -> bool:
@@ -126,7 +135,8 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
         parent = Path(directory)
         # Mirror .gitignore: caches at any depth, development tests only at the package root.
         directories[:] = [name for name in directories if name not in ignored and not (parent == root and name == "tests")]
-        paths.extend(parent / name for name in files if name not in ignored)
+        # Only regular files and links are content; reading a FIFO would block.
+        paths.extend(parent / name for name in files if name not in ignored and regular_or_link(parent / name))
         paths.extend(parent / name for name in directories if safe_is_symlink(root, parent / name, errors))
     return sorted(paths, key=lambda path: relative(root, path))
 
@@ -226,10 +236,11 @@ def check_manifest(root: Path, path: str, kind: str, errors: list[dict[str, str]
         add(errors, "component_path", path, "Cursor skills must be ./skills/ when declared")
     if kind in {"codex", "cursor"} and "skills" in value:
         check_path(root, value["skills"], path, "skills", errors)
-    if kind == "cursor" and "rules" in value:
-        if value["rules"] != CURSOR_RULES_PATH:
+    if kind == "cursor":
+        if value.get("rules") != CURSOR_RULES_PATH:
             add(errors, "component_path", path, f"Cursor rules must be {CURSOR_RULES_PATH}")
-        check_path(root, value["rules"], path, "rules", errors, directory=True)
+        else:
+            check_path(root, value["rules"], path, "rules", errors, directory=True)
     return value
 
 
@@ -272,6 +283,8 @@ def check_marketplace(root: Path, path: str, kind: str, errors: list[dict[str, s
             add(errors, "marketplace_source", origin, "marketplace source must be a relative path")
         if "version" in entry and entry["version"] != VERSION:
             add(errors, "identity_mismatch", origin, f"version must be {VERSION!r}")
+    if NAME not in seen:
+        add(errors, "marketplace_plugins", path, f"marketplace must list the {NAME} plugin")
     return value
 
 
@@ -326,7 +339,8 @@ def parse_skill(path: Path) -> tuple[dict[str, str] | None, str]:
     return {"name": fields["name"], "description": fields["description"], "body": "".join(lines[end + 1 :]), "raw": text}, ""
 
 
-def check_references(root: Path, skill_root: Path, source: Path, text: str, errors: list[dict[str, str]]) -> None:
+def check_references(root: Path, skill_root: Path, source: Path, text: str, errors: list[dict[str, str]], published: set[Path]) -> None:
+    """Every local link must reach a published file or folder; ignored files are absent from a clone."""
     targets = [(match.group(1), source.parent, False) for match in re.finditer(r"\]\(\s*<?([^) >]+)", text)]
     for match in re.finditer(r"(?<![\w./])((?:references|scripts)/[A-Za-z0-9_.~/-]+)", text):
         prefix = text[max(0, match.start() - 32) : match.start()]
@@ -339,7 +353,7 @@ def check_references(root: Path, skill_root: Path, source: Path, text: str, erro
             continue
         checked.add((raw, str(base)))
         target = raw.split("#", 1)[0].split("?", 1)[0].strip()
-        if not target or target.startswith(("#", "http:", "https:", "mailto:")):
+        if not target or target.startswith(("#", "//")) or re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", target):
             continue
         if target.startswith("/") or "\\" in target:
             add(errors, "reference_escape", relative(root, source), f"local reference {raw!r} is not portable")
@@ -347,13 +361,13 @@ def check_references(root: Path, skill_root: Path, source: Path, text: str, erro
         candidate = (base / target).resolve()
         if not inside(candidate, root):
             add(errors, "reference_escape", relative(root, source), f"local reference {raw!r} escapes package")
-        elif not candidate.exists():
+        elif candidate not in published:
             package_candidate = (root / target).resolve()
-            if not fallback or not inside(package_candidate, root) or not package_candidate.exists():
+            if not fallback or not inside(package_candidate, root) or package_candidate not in published:
                 add(errors, "reference_missing", relative(root, source), f"local reference {raw!r} is missing")
 
 
-def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str, str]]:
+def check_skills(root: Path, errors: list[dict[str, str]], public: list[Path], published: set[Path]) -> dict[str, dict[str, str]]:
     directory = root / "skills"
     if under_symlink(root, directory, errors):
         return {}
@@ -365,18 +379,18 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
     if not is_directory:
         add(errors, "skills_missing", "skills", "skills directory is missing")
         return {}
+    entrypoints = [path for path in public if path.name == "SKILL.md" and inside(path, directory)]
     paths = []
-    try:
-        for path in directory.glob("*/SKILL.md"):
-            try:
-                is_file = path.is_file()
-            except OSError:
-                add(errors, "unreadable_content", relative(root, path), "skill entrypoint could not be inspected")
-                continue
-            if is_file and not under_symlink(root, path, errors):
-                paths.append(path)
-    except OSError:
-        add(errors, "unreadable_content", "skills", "skills directory could not be read")
+    for path in entrypoints:
+        if path.parent.parent != directory:
+            continue
+        try:
+            is_file = path.is_file()
+        except OSError:
+            add(errors, "unreadable_content", relative(root, path), "skill entrypoint could not be inspected")
+            continue
+        if is_file and not under_symlink(root, path, errors):
+            paths.append(path)
     paths.sort()
     if {path.parent.name for path in paths} != set(SKILLS) or len(paths) != len(SKILLS):
         add(
@@ -385,7 +399,7 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
             "skills",
             "expected exactly compound, map, setup, setup-global, and status-global skill entrypoints",
         )
-    for path in directory.rglob("SKILL.md"):
+    for path in entrypoints:
         if under_symlink(root, path, errors):
             continue
         if path.parent.parent != directory:
@@ -402,11 +416,11 @@ def check_skills(root: Path, errors: list[dict[str, str]]) -> dict[str, dict[str
             add(errors, "skill_identity", relative(root, path), "frontmatter name must match its directory")
         if not parsed["description"]:
             add(errors, "frontmatter", relative(root, path), "skill description must not be empty")
-        check_references(root, path.parent, path, parsed["body"], errors)
-        for resource in sorted(path.parent.rglob("*.md")):
+        check_references(root, path.parent, path, parsed["body"], errors, published)
+        for resource in sorted(item for item in public if item.suffix == ".md" and inside(item, path.parent)):
             if resource != path and not under_symlink(root, resource, errors):
                 try:
-                    check_references(root, path.parent, resource, resource.read_text(encoding="utf-8"), errors)
+                    check_references(root, path.parent, resource, resource.read_text(encoding="utf-8"), errors, published)
                 except UnicodeDecodeError:
                     add(errors, "unreadable_content", relative(root, resource), "release file is not valid UTF-8")
                 except OSError:
@@ -563,7 +577,7 @@ def check_cursor_rule(root: Path, errors: list[dict[str, str]]) -> Path | None:
             if not stripped or stripped.startswith("#"):
                 continue
             match = re.match(r"^([A-Za-z0-9_-]+):[ \t]*(.*)$", stripped)
-            if not match or not match.group(2).strip():
+            if not match:
                 valid = False
                 break
             if match.group(1) == "alwaysApply":
@@ -579,7 +593,7 @@ def check_cursor_rule(root: Path, errors: list[dict[str, str]]) -> Path | None:
 def check_index_worktree(root: Path, errors: list[dict[str, str]]) -> None:
     try:
         result = subprocess.run(
-            ["git", "-C", str(root), "diff", "--name-only", "-z", "--"],
+            ["git", "-C", str(root), "diff", "--name-only", "--relative", "-z", "--", "."],
             check=False,
             capture_output=True,
         )
@@ -616,17 +630,18 @@ def check_package(root: Path) -> dict[str, Any]:
         for path in symlinks:
             add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
         scannable = [path for path in public if not under_symlink(root, path, errors)]
+        published = set(public) | {parent for path in public for parent in path.parents if inside(parent, root)}
         check_index_worktree(root, errors)
         manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
-        cursor_manifest = manifests.get(".cursor-plugin/plugin.json")
-        if isinstance(cursor_manifest, dict) and "rules" in cursor_manifest:
-            if rule := check_cursor_rule(root, errors):
-                if rule in public:
-                    host_rules.append(rule)
-                else:
-                    add(errors, "release_inventory", CURSOR_RULE_PATH, "declared Cursor rule is not in release inventory")
+        if rule := check_cursor_rule(root, errors):
+            if rule in public:
+                host_rules.append(rule)
+            else:
+                add(errors, "release_inventory", CURSOR_RULE_PATH, "declared Cursor rule is not in release inventory")
+        for extra in sorted(path for path in public if path.suffix == ".mdc" and path != root / CURSOR_RULE_PATH):
+            add(errors, "cursor_rule_unexpected", relative(root, extra), "only the compound-default rule may ship; Cursor would load others into chats")
         marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
-        skills = check_skills(root, errors) if root_is_directory else {}
+        skills = check_skills(root, errors, public, published) if root_is_directory else {}
         for path in scannable:
             path_name = relative(root, path)
             if path_name.startswith(("tests/", "test/")):
@@ -638,8 +653,9 @@ def check_package(root: Path) -> dict[str, Any]:
             for kind, pattern in PRIVATE_PATTERNS:
                 if pattern.search(text):
                     add(errors, "sensitive_content", path_name, f"detected {kind} pattern")
-            if path.suffix == ".md" and "skills" not in path.relative_to(root).parts:
-                check_references(root, root, path, text, errors)
+            # check_skills already followed the links in each skill folder it parsed.
+            if path.suffix == ".md" and not any(path_name.startswith(f"skills/{name}/") for name in skills):
+                check_references(root, root, path, text, errors, published)
     except OSError:
         add(errors, "unreadable_content", ".", "package could not be fully inspected")
     try:
