@@ -343,10 +343,15 @@ def _registry_path(write: bool = False) -> Path:
         raise MapServerError(f"could not prepare code-map registry: {exc}") from exc
 
 
-def _registry_string(value: Any, maximum: int) -> str | None:
+def _printable(value: str) -> str:
+    """Replace control characters, which the saved registry rejects in names and queries."""
+    return "".join(" " if ord(character) < 32 or ord(character) == 127 else character for character in value)
+
+
+def _registry_string(value: Any, maximum: int, controls: bool = False) -> str | None:
     if not isinstance(value, str) or not value or len(value) > maximum:
         return None
-    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+    if not controls and any(ord(character) < 32 or ord(character) == 127 for character in value):
         return None
     return value
 
@@ -376,7 +381,8 @@ def _read_registry() -> dict[str, dict[str, str]]:
         if not isinstance(record, dict):
             continue
         project_id = _registry_string(record.get("id"), 64)
-        root = _registry_string(record.get("root"), MAX_SOURCE_PATH)
+        # A directory name may hold a tab or newline; restoring re-validates the root against its ID.
+        root = _registry_string(record.get("root"), MAX_SOURCE_PATH, controls=True)
         name = _registry_string(record.get("name"), MAX_REGISTRY_NAME)
         query = record.get("query", "")
         if project_id is None or len(project_id) != 64 or any(character not in "0123456789abcdef" for character in project_id):
@@ -822,7 +828,7 @@ class MapService:
     def _remember(self, project: Project) -> None:
         self._load_registry()
         with project.lock:
-            name = project.name[:MAX_REGISTRY_NAME]
+            name = _printable(project.name[:MAX_REGISTRY_NAME])
             query = project.query[:MAX_QUERY]
         self._registry.pop(project.id, None)
         self._registry[project.id] = {"id": project.id, "root": str(project.root), "name": name, "query": query}
@@ -975,7 +981,7 @@ class MapService:
     def register(self, root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> Project:
         project_id = _project_id(root)
         # The saved registry rejects control characters, and ranking only reads word characters.
-        query = "".join(" " if ord(character) < 32 or ord(character) == 127 else character for character in query)
+        query = _printable(query)
         with self.lock:
             self._load_registry()
             project = self.projects.get(project_id)
