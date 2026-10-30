@@ -196,7 +196,8 @@ function renderTree() {
       const button = make("button", undefined, "folder-row"); button.setAttribute("aria-pressed", String(item.name === state.folder)); button.dataset.key = item.name;
       const dot = make("canvas", undefined, "folder-dot"); dot.width = dot.height = 8; const ctx = dot.getContext("2d"); ctx.fillStyle = groupColor(item.name); ctx.fillRect(0, 0, 8, 8);
       button.append(dot, make("span", item.name, "row-label"), make("span", count(item.members.length), "row-count"));
-      button.addEventListener("click", () => { state.folder = item.name; state.browse = "files"; state.page = 0; renderTree(); renderGraph(true); }); fragment.append(button);
+      // The folder's files replace the folder rows, so focus goes to its first file, or to the tab that now lists files.
+      button.addEventListener("click", () => { state.folder = item.name; state.browse = "files"; state.page = 0; keepingFocus(renderTree, () => [refs["file-tree"].querySelector(".file-row"), document.querySelector("[data-browse=files]")]); renderGraph(true); }); fragment.append(button);
     } else if (mode === "symbols") {
       const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-current", String(item.file.path === state.selected)); button.dataset.key = item.file.path + ":" + item.symbol.name;
       const copy = make("span", undefined, "row-copy"); copy.append(make("span", item.symbol.name, "row-name"), make("span", item.file.path + ":" + item.symbol.line, "row-path"));
@@ -225,14 +226,14 @@ function traceImports(start, target) {
   }
   return { paths: [], limited: index < queue.length };
 }
-function chooseFile(path, record = true) {
+function chooseFile(path, record = true, nearby) {
   if (!state.lookup.has(path)) return;
   state.selected = path; state.trace = []; refs["trace-result"].textContent = "";
   if (state.folder && group(path) !== state.folder) state.folder = "";
   if (state.query && !matcher()(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
   if (record && state.history[state.historyIndex] !== path) { state.history = state.history.slice(0, state.historyIndex + 1); state.history.push(path); state.historyIndex = state.history.length - 1; }
   if (state.view === "trace") state.view = "neighbors";
-  state.impact = walkDependents(path); updateUrl(); keepingFocus(() => { renderTree(); renderInspector(); renderGraph(); }); graph.select(path); drawer("inspector", true);
+  state.impact = walkDependents(path); updateUrl(); keepingFocus(() => { renderTree(); renderInspector(); renderGraph(); }, nearby); graph.select(path); drawer("inspector", true);
 }
 function renderGraph(fit = false) {
   if (!state.model) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("loading", "", "Connecting to the local index…"); return; }
@@ -282,7 +283,9 @@ function renderGraph(fit = false) {
 function edgeRow(path, arrow) {
   const item = make("li"), button = make("button", undefined, "edge-row");
   const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(path), "row-name"), make("span", parent(path) || "/", "row-path"));
-  button.append(make("span", arrow, "edge-arrow"), copy); button.title = path; button.disabled = !state.lookup.has(path); button.addEventListener("click", () => chooseFile(path)); item.append(button); return item;
+  button.append(make("span", arrow, "edge-arrow"), copy); button.title = path; button.disabled = !state.lookup.has(path); item.append(button);
+  // The chosen file's lists replace these, so focus goes to their row for the file just left, or else to the inspector's first control.
+  button.addEventListener("click", () => { const left = state.selected; chooseFile(path, true, () => [...refs.inspector.querySelectorAll(".edge-row")].filter(row => row.title === left).concat(firstControl(refs.inspector))); }); return item;
 }
 function renderEdges(element, paths, arrow, maximum = 40) {
   if (!paths.length) { element.replaceChildren(make("li", "No recorded connections.", "detail-empty")); return; }
@@ -353,14 +356,22 @@ function rowFinder(row) {
   const key = node => node.dataset.key || node.title || node.textContent, twins = () => [...list.querySelectorAll("button")].filter(button => key(button) === key(row)), repeat = twins().indexOf(row);
   return () => list.contains(row) ? row : twins()[repeat];
 }
-// Runs a re-render that may replace the focused row, then focuses the row now in its place, without scrolling a list the user may have scrolled away from it, and without counting as use of its panel.
-function keepingFocus(render) {
+// Runs a re-render that may replace or disable the focused control, then focuses the row now in its place, without scrolling a list the user may have scrolled away from it, and without counting as use of its panel. With no such row, focus goes to the first in view of the nearby controls a caller names, or else to the last of them, scrolled into view. A click that focused nothing, as in Safari, moves no focus.
+function keepingFocus(render, nearby = () => []) {
   const active = document.activeElement, find = rowFinder(active), used = state.used;
   render();
-  if (!active?.isConnected) { find()?.focus({ preventScroll: true }); state.used = used; }
+  if (!active || (active.isConnected && !active.disabled)) return;
+  const row = find();
+  if (row) row.focus({ preventScroll: true });
+  else { const targets = nearby(); if (!focusInView(targets)) targets.at(-1)?.focus(); }
+  state.used = used;
 }
 // True when the middle of the element is on screen and on top, neither scrolled out of its panel nor under the Files drawer.
 const inView = node => { const box = node.getBoundingClientRect(); return node.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)); };
+// Focuses the first of the targets in view that takes focus, without scrolling, and returns it.
+const focusInView = targets => targets.find(target => { if (target && inView(target)) target.focus({ preventScroll: true }); return target && document.activeElement === target; });
+// The panel's first control that can take focus, being enabled and shown.
+const firstControl = panel => [...panel.querySelectorAll("button, input, select, summary")].find(node => !node.disabled && node.getClientRects().length);
 function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
@@ -470,12 +481,13 @@ function installInteractions() {
   refs["source-dialog"].addEventListener("close", () => {
     state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren();
     // The dialog returns focus to its opener, unless a refresh replaced that row or removed its symbol, or a resize hid it, which leaves focus on the closed dialog. Focus then goes to the first in view of the row now in its place, Source and Details, without scrolling, like the dialog's own return.
-    if (state.sourceReturn && (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement))) for (const target of [state.sourceReturn(), refs["source-button"], refs["inspector-button"]]) { if (target && inView(target)) target.focus({ preventScroll: true }); if (document.activeElement === target) break; }
+    if (state.sourceReturn && (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement))) focusInView([state.sourceReturn(), refs["source-button"], refs["inspector-button"]]);
   });
   refs["context-button"].addEventListener("click", () => { const file = state.lookup.get(state.selected); if (file) copy(contextText(file), "Compact context copied · paste into your chat"); });
   refs["path-button"].addEventListener("click", () => copy(state.selected || "", "File path copied"));
-  refs["history-back"].addEventListener("click", () => { if (state.historyIndex > 0) chooseFile(state.history[--state.historyIndex], false); });
-  refs["history-forward"].addEventListener("click", () => { if (state.historyIndex + 1 < state.history.length) chooseFile(state.history[++state.historyIndex], false); });
+  // Reaching either end of the history disables the button in use, so focus passes to the other.
+  refs["history-back"].addEventListener("click", () => { if (state.historyIndex > 0) chooseFile(state.history[--state.historyIndex], false, () => [refs["history-forward"]]); });
+  refs["history-forward"].addEventListener("click", () => { if (state.historyIndex + 1 < state.history.length) chooseFile(state.history[++state.historyIndex], false, () => [refs["history-back"]]); });
   refs["zoom-in"].addEventListener("click", () => graph.zoom(1.25)); refs["zoom-out"].addEventListener("click", () => graph.zoom(.8)); refs["zoom-reset"].addEventListener("click", () => graph.fit()); refs["fit-button"].addEventListener("click", () => graph.fit());
   document.addEventListener("visibilitychange", () => { clearInterval(state.timer); if (document.visibilityState === "visible") { startPolling(); poll(); } });
   document.addEventListener("keydown", event => {
