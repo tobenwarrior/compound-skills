@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import re
@@ -103,6 +104,21 @@ def under_symlink(root: Path, path: Path, errors: list[dict[str, str]] | None = 
     return False
 
 
+def gitignore_rules(root: Path) -> list[tuple[str, bool, bool]]:
+    """Read the package .gitignore's patterns as (pattern, anchored, directories only); negations are not supported."""
+
+    path = root / ".gitignore"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines() if path.is_file() else []
+    except (OSError, UnicodeError):
+        return []
+    rules = []
+    for line in map(str.strip, lines):
+        if line and not line.startswith(("#", "!")):
+            rules.append((line.strip("/"), "/" in line.rstrip("/"), line.endswith("/")))
+    return rules
+
+
 def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
     """Use Git's tracked/unignored view, with a small non-Git fallback."""
 
@@ -124,7 +140,15 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
     except OSError:
         pass
 
-    ignored = {".git", ".pytest_cache", "__pycache__", ".mypy_cache", ".ruff_cache"}
+    rules = gitignore_rules(root)
+
+    def ignored(parent: Path, name: str, directory: bool) -> bool:
+        path = relative(root, parent / name)
+        return name == ".git" or any(
+            (directory or not directories_only) and fnmatch.fnmatchcase(path if anchored else name, pattern)
+            for pattern, anchored, directories_only in rules
+        )
+
     paths = []
 
     def unreadable(exc: OSError) -> None:
@@ -133,10 +157,9 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
 
     for directory, directories, files in os.walk(root, followlinks=False, onerror=unreadable):
         parent = Path(directory)
-        # Mirror .gitignore: caches at any depth, development tests only at the package root.
-        directories[:] = [name for name in directories if name not in ignored and not (parent == root and name == "tests")]
+        directories[:] = [name for name in directories if not ignored(parent, name, True)]
         # Only regular files and links are content; reading a FIFO would block.
-        paths.extend(parent / name for name in files if name not in ignored and regular_or_link(parent / name))
+        paths.extend(parent / name for name in files if not ignored(parent, name, False) and regular_or_link(parent / name))
         paths.extend(parent / name for name in directories if safe_is_symlink(root, parent / name, errors))
     return sorted(paths, key=lambda path: relative(root, path))
 
