@@ -22,12 +22,12 @@ _TYPE_PATTERNS: dict[str, re.Pattern[str]] = {
     "rust": re.compile(r"^\s*(?:(?:pub(?:\s*\([^)]*\))?|unsafe|extern|async)\s+)*(struct|enum|trait|union|type)\s+(" + _IDENTIFIER + r")\b"),
     "java": re.compile(r"^\s*(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed)\s+)*(?:@interface|(class|interface|enum|record))\s+(" + _IDENTIFIER + r")\b"),
     "c": re.compile(r"^\s*(?:(?:typedef|static|extern)\s+)*(struct|union|enum)\s+(" + _IDENTIFIER + r")\b"),
-    "cpp": re.compile(r"^\s*(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:class\s+)?(" + _IDENTIFIER + r")\b"),
+    "cpp": re.compile(r"^\s*(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:(?:class|struct)\s+)?(" + _IDENTIFIER + r")\b"),
     "csharp": re.compile(r"^\s*(?:(?:public|protected|private|internal|abstract|static|sealed|partial|readonly|ref|new)\s+)*(?:(record)(?:\s+(?:class|struct))?|(class|interface|struct|enum|delegate))\s+(" + _IDENTIFIER + r")\b"),
     "ruby": re.compile(r"^\s*(?:class|module)\s+([A-Z][\w]*(?:::[A-Z][\w]*)*)\b"),
     "php": re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(class|interface|trait|enum)\s+(" + _IDENTIFIER + r")\b"),
-    "swift": re.compile(r"^\s*(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(" + _IDENTIFIER + r")\b"),
-    "kotlin": re.compile(r"^\s*(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum)\s+)*(enum\s+class|annotation\s+class|class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
+    "swift": re.compile(r"^\s*(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(?!(?:[a-z]+\s+)*(?:func|var|subscript)\b)(" + _IDENTIFIER + r")\b"),
+    "kotlin": re.compile(r"^\s*(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum)\s+)*(class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
 }
 
 _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
@@ -240,9 +240,7 @@ def _type_declaration(language: str, line: str) -> tuple[str, str] | None:
         kind, name = "type", match.group(1)
     if language == "java" and "@interface" in line:
         kind = "interface"
-    if language == "kotlin":
-        kind = "enum" if kind == "enum class" else "class" if kind == "annotation class" else kind
-    if language == "cpp" and kind == "enum" and re.search(r"\benum\s+class\b", line):
+    if language == "kotlin" and kind == "class" and "enum" in line[:match.start(1)].split():
         kind = "enum"
     return kind.lower(), name
 
