@@ -434,9 +434,6 @@ def _uri_to_indexed_path(uri: Any, root: Path, inventory: set[str]) -> str | Non
         return None
     if relative not in inventory or code_map._private(relative) or code_map._skip_dir(relative, git_inventory=True):
         return None
-    candidate, _reason = code_map._candidate(root, relative, git_inventory=True)
-    if candidate is None:
-        return None
     try:
         fd = open_regular_nofollow(root, relative)
         os.close(fd)
@@ -491,7 +488,7 @@ def _locations(
     else:
         raise LspLookupError("malformed language-server location result")
 
-    truncated = len(values) > max_results or len(values) > MAX_EXAMINED_RESULTS
+    truncated = len(values) > MAX_EXAMINED_RESULTS
     filtered = 0
     result: list[dict[str, Any]] = []
     seen: set[tuple[str, int, int]] = set()
