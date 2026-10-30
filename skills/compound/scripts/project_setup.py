@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import codecs
+import io
 import json
 import os
 import stat
@@ -147,15 +148,11 @@ def _has_line_ending(text: str) -> bool:
 def _marker_lines(text: str, marker: str) -> list[tuple[int, int, str]]:
     matches: list[tuple[int, int, str]] = []
     offset = 0
-    for line in text.splitlines(keepends=True):
-        content = line.rstrip("\r\n")
-        if content.strip() == marker:
+    # Split only at the endings _has_line_ending accepts; str.splitlines() also splits at U+2028 and others.
+    for line in io.StringIO(text, newline=""):
+        if line.rstrip("\r\n").strip() == marker:
             matches.append((offset, offset + len(line), line))
         offset += len(line)
-    if offset < len(text):  # splitlines() only omits this for an empty string
-        content = text[offset:].rstrip("\r\n")
-        if content.strip() == marker:
-            matches.append((offset, len(text), text[offset:]))
     return matches
 
 
