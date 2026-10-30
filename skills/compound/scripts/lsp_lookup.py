@@ -51,10 +51,8 @@ MAX_OUTPUT_BYTES = 64 * 1024
 MAX_EXAMINED_RESULTS = 2000
 _READER_CHUNK_BYTES = 4096
 # LSP languageId values where they differ from code_map's language labels.
-LANGUAGE_IDS = {
-    ".tsx": "typescriptreact", ".jsx": "javascriptreact", ".jsonc": "jsonc", ".fish": "fish",
-    **dict.fromkeys((".sh", ".bash", ".zsh"), "shellscript"),
-}
+LANGUAGE_IDS = {".tsx": "typescriptreact", ".jsx": "javascriptreact", ".jsonc": "jsonc", ".fish": "fish",
+                **dict.fromkeys((".sh", ".bash", ".zsh"), "shellscript")}
 
 
 class LspLookupError(ValueError):
@@ -93,11 +91,7 @@ def _relative_path(value: str) -> str:
 
 
 def _caller_path(path: str) -> str:
-    """Pin a relative path to the caller's directory, because the server starts in the repository root.
-
-    It is joined rather than normalized, so ``..`` after a symlinked directory
-    still names the file the kernel finds.
-    """
+    """Pin a relative path to the caller's directory, since the server starts in the root; joined, not normalized, so ``..`` resolves as the kernel does."""
     return path if os.path.isabs(path) else os.path.join(os.getcwd(), path)
 
 
@@ -193,8 +187,6 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         raise LspLookupError("source file is not valid UTF-8") from exc
-    if code_map._private(relative) or code_map._skip_dir(relative, git_inventory=True):
-        raise LspLookupError("file is private or excluded from the source index")
     return text, _language_id(relative, candidate["language"])
 
 
