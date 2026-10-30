@@ -3,6 +3,7 @@ import { createGraph, groupColor } from "./map-graph.js";
 const POLL_MS = 2000;
 const PAGE_SIZE = 60;
 const MAX_FILES = 5000;
+const MAX_QUERY = 512;
 const API = Object.freeze({ projects: "/api/projects", map: "/api/map", status: "/api/status", file: "/api/file" });
 const ids = ["project-select","refresh-button","sidebar","sidebar-button","sidebar-close","inspector","inspector-button","inspector-close","notice-strip","notice-title","notice-detail","notice-dismiss","sidebar-count","file-search","tree-state","file-tree","clear-folder","show-more","coverage-summary","coverage-detail","root-name","scope-name","graph-mode","graph","graph-tooltip","graph-loading","loading-detail","graph-empty","empty-title","empty-detail","empty-reset","graph-error","error-detail","retry-button","fit-button","zoom-in","zoom-out","zoom-reset","layout-state","layout-light","graph-summary","focus-summary","changed-count","inspector-empty","file-detail","repository-summary","inspector-title","detail-breadcrumb","detail-path","detail-summary","analysis-note","source-button","context-button","path-button","neighborhood-button","impact-button","trace-button","trace-panel","trace-target","trace-files","trace-result","connections-panel","symbols-panel","impact-panel","import-list","importer-list","symbol-list","symbol-note","detail-import-count","detail-importer-count","detail-symbol-count","unresolved-section","unresolved-count","unresolved-list","exports-section","export-list","impact-count","impact-note","impact-list","show-impact","history-back","history-forward","live-status","live-status-text","total-files","total-lines","total-symbols","branch-name","toast","source-dialog","source-title","source-meta","source-content","source-note","source-close"];
 const refs = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
@@ -24,7 +25,7 @@ const params = new URLSearchParams(location.search);
 const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
   query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
-  history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
+  history: [], historyIndex: -1, revision: null, updated: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
   trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null,
 };
 const graph = createGraph(refs.graph, {
@@ -73,10 +74,13 @@ function indexModel(model) {
   state.reverse.forEach(paths => paths.sort());
 }
 
-function matches(file) {
+function matcher() {
   const terms = state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const haystack = [file.path, file.language, ...file.symbols.map(symbol => symbol.name)].join(" ").toLowerCase();
-  return terms.every(term => haystack.includes(term));
+  const haystack = file => [file.path, file.language, ...file.symbols.map(symbol => symbol.name)].join(" ").toLowerCase();
+  const all = file => { const text = haystack(file); return terms.every(term => text.includes(term)); };
+  // Like the service's ranking, a topic matches any of its words when no file contains them all.
+  if (!state.model || state.model.files.some(all)) return all;
+  return file => { const text = haystack(file); return terms.some(term => text.includes(term)); };
 }
 function scopedFiles() { return state.model ? state.model.files.filter(file => !state.folder || group(file.path) === state.folder) : []; }
 function updateUrl() {
@@ -101,6 +105,7 @@ function drawer(name, open) {
   if (open) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
   refs[name].classList.toggle("is-open", open);
   refs[name + "-button"].setAttribute("aria-expanded", String(open));
+  if (!open && refs[name].contains(document.activeElement)) refs[name + "-button"].focus();
 }
 function setOverlay(kind, title, detail) {
   ["loading", "empty", "error"].forEach(name => { refs["graph-" + name].hidden = name !== kind; });
@@ -110,14 +115,17 @@ function setOverlay(kind, title, detail) {
 }
 function renderProjects() {
   refs["project-select"].replaceChildren(...state.projects.map(project => {
-    const option = make("option", project.name); option.value = project.id; option.selected = project.id === state.project; return option;
+    const option = make("option", project.name); option.value = project.id; return option;
   }));
+  refs["project-select"].value = state.project;
 }
 function renderStatus() {
   const error = state.error || str(state.status?.error);
-  const status = error ? "error" : state.status?.indexing ? "indexing" : state.model ? "live" : "loading";
+  // The service also reports indexing while it checks an unchanged repository, so a loaded map stays Ready.
+  const status = error ? "error" : state.model ? "live" : state.status?.indexing ? "indexing" : "loading";
+  const label = status === "live" ? "Ready" : status === "error" ? "Offline" : status === "indexing" ? "Indexing" : "Connecting";
   refs["live-status"].dataset.state = status;
-  refs["live-status-text"].textContent = status === "live" ? "Ready" : status === "error" ? "Offline" : status === "indexing" ? "Indexing" : "Connecting";
+  if (refs["live-status-text"].textContent !== label) refs["live-status-text"].textContent = label;
   const issues = state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic") && !note.includes("response file cap")) || [];
   const coverage = state.model?.coverage;
   const partial = coverage && (coverage.skipped || coverage.truncated || issues.length);
@@ -146,7 +154,7 @@ function renderSummary() {
 }
 
 function createFileRow(file) {
-  const button = make("button", undefined, "file-row"); button.setAttribute("aria-selected", String(file.path === state.selected)); button.title = file.path;
+  const button = make("button", undefined, "file-row"); button.setAttribute("aria-current", String(file.path === state.selected)); button.title = file.path;
   const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(file.path), "row-name"), make("span", parent(file.path) || "/", "row-path"));
   button.append(make("span", file.language === "python" ? "py" : file.language === "typescript" ? "ts" : "◇", "file-glyph"), copy);
   if (file.changed) button.append(make("span", file.changed === "untracked" ? "U" : file.changed[0].toUpperCase(), "change-mark"));
@@ -155,7 +163,7 @@ function createFileRow(file) {
 function renderTree() {
   document.querySelectorAll("[data-browse]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.browse === state.browse)));
   refs["clear-folder"].hidden = !state.folder;
-  const files = scopedFiles().filter(matches);
+  const files = scopedFiles().filter(matcher());
   const mode = state.browse === "folders" && state.query ? "files" : state.browse;
   let items;
   if (mode === "folders") {
@@ -178,7 +186,7 @@ function renderTree() {
       button.append(dot, make("span", item.name, "row-label"), make("span", count(item.members.length), "row-count"));
       button.addEventListener("click", () => { state.folder = item.name; state.browse = "files"; state.page = 0; renderTree(); renderGraph(true); }); fragment.append(button);
     } else if (mode === "symbols") {
-      const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-selected", String(item.file.path === state.selected));
+      const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-current", String(item.file.path === state.selected));
       const copy = make("span", undefined, "row-copy"); copy.append(make("span", item.symbol.name, "row-name"), make("span", item.file.path + ":" + item.symbol.line, "row-path"));
       button.append(make("span", item.symbol.kind === "class" ? "C" : "ƒ", "file-glyph"), copy); button.addEventListener("click", () => { chooseFile(item.file.path); drawer("sidebar", false); openSource(item.file.path, item.symbol.line); }); fragment.append(button);
     } else fragment.append(createFileRow(item));
@@ -209,15 +217,17 @@ function chooseFile(path, record = true) {
   if (!state.lookup.has(path)) return;
   state.selected = path; state.trace = []; refs["trace-result"].textContent = "";
   if (state.folder && group(path) !== state.folder) state.folder = "";
-  if (state.query && !matches(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
+  if (state.query && !matcher()(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
   if (record && state.history[state.historyIndex] !== path) { state.history = state.history.slice(0, state.historyIndex + 1); state.history.push(path); state.historyIndex = state.history.length - 1; }
   if (state.view === "trace") state.view = "neighbors";
   state.impact = walkDependents(path); updateUrl(); renderTree(); renderInspector(); renderGraph(); graph.select(path); drawer("inspector", true);
 }
 function renderGraph(fit = false) {
   if (!state.model) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("loading", "", "Connecting to the local index…"); return; }
-  let files = scopedFiles();
-  const matching = files.filter(matches);
+  // Selection views follow imports across folders, so the folder filter applies to the others only.
+  const scoped = !["neighbors", "impact", "trace"].includes(state.view);
+  let files = scoped ? scopedFiles() : state.model.files;
+  const matching = files.filter(matcher());
   if (state.query && !matching.length) { state.graphEdges = 0; graph.setData({ nodes: [], edges: [], selected: null }); setOverlay("empty", "No matching files", "Try a file, folder, language, or symbol name."); return; }
   let allowed;
   if (state.view === "neighbors") allowed = new Set(state.selected ? [state.selected, ...(state.lookup.get(state.selected)?.dependencies || []), ...(state.reverse.get(state.selected) || [])] : []);
@@ -254,7 +264,7 @@ function renderGraph(fit = false) {
   }
   document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === state.view)));
   const names = { all: "everything", neighbors: "selected neighborhood", changed: "changed files + neighbors", impact: "dependent files", trace: "import trace" };
-  refs["scope-name"].textContent = "/ " + (state.folder ? state.folder + " / " : "") + names[state.view];
+  refs["scope-name"].textContent = "/ " + (scoped && state.folder ? state.folder + " / " : "") + names[state.view];
   refs["graph-mode"].textContent = names[state.view]; refs["focus-summary"].textContent = state.view === "trace" ? "RECORDED IMPORT PATH" : "FOLDER GROUPS";
 }
 function edgeRow(path, arrow) {
@@ -314,7 +324,7 @@ async function openSource(path, line = 0) {
   try {
     const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodeURIComponent(path), request.signal);
     if (state.sourceRequest !== request || !refs["source-dialog"].open) return;
-    const content = str(payload.content).split("\n"); if (content.at(-1) === "") content.pop();
+    const content = str(payload.content).split(/\r\n|\r|\n/); if (content.at(-1) === "") content.pop();
     const fragment = document.createDocumentFragment();
     content.forEach((value, index) => { const row = make("div", undefined, "source-line" + (index + 1 === line ? " is-focus" : "")); row.append(make("span", index + 1, "source-number"), make("span", value || " ", "source-code")); fragment.append(row); });
     refs["source-content"].replaceChildren(fragment); refs["source-meta"].textContent = str(payload.language) + " · " + count(num(payload.lines) || content.length) + " lines · read from disk";
@@ -324,12 +334,21 @@ async function openSource(path, line = 0) {
 }
 function closeSource() { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-dialog"].close(); refs["source-content"].replaceChildren(); }
 
-function renderAll() { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }
+function renderAll() {
+  const active = document.activeElement, list = active?.closest("#file-tree, .edge-list, .symbol-list"), key = node => node.title || node.textContent;
+  renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph();
+  if (list && !list.contains(active)) [...list.querySelectorAll("button")].find(button => key(button) === key(active))?.focus();
+}
+function resetTrace() {
+  state.trace = []; if (state.view === "trace") state.view = "neighbors";
+  refs["trace-panel"].hidden = true; refs["trace-button"].setAttribute("aria-expanded", "false");
+  refs["trace-result"].textContent = refs["trace-target"].value = ""; refs["trace-files"].replaceChildren();
+}
 async function loadMap() {
   const project = state.project, epoch = state.epoch, requestedQuery = state.query, key = epoch + ":" + project;
   if (!project || state.mapBusy === key) return; state.mapBusy = key;
   try {
-    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(requestedQuery));
+    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(requestedQuery.slice(0, MAX_QUERY)));
     if (state.project !== project || state.epoch !== epoch) return;
     if (payload.indexing && !payload.model) {
       state.status = { ...state.status, indexing: true }; state.error = str(payload.error);
@@ -341,7 +360,8 @@ async function loadMap() {
     state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision);
     const current = state.projects.find(value => value.id === project); if (current) current.name = state.name;
     if (!state.lookup.has(state.selected)) {
-      const matching = state.model.files.filter(matches);
+      resetTrace();
+      const matching = state.model.files.filter(matcher());
       const ranked = matching.slice().sort((a, b) => ((state.reverse.get(b.path)?.length || 0) + b.dependencies.length) - ((state.reverse.get(a.path)?.length || 0) + a.dependencies.length));
       state.selected = ranked[0]?.path || null;
       if (state.selected && !state.history.length) { state.history = [state.selected]; state.historyIndex = 0; }
@@ -352,7 +372,7 @@ async function loadMap() {
       state.historyIndex = state.history.lastIndexOf(current);
     }
     if (state.selected && state.history[state.historyIndex] !== state.selected) { state.history.push(state.selected); state.historyIndex = state.history.length - 1; }
-    state.error = ""; state.dismissed = ""; renderAll(); if (!hadModel) graph.fit(); updateUrl();
+    state.error = ""; renderAll(); if (!hadModel) graph.fit(); updateUrl();
   } catch (error) { if (state.epoch === epoch) { state.error = error.message; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
   finally {
     if (state.mapBusy === key) state.mapBusy = "";
@@ -360,30 +380,33 @@ async function loadMap() {
   }
 }
 async function poll(force = false) {
-  if (document.visibilityState !== "visible" || !state.project) return;
+  if ((!force && document.visibilityState !== "visible") || !state.project) return;
   const epoch = state.epoch, project = state.project, key = epoch + ":" + project;
   if (state.statusBusy === key) return; state.statusBusy = key;
   try {
     const payload = await fetchJson(API.status + "?project=" + encodeURIComponent(project));
     if (state.epoch !== epoch) return;
-    state.status = payload; state.error = str(payload.error); renderStatus();
-    if (force || !state.model || num(payload.revision) !== state.revision) await loadMap();
-  } catch (error) { if (state.epoch === epoch) { state.error = error.message; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
+    // A restarted service numbers revisions from zero again, so a new build time or a failed check reloads the map.
+    const rebuilt = state.updated !== null && str(payload.updated_at) !== state.updated;
+    state.status = payload; state.updated = str(payload.updated_at); state.error = str(payload.error); renderStatus();
+    if (force || !state.model || rebuilt || num(payload.revision) !== state.revision) await loadMap();
+  } catch (error) { if (state.epoch === epoch) { state.error = error.message; state.revision = null; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
   finally { if (state.statusBusy === key) state.statusBusy = ""; }
 }
 function startPolling() { clearInterval(state.timer); if (state.project && document.visibilityState === "visible") state.timer = setInterval(() => poll(), POLL_MS); }
 async function activateProject(id) {
   if (!id) return; state.epoch += 1; state.project = id; state.name = state.projects.find(project => project.id === id)?.name || "";
-  state.model = null; state.revision = null; state.status = null; state.error = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
+  state.model = null; state.revision = null; state.updated = null; state.status = null; state.error = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
   state.lookup = new Map(); state.reverse = new Map(); state.edges = []; closeSource(); renderAll(); updateUrl();
-  await loadMap(); startPolling();
+  await poll(true); startPolling();
 }
 async function loadProjects() {
   try {
     const payload = await fetchJson(API.projects);
     state.projects = (Array.isArray(payload.projects) ? payload.projects : []).filter(project => project && typeof project.id === "string").map(project => ({ id: project.id, name: str(project.name, "Repository") }));
-    const target = state.projects.find(project => project.id === state.project) || state.projects.find(project => project.id === payload.defaultProject) || state.projects[0];
-    if (target) await activateProject(target.id); else { state.error = "No repository is registered. Open the map from a project chat."; renderStatus(); setOverlay("error", "", state.error); }
+    const target = state.projects.find(project => project.id === state.project) || (!state.project && state.projects[0]);
+    if (target) await activateProject(target.id);
+    else { state.error = state.project && state.projects.length ? "This repository is not registered. Open the map again from its project chat." : "No repository is registered. Open the map from a project chat."; renderProjects(); renderStatus(); setOverlay("error", "", state.error); }
   } catch (error) { state.error = error.message; renderStatus(); setOverlay("error", "", state.error); }
 }
 function setView(view) { state.view = view; state.trace = view === "trace" ? state.trace : []; renderGraph(true); }
@@ -412,8 +435,8 @@ function installInteractions() {
   refs["trace-panel"].addEventListener("submit", event => {
     event.preventDefault(); const target = refs["trace-target"].value.trim();
     if (!state.selected || !state.lookup.has(target)) { refs["trace-result"].textContent = "Choose a full indexed file path."; return; }
-    const result = traceImports(state.selected, target); state.trace = result.paths;
-    refs["trace-result"].textContent = result.paths.length ? result.paths.join(" → ") : result.limited ? "Trace search limit reached. Narrow the path using a nearer file." : (state.model?.coverage.truncated || state.model?.coverage.skipped ? "No path was found in this partial index. Confirm with source search." : "No recorded import path connects these files.");
+    const forward = traceImports(state.selected, target), result = forward.paths.length ? forward : traceImports(target, state.selected); state.trace = result.paths;
+    refs["trace-result"].textContent = result.paths.length ? result.paths.join(" → ") : forward.limited || result.limited ? "Trace search limit reached. Narrow the path using a nearer file." : (state.model?.coverage.truncated || state.model?.coverage.skipped ? "No path was found in this partial index. Confirm with source search." : "No recorded import path connects these files.");
     if (result.paths.length) setView("trace");
   });
   refs["source-button"].addEventListener("click", () => openSource(state.selected)); refs["source-close"].addEventListener("click", closeSource);
@@ -427,7 +450,7 @@ function installInteractions() {
   document.addEventListener("keydown", event => {
     if (refs["source-dialog"].open) return;
     if (event.key === "Escape") { drawer("sidebar", false); drawer("inspector", false); return; }
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+    if (event.ctrlKey || event.metaKey || event.altKey || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
     if (event.key === "/") { event.preventDefault(); drawer("sidebar", true); refs["file-search"].focus(); }
     if (event.key.toLowerCase() === "f") graph.fit();
   });

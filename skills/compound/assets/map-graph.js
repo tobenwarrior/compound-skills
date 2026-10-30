@@ -1126,6 +1126,8 @@ export function createGraph(canvas, options = {}) {
       state.gesture = { type: node >= 0 ? "node" : "pan", node, x: point.x, y: point.y, moved: false, dragging: false, vx: 0, vy: 0, time };
     }
     if (event.cancelable) event.preventDefault();
+    // Preventing the default also skips the click's focus, which keyboard zoom and pan need.
+    if (typeof canvas.focus === "function") canvas.focus({ preventScroll: true, focusVisible: false });
   }
 
   function handlePointerMove(event) {
