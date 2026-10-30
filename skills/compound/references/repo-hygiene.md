@@ -58,8 +58,8 @@ bytecode, and `.scratch/`. `artifacts/` is project-specific and is not forced
 on repositories that do not use it; add it to `.gitignore` when appropriate.
 
 `--write-baseline` records current finding signatures, plus the line count,
-missing ignore entries, or worktree count of comparable findings. Later runs
-report accepted findings only as a count and block new findings; a comparable
-finding that gets worse becomes active again. A baseline is an
-adoption aid, not a cleanliness claim. Use `--no-baseline` to inspect the
-whole repository.
+number of missing ignore entries, or worktree count of comparable findings.
+Later runs report accepted findings only as a count and block new findings; a
+comparable finding becomes active again when its number exceeds the recorded
+one. A baseline is an adoption aid, not a cleanliness claim. Use
+`--no-baseline` to inspect the whole repository.
