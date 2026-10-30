@@ -1119,13 +1119,14 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
         raise CodeMapError(f"refusing symlink code-map cache: {path}")
     # Store the entries that fit, so a large repository keeps most of its cache instead of none.
     parts: list[str] = []
-    size = len(f'{{"version":{CACHE_VERSION},"python":"{PYTHON_VERSION}","entries":{{}}}}')
+    prefix = f'{{"version":{CACHE_VERSION},"python":"{PYTHON_VERSION}","entries":{{'
+    size = len(prefix) + 2
     for name, entry in entries.items():
         part = json.dumps(name, ensure_ascii=True) + ":" + json.dumps(entry, ensure_ascii=True, separators=(",", ":"))
         if size + len(part) + 1 <= MAX_CACHE_BYTES:
             parts.append(part)
             size += len(part) + 1
-    encoded = f'{{"version":{CACHE_VERSION},"python":"{PYTHON_VERSION}","entries":{{{",".join(parts)}}}}}'
+    encoded = prefix + ",".join(parts) + "}}"
     temporary: Path | None = None
     try:
         if path.exists() and path.stat().st_size == len(encoded) and path.read_bytes() == encoded.encode("utf-8"):
