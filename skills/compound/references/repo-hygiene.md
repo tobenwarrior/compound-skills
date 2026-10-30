@@ -21,7 +21,8 @@ python3 <installed-skill-dir>/scripts/repo_audit.py <repo-root> --no-baseline
 ```
 
 Exit `0` means no active blocking finding, `1` means an active `FAIL` (or a
-`WARN` under `--strict`), and `2` means an invalid path or configuration.
+`WARN` under `--strict`), and `2` means an invalid path or configuration, or
+an audit or baseline write that could not run.
 An audit with `--json` emits one object with `status`, `exit_code`,
 `findings`, `baselined`, `fail`, and `warn`; `--write-baseline` reports the
 accepted count, and errors report `status`, `error`, and `exit_code`. `--help`

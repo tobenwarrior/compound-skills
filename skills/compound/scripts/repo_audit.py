@@ -7,7 +7,7 @@ project files; only ``--write-baseline`` writes its baseline. It audits tracked
 and untracked-not-ignored files, with a filesystem fallback outside Git.
 
 Usage: python3 repo_audit.py [PATH] [--strict] [--json] [--no-color]
-Exit codes: 0 unblocked, 1 active violations, 2 invalid path/configuration.
+Exit codes: 0 unblocked, 1 active violations, 2 invalid path/configuration or a failed run.
 Config: .repo-audit.toml or [tool.repo_audit] in pyproject.toml.
 """
 
@@ -519,7 +519,7 @@ def load_baseline(root: Path) -> dict | None:
         return None
     try:
         value = json.loads(p.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except (OSError, ValueError, RecursionError):  # JSONDecodeError and UnicodeError are ValueErrors
         return None
     return value if isinstance(value, dict) else None
 
