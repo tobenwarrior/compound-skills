@@ -17,17 +17,19 @@ MAX_LINE_CHARS = 8192
 MAX_SYMBOLS = 512
 
 _IDENTIFIER = r"[A-Za-z_$][\w$]*"
+_ANNOTATIONS = r"(?:@[\w.]+(?:\([^()\n]*\))?\s+)*+"  # Java, Kotlin and Swift annotations or attributes
+_GENERIC = r"(?:<(?:[^<>\n]|<[^<>\n]*>)*>\s*)?"  # one nested level of type parameters
 _TYPE_PATTERNS: dict[str, re.Pattern[str]] = {
     "go": re.compile(r"^\s*type\s+(" + _IDENTIFIER + r")\b"),
     "rust": re.compile(r"^\s*(?:(?:pub(?:\s*\([^)]*\))?|unsafe|extern|async)\s+)*(struct|enum|trait|union|type)\s+(" + _IDENTIFIER + r")\b"),
-    "java": re.compile(r"^\s*(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed)\s+)*(?:@interface|(class|interface|enum|record))\s+(" + _IDENTIFIER + r")\b"),
+    "java": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed)\s+)*(?:@interface|(class|interface|enum|record))\s+(" + _IDENTIFIER + r")\b"),
     "c": re.compile(r"^\s*(?:(?:typedef|static|extern)\s+)*(struct|union|enum)\s+"),
     "cpp": re.compile(r"^\s*(?:template\s*<.*?>\s*)?(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:(?:class|struct)\s+)?"),
-    "csharp": re.compile(r"^\s*(?:(?:public|protected|private|internal|abstract|static|sealed|partial|readonly|ref|new)\s+)*(?:(record)(?:\s+(?:class|struct))?|(class|interface|struct|enum|delegate))\s+(" + _IDENTIFIER + r")\b"),
+    "csharp": re.compile(r"^\s*(?:\[[^\]\n]*\]\s*)*(?:(?:public|protected|private|internal|abstract|static|sealed|partial|readonly|ref|new)\s+)*(?:(record)(?:\s+(?:class|struct))?|(class|interface|struct|enum|delegate))\s+(" + _IDENTIFIER + r")\b"),
     "ruby": re.compile(r"^\s*(?:class|module)\s+([A-Z][\w]*(?:::[A-Z][\w]*)*)\b"),
     "php": re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(class|interface|trait|enum)\s+(" + _IDENTIFIER + r")\b"),
-    "swift": re.compile(r"^\s*(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(?!(?:[a-z]+\s+)*(?:func|var|subscript)\b)(" + _IDENTIFIER + r")\b"),
-    "kotlin": re.compile(r"^\s*(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum)\s+)*(class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
+    "swift": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(?!(?:[a-z]+\s+)*(?:func|var|subscript)\b)(" + _IDENTIFIER + r")\b"),
+    "kotlin": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum|inner|companion)\s+)*(class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
 }
 
 _C_TYPE_ATTRIBUTE = re.compile(r"(?:\[\[[^\]]*\]\]|alignas\s*\([^)]*\)|__attribute__\s*\(\([^)]*\)\)|__declspec\s*\([^)]*\))\s*")
@@ -36,25 +38,31 @@ _C_TYPE_ALIAS = re.compile(r"^\s*(?:typedef\b[^;()]*?\b(" + _IDENTIFIER + r")\s*
 _CSHARP_DELEGATE = re.compile(r"\bdelegate\s+.*?(" + _IDENTIFIER + r")\s*(?:<[^<>()]*>\s*)?\(")
 
 _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
-    "go": re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(" + _IDENTIFIER + r")(?:\s*\[[^\]\n]*\])?\s*\("),
+    "go": re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(" + _IDENTIFIER + r")(?:\s*\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\])?\s*\("),
     "rust": re.compile(r"^\s*(?:(?:pub(?:\s*\([^)]*\))?|unsafe|async|const|extern)\s+)*fn\s+([A-Za-z_]\w*)\s*(?:<[^;{}]*>)?\s*\("),
     "ruby": re.compile(r"^\s*def\s+(?:(?:self)\.)?([A-Za-z_]\w*[!?=]?)"),
     "php": re.compile(r"^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*function\s+(?:&\s*)?([A-Za-z_]\w*)\s*\("),
-    "swift": re.compile(r"^\s*(?:(?:public|private|internal|fileprivate|open|static|class|override|mutating|nonmutating|final|dynamic|discardableResult)\s+)*func\s+([A-Za-z_]\w*)\s*\("),
-    "kotlin": re.compile(r"^\s*(?:(?:public|private|protected|internal|open|final|abstract|override|inline|infix|operator|suspend|tailrec|external|expect|actual)\s+)*fun\s+(?:<[^>]+>\s*)?(?:[\w$.<>?]+\.)?([A-Za-z_]\w*)\s*\("),
+    "swift": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|internal|fileprivate|open|static|class|override|mutating|nonmutating|final|dynamic)\s+)*func\s+([A-Za-z_]\w*)\s*" + _GENERIC + r"\("),
+    "kotlin": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|protected|internal|open|final|abstract|override|inline|infix|operator|suspend|tailrec|external|expect|actual)\s+)*fun\s+" + _GENERIC + r"(?:[\w$.<>?]+\.)?([A-Za-z_]\w*)\s*\("),
 }
 
 # The C-family and JVM method rule requires an explicit return type, avoiding
 # most ordinary calls; constructors and destructors are matched separately.
 # Possessive and atomic groups keep matching linear: a modifier is never retried as a type token.
-_METHOD_PATTERN = re.compile(
-    r"^\s*(?:(?:public|protected|private|internal|static|final|abstract|virtual|override|async|extern|unsafe|inline|constexpr|consteval|constinit|friend|explicit|synchronized|native|default|sealed|new|partial|readonly|volatile|register|typedef)\s+)*+"
-    r"(?><[^;{}]+>\s+)?"
-    r"(?:[\w:$~*&<>.,?\[\]]+\s+)+[*&]*"
-    r"((?:[A-Za-z_$][\w$]*::)*(?:~?[A-Za-z_$][\w$]*))\s*\("
-)
+def _method_pattern(type_parameters: str) -> re.Pattern[str]:
+    return re.compile(
+        r"^\s*" + _ANNOTATIONS + r"(?:(?:public|protected|private|internal|static|final|abstract|virtual|override|async|extern|unsafe|inline|constexpr|consteval|constinit|friend|explicit|synchronized|native|default|sealed|new|partial|readonly|volatile|register|typedef)\s+)*+"
+        r"(?><[^;{}]+>\s+)?"
+        r"(?:[\w:$~*&<>.,?\[\]]+\s+)+[*&]*"
+        r"((?:[A-Za-z_$][\w$]*::)*(?:~?[A-Za-z_$][\w$]*))\s*" + type_parameters + r"\("
+    )
+
+
+# In C and C++ `name<T>(` is nearly always a call, so only C# declares type parameters after the name.
+_METHOD_PATTERN = _method_pattern("")
+_GENERIC_METHOD_PATTERN = _method_pattern(_GENERIC)
 _CONSTRUCTOR_PATTERN = re.compile(
-    r"^\s*(?:(?:public|protected|private|internal|static|inline|async|virtual)\s+|(explicit|constexpr|consteval)\s+)*+"
+    r"^\s*" + _ANNOTATIONS + r"(?:(?:public|protected|private|internal|static|inline|async|virtual)\s+|(explicit|constexpr|consteval)\s+)*+"
     r"(~?[A-Za-z_$][\w$]*)\s*\("
 )
 _STATEMENT_START = re.compile(r"\s*(?:(?:return|throw|yield|case|else|await|co_await|co_return|co_yield|goto|delete)\b|default\s*:)")
@@ -64,6 +72,7 @@ _CONTROL_NAMES = {
     "using", "yield", "await", "super", "this", "where", "when", "match",
 }
 _C_KEYWORDS = {"__asm__", "__attribute__", "__declspec", "alignas", "alignof", "consteval", "constexpr", "decltype", "noexcept", "static_assert"}
+_LINE_END = re.compile(r"[\r\n]")
 _RUBY_HEREDOC = re.compile(r"<<([~-]?)([\"'`]?)([A-Za-z_]\w*)\2")
 _PHP_HEREDOC = re.compile(r"<<<[ \t]*()([\"']?)([A-Za-z_]\w*)\2")
 _PHP_OPEN = re.compile(r"<\?(?:php\b|=)?")
@@ -120,12 +129,12 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
 
     def blank(start: int, end: int) -> None:
         for pos in range(start, end):
-            if chars[pos] != "\n":
+            if chars[pos] not in "\r\n":
                 chars[pos] = " "
 
     def line_end_at(pos: int) -> int:
-        end = source.find("\n", pos)
-        return length if end < 0 else end
+        end = _LINE_END.search(source, pos)
+        return end.start() if end else length
 
     while i < length:
         if heredoc and i > heredoc[0]:
@@ -143,7 +152,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             continue
 
         if ruby_doc:
-            if source[i] == "\n":
+            if source[i] in "\r\n":
                 i += 1
                 continue
             line_end = line_end_at(i)
@@ -163,7 +172,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
                 blank(i, i + 2)
                 i += 2
             else:
-                if source[i] != "\n":
+                if source[i] not in "\r\n":
                     chars[i] = " "
                 i += 1
             continue
@@ -171,7 +180,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
         if quote:
             delimiter = quote * (3 if triple else 1)
             if escaped:
-                if source[i] != "\n":
+                if source[i] not in "\r\n":
                     chars[i] = " "
                 escaped = False
                 i += 1
@@ -188,7 +197,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
                 quote = ""
                 triple = raw = verbatim = False
             else:
-                if source[i] != "\n":
+                if source[i] not in "\r\n":
                     chars[i] = " "
                 i += 1
             continue
@@ -223,7 +232,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             i = close + len(raw_end)
             continue
 
-        if language == "ruby" and source[i] == "=" and (i == 0 or source[i - 1] == "\n"):
+        if language == "ruby" and source[i] == "=" and (i == 0 or source[i - 1] in "\r\n"):
             line_end = line_end_at(i)
             if re.match(r"=begin(?:\s|$)", source[i:line_end]):
                 blank(i, line_end)
@@ -351,7 +360,7 @@ def _function_name(language: str, line: str, type_names: set[str]) -> str | None
         return None
     if _STATEMENT_START.match(line):
         return None
-    match = _METHOD_PATTERN.search(line)
+    match = (_GENERIC_METHOD_PATTERN if language == "csharp" else _METHOD_PATTERN).search(line)
     if match:
         name = match.group(1).split("::")[-1].lstrip("~")
         if name.lower() not in _CONTROL_NAMES and name not in _C_KEYWORDS:

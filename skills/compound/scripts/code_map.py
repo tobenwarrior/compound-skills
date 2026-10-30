@@ -44,7 +44,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 11
+CACHE_VERSION = 12
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -109,14 +109,15 @@ JS_IMPORT_CLAUSE = re.compile(
 JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
 JS_SYMBOLS = (
     (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)"), "function"),
-    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?class\s+([A-Za-z_$][\w$]*)"), "class"),
+    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?class\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)"), "class"),
     (re.compile(r"^\s*(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)"), "interface"),
-    (re.compile(r"^\s*(?:export\s+)?(?:type|enum)\s+([A-Za-z_$][\w$]*)"), "type"),
+    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?type\s+([A-Za-z_$][\w$]*)\s*[=<]"), "type"),
+    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const\s+)?enum\s+([A-Za-z_$][\w$]*)"), "type"),
     (re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\("), "function"),
     (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
 )
 JS_EXPORT_DECL = re.compile(
-    r"^[ \t]*export\s+(?:default\s+)?(?:async\s+)?(?:function|class|interface|type|enum|const|let|var)\s+([A-Za-z_$][\w$]*)",
+    r"^[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function\*?|(?:abstract\s+)?class|interface|type|(?:const\s+)?enum|const|let|var)\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)",
     re.MULTILINE,
 )
 JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
@@ -463,9 +464,9 @@ def _javascript_exports(text: str) -> list[str]:
     names = JS_EXPORT_DECL.findall(text)
     for group in JS_EXPORT_LIST.findall(text):
         for item in group.split(","):
-            source = item.strip().split(" as ", 1)[0].strip()
-            if re.fullmatch(r"[A-Za-z_$][\w$]*", source):
-                names.append(source)
+            exported = item.strip().removeprefix("type ").split(" as ")[-1].strip()  # `a as b` exports b
+            if re.fullmatch(r"[A-Za-z_$][\w$]*", exported):
+                names.append(exported)
     return list(dict.fromkeys(names))[:MAX_SYMBOLS]
 def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | None, int, str | None]:
     fp = info["fingerprint"]
