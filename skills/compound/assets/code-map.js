@@ -359,8 +359,8 @@ function keepingFocus(render) {
   render();
   if (!active?.isConnected) { find()?.focus({ preventScroll: true }); state.used = used; }
 }
-// True when the middle of the element is on screen and on top, neither scrolled out of its panel nor under the Files drawer.
-const inView = node => { const box = node.getBoundingClientRect(); return node.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)); };
+// True when another panel, such as the Files drawer, lies over the middle of the element. One scrolled out of its own panel is not covered, and the dialog's own return also focuses it there.
+const covered = node => { const box = node.getBoundingClientRect(), top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("aside"); return !!top && top !== node.closest("aside"); };
 function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
@@ -469,8 +469,8 @@ function installInteractions() {
   refs["source-button"].addEventListener("click", () => openSource(state.selected)); refs["source-close"].addEventListener("click", closeSource);
   refs["source-dialog"].addEventListener("close", () => {
     state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren();
-    // The dialog returns focus to its opener, unless a refresh replaced that row or removed its symbol, or a resize hid it, which leaves focus on the closed dialog. Focus then goes to the first in view of the row now in its place, Source and Details, without scrolling, like the dialog's own return.
-    if (state.sourceReturn && (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement))) for (const target of [state.sourceReturn(), refs["source-button"], refs["inspector-button"]]) { if (target && inView(target)) target.focus({ preventScroll: true }); if (document.activeElement === target) break; }
+    // The dialog returns focus to its opener, unless a refresh replaced that row or removed its symbol, or a resize hid it, which leaves focus on the closed dialog. Focus then goes to the first of the row now in its place, Source and Details that can take it and that no other panel covers, without scrolling, like the dialog's own return.
+    if (state.sourceReturn && (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement))) for (const target of [state.sourceReturn(), refs["source-button"], refs["inspector-button"]]) { if (target && !covered(target)) target.focus({ preventScroll: true }); if (document.activeElement === target) break; }
   });
   refs["context-button"].addEventListener("click", () => { const file = state.lookup.get(state.selected); if (file) copy(contextText(file), "Compact context copied · paste into your chat"); });
   refs["path-button"].addEventListener("click", () => copy(state.selected || "", "File path copied"));
