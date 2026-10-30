@@ -67,6 +67,8 @@ MAX_REGISTRY_PROJECTS = 32
 MAX_REGISTRY_BYTES = 256 * 1024
 MAX_REGISTRY_NAME = 256
 MODEL_WAIT = 30.0
+# An index pass can hold the GIL for seconds, so a busy service answers late.
+REQUEST_TIMEOUT = 5.0
 MAX_LOADED_PROJECTS = 8
 MAX_INDEX_WORKERS = 4
 ASSET_NAMES = ("code-map.html", "code-map.css", "code-map.js", "map-graph.js")
@@ -525,7 +527,7 @@ def _startup_lock(directory: Path, timeout: float = 10.0):
                 pass
 
 
-def _request(port: int, method: str, path: str, token: str | None = None, body: dict[str, Any] | None = None, timeout: float = 2.0) -> tuple[int, dict[str, Any] | None, bytes]:
+def _request(port: int, method: str, path: str, token: str | None = None, body: dict[str, Any] | None = None, timeout: float = REQUEST_TIMEOUT) -> tuple[int, dict[str, Any] | None, bytes]:
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
     payload = _json(body) if body is not None else None
     headers = {"Host": f"127.0.0.1:{port}", "Accept": "application/json"}
@@ -552,8 +554,7 @@ def _request(port: int, method: str, path: str, token: str | None = None, body: 
 def _health(runtime: dict[str, Any]) -> dict[str, Any] | None:
     """Return the service's health, {} when its port answers otherwise, or None when nothing listens."""
     try:
-        # An index pass can hold the GIL for seconds, so a busy service answers late.
-        status, value, _ = _request(runtime["port"], "GET", "/api/health", runtime["token"], timeout=5.0)
+        status, value, _ = _request(runtime["port"], "GET", "/api/health", runtime["token"])
     except MapServerError as exc:
         return None if isinstance(exc.__cause__, ConnectionRefusedError) else {}
     if status != 200 or not value or value.get("service") != SERVICE:
