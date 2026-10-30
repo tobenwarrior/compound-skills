@@ -122,6 +122,7 @@ JS_EXPORT_DECL = re.compile(
 )
 JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
 STDLIB_MODULES = frozenset(sys.stdlib_module_names)
+PYTHON_VERSION = f"{sys.version_info[0]}.{sys.version_info[1]}"
 OUTLINED_LANGUAGES = {"python", "javascript", "typescript", *SUPPORTED_LANGUAGES}
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
@@ -202,7 +203,7 @@ def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
     if root_result is None or root_result.returncode != 0:
         return supplied, "", [], ["Git inventory unavailable; use native search to inspect this repository"]
     try:
-        root = Path(os.fsdecode(root_result.stdout.strip())).resolve(strict=True)
+        root = Path(os.fsdecode(root_result.stdout.removesuffix(b"\n"))).resolve(strict=True)  # names may end in spaces
     except OSError:
         return supplied, "", [], ["Git root unavailable; use native search to inspect this repository"]
     head_result = _git(root, "rev-parse", "HEAD")
@@ -992,6 +993,8 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
         record["outline_note"] = entry["parse_note"]
     if native_capped or len(dependencies) > MAX_DEPS:
         record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), f"local import links capped at {MAX_DEPS}")))
+    if "source_limit" in entry.get("native_imports", {}).get("diagnostics", ()):
+        record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), "local import links read from the first 256 KiB")))
     return record
 def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     terms = re.findall(r"[a-z0-9_]+", query.lower())
@@ -1137,6 +1140,8 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     if not isinstance(payload, dict):
         return {}, "code-map cache has an unsupported shape"
     version = payload.get("version")
+    # Python outlines depend on the interpreter that parsed them, so another version re-parses them.
+    same_python = payload.get("python") == PYTHON_VERSION
     if version != CACHE_VERSION:
         if isinstance(version, int) and 0 <= version < CACHE_VERSION:
             return {}, "code-map cache requires migration"
@@ -1147,7 +1152,7 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     reusable: dict[str, Any] = {}
     for path_name, entry in raw.items():
         current = candidates.get(path_name)
-        if isinstance(path_name, str) and current and _valid_entry(entry, path_name) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"]:
+        if isinstance(path_name, str) and current and _valid_entry(entry, path_name) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"] and (same_python or entry["language"] != "python"):
             reusable[path_name] = entry
     return reusable, None
 def _write_json(root: Path, entries: dict[str, Any]) -> None:
@@ -1156,13 +1161,13 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
         raise CodeMapError(f"refusing symlink code-map cache: {path}")
     # Store the entries that fit, so a large repository keeps most of its cache instead of none.
     parts: list[str] = []
-    size = len(f'{{"version":{CACHE_VERSION},"entries":{{}}}}')
+    size = len(f'{{"version":{CACHE_VERSION},"python":"{PYTHON_VERSION}","entries":{{}}}}')
     for name, entry in entries.items():
         part = json.dumps(name, ensure_ascii=True) + ":" + json.dumps(entry, ensure_ascii=True, separators=(",", ":"))
         if size + len(part) + 1 <= MAX_CACHE_BYTES:
             parts.append(part)
             size += len(part) + 1
-    encoded = f'{{"version":{CACHE_VERSION},"entries":{{{",".join(parts)}}}}}'
+    encoded = f'{{"version":{CACHE_VERSION},"python":"{PYTHON_VERSION}","entries":{{{",".join(parts)}}}}}'
     temporary: Path | None = None
     try:
         if path.exists() and path.stat().st_size == len(encoded) and path.read_bytes() == encoded.encode("utf-8"):
@@ -1320,12 +1325,12 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         f"{coverage.get('excluded', 0)} excluded; {coverage.get('skipped', 0)} skipped; "
         f"{'partial' if partial else 'complete'}",
         "Source confirmation: metadata only; inspect listed files before changing behavior.",
-        "Focus:",
     ]
     excluded_reasons = coverage.get("excluded_reasons", {})
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
-        lines.append("Excluded: " + summary)
+        lines.insert(3, "Excluded: " + summary)
+    lines.append("Focus:")
     terms = re.findall(r"[a-z0-9_]+", query.lower())
     by_path = {file["path"]: file for file in model["files"]}
     for path in model["focus"]:

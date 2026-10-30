@@ -140,11 +140,16 @@ def _read_reference_text(
 
 
 def _budget_exempt(git_root: Path, path: str) -> bool:
-    """Cheap checks for paths _build excludes, which need no file-budget slot; symlinks still take one."""
+    """Whether _build excludes this inventory path, so it needs no file-budget slot."""
     if code_map._private(path) or code_map._skip_dir(path, git_inventory=True):
         return True
-    # _build reports a missing tracked file as skipped, so only existing non-code files are exempt.
-    return code_map._language(path) is None and code_map._non_code_path(path) and os.path.lexists(os.path.join(git_root, path))
+    absolute = git_root / path
+    try:
+        if code_map._has_symlink_ancestor(absolute, git_root) or not stat.S_ISREG(absolute.lstat().st_mode):
+            return True  # symlinks, submodules and other non-regular paths
+    except OSError:
+        return False  # _build reports a missing tracked file as skipped, so it keeps its slot
+    return code_map._language(path) is None and code_map._non_code_path(path)
 
 
 def _coverage_partial(model_coverage: dict[str, Any]) -> bool:

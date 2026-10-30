@@ -33,12 +33,13 @@ MAX_FILE_BYTES = 256 * 1024
 MAX_INDEX_BYTES = 16 * 1024 * 1024
 MAX_RESULTS = 64
 MAX_OUTPUT_BYTES = 16 * 1024
-_METADATA_VERSION = 2
+_METADATA_VERSION = 3
 
 _GO_MODULE_PATH = re.compile(r"^[A-Za-z0-9._~+-]+(?:/[A-Za-z0-9._~+-]+)*$")
 _GO_PACKAGE = re.compile(r"package\s+([A-Za-z_][A-Za-z0-9_]*)\b")
 _GO_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _RUST_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_GO_RUNE = re.compile(r"'(?:[^'\\\n]|\\[^\n]{1,10}?)'")
 _RUST_CHAR = re.compile(r"'(?:[^'\\\n]|\\u\{[0-9A-Fa-f_]{1,8}\}|\\.)'")
 _RUST_MOD = re.compile(r"(?m)^[ \t]*(?:(?:pub(?:\([^)]*\))?)\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
 _RUST_INLINE_MOD = re.compile(r"(?m)^[ \t]*(?:(?:pub(?:\([^)]*\))?)\s+)?mod\s+[A-Za-z_][A-Za-z0-9_]*\s*\{")
@@ -240,10 +241,15 @@ def _rust_root_candidate(rel: str) -> bool:
     return False
 
 
-def _go_tokens(source: str) -> tuple[list[tuple[str, str, int, int]], bool]:
-    """Tokenize the small Go subset needed here, skipping comments and bounding work."""
+def _go_tokens(source: str, imports_only: bool = False) -> tuple[list[tuple[str, str, int, int]], bool, bool]:
+    """Tokenize the small Go subset needed here, skipping comments and bounding work.
+
+    Returns the tokens, whether lexing was partial, and whether ``imports_only``
+    stopped at the first top-level declaration, after which no import can follow.
+    """
     tokens = []
     partial = False
+    depth = 0
     length = len(source)
     i = 0
     while i < length:
@@ -263,7 +269,11 @@ def _go_tokens(source: str) -> tuple[list[tuple[str, str, int, int]], bool]:
             i = end + 2
             continue
         start = i
-        if char in {'"', '`'}:
+        rune = _GO_RUNE.match(source, i) if char == "'" else None
+        if rune:
+            i = rune.end()
+            tokens.append(("rune", rune.group(), start, i))
+        elif char in {'"', '`'}:
             quote = char
             i += 1
             while i < length:
@@ -287,14 +297,17 @@ def _go_tokens(source: str) -> tuple[list[tuple[str, str, int, int]], bool]:
             i += 1
             while i < length and (source[i] == "_" or source[i].isalnum()):
                 i += 1
+            if imports_only and depth == 0 and source[start:i] in {"func", "type", "var", "const"}:
+                return tokens, partial, True
             tokens.append(("ident", source[start:i], start, i))
         else:
             i += 1
+            depth += 1 if char in "({[" else -1 if char in ")}]" else 0
             tokens.append(("punct", char, start, i))
         if len(tokens) >= 32768:
             partial = i < length
             break
-    return tokens, partial
+    return tokens, partial, False
 
 
 def _go_string_value(token: str) -> str | None:
@@ -326,8 +339,10 @@ def _go_module_declaration(source: str, tokens: list[tuple[str, str, int, int]])
     return None
 
 
-def _go_file_metadata(source: str) -> tuple[str | None, list[str], bool, list[str]]:
-    tokens, partial = _go_tokens(source)
+def _go_file_metadata(source: str, truncated: bool = False) -> tuple[str | None, list[str], bool, list[str]]:
+    tokens, partial, imports_ended = _go_tokens(source, imports_only=True)
+    # A truncated file still has every import when the import section ended inside the part read.
+    partial = partial or truncated and not imports_ended
     diagnostics = ["token_limit_or_lex_error"] if partial else []
     package = tokens[1][1] if len(tokens) > 1 and tokens[0][0:2] == ("ident", "package") and tokens[1][0] == "ident" and _GO_IDENTIFIER.fullmatch(tokens[1][1]) else None
     if package is None:
@@ -527,23 +542,25 @@ def extract_language_metadata(rel: str, source: str) -> dict:
         metadata["diagnostics"].append("invalid_source")
         return metadata
     try:
-        source_bytes = len(source.encode("utf-8", "surrogatepass"))
+        encoded = source.encode("utf-8", "surrogatepass")
     except (UnicodeError, MemoryError):
-        source_bytes = MAX_FILE_BYTES + 1
-    if source_bytes > MAX_FILE_BYTES:
         metadata["partial"] = True
         metadata["diagnostics"].append("source_limit")
         return metadata
+    truncated = len(encoded) > MAX_FILE_BYTES
+    if truncated:
+        # Read imports from the first 256 KiB instead of dropping them all.
+        source = encoded[:MAX_FILE_BYTES].decode("utf-8", "ignore")
     fallback = {**metadata, "partial": True, "diagnostics": ["analysis_failed"]}
     try:
         if kind == "go":
-            package, imports, partial, diagnostics = _go_file_metadata(source)
+            package, imports, partial, diagnostics = _go_file_metadata(source, truncated)
             metadata["go_package"] = package
             metadata["go_imports"] = imports
             metadata["partial"] = partial
             metadata["diagnostics"].extend(diagnostics)
         elif kind == "go_mod":
-            tokens, partial = _go_tokens(source)
+            tokens, partial, _ = _go_tokens(source)
             metadata["go_module"] = _go_module_declaration(source, tokens)
             metadata["partial"] = partial
             if partial:
@@ -558,6 +575,9 @@ def extract_language_metadata(rel: str, source: str) -> dict:
             metadata["rust_path_attr"] = path_attr
             metadata["partial"] = partial
             metadata["diagnostics"].extend(diagnostics)
+        if truncated:
+            metadata["diagnostics"].append("source_limit")
+            metadata["partial"] = metadata["partial"] or kind != "go"
     except Exception:  # One unusual file must not fail the whole map.
         metadata = fallback
     return _fit_language_metadata(metadata)
@@ -658,7 +678,8 @@ def _build_local_import_index(root, parsed_metadata: dict, known=None, inherited
             break
         records[rel] = record
         metadata_bytes += size
-        if record["partial"] or record["diagnostics"]:
+        # A Go file read only in part still has complete imports when its metadata is not partial.
+        if record["partial"] or set(record["diagnostics"]) - {"source_limit"}:
             diagnostics.append("partial_source_metadata")
     eligible_names = set(candidates)
     known_output = set(eligible_names)
@@ -839,7 +860,8 @@ def resolve_go_import(spec: str, source_path: str, index: dict) -> tuple[str, ..
     if target_module is None or target_module != source_module:
         return ()
     result = index.get("go_packages", {}).get((source_module["root"], suffix), ())
-    return _bounded_paths(path for path in result if path in index.get("known", ()) and path != source_path and _safe_rel(path))
+    # Every file of the package is returned; the caller's link cap reports a large package.
+    return tuple(path for path in result if path in index.get("known", ()) and path != source_path and _safe_rel(path))
 
 
 def resolve_rust_import(spec: str, source_path: str, index: dict) -> tuple[str, ...]:
