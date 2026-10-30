@@ -300,6 +300,7 @@ def _validate_fallback_ancestors(root: Path) -> None:
 def _legacy_shadow_files(root: Path) -> tuple[Path, ...]:
     found: list[Path] = []
     ancestor = root
+    primary = root / "AGENTS.md"
     user_claude_memory = Path.home() / ".claude" / "CLAUDE.md"
     while True:
         for relative in ("CLAUDE.md", ".claude/CLAUDE.md", "CLAUDE.local.md"):
@@ -307,7 +308,8 @@ def _legacy_shadow_files(root: Path) -> tuple[Path, ...]:
             if candidate == user_claude_memory:
                 continue
             try:
-                if candidate.is_file():
+                # A link to AGENTS.md loads its routing instead of shadowing it.
+                if candidate.is_file() and not (primary.exists() and candidate.samefile(primary)):
                     found.append(candidate)
             except OSError as exc:
                 raise SetupError(f"could not inspect legacy instruction file {candidate}: {exc}") from exc
