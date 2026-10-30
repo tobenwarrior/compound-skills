@@ -115,14 +115,15 @@ _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 
 def _inventory_fingerprint(root: Path) -> str:
-    """Bounded Git inventory and worktree metadata, or "" (never a cache hit) when Git fails or exceeds its bound."""
-    limit = int(getattr(engine, "MAX_GIT_INVENTORY_BYTES", 8 * 1024 * 1024))
-    inventory = engine._bounded_git_output(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], limit)
-    status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], limit)
+    """The engine's capped Git inventory, a bounded Git status and worktree metadata, or "" (never a cache hit) when Git fails."""
+    inventory, capped = engine._git_inventory(root)
+    # An oversized status keeps its prefix (branch, then tracked changes); the metadata below still covers every mapped path.
+    status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], engine.MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
     if inventory is None or status is None:
         return ""
     digest = hashlib.sha256(status)
     digest.update(inventory)
+    digest.update(b"\0capped=" + (b"1" if capped else b"0"))
     paths = sorted(set(inventory.split(b"\0")))
     for raw in paths:
         if not raw:
