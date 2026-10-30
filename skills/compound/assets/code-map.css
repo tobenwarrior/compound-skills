@@ -1184,9 +1184,12 @@ kbd { background:var(--raised); color:var(--muted); padding:2px 5px; }
   .view-tabs button { font-size:9px; }
   .statusbar { gap:9px; }
 }
-/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's, so the view tabs size to their labels and then shrink. */
+/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's, so each view tab starts from its label's width instead of an equal third, and up to 660px the Changed count gives way, since a long one, such as every file before a first commit, would push the labels out. */
 @media(min-width:561px) and (max-width:760px) {
   .workspace:has(.inspector.is-open) .view-tabs button { flex:1 1 auto; }
+}
+@media(min-width:561px) and (max-width:660px) {
+  .workspace:has(.inspector.is-open) #changed-count { display:none; }
 }
 @media(min-width:561px) and (max-width:620px) {
   .workspace:has(.inspector.is-open) .graph-toolbar { gap:5px; }
