@@ -247,6 +247,7 @@ class _JsonRpc:
         self.received_bytes = 0
         self.sent_bytes = 0
         self.next_id = 1
+        self._pumped = 0
         self._chunks: queue.Queue[bytes | BaseException | None] = queue.Queue()
         self._closed = threading.Event()
         self._write_done = threading.Event()
@@ -260,14 +261,13 @@ class _JsonRpc:
         # it reads cannot block both pipes; the protocol byte limit bounds the queue.
         assert self.process.stdout is not None
         fd = self.process.stdout.fileno()
-        pumped = 0
         try:
-            while not self._closed.is_set() and pumped <= MAX_TOTAL_PROTOCOL_BYTES:
+            while not self._closed.is_set() and self._pumped <= MAX_TOTAL_PROTOCOL_BYTES:
                 block = os.read(fd, _READER_CHUNK_BYTES)
                 if not block:
                     self._chunks.put(None)
                     return
-                pumped += len(block)
+                self._pumped += len(block)
                 self._chunks.put(block)
         except BaseException as exc:  # delivered to the protocol owner
             self._chunks.put(exc)
@@ -296,8 +296,13 @@ class _JsonRpc:
 
         self._write_done.clear()
         threading.Thread(target=writer, daemon=True).start()
-        if not self._write_done.wait(self._remaining()):
-            raise LspLookupError("language-server process timed out while sending a request")
+        # The reader stops at the byte limit, and a server then blocked on its
+        # output never reads this request, so the wait checks the limit in slices.
+        while not self._write_done.wait(0.05):
+            if self._pumped > MAX_TOTAL_PROTOCOL_BYTES:
+                raise LspLookupError("language-server response byte limit exceeded")
+            if time.monotonic() >= self.deadline:
+                raise LspLookupError("language-server process timed out while sending a request")
         if failure:
             raise LspLookupError("language server closed its input stream") from failure[0]
 
