@@ -80,10 +80,10 @@ def _error(action: str, message: str, identity: Identity | None = None) -> dict[
 
 
 def _canonical_directory(raw: str) -> Path:
-    path = Path(raw).expanduser()
-    if not path.is_absolute():
-        path = Path.cwd() / path
     try:
+        path = Path(raw).expanduser()
+        if not path.is_absolute():
+            path = Path.cwd() / path
         if not path.exists():
             raise SetupError(f"repository path does not exist: {path}")
         if not path.is_dir():
@@ -91,8 +91,8 @@ def _canonical_directory(raw: str) -> Path:
         return path.resolve(strict=True)
     except SetupError:
         raise
-    except OSError as exc:
-        raise SetupError(f"could not resolve repository path {path}: {exc}") from exc
+    except (OSError, RuntimeError) as exc:
+        raise SetupError(f"could not resolve repository path {raw}: {exc}") from exc
 
 
 def _repository_identity(raw: str) -> Identity:
@@ -101,7 +101,6 @@ def _repository_identity(raw: str) -> Identity:
         result = subprocess.run(
             ["git", "-C", str(supplied), "rev-parse", "--show-toplevel", "--git-common-dir"],
             capture_output=True,
-            text=True,
             check=False,
             timeout=10,
         )
@@ -109,7 +108,8 @@ def _repository_identity(raw: str) -> Identity:
         raise SetupError(f"could not inspect repository with git: {exc}") from exc
 
     if result.returncode == 0:
-        lines = result.stdout.splitlines()
+        # Paths need not be UTF-8; decode them as the file system does.
+        lines = [os.fsdecode(line) for line in result.stdout.splitlines()]
         if len(lines) != 2 or not all(lines):
             raise SetupError("git returned an invalid repository identity")
         try:
@@ -129,20 +129,23 @@ def _repository_identity(raw: str) -> Identity:
             raise SetupError(f"could not inspect repository identity: {exc}") from exc
         root = supplied
         parts = ("nongit", str(root), str(stat_result.st_dev), str(stat_result.st_ino))
-    key = hashlib.sha256("\0".join(parts).encode("utf-8")).hexdigest()
+    key = hashlib.sha256("\0".join(parts).encode("utf-8", "surrogateescape")).hexdigest()
     return Identity(root, key)
 
 
 def _state_paths() -> tuple[Path, Path]:
     configured = os.environ.get("COMPOUND_SKILLS_STATE_DIR")
-    if configured is None:
-        directory = Path.home() / ".cache" / "compound-skills"
-    elif not configured:
-        raise SetupError("COMPOUND_SKILLS_STATE_DIR must not be empty")
-    else:
-        directory = Path(configured).expanduser()
-        if not directory.is_absolute():
-            raise SetupError("COMPOUND_SKILLS_STATE_DIR must be an absolute path")
+    try:
+        if configured is None:
+            directory = Path.home() / ".cache" / "compound-skills"
+        elif not configured:
+            raise SetupError("COMPOUND_SKILLS_STATE_DIR must not be empty")
+        else:
+            directory = Path(configured).expanduser()
+            if not directory.is_absolute():
+                raise SetupError("COMPOUND_SKILLS_STATE_DIR must be an absolute path")
+    except RuntimeError as exc:
+        raise SetupError(f"could not determine onboarding state directory: {exc}") from exc
     return directory, directory / DATABASE_NAME
 
 
