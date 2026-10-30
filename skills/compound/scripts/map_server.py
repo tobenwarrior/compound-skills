@@ -111,71 +111,6 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
 _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 
-def _git_branch(status: bytes) -> str:
-    """Extract only the local branch name from porcelain's bounded header."""
-    header = status.split(b"\n", 1)[0]
-    if not header.startswith(b"## "):
-        return ""
-    try:
-        value = os.fsdecode(header[3:].strip())
-    except (UnicodeDecodeError, ValueError):
-        return ""
-    if value.startswith("No commits yet on "):
-        value = value[len("No commits yet on "):]
-    if value in {"HEAD", "HEAD (no branch)", "(no branch)"}:
-        return ""
-    return value.split("...", 1)[0].split(" [", 1)[0]
-
-
-def _git_state_fingerprint(root: Path) -> tuple[str, str] | None:
-    """Fallback for engines that predate the model's bounded Git state fields."""
-    command = ["git", "-C", str(root), "status", "--porcelain=v1", "--branch", "-z", "--untracked-files=all"]
-    process: subprocess.Popen[bytes] | None = None
-    stream: Any = None
-    raw = b""
-    truncated = False
-    try:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        stream = process.stdout
-        if stream is None:
-            return None
-        raw = stream.read(MAX_GIT_STATUS_BYTES + 1)
-        if not isinstance(raw, bytes):
-            return None
-        truncated = len(raw) > MAX_GIT_STATUS_BYTES
-        if truncated:
-            with contextlib.suppress(OSError):
-                process.kill()
-        try:
-            process.wait(timeout=float(getattr(engine, "GIT_TIMEOUT", 5)))
-        except subprocess.TimeoutExpired:
-            with contextlib.suppress(OSError):
-                process.kill()
-            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
-                process.wait(timeout=1)
-            return None
-        if process.returncode != 0 and not truncated:
-            return None
-    except (OSError, ValueError, subprocess.TimeoutExpired):
-        if process is not None:
-            with contextlib.suppress(OSError):
-                process.kill()
-            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
-                process.wait(timeout=1)
-        return None
-    finally:
-        if stream is not None:
-            with contextlib.suppress(OSError, ValueError):
-                stream.close()
-    if truncated:
-        raw = raw[:MAX_GIT_STATUS_BYTES]
-    digest = hashlib.sha256()
-    digest.update(raw)
-    digest.update(b"\0truncated=")
-    digest.update(b"1" if truncated else b"0")
-    return _git_branch(raw), digest.hexdigest()
-
-
 def _inventory_fingerprint(root: Path) -> str:
     """Bounded Git inventory and worktree metadata; failures are never cache hits."""
     limit = int(getattr(engine, "MAX_GIT_INVENTORY_BYTES", 8 * 1024 * 1024))
@@ -964,10 +899,6 @@ class MapService:
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text")
             after = _inventory_fingerprint(project.root)
             git_state = _model_git_state(model)
-            if git_state is None and not hasattr(engine, "_git_state"):
-                git_state = _git_state_fingerprint(project.root)
-            if git_state and git_state[0] and "branch" not in model:
-                model["branch"] = git_state[0]
             with project.lock:
                 old = project.model
                 stable_old = dict(old) if old else None
