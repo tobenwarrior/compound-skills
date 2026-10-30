@@ -1184,10 +1184,13 @@ kbd { background:var(--raised); color:var(--muted); padding:2px 5px; }
   .view-tabs button { font-size:9px; }
   .statusbar { gap:9px; }
 }
-/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's. */
+/* Beside the docked inspector these widths leave a graph and an inspector as narrow as a phone's, so the view tabs size to their labels and then shrink. */
+@media(min-width:561px) and (max-width:760px) {
+  .workspace:has(.inspector.is-open) .view-tabs button { flex:1 1 auto; }
+}
 @media(min-width:561px) and (max-width:620px) {
-  .graph-toolbar { gap:5px; }
-  .view-tabs button { padding-inline:4px; font-size:9px; }
+  .workspace:has(.inspector.is-open) .graph-toolbar { gap:5px; }
+  .workspace:has(.inspector.is-open) .view-tabs button { padding-inline:4px; font-size:9px; }
   .map-actions { flex-wrap:wrap; }
 }
 /* Phones in landscape and other short windows: compact chrome, one row for the breadcrumb and summary, and the zoom controls in a row. Phones in portrait, below 561px, keep the full chrome down to 500px tall. */

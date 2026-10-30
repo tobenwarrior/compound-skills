@@ -425,6 +425,8 @@ function installInteractions() {
   refs["notice-dismiss"].addEventListener("click", () => { state.dismissed = state.error || JSON.stringify([state.model?.coverage.skipped, state.model?.coverage.truncated, state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic") && !note.includes("response file cap"))]); renderStatus(); });
   refs["sidebar-button"].addEventListener("click", () => drawer("sidebar", !refs.sidebar.classList.contains("is-open"))); refs["sidebar-close"].addEventListener("click", () => drawer("sidebar", false));
   refs["inspector-button"].addEventListener("click", () => drawer("inspector", !refs.inspector.classList.contains("is-open"))); refs["inspector-close"].addEventListener("click", () => drawer("inspector", false));
+  // Narrowing until the docked inspector floats again would stack it over a Files drawer opened beside it, so Files, opened last, keeps the screen.
+  addEventListener("resize", () => { if (refs.sidebar.classList.contains("is-open") && refs.inspector.classList.contains("is-open") && floating("inspector")) drawer("inspector", false); });
   refs["file-search"].value = state.query;
   refs["file-search"].addEventListener("input", event => {
     state.query = event.target.value; state.page = 0; updateUrl(); renderTree(); renderGraph(true);
