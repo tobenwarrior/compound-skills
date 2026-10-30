@@ -177,15 +177,19 @@ def _safe_relative(value: str) -> bool:
     return bool(value) and not path.is_absolute() and ".." not in path.parts
 def _git_inventory(root: Path) -> tuple[bytes | None, bool]:
     """Return whole NUL-terminated paths within MAX_GIT_INVENTORY_BYTES, tracked first, and whether the cap cut any."""
-    data = _bounded_git_output(root, ["ls-files", "--cached", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
-    if data is not None and len(data) <= MAX_GIT_INVENTORY_BYTES:
-        # Untracked paths only fill what tracked ones leave, so an unignored dependency folder cannot crowd out source.
-        others = _bounded_git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"], MAX_GIT_INVENTORY_BYTES - len(data), keep_prefix=True)
-        data = None if others is None else data + others
-    if data is None or len(data) <= MAX_GIT_INVENTORY_BYTES:
-        return data, False
+    tracked = _bounded_git_output(root, ["ls-files", "--cached", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
+    if tracked is None:
+        return None, False
+    # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
+    # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
+    reserve = max(MAX_GIT_INVENTORY_BYTES - len(tracked), MAX_GIT_INVENTORY_BYTES // 4)
+    others = _bounded_git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"], reserve, keep_prefix=True)
+    if others is None:
+        return None, False
+    capped = len(tracked) + len(others) > MAX_GIT_INVENTORY_BYTES
     # Keep the complete entries read so far instead of mapping nothing.
-    return data[:data.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES) + 1], True
+    others = others[:others.rfind(b"\0", 0, reserve) + 1]
+    return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1] + others, capped
 def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
     root_result = _git(supplied, "rev-parse", "--show-toplevel")
     if root_result is None or root_result.returncode != 0:
