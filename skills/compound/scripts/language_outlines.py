@@ -34,8 +34,9 @@ _TYPE_PATTERNS: dict[str, re.Pattern[str]] = {
 
 _C_TYPE_ATTRIBUTE = re.compile(r"(?:\[\[[^\]]*\]\]|alignas\s*\([^)]*\)|__attribute__\s*\(\([^)]*\)\)|__declspec\s*\([^)]*\))\s*")
 _C_TYPE_WORD = re.compile(r"(" + _IDENTIFIER + r")\s*")
-_C_TYPE_ALIAS = re.compile(r"^\s*(?:typedef\b[^;()]*?\b(" + _IDENTIFIER + r")\s*(?:\[[^\]]*\]\s*)?;|using\s+(" + _IDENTIFIER + r")\s*=)")
-_CSHARP_DELEGATE = re.compile(r"\bdelegate\s+.*?(" + _IDENTIFIER + r")\s*(?:<[^<>()]*>\s*)?\(")
+# Names start only where identifiers do (\b also holds inside a$b) and dimensions end at the next bracket, keeping matching linear.
+_C_TYPE_ALIAS = re.compile(r"^\s*(?:typedef\b[^;()]*?(?<![\w$])(" + _IDENTIFIER + r")\s*(?:\[[^\][]*\]\s*)?;|using\s+(" + _IDENTIFIER + r")\s*=)")
+_CSHARP_DELEGATE = re.compile(r"\bdelegate\s+.*?(?<![\w$])(" + _IDENTIFIER + r")\s*(?:<[^<>()]*>\s*)?\(")
 
 _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
     "go": re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(" + _IDENTIFIER + r")(?:\s*\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\])?\s*\("),
@@ -452,7 +453,7 @@ def _type_declaration(language: str, line: str) -> tuple[str, str] | None:
     elif language == "csharp":
         kind = match.group(1) or match.group(2)
         # A delegate's first identifier is its return type; the name is the one before the parameters.
-        delegate = _CSHARP_DELEGATE.search(line) if kind == "delegate" else None
+        delegate = _CSHARP_DELEGATE.match(line, match.start(2)) if kind == "delegate" else None
         name = delegate.group(1) if delegate else match.group(3)
     elif language == "ruby":
         kind_match = re.search(r"\b(class|module)\b", line)
