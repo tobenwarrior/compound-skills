@@ -46,10 +46,11 @@ Keep tests that protect contracts, regressions, failures, and boundaries. Assess
 Configuration is read from `.repo-audit.toml`, or from `[tool.repo_audit]` in
 `pyproject.toml` when the dedicated file is absent. Known settings include
 size limits, size overrides, worktree limits, root/litter allowlists, and the
-reference check. `litter_ignore` also exempts a deliberately committed
-dependency folder, such as a `node_modules` test fixture. The checker requires
-Python 3.11+ (`tomllib`); malformed TOML, unsupported runtimes, or
-unknown/invalid settings return exit `2`.
+reference check. A `litter_ignore` glob matches a path or its basename and
+also exempts a deliberately committed dependency folder, such as a
+`node_modules` test fixture. The checker requires Python 3.11+ (`tomllib`);
+malformed TOML, unsupported runtimes, or unknown/invalid settings return
+exit `2`.
 
 The default ignore recommendations cover virtual environments, caches,
 bytecode, and `.scratch/`. `artifacts/` is project-specific and is not forced

@@ -224,6 +224,10 @@ def _match_any(name: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(name, pat) for pat in patterns)
 
 
+def _litter_ignored(rel: str, cfg: Config) -> bool:
+    return _match_any(rel.rstrip("/"), cfg.litter_ignore) or _match_any(Path(rel).name, cfg.litter_ignore)
+
+
 # ---------------------------------------------------------------------------
 # checks
 # ---------------------------------------------------------------------------
@@ -245,7 +249,7 @@ def check_root(root: Path, files: list[str], cfg: Config) -> list[Finding]:
 
 
 def _is_litter(rel: str, cfg: Config) -> str | None:
-    if _match_any(rel, cfg.litter_ignore) or _match_any(Path(rel).name, cfg.litter_ignore):
+    if _litter_ignored(rel, cfg):
         return None
     name = Path(rel).name
     if _match_any(name, LITTER_BASENAMES + cfg.litter_extra):
@@ -382,7 +386,7 @@ def check_junkdirs(root: Path, files: list[str], cfg: Config) -> list[Finding]:
     rootdirs = {rel.split("/")[0] for rel in files if "/" in rel}
     out = []
     for d in sorted(rootdirs):
-        if _match_any(d, cfg.litter_ignore):
+        if _litter_ignored(d, cfg):
             continue
         if DATE_STAMP_RE.search(d) or _match_any(d, JUNK_DIR_GLOBS + cfg.junk_dir_extra):
             out.append(Finding(FAIL, "junkdir", d + "/",
@@ -422,7 +426,7 @@ def check_ondisk(root: Path, files: list[str], cfg: Config) -> list[Finding]:
                     "loop-litter on disk but gitignored — hiding a file does not establish "
                     "that it is clean; review it and use .scratch/ for temporary work")
             for rel in _walk_loop_litter(root)
-            if rel not in visible and not _match_any(rel, cfg.litter_ignore) and not _match_any(Path(rel).name, cfg.litter_ignore)]
+            if rel not in visible and not _litter_ignored(rel, cfg)]
 
 
 def _entry_looks_like_litter(entry: str) -> bool:
@@ -454,7 +458,7 @@ def check_noise(inventory: set[str], cfg: Config) -> list[Finding]:
     folders = {_noise_folder(rel, roots) for rel in inventory if not _excluded_worktree(rel)} - {None}
     out = []
     for folder in sorted(folders):
-        if _match_any(folder.rstrip("/"), cfg.litter_ignore):
+        if _litter_ignored(folder, cfg):
             continue
         if folder.count("/") == 1 and folder.rstrip("/") in {"build", "dist", "out", "target"}:
             out.append(Finding(WARN, "noise", folder, "build output in version control — gitignore it unless it is published on purpose"))
