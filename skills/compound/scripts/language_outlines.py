@@ -138,7 +138,8 @@ def mask_javascript(text: str) -> str:
     def mask(start: int, end: int) -> None:
         nonlocal kept
         out.append(text[kept:start])
-        out.append(_JS_BLANK.sub(" ", text[start:end]))
+        segment = text[start:end]
+        out.append(_JS_BLANK.sub(" ", segment) if "\n" in segment or "\r" in segment else " " * len(segment))
         kept = end
 
     def template_text(start: int) -> int:
