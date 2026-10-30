@@ -10,6 +10,7 @@ file.
 from __future__ import annotations
 
 import argparse
+import codecs
 import json
 import os
 import stat
@@ -97,6 +98,7 @@ class TargetState:
     path: Path
     text: str | None
     markers: MarkerRange | None
+    bom: bytes = b""
 
     @property
     def exists(self) -> bool:
@@ -209,8 +211,10 @@ def _read_target(
         raw = path.read_bytes()
     except OSError as exc:
         raise SetupError(f"could not inspect instruction target {path}: {exc}") from exc
+    # Some editors save a byte-order mark before the start marker; it is not content.
+    bom = codecs.BOM_UTF8 if raw.startswith(codecs.BOM_UTF8) else b""
     try:
-        text = raw.decode("utf-8")
+        text = raw[len(bom) :].decode("utf-8")
     except UnicodeDecodeError as exc:
         raise SetupError(f"instruction target is not UTF-8: {path}") from exc
     return TargetState(
@@ -223,6 +227,7 @@ def _read_target(
             end_marker=end_marker,
             marker_namespace=marker_namespace,
         ),
+        bom,
     )
 
 
@@ -680,7 +685,7 @@ def _stage(plans: Iterable[tuple[TargetState, str, bool]]) -> list[StagedPlan]:
                 item.temporary = Path(temporary)
                 staged.append(item)
                 with os.fdopen(descriptor, "wb") as handle:
-                    handle.write(text.encode("utf-8"))
+                    handle.write(state.bom + text.encode("utf-8"))
                     handle.flush()
                     os.fsync(handle.fileno())
                 if state.exists:
