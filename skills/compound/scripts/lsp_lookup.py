@@ -50,6 +50,12 @@ DEFAULT_MAX_OUTPUT_BYTES = 12 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024
 MAX_EXAMINED_RESULTS = 2000
 _READER_CHUNK_BYTES = 4096
+# LSP languageId values where they differ from code_map's language labels.
+LANGUAGE_IDS = {
+    ".tsx": "typescriptreact", ".jsx": "javascriptreact", ".jsonc": "jsonc", ".fish": "fish",
+    **dict.fromkeys((".sh", ".bash", ".zsh"), "shellscript"),
+}
+CONFIG_LANGUAGE_IDS = {"dockerfile": "dockerfile", "makefile": "makefile", "go.mod": "go.mod"}
 
 
 class LspLookupError(ValueError):
@@ -118,8 +124,16 @@ def _command_argv(command: Sequence[str]) -> list[str]:
     return argv
 
 
+def _language_id(relative: str, language: str) -> str:
+    name, suffix = code_map._name_and_suffix(relative)
+    if language != "config":
+        return LANGUAGE_IDS.get(suffix, language)
+    name = "dockerfile" if name.startswith("dockerfile.") else name
+    return CONFIG_LANGUAGE_IDS.get(name) or code_map.LANGUAGES.get(suffix, "plaintext")
+
+
 def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
-    """Return source text and language only for a safe indexed source file."""
+    """Return source text and LSP language id only for a safe indexed source file."""
     try:
         inventory_root, _head, inventory, notes = code_map._git_context(root)
     except (OSError, ValueError) as exc:
@@ -165,7 +179,7 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
         raise LspLookupError("source file is not valid UTF-8") from exc
     if code_map._private(relative) or code_map._skip_dir(relative, git_inventory=True):
         raise LspLookupError("file is private or excluded from the source index")
-    return text, candidate["language"]
+    return text, _language_id(relative, candidate["language"])
 
 
 def _lsp_position(text: str, line: int, column: int, encoding: str) -> dict[str, int]:
@@ -204,9 +218,10 @@ def _frame(message: dict[str, Any]) -> bytes:
 class _JsonRpc:
     """Small framed JSON-RPC client with bounded pipes and one total deadline."""
 
-    def __init__(self, process: subprocess.Popen[bytes], deadline: float):
+    def __init__(self, process: subprocess.Popen[bytes], deadline: float, workspace_folders: list[dict[str, str]]):
         self.process = process
         self.deadline = deadline
+        self.workspace_folders = workspace_folders
         self.buffer = bytearray()
         self.received_bytes = 0
         self.sent_bytes = 0
@@ -334,7 +349,7 @@ class _JsonRpc:
             result: Any = [None] * len(items) if isinstance(items, list) else []
             response = {"jsonrpc": "2.0", "id": request_id, "result": result}
         elif method == "workspace/workspaceFolders":
-            response = {"jsonrpc": "2.0", "id": request_id, "result": []}
+            response = {"jsonrpc": "2.0", "id": request_id, "result": self.workspace_folders}
         elif method in {"client/registerCapability", "client/unregisterCapability", "window/workDoneProgress/create"}:
             response = {"jsonrpc": "2.0", "id": request_id, "result": None}
         elif method == "workspace/applyEdit":
@@ -346,10 +361,13 @@ class _JsonRpc:
             }
         self._write(_frame(response))
 
-    def request(self, method: str, params: dict[str, Any]) -> Any:
+    def request(self, method: str, params: dict[str, Any] | None = None) -> Any:
         request_id = self.next_id
         self.next_id += 1
-        self._write(_frame({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}))
+        outgoing: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id, "method": method}
+        if params is not None:
+            outgoing["params"] = params
+        self._write(_frame(outgoing))
         while True:
             message = self._read_message()
             if "method" in message:
@@ -588,14 +606,15 @@ def lookup_lsp(
         except OSError as exc:
             raise LspLookupError("could not start the explicitly supplied language-server command") from exc
         deadline = time.monotonic() + timeout_value
-        rpc = _JsonRpc(process, deadline)
+        workspace_folders = [{"uri": root.as_uri(), "name": root.name}]
+        rpc = _JsonRpc(process, deadline, workspace_folders)
         initialize = rpc.request(
             "initialize",
             {
                 "processId": os.getpid(),
                 "clientInfo": {"name": "compound-lsp-lookup", "version": "1"},
                 "rootUri": root.as_uri(),
-                "workspaceFolders": [{"uri": root.as_uri(), "name": root.name}],
+                "workspaceFolders": workspace_folders,
                 "capabilities": {
                     "general": {"positionEncodings": ["utf-16"]},
                     "textDocument": {
@@ -603,7 +622,7 @@ def lookup_lsp(
                         "references": {"dynamicRegistration": False},
                         "synchronization": {"dynamicRegistration": False},
                     },
-                    "workspace": {"workspaceFolders": {"supported": True}, "configuration": False},
+                    "workspace": {"workspaceFolders": True, "configuration": False},
                     "window": {"workDoneProgress": False},
                 },
             },
@@ -637,7 +656,7 @@ def lookup_lsp(
         references, references_truncated, references_filtered = _locations(
             references_raw, kind="references", root=root, inventory=inventory, max_results=max_results
         )
-        rpc.request("shutdown", {})
+        rpc.request("shutdown")
         rpc.notify("exit")
         if process.stdin is not None:
             process.stdin.close()
