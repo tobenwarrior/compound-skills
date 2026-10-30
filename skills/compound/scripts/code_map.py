@@ -801,10 +801,6 @@ def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int, keep_p
                 process.wait(timeout=1)
                 return b"".join(chunks) if keep_prefix else None
         data = b"".join(chunks)
-        if len(data) > max_bytes:
-            process.kill()
-            process.wait(timeout=1)
-            return None
         process.wait(timeout=max(0.0, deadline - time.monotonic()))
         return data if process.returncode == 0 else None
     except (OSError, subprocess.TimeoutExpired):
