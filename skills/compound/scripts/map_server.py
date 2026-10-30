@@ -538,17 +538,21 @@ def _request(port: int, method: str, path: str, token: str | None = None, body: 
 
 
 def _health(runtime: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the service's health, {} when its port answers otherwise, or None when nothing listens."""
     try:
-        status, value, _ = _request(runtime["port"], "GET", "/api/health", runtime["token"], timeout=0.5)
-    except MapServerError:
-        return None
+        # An index pass can hold the GIL for seconds, so a busy service answers late.
+        status, value, _ = _request(runtime["port"], "GET", "/api/health", runtime["token"], timeout=5.0)
+    except MapServerError as exc:
+        return None if isinstance(exc.__cause__, ConnectionRefusedError) else {}
     if status != 200 or not value or value.get("service") != SERVICE:
-        return None
+        return {}
     return value
 
 
 def _shutdown_owned(runtime: dict[str, Any], wait: float = 3.0) -> bool:
     health = _health(runtime)
+    if health is None:
+        return True
     if not health or health.get("pid") != runtime["pid"] or health.get("port") != runtime["port"]:
         return False
     try:
@@ -559,7 +563,7 @@ def _shutdown_owned(runtime: dict[str, Any], wait: float = 3.0) -> bool:
         return False
     deadline = time.monotonic() + wait
     while time.monotonic() < deadline:
-        if _health(runtime) is None:
+        if not _health(runtime):
             return True
         time.sleep(0.05)
     return False
@@ -1364,6 +1368,9 @@ def _status() -> int:
     if health and health.get("protocol") == PROTOCOL and health.get("pid") == runtime["pid"]:
         print(json.dumps({"status": "running", "pid": runtime["pid"], "port": runtime["port"], "build": health.get("build", "")}, ensure_ascii=True))
         return 0
+    if health is None:
+        print(json.dumps({"status": "stopped", "pid": runtime["pid"], "error": "service exited without removing its runtime file"}, ensure_ascii=True))
+        return 0
     print(json.dumps({"status": "stale", "pid": runtime["pid"], "port": runtime["port"], "error": "service is not responding"}, ensure_ascii=True))
     return 1
 
@@ -1379,6 +1386,10 @@ def _stop() -> int:
         print(json.dumps({"status": "stopped", "error": error}, ensure_ascii=True))
         return 0
     if _shutdown_owned(runtime):
+        # A service that crashed or was killed leaves its runtime file behind.
+        with contextlib.suppress(OSError):
+            if _read_runtime(path)[0] == runtime:
+                path.unlink()
         print(json.dumps({"status": "stopped", "pid": runtime["pid"]}, ensure_ascii=True))
         return 0
     print(json.dumps({"status": "stale", "pid": runtime["pid"], "error": "owned service did not accept shutdown"}, ensure_ascii=True))
