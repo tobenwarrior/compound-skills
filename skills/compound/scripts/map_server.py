@@ -131,7 +131,7 @@ def _inventory_fingerprint(root: Path) -> str:
             raise MapServerError("Git inventory contains an unsafe path")
         try:
             info = (root / rel).lstat()
-        except FileNotFoundError:
+        except OSError:
             digest.update(raw + b"\0missing\0")
             continue
         digest.update(raw + b"\0")
@@ -919,7 +919,7 @@ class MapService:
                     return
                 refresh, project.reparse = project.reparse, False
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text", refresh=refresh)
-            after = _inventory_fingerprint(project.root)
+            after = _inventory_fingerprint(project.root) if before else ""
             git_state = _model_git_state(model)
             with project.lock:
                 old = project.model
