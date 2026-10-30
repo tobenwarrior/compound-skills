@@ -1190,8 +1190,8 @@ kbd { background:var(--raised); color:var(--muted); padding:2px 5px; }
   .view-tabs button { padding-inline:4px; font-size:9px; }
   .map-actions { flex-wrap:wrap; }
 }
-/* Phones in landscape: compact chrome, one row for the breadcrumb and summary, and the zoom controls in a row. */
-@media(max-width:1180px) and (max-height:500px) {
+/* Phones in landscape and other short windows: compact chrome, one row for the breadcrumb and summary, and the zoom controls in a row. Phones in portrait, below 561px, keep the full chrome down to 500px tall. */
+@media(max-width:1180px) and (max-height:500px),(min-width:561px) and (max-width:1180px) and (max-height:600px) {
   .topbar { height:44px; margin-bottom:4px; }
   .sidebar,.inspector { top:44px; bottom:29px; }
   .notice-strip { margin-bottom:4px; padding-block:0; }
