@@ -18,6 +18,7 @@ import fnmatch
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 from dataclasses import dataclass, field, replace
@@ -101,6 +102,7 @@ SOURCE_EXTS = {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java", ".swi
                ".m", ".mm", ".lua", ".ex", ".exs"}
 ARCH_OK = "ARCH-OK:"  # marker that justifies an oversized-but-cohesive file
 MARKER_SCAN_LINES = 60
+MAX_READ_BYTES = 8 * 1024 * 1024
 # Reference corpus for the unreferenced-script heuristic.
 REF_EXTS = SOURCE_EXTS | {".md", ".toml", ".cfg", ".ini", ".yaml", ".yml", ".txt", ".sh",
                           ".json", ".mk"}
@@ -142,14 +144,13 @@ class Finding:
 # ---------------------------------------------------------------------------
 
 def _git_files(root: Path, *args: str) -> list[str] | None:
-    """Run a `git ls-files` variant with -z: NUL-separated output that is
-    byte-accurate and immune to git's default quoting of non-ASCII paths."""
+    """Run a `git ls-files` variant with -z and decode names like the filesystem,
+    so quoting, carriage returns and non-UTF-8 bytes survive."""
     try:
-        out = subprocess.run(["git", "-C", str(root), *args, "-z"],
-                             capture_output=True, text=True, check=True)
+        out = subprocess.run(["git", "-C", str(root), *args, "-z"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
-    return [p for p in out.stdout.split("\0") if p]
+    return [os.fsdecode(p) for p in out.stdout.split(b"\0") if p]
 
 
 def _excluded(rel: str) -> bool:
@@ -165,8 +166,10 @@ def list_repo_files(root: Path) -> list[str]:
     """Relative POSIX paths that would land in the repo (tracked + untracked-not-ignored)."""
     tracked = _git_files(root, "ls-files")
     if tracked is not None:
+        # Onboarding removes obsolete tracked files from the worktree only, so those are gone.
+        deleted = _git_files(root, "ls-files", "--deleted") or []
         others = _git_files(root, "ls-files", "--others", "--exclude-standard") or []
-        files = set(tracked) | set(others)
+        files = (set(tracked) - set(deleted)) | set(others)
     else:  # not a git repo: walk the filesystem, pruning noise dirs
         files = set()
         for p in root.rglob("*"):
@@ -176,10 +179,17 @@ def list_repo_files(root: Path) -> list[str]:
 
 
 def read_lines(path: Path) -> list[str] | None:
+    """Lines of a regular file (links followed), split on newlines only, from its first 8 MiB."""
     try:
-        return path.read_text(encoding="utf-8", errors="ignore").splitlines()
-    except (OSError, UnicodeError):
+        # O_NONBLOCK keeps a FIFO from blocking the open; fstat then rejects it.
+        with os.fdopen(os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)), "rb") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                return None
+            data = handle.read(MAX_READ_BYTES)
+    except OSError:
         return None
+    lines = data.decode("utf-8", errors="ignore").replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    return lines[:-1] if lines[-1] == "" else lines
 
 
 def _match_any(name: str, patterns: list[str]) -> bool:
@@ -420,13 +430,18 @@ def write_baseline(root: Path, findings: list[Finding]) -> int:
         "suppress": sorted({_sig(f) for f in findings if f.check != "size"}),
         "sizes": {f.path: f.metric for f in findings if f.check == "size" and f.metric is not None},
     }
-    (root / BASELINE_FILE).write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    path = root / BASELINE_FILE
+    # A committed symlink must not redirect the write to another file.
+    if path.is_symlink() or path.exists() and not path.is_file():
+        raise OSError("existing baseline is not a regular file")
+    with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o644), "w", encoding="utf-8") as handle:
+        handle.write(json.dumps(data, indent=2) + "\n")
     return len(data["suppress"]) + len(data["sizes"])
 
 
 def load_baseline(root: Path) -> dict | None:
     p = root / BASELINE_FILE
-    if not p.is_file():
+    if p.is_symlink() or not p.is_file():
         return None
     try:
         value = json.loads(p.read_text(encoding="utf-8"))
@@ -502,7 +517,7 @@ def load_config(root: Path) -> Config:
             section = tool.get("repo_audit", {})
         else:
             section = {}
-    except (tomllib.TOMLDecodeError, OSError, UnicodeError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:  # TOMLDecodeError and UnicodeError are ValueErrors
         raise ConfigError(f"invalid configuration: {exc}") from exc
     if not isinstance(section, dict):
         raise ConfigError("invalid configuration: audit settings must be a table")
@@ -581,16 +596,24 @@ def main(argv: list[str] | None = None) -> int:
                     help=f"record current findings to {BASELINE_FILE} and exit (grandfather a messy repo)")
     ap.add_argument("--no-baseline", action="store_true", help=f"ignore {BASELINE_FILE} if present")
     args = ap.parse_args(argv)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")  # non-UTF-8 file names stay printable
 
-    root = Path(args.path).expanduser().resolve()
-    if not root.is_dir():
-        return _error(f"{root} is not a directory", args.json)
+    try:
+        root = Path(args.path).expanduser().resolve()
+        if not root.is_dir():
+            return _error(f"{root} is not a directory", args.json)
+    except (OSError, RuntimeError) as exc:
+        return _error(f"invalid path: {exc}", args.json)
 
     try:
         cfg = load_config(root)
     except ConfigError as exc:
         return _error(f"config error: {exc}", args.json)
-    findings = run_audit(root, cfg)
+    try:
+        findings = run_audit(root, cfg)
+    except Exception as exc:  # exit 1 means findings, so an unexpected failure must not produce it
+        return _error(f"audit failed: {exc}", args.json)
 
     if args.write_baseline:
         try:
