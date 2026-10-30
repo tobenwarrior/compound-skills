@@ -33,6 +33,7 @@ try:
     import fcntl
 except ImportError:  # pragma: no cover - Windows has no fcntl
     fcntl = None
+    import msvcrt
 
 try:
     from . import code_map as engine
@@ -481,50 +482,26 @@ def _read_runtime(path: Path) -> tuple[dict[str, Any] | None, str | None]:
 def _startup_lock(directory: Path, timeout: float = 10.0):
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / ".startup.lock"
-    if fcntl is not None:
-        if path.is_symlink() or (path.exists() and not path.is_file()):
-            raise MapServerError(f"refusing unsafe startup lock: {path}")
-        handle = path.open("a+")
-        try:
-            os.chmod(path, 0o600)
-            deadline = time.monotonic() + timeout
-            while True:
-                try:
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    break
-                except BlockingIOError:
-                    if time.monotonic() >= deadline:
-                        raise MapServerError("timed out waiting for map service startup lock")
-                    time.sleep(0.05)
-            yield
-        finally:
-            try:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-            finally:
-                handle.close()
-    else:  # pragma: no cover - exercised only on platforms without fcntl
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise MapServerError(f"refusing unsafe startup lock: {path}")
+    handle = path.open("a+")
+    try:
+        os.chmod(path, 0o600)
         deadline = time.monotonic() + timeout
         while True:
             try:
-                fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-                os.close(fd)
+                if fcntl is not None:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:  # pragma: no cover - Windows, which like flock drops the lock when its holder exits
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
                 break
-            except FileExistsError:
-                with contextlib.suppress(OSError):
-                    # Startup holds the lock well under a minute; an older lock outlived a killed holder.
-                    if time.time() - path.stat().st_mtime > 60:
-                        path.unlink()
-                        continue
+            except (BlockingIOError, PermissionError):
                 if time.monotonic() >= deadline:
                     raise MapServerError("timed out waiting for map service startup lock")
                 time.sleep(0.05)
-        try:
-            yield
-        finally:
-            try:
-                path.unlink()
-            except OSError:
-                pass
+        yield
+    finally:
+        handle.close()
 
 
 def _request(port: int, method: str, path: str, token: str | None = None, body: dict[str, Any] | None = None, timeout: float = REQUEST_TIMEOUT) -> tuple[int, dict[str, Any] | None, bytes]:
