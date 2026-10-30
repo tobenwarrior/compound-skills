@@ -112,12 +112,12 @@ _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 
 def _inventory_fingerprint(root: Path) -> str:
-    """Bounded Git inventory and worktree metadata; failures are never cache hits."""
+    """Bounded Git inventory and worktree metadata, or "" (never a cache hit) when Git cannot list it."""
     limit = int(getattr(engine, "MAX_GIT_INVENTORY_BYTES", 8 * 1024 * 1024))
     inventory = engine._bounded_git_output(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], limit)
     status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], limit)
     if inventory is None or status is None:
-        raise MapServerError("Git fingerprint unavailable or exceeded its bounded output limit")
+        return ""
     digest = hashlib.sha256(status)
     digest.update(inventory)
     paths = sorted(set(inventory.split(b"\0")))
@@ -735,6 +735,7 @@ class Project:
     rerun: bool | None = None
     last_used: float = 0.0
     inventory_fingerprint: str | None = None
+    stalled: bool = False
     lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
 
 
@@ -887,9 +888,10 @@ class MapService:
             before = _inventory_fingerprint(project.root)
             display_name = engine.repository_name(project.root)
             with project.lock:
-                pending = bool(project.model and project.model.get("coverage", {}).get("pending"))
-                unchanged = project.model is not None and project.inventory_fingerprint == before
-                if not force and unchanged and not pending and not project.error:
+                pending = project.model.get("coverage", {}).get("pending", 0) if project.model else 0
+                unchanged = bool(before) and project.model is not None and project.inventory_fingerprint == before
+                # Files deferred by the read budget force another pass only while passes parse more of them.
+                if not force and unchanged and (not pending or project.stalled) and not project.error:
                     if project.name != display_name or project.model.get("root_name") != display_name:
                         project.model = {**project.model, "root_name": display_name}
                         project.name = display_name
@@ -911,6 +913,7 @@ class MapService:
                 project.model = model
                 # A concurrent edit must force another build on the next check.
                 project.inventory_fingerprint = after if before == after else None
+                project.stalled = unchanged and bool(pending) and model.get("coverage", {}).get("pending", 0) >= pending
                 if git_state is not None:
                     project.git_fingerprint = git_state
                 project.name = model.get("root_name", display_name)
@@ -934,7 +937,8 @@ class MapService:
     def _refresh(self, project: Project, force: bool = False, recheck: bool = False) -> None:
         """Queue one bounded index build without holding the service lock.
 
-        Polls check at most every 2 seconds; explicit requests (recheck) always check.
+        Polls check at most every 2 seconds, or every 30 while Git cannot fingerprint the
+        repository and each check rebuilds; explicit requests (recheck) always check.
         """
         with project.lock:
             now = time.monotonic()
@@ -942,7 +946,7 @@ class MapService:
                 if force or recheck:
                     project.rerun = bool(force or project.rerun)
                 return
-            if not force and not recheck and now - project.last_check < 2.0:
+            if not force and not recheck and now - project.last_check < (30.0 if project.inventory_fingerprint == "" else 2.0):
                 return
             project.last_check = now
             project.indexing = True
