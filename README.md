@@ -81,7 +81,7 @@ Compound loads one short guide for each stage of the work.
 
 ## What we have measured
 
-![Code map build time, median of 5 runs: 0.094 seconds on the first run, 0.033 seconds when nothing changed, and 0.037 seconds after editing one file.](.github/assets/map-cache.svg)
+![Code map build time, median of 5 runs: 0.121 seconds on the first run, 0.035 seconds when nothing changed, and 0.037 seconds after editing one file.](.github/assets/map-cache.svg)
 
 The map remembers what it has already read, so later runs re-read only the files that changed. Reproduce it with `python3 -B scripts/benchmark_code_map.py --files-per-language 20 --repetitions 3`.
 

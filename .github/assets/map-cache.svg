@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="580" viewBox="0 0 1280 580" role="img" aria-labelledby="title desc">
 <title id="title">The map is reused, not rebuilt</title>
-<desc id="desc">Code map build time, median of 5 runs on a 103-file test repository: first run 0.094 seconds reading all 103 files; run again 0.033 seconds reading 0 files; after editing one file 0.037 seconds reading 1 file. This compares Compound with itself, not an agent with versus without Compound.</desc>
+<desc id="desc">Code map build time, median of 5 runs on a 103-file test repository: first run 0.121 seconds reading all 103 files; run again 0.035 seconds reading 0 files; after editing one file 0.037 seconds reading 1 file. This compares Compound with itself, not an agent with versus without Compound.</desc>
 <defs>
 <radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
 <radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
@@ -36,17 +36,17 @@ text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Ari
 <text x="76" y="222" class="label">Time to build the code map <tspan class="note">· lower is better</tspan></text>
 <text x="76" y="284" class="label">First run</text>
 <rect x="330" y="262" width="470" height="30" rx="15" fill="#f0ede6"/>
-<rect x="330" y="262" width="443.0" height="30" rx="15" fill="#a7aaa1"/>
-<text x="822" y="287" class="value">0.094 s</text>
+<rect x="330" y="262" width="380.5" height="30" rx="15" fill="#a7aaa1"/>
+<text x="822" y="287" class="value">0.121 s</text>
 <text x="960" y="284" class="note">reads all 103 files</text>
 <text x="76" y="342" class="label">Run again</text>
 <rect x="330" y="320" width="470" height="30" rx="15" fill="#f0ede6"/>
-<rect x="330" y="320" width="156.8" height="30" rx="15" fill="url(#accent)"/>
-<text x="822" y="345" class="value green">0.033 s</text>
+<rect x="330" y="320" width="110.2" height="30" rx="15" fill="url(#accent)"/>
+<text x="822" y="345" class="value green">0.035 s</text>
 <text x="960" y="342" class="note">reads 0 files</text>
 <text x="76" y="400" class="label">After editing 1 file</text>
 <rect x="330" y="378" width="470" height="30" rx="15" fill="#f0ede6"/>
-<rect x="330" y="378" width="175.3" height="30" rx="15" fill="url(#accent)"/>
+<rect x="330" y="378" width="115.1" height="30" rx="15" fill="url(#accent)"/>
 <text x="822" y="403" class="value green">0.037 s</text>
 <text x="960" y="400" class="note">reads 1 file</text>
 <rect x="40" y="466" width="1200" height="82" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
