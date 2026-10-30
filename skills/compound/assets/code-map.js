@@ -25,7 +25,7 @@ const params = new URLSearchParams(location.search);
 const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
   query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
-  history: [], historyIndex: -1, revision: null, updated: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
+  history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
   trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null,
 };
 const graph = createGraph(refs.graph, {
@@ -66,6 +66,7 @@ function indexModel(model) {
   state.lookup = new Map(model.files.map(file => [file.path, file]));
   state.reverse = new Map(model.files.map(file => [file.path, []]));
   state.edges = [];
+  for (const file of model.files) file.search = [file.path, file.language, ...file.symbols.map(symbol => symbol.name)].join(" ").toLowerCase();
   for (const file of model.files) for (const dependency of file.dependencies) {
     if (!state.lookup.has(dependency)) continue;
     state.reverse.get(dependency).push(file.path);
@@ -76,11 +77,10 @@ function indexModel(model) {
 
 function matcher() {
   const terms = state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const haystack = file => [file.path, file.language, ...file.symbols.map(symbol => symbol.name)].join(" ").toLowerCase();
-  const all = file => { const text = haystack(file); return terms.every(term => text.includes(term)); };
+  const all = file => terms.every(term => file.search.includes(term));
   // Like the service's ranking, a topic matches any of its words when no file contains them all.
   if (!state.model || state.model.files.some(all)) return all;
-  return file => { const text = haystack(file); return terms.some(term => text.includes(term)); };
+  return file => terms.some(term => file.search.includes(term));
 }
 function scopedFiles() { return state.model ? state.model.files.filter(file => !state.folder || group(file.path) === state.folder) : []; }
 function updateUrl() {
@@ -181,12 +181,12 @@ function renderTree() {
   const fragment = document.createDocumentFragment();
   for (const item of items.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE)) {
     if (mode === "folders") {
-      const button = make("button", undefined, "folder-row"); button.setAttribute("aria-pressed", String(item.name === state.folder));
+      const button = make("button", undefined, "folder-row"); button.setAttribute("aria-pressed", String(item.name === state.folder)); button.dataset.key = item.name;
       const dot = make("canvas", undefined, "folder-dot"); dot.width = dot.height = 8; const ctx = dot.getContext("2d"); ctx.fillStyle = groupColor(item.name); ctx.fillRect(0, 0, 8, 8);
       button.append(dot, make("span", item.name, "row-label"), make("span", count(item.members.length), "row-count"));
       button.addEventListener("click", () => { state.folder = item.name; state.browse = "files"; state.page = 0; renderTree(); renderGraph(true); }); fragment.append(button);
     } else if (mode === "symbols") {
-      const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-current", String(item.file.path === state.selected));
+      const button = make("button", undefined, "symbol-row"); button.setAttribute("aria-current", String(item.file.path === state.selected)); button.dataset.key = item.file.path + ":" + item.symbol.name;
       const copy = make("span", undefined, "row-copy"); copy.append(make("span", item.symbol.name, "row-name"), make("span", item.file.path + ":" + item.symbol.line, "row-path"));
       button.append(make("span", item.symbol.kind === "class" ? "C" : "ƒ", "file-glyph"), copy); button.addEventListener("click", () => { chooseFile(item.file.path); drawer("sidebar", false); openSource(item.file.path, item.symbol.line); }); fragment.append(button);
     } else fragment.append(createFileRow(item));
@@ -296,7 +296,7 @@ function renderInspector() {
   refs["unresolved-section"].hidden = !file.unresolved.length; refs["unresolved-count"].textContent = count(file.unresolved.length); refs["unresolved-list"].replaceChildren(...file.unresolved.map(value => make("li", value)));
   refs["symbol-note"].textContent = file.analysis === "metadata" ? "Only file metadata is available for this language." : file.symbols.length ? (file.analysis === "heuristic-outline" ? "Heuristic declarations; select a symbol to inspect its source." : "Select a symbol to inspect its source.") : "No symbols were recorded. Check index coverage for parsing limits.";
   refs["symbol-list"].replaceChildren(...file.symbols.map(symbol => {
-    const item = make("li"), button = make("button", undefined, "symbol-button");
+    const item = make("li"), button = make("button", undefined, "symbol-button"); button.dataset.key = symbol.kind + ":" + symbol.name;
     button.append(make("span", symbol.kind === "class" ? "C" : "ƒ", "symbol-kind"), make("span", symbol.signature || symbol.name, "symbol-name"), make("span", "L" + symbol.line, "symbol-line"));
     button.addEventListener("click", () => openSource(file.path, symbol.line)); item.append(button); return item;
   }));
@@ -335,9 +335,12 @@ async function openSource(path, line = 0) {
 function closeSource() { state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-dialog"].close(); refs["source-content"].replaceChildren(); }
 
 function renderAll() {
-  const active = document.activeElement, list = active?.closest("#file-tree, .edge-list, .symbol-list"), key = node => node.title || node.textContent;
+  const active = document.activeElement, list = active?.closest("#file-tree, .edge-list, .symbol-list");
+  // Refreshes change the counts and line numbers rows show, so focus returns by key, and by position among rows sharing a key, such as two run methods.
+  const key = node => node.dataset.key || node.title || node.textContent, twins = () => [...list.querySelectorAll("button")].filter(button => key(button) === key(active));
+  const repeat = list ? twins().indexOf(active) : -1;
   renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph();
-  if (list && !list.contains(active)) [...list.querySelectorAll("button")].find(button => key(button) === key(active))?.focus();
+  if (list && !list.contains(active)) twins()[repeat]?.focus();
 }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
@@ -348,10 +351,12 @@ async function loadMap() {
   const project = state.project, epoch = state.epoch, requestedQuery = state.query, key = epoch + ":" + project;
   if (!project || state.mapBusy === key) return; state.mapBusy = key;
   try {
-    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(requestedQuery.slice(0, MAX_QUERY)));
+    // The service counts code points, and cutting UTF-16 units could leave half an emoji, which cannot be encoded.
+    const payload = await fetchJson(API.map + "?project=" + encodeURIComponent(project) + "&query=" + encodeURIComponent(Array.from(requestedQuery).slice(0, MAX_QUERY).join("")));
     if (state.project !== project || state.epoch !== epoch) return;
     if (payload.indexing && !payload.model) {
-      state.status = { ...state.status, indexing: true }; state.error = str(payload.error);
+      // A restarted service has no map yet and numbers revisions from zero again, so its first map reloads, as after a failed check.
+      state.status = { ...state.status, indexing: true }; state.error = str(payload.error); state.revision = null;
       renderStatus();
       if (!state.model) setOverlay("loading", "", "Indexing source files; the map will appear automatically…");
       return;
@@ -386,17 +391,15 @@ async function poll(force = false) {
   try {
     const payload = await fetchJson(API.status + "?project=" + encodeURIComponent(project));
     if (state.epoch !== epoch) return;
-    // A restarted service numbers revisions from zero again, so a new build time or a failed check reloads the map.
-    const rebuilt = state.updated !== null && str(payload.updated_at) !== state.updated;
-    state.status = payload; state.updated = str(payload.updated_at); state.error = str(payload.error); renderStatus();
-    if (force || !state.model || rebuilt || num(payload.revision) !== state.revision) await loadMap();
+    state.status = payload; state.error = str(payload.error); renderStatus();
+    if (force || !state.model || num(payload.revision) !== state.revision) await loadMap();
   } catch (error) { if (state.epoch === epoch) { state.error = error.message; state.revision = null; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
   finally { if (state.statusBusy === key) state.statusBusy = ""; }
 }
 function startPolling() { clearInterval(state.timer); if (state.project && document.visibilityState === "visible") state.timer = setInterval(() => poll(), POLL_MS); }
 async function activateProject(id) {
   if (!id) return; state.epoch += 1; state.project = id; state.name = state.projects.find(project => project.id === id)?.name || "";
-  state.model = null; state.revision = null; state.updated = null; state.status = null; state.error = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
+  state.model = null; state.revision = null; state.status = null; state.error = ""; state.dismissed = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
   state.lookup = new Map(); state.reverse = new Map(); state.edges = []; closeSource(); renderAll(); updateUrl();
   await poll(true); startPolling();
 }
@@ -404,7 +407,8 @@ async function loadProjects() {
   try {
     const payload = await fetchJson(API.projects);
     state.projects = (Array.isArray(payload.projects) ? payload.projects : []).filter(project => project && typeof project.id === "string").map(project => ({ id: project.id, name: str(project.name, "Repository") }));
-    const target = state.projects.find(project => project.id === state.project) || (!state.project && state.projects[0]);
+    // An embedding host frames the viewer without ?project= and names its workspace's project as defaultProject.
+    const target = state.projects.find(project => project.id === state.project) || (!state.project && (state.projects.find(project => project.id === payload.defaultProject) || state.projects[0]));
     if (target) await activateProject(target.id);
     else { state.error = state.project && state.projects.length ? "This repository is not registered. Open the map again from its project chat." : "No repository is registered. Open the map from a project chat."; renderProjects(); renderStatus(); setOverlay("error", "", state.error); }
   } catch (error) { state.error = error.message; renderStatus(); setOverlay("error", "", state.error); }
