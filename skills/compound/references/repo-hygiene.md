@@ -53,7 +53,7 @@ bytecode, and `.scratch/`. `artifacts/` is project-specific and is not forced
 on repositories that do not use it; add it to `.gitignore` when appropriate.
 
 `--write-baseline` records current finding signatures and oversized-file line
-counts. Later runs keep accepted findings visible as backlog and block new
+counts. Later runs report accepted findings only as a count and block new
 findings; a baselined file that grows becomes active again. A baseline is an
 adoption aid, not a cleanliness claim. Use `--no-baseline` to inspect the
 whole repository.

@@ -416,18 +416,19 @@ def lookup_symbols(
     reference_notes: list[str] = []
     references_truncated = False
     reference_timed_out = False
-    for record in model_files[:file_limit]:
+    # Data and config files can name a symbol too (entry points, manifests), so they are scanned after source.
+    for record in sorted(model_files[:file_limit], key=lambda item: item.get("language") in _NON_SOURCE_LANGUAGES):
         if time.monotonic() >= deadline:
             reference_timed_out = True
             reference_notes.append("reference scan timed out")
             break
         relative = record.get("path")
-        language = record.get("language")
-        if not isinstance(relative, str) or language in _NON_SOURCE_LANGUAGES:
+        if not isinstance(relative, str):
             continue
         candidate, reason = code_map._candidate(git_root, relative, git_inventory=True)
         if candidate is None:
-            reference_notes.append("changed, private, symlink, or unsupported paths were skipped")
+            if "changed, private, symlink, or unsupported paths were skipped" not in reference_notes:
+                reference_notes.append("changed, private, symlink, or unsupported paths were skipped")
             continue
         remaining = total_byte_limit - reference_considered
         fingerprint = candidate["fingerprint"]
@@ -459,7 +460,8 @@ def lookup_symbols(
             reference_bytes += consumed
             reference_considered += consumed if loaded else fingerprint["size"]
             if code_map._fingerprint(git_root / relative) != fingerprint:
-                reference_notes.append("file changed during reference scan")
+                if "file changed during reference scan" not in reference_notes:
+                    reference_notes.append("file changed during reference scan")
                 continue
             if not loaded:
                 cached_files += 1

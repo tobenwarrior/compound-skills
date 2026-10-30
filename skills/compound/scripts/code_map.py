@@ -71,11 +71,17 @@ CONFIG_NAMES = {
 NON_CODE_NAMES = {
     ".codeowners", ".cursorignore", ".dockerignore", ".editorconfig", ".gitattributes", ".gitignore",
     ".gitmodules", ".gitkeep", ".npmignore", "authors", "changelog", "copying", "license", "notice", "readme",
+    "codeowners", "go.sum", "package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml", ".mailmap",
+    ".nvmrc", ".node-version", ".python-version", ".ruby-version", ".tool-versions", ".npmrc", ".yarnrc",
+    ".prettierrc", ".prettierignore", ".eslintignore", ".flake8", ".coveragerc", ".pylintrc", ".clang-format",
 }
 NON_CODE_SUFFIXES = {
     ".adoc", ".bmp", ".csv", ".gif", ".ico", ".jpeg", ".jpg", ".lock", ".log", ".map", ".md",
     ".mdc", ".markdown", ".png", ".rst", ".svg", ".text", ".txt", ".webp",
     ".bin", ".jsonl", ".otf", ".ttf", ".woff", ".woff2", ".xls", ".xlsx",
+    ".avif", ".class", ".db", ".diff", ".dll", ".dylib", ".eot", ".exe", ".gz", ".jar", ".lockb", ".mov",
+    ".mp3", ".mp4", ".parquet", ".patch", ".pdf", ".pkl", ".pyc", ".snap", ".so", ".sqlite", ".tar", ".tgz",
+    ".tiff", ".wasm", ".wav", ".zip",
 }
 LANGUAGES = {
     **dict.fromkeys((".py", ".pyw"), "python"),
@@ -115,6 +121,7 @@ JS_EXPORT_DECL = re.compile(
 )
 JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
 STDLIB_MODULES = frozenset(sys.stdlib_module_names)
+OUTLINED_LANGUAGES = {"python", "javascript", "typescript", *SUPPORTED_LANGUAGES}
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
     pass
@@ -347,6 +354,8 @@ def _non_code_path(rel: str) -> bool:
 def _exclusion_reason(rel: str, reason: str | None) -> str | None:
     if reason == "unsupported format" and _non_code_path(rel):
         return "non-code file"
+    if reason == "private or symlink path" and _skip_dir(rel, git_inventory=True) and not _private(rel):
+        return "vendored dependency folder"
     if reason in {"private or symlink path", "non-regular path"}:
         return reason
     return None
@@ -1217,19 +1226,22 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         if entry is None:
             entry, consumed, parse_note = _read_parse(info, remaining)
             remaining = max(0, remaining - consumed)
+            bounded = entry is None and bool(parse_note) and ("read budget" in parse_note or "file limit" in parse_note)
+            if bounded and info["language"] not in OUTLINED_LANGUAGES:
+                parse_note = None  # a size limit costs a metadata-only file nothing but its line count
+            elif bounded:
+                pending += int("read budget" in parse_note)
+                limited += 1
             if parse_note:
                 _note(notes, parse_note)
             if entry is None:
-                bounded = parse_note and ("read budget" in parse_note or "file limit" in parse_note)
                 if not bounded:
                     skipped += 1
                     continue
-                pending += int("read budget" in parse_note)
-                limited += 1
                 entry = {
                     "fingerprint": info["fingerprint"], "language": info["language"],
                     "symbols": [], "imports": [], "lines": 0, "analysis": "metadata", "exports": [],
-                    "parse_note": parse_note,
+                    **({"parse_note": parse_note} if parse_note else {}),
                 }
             else:
                 reusable[rel] = entry
