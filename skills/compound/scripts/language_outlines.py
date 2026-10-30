@@ -434,6 +434,10 @@ def _c_type_declaration(match: re.Match[str], line: str) -> tuple[str, str] | No
     return None
 
 
+def _next_code(lines: list[str], index: int) -> str:
+    return next((line.strip() for line in lines[index:index + 8] if line.strip()), "")
+
+
 def _type_declaration(language: str, line: str) -> tuple[str, str] | None:
     match = _TYPE_PATTERNS[language].search(line)
     if language in {"c", "cpp"}:
@@ -520,6 +524,9 @@ def outline(text: str, language: str, max_symbols: int = 512) -> tuple[list[dict
             notes.append(f"Skipped line {line_no} longer than {MAX_LINE_CHARS} characters.")
             continue
         type_decl = _type_declaration(language, line)
+        # A template parameter alone on its line, such as "class Alloc" before ">", declares no type.
+        if type_decl and language == "cpp" and line.rstrip().endswith(type_decl[1]) and _next_code(lines, line_no).startswith((">", ",")):
+            continue
         if type_decl:
             kind, name = type_decl
             type_names.add(name)
