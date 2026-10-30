@@ -233,32 +233,30 @@ class _JsonRpc:
         self.received_bytes = 0
         self.sent_bytes = 0
         self.next_id = 1
-        self._chunks: queue.Queue[bytes | BaseException | None] = queue.Queue(maxsize=8)
+        self._chunks: queue.Queue[bytes | BaseException | None] = queue.Queue()
         self._closed = threading.Event()
+        self._write_done = threading.Event()
+        self._write_done.set()
         assert process.stdout is not None
         self._reader = threading.Thread(target=self._pump_stdout, daemon=True)
         self._reader.start()
 
     def _pump_stdout(self) -> None:
+        # Keep reading while a request is written, so a server that writes before
+        # it reads cannot block both pipes; the protocol byte limit bounds the queue.
         assert self.process.stdout is not None
         fd = self.process.stdout.fileno()
+        pumped = 0
         try:
-            while not self._closed.is_set():
+            while not self._closed.is_set() and pumped <= MAX_TOTAL_PROTOCOL_BYTES:
                 block = os.read(fd, _READER_CHUNK_BYTES)
                 if not block:
-                    self._put(None)
+                    self._chunks.put(None)
                     return
-                self._put(block)
+                pumped += len(block)
+                self._chunks.put(block)
         except BaseException as exc:  # delivered to the protocol owner
-            self._put(exc)
-
-    def _put(self, value: bytes | BaseException | None) -> None:
-        while not self._closed.is_set():
-            try:
-                self._chunks.put(value, timeout=0.1)
-                return
-            except queue.Full:
-                continue
+            self._chunks.put(exc)
 
     def _remaining(self) -> float:
         remaining = self.deadline - time.monotonic()
@@ -271,7 +269,6 @@ class _JsonRpc:
         if self.sent_bytes > MAX_TOTAL_PROTOCOL_BYTES:
             raise LspLookupError("language-server request byte limit exceeded")
         assert self.process.stdin is not None
-        completed = threading.Event()
         failure: list[BaseException] = []
 
         def writer() -> None:
@@ -281,10 +278,11 @@ class _JsonRpc:
             except BaseException as exc:
                 failure.append(exc)
             finally:
-                completed.set()
+                self._write_done.set()
 
+        self._write_done.clear()
         threading.Thread(target=writer, daemon=True).start()
-        if not completed.wait(self._remaining()):
+        if not self._write_done.wait(self._remaining()):
             raise LspLookupError("language-server process timed out while sending a request")
         if failure:
             raise LspLookupError("language server closed its input stream") from failure[0]
@@ -339,7 +337,7 @@ class _JsonRpc:
                 body.decode("utf-8"),
                 parse_constant=lambda _value: (_ for _ in ()).throw(ValueError("invalid JSON constant")),
             )
-        except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
             raise LspLookupError("malformed JSON in language-server response") from exc
         if not isinstance(message, dict) or message.get("jsonrpc") != "2.0":
             raise LspLookupError("malformed JSON-RPC response")
@@ -402,6 +400,9 @@ class _JsonRpc:
 
     def close_reader(self) -> None:
         self._closed.set()
+
+    def write_pending(self) -> bool:
+        return not self._write_done.is_set()
 
 
 def _server_argv_or_error(command: Sequence[str]) -> list[str]:
@@ -713,19 +714,23 @@ def lookup_lsp(
         if rpc is not None:
             rpc.close_reader()
         if process is not None:
-            if process.poll() is None:
-                try:
-                    if os.name == "posix":
-                        os.killpg(process.pid, signal.SIGKILL)
-                    else:
-                        process.kill()
-                except (OSError, ProcessLookupError):
-                    pass
+            running = process.poll() is None
+            try:
+                if os.name == "posix":
+                    # Helpers the server started stay in its group after it exits.
+                    os.killpg(process.pid, signal.SIGKILL)
+                elif running:
+                    process.kill()
+            except (OSError, ProcessLookupError):
+                pass
+            if running:
                 try:
                     process.wait(timeout=1)
                 except subprocess.TimeoutExpired:
                     pass
-            if process.stdin is not None:
+            # A write still blocked on a pipe that a detached helper holds open keeps
+            # the stdin lock, so closing would hang; the collector closes it later.
+            if process.stdin is not None and (rpc is None or not rpc.write_pending()):
                 try:
                     process.stdin.close()
                 except OSError:
