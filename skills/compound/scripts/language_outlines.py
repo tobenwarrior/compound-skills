@@ -21,14 +21,19 @@ _TYPE_PATTERNS: dict[str, re.Pattern[str]] = {
     "go": re.compile(r"^\s*type\s+(" + _IDENTIFIER + r")\b"),
     "rust": re.compile(r"^\s*(?:(?:pub(?:\s*\([^)]*\))?|unsafe|extern|async)\s+)*(struct|enum|trait|union|type)\s+(" + _IDENTIFIER + r")\b"),
     "java": re.compile(r"^\s*(?:(?:public|protected|private|abstract|static|final|strictfp|sealed|non-sealed)\s+)*(?:@interface|(class|interface|enum|record))\s+(" + _IDENTIFIER + r")\b"),
-    "c": re.compile(r"^\s*(?:(?:typedef|static|extern)\s+)*(struct|union|enum)\s+(" + _IDENTIFIER + r")\b"),
-    "cpp": re.compile(r"^\s*(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:(?:class|struct)\s+)?(" + _IDENTIFIER + r")\b"),
+    "c": re.compile(r"^\s*(?:(?:typedef|static|extern)\s+)*(struct|union|enum)\s+"),
+    "cpp": re.compile(r"^\s*(?:template\s*<.*?>\s*)?(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:(?:class|struct)\s+)?"),
     "csharp": re.compile(r"^\s*(?:(?:public|protected|private|internal|abstract|static|sealed|partial|readonly|ref|new)\s+)*(?:(record)(?:\s+(?:class|struct))?|(class|interface|struct|enum|delegate))\s+(" + _IDENTIFIER + r")\b"),
     "ruby": re.compile(r"^\s*(?:class|module)\s+([A-Z][\w]*(?:::[A-Z][\w]*)*)\b"),
     "php": re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(class|interface|trait|enum)\s+(" + _IDENTIFIER + r")\b"),
     "swift": re.compile(r"^\s*(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(?!(?:[a-z]+\s+)*(?:func|var|subscript)\b)(" + _IDENTIFIER + r")\b"),
     "kotlin": re.compile(r"^\s*(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum)\s+)*(class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
 }
+
+_C_TYPE_ATTRIBUTE = re.compile(r"(?:\[\[[^\]]*\]\]|alignas\s*\([^)]*\)|__attribute__\s*\(\([^)]*\)\)|__declspec\s*\([^)]*\))\s*")
+_C_TYPE_WORD = re.compile(r"(" + _IDENTIFIER + r")\s*")
+_C_TYPE_ALIAS = re.compile(r"^\s*(?:typedef\b[^;()]*?\b(" + _IDENTIFIER + r")\s*(?:\[[^\]]*\]\s*)?;|using\s+(" + _IDENTIFIER + r")\s*=)")
+_CSHARP_DELEGATE = re.compile(r"\bdelegate\s+.*?(" + _IDENTIFIER + r")\s*(?:<[^<>()]*>\s*)?\(")
 
 _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
     "go": re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(" + _IDENTIFIER + r")(?:\s*\[[^\]\n]*\])?\s*\("),
@@ -45,7 +50,7 @@ _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
 _METHOD_PATTERN = re.compile(
     r"^\s*(?:(?:public|protected|private|internal|static|final|abstract|virtual|override|async|extern|unsafe|inline|constexpr|consteval|constinit|friend|explicit|synchronized|native|default|sealed|new|partial|readonly|volatile|register|typedef)\s+)*+"
     r"(?><[^;{}]+>\s+)?"
-    r"(?:[\w:$~*&<>.,?\[\]]+\s+)+"
+    r"(?:[\w:$~*&<>.,?\[\]]+\s+)+[*&]*"
     r"((?:[A-Za-z_$][\w$]*::)*(?:~?[A-Za-z_$][\w$]*))\s*\("
 )
 _CONSTRUCTOR_PATTERN = re.compile(
@@ -59,6 +64,9 @@ _CONTROL_NAMES = {
     "using", "yield", "await", "super", "this", "where", "when", "match",
 }
 _C_KEYWORDS = {"__asm__", "__attribute__", "__declspec", "alignas", "alignof", "consteval", "constexpr", "decltype", "noexcept", "static_assert"}
+_RUBY_HEREDOC = re.compile(r"<<([~-]?)([\"'`]?)([A-Za-z_]\w*)\2")
+_PHP_HEREDOC = re.compile(r"<<<[ \t]*()([\"']?)([A-Za-z_]\w*)\2")
+_PHP_OPEN = re.compile(r"<\?(?:php\b|=)?")
 _COMMENT_STYLES = {
     "go": ("//", "/*"), "rust": ("//", "/*"), "java": ("//", "/*"),
     "c": ("//", "/*"), "cpp": ("//", "/*"), "csharp": ("//", "/*"),
@@ -77,15 +85,36 @@ def split_lines(text: str) -> list[str]:
     return lines[:-1] if lines[-1] == "" else lines
 
 
+def _heredoc_end(source: str, start: int, terminator: str, indented: bool, php: bool) -> int:
+    """Offset just after the line that closes a heredoc whose body starts at ``start``."""
+    pos = start
+    while pos < len(source):
+        end = source.find("\n", pos)
+        end = len(source) if end < 0 else end
+        line = source[pos:end].rstrip("\r")
+        if php and re.match(r"\s*" + re.escape(terminator) + r"\b", line) or (line.strip() if indented else line) == terminator:
+            return end
+        pos = end + 1
+    return len(source)
+
+
 def _mask_comments_and_strings(source: str, language: str) -> str:
     """Blank comments/literals while preserving offsets and line numbers."""
     chars = list(source)
     line_comments = _COMMENT_STYLES[language]
+    block_comments = "/*" in line_comments
+    nested_comments = language in {"rust", "swift", "kotlin"}
+    php = language == "php"
+    heredocs = language in {"ruby", "php"}
     block_depth = 0
     quote = ""
     triple = False
+    raw = False  # the open literal has no backslash escapes
+    verbatim = False  # C# @"...", where a doubled quote stays inside
     escaped = False
     ruby_doc = False
+    php_html = php  # PHP files start as inline HTML until <?php
+    heredoc: tuple[int, int] | None = None  # (end of opener line, end of body) still to skip
     i = 0
     length = len(source)
 
@@ -94,24 +123,38 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             if chars[pos] != "\n":
                 chars[pos] = " "
 
+    def line_end_at(pos: int) -> int:
+        end = source.find("\n", pos)
+        return length if end < 0 else end
+
     while i < length:
+        if heredoc and i > heredoc[0]:
+            i = max(i, heredoc[1])
+            heredoc = None
+            continue
+
+        if php_html:
+            opener = _PHP_OPEN.search(source, i)
+            blank(i, opener.end() if opener else length)
+            if not opener:
+                break
+            i = opener.end()
+            php_html = False
+            continue
+
         if ruby_doc:
             if source[i] == "\n":
                 i += 1
                 continue
-            line_end = source.find("\n", i)
-            if line_end < 0:
-                line_end = length
-            if source[i:line_end].strip() == "=end":
-                blank(i, line_end)
+            line_end = line_end_at(i)
+            if re.match(r"=end(?:\s|$)", source[i:line_end]):
                 ruby_doc = False
-            else:
-                blank(i, line_end)
+            blank(i, line_end)
             i = line_end
             continue
 
         if block_depth:
-            if language in {"rust", "swift"} and source.startswith("/*", i):
+            if nested_comments and source.startswith("/*", i):
                 block_depth += 1
                 blank(i, i + 2)
                 i += 2
@@ -132,22 +175,25 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
                     chars[i] = " "
                 escaped = False
                 i += 1
-            elif source[i] == "\\":
+            elif source[i] == "\\" and not raw:
                 chars[i] = " "
                 escaped = True
                 i += 1
+            elif verbatim and source.startswith('""', i):
+                blank(i, i + 2)
+                i += 2
             elif source.startswith(delimiter, i):
                 blank(i, i + len(delimiter))
                 i += len(delimiter)
                 quote = ""
-                triple = False
+                triple = raw = verbatim = False
             else:
                 if source[i] != "\n":
                     chars[i] = " "
                 i += 1
             continue
 
-        # C++ raw strings and Rust raw/byte-raw strings.
+        # C++ raw strings, Rust raw/byte-raw strings and Swift #"..."# strings.
         raw_start = None
         raw_end = None
         if language == "cpp" and source.startswith('R"', i):
@@ -162,6 +208,11 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             if match:
                 raw_start = i + match.end()
                 raw_end = '"' + (match.group(1) or "")
+        elif language == "swift" and source[i] == "#":
+            match = re.match(r'(#+)("""|")', source[i:i + 40])
+            if match:
+                raw_start = i + match.end()
+                raw_end = match.group(2) + match.group(1)
         if raw_start is not None and raw_end is not None:
             blank(i, raw_start)
             close = source.find(raw_end, raw_start)
@@ -173,31 +224,47 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             continue
 
         if language == "ruby" and source[i] == "=" and (i == 0 or source[i - 1] == "\n"):
-            line_end = source.find("\n", i)
-            if line_end < 0:
-                line_end = length
-            if source[i:line_end].strip() == "=begin":
+            line_end = line_end_at(i)
+            if re.match(r"=begin(?:\s|$)", source[i:line_end]):
                 blank(i, line_end)
                 ruby_doc = True
                 i = line_end
                 continue
 
-        if source.startswith("/*", i):
+        if heredocs and source.startswith("<<", i):
+            match = (_PHP_HEREDOC if php else _RUBY_HEREDOC).match(source, i)
+            # A bare Ruby <<NAME needs a capitalized name, so shifts such as a<<b stay code.
+            if match and (php or match.group(1) or match.group(2) or match.group(3)[0].isupper()):
+                body = heredoc[1] + 1 if heredoc else line_end_at(i) + 1
+                close = _heredoc_end(source, body, match.group(3), php or bool(match.group(1)), php)
+                blank(body, close)
+                heredoc = (line_end_at(i), close)
+                i = match.end()
+                continue
+
+        if php and source.startswith("?>", i):
+            blank(i, i + 2)
+            i += 2
+            php_html = True
+            continue
+        if block_comments and source.startswith("/*", i):
             block_depth = 1
             blank(i, i + 2)
             i += 2
             continue
         line_marker = next((marker for marker in line_comments if source.startswith(marker, i)), None)
-        if line_marker:
-            line_end = source.find("\n", i)
-            if line_end < 0:
-                line_end = length
+        if line_marker and not (php and source.startswith("#[", i)):
+            line_end = line_end_at(i)
+            if php:
+                # A PHP line comment also ends at ?>, which returns to inline HTML.
+                close_tag = source.find("?>", i, line_end)
+                line_end = close_tag if close_tag >= 0 else line_end
             blank(i, line_end)
             i = line_end
             continue
 
         if source.startswith('"""', i) and language in {"java", "swift", "kotlin", "csharp"}:
-            quote, triple = '"', True
+            quote, triple, raw = '"', True, language in {"kotlin", "csharp"}
             blank(i, i + 3)
             i += 3
             continue
@@ -219,6 +286,8 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
                     continue
             quote = char
             triple = False
+            verbatim = char == '"' and language == "csharp" and (source[max(0, i - 2):i].endswith("@") or source[max(0, i - 2):i] == "@$")
+            raw = verbatim or char == "`" and language == "go"
             chars[i] = " "
             i += 1
             continue
@@ -226,16 +295,41 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
     return "".join(chars)
 
 
+def _c_type_declaration(match: re.Match[str], line: str) -> tuple[str, str] | None:
+    """Name a C/C++ type after attributes and export macros, accepting only declarations, not variables or returns."""
+    pos = match.end()
+    while attribute := _C_TYPE_ATTRIBUTE.match(line, pos):
+        pos = attribute.end()
+    words = []
+    while word := _C_TYPE_WORD.match(line, pos):
+        words.append(word.group(1))
+        pos = word.end()
+    if words[-1:] in (["final"], ["sealed"]):
+        words.pop()
+    rest = line[pos:]
+    if not words or not all(word.isupper() for word in words[:-1]):
+        return None
+    if rest.startswith(("{", ":", "<")) or not rest.strip() or rest.startswith(";") and len(words) == 1:
+        return match.group(1), words[-1]
+    return None
+
+
 def _type_declaration(language: str, line: str) -> tuple[str, str] | None:
     match = _TYPE_PATTERNS[language].search(line)
+    if language in {"c", "cpp"}:
+        declaration = _c_type_declaration(match, line) if match else None
+        alias = None if declaration else _C_TYPE_ALIAS.match(line)
+        return declaration or (("type", alias.group(1) or alias.group(2)) if alias else None)
     if not match:
         return None
-    if language in {"java", "c", "cpp", "php", "swift", "kotlin", "rust"}:
+    if language in {"java", "php", "swift", "kotlin", "rust"}:
         kind, name = match.groups()
 
     elif language == "csharp":
         kind = match.group(1) or match.group(2)
-        name = match.group(3)
+        # A delegate's first identifier is its return type; the name is the one before the parameters.
+        delegate = _CSHARP_DELEGATE.search(line) if kind == "delegate" else None
+        name = delegate.group(1) if delegate else match.group(3)
     elif language == "ruby":
         kind_match = re.search(r"\b(class|module)\b", line)
         kind, name = (kind_match.group(1), match.group(1)) if kind_match else ("class", match.group(1))
@@ -310,11 +404,13 @@ def outline(text: str, language: str, max_symbols: int = 512) -> tuple[list[dict
             kind, name = type_decl
             type_names.add(name)
             candidates.append((line_no, name, kind))
+    typed = {(line_no, name) for line_no, name, _ in candidates}
     for line_no, line in enumerate(lines, 1):
         if len(line) > MAX_LINE_CHARS:
             continue
         name = _function_name(language, line, type_names)
-        if name and name.lower() not in _CONTROL_NAMES:
+        # Records and primary constructors already appear as their type on the same line.
+        if name and name.lower() not in _CONTROL_NAMES and (line_no, name) not in typed:
             candidates.append((line_no, name, "function"))
 
     seen: set[tuple[int, str, str]] = set()
