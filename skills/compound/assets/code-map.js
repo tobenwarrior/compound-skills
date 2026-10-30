@@ -103,8 +103,10 @@ function toast(message) {
   refs.toast.textContent = message; refs.toast.hidden = false;
   clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => { refs.toast.hidden = true; }, 2600);
 }
+// Where a panel has no room beside the graph it floats over it, and only a floating panel makes way for the other one or closes first on Escape.
+const floating = name => getComputedStyle(refs[name]).position === "fixed";
 function drawer(name, open) {
-  if (open) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
+  if (open && (name === "inspector" || floating("inspector"))) { const other = name === "sidebar" ? "inspector" : "sidebar"; refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false"); }
   refs[name].classList.toggle("is-open", open);
   refs[name + "-button"].setAttribute("aria-expanded", String(open));
   if (!open && refs[name].contains(document.activeElement)) refs[name + "-button"].focus();
@@ -455,7 +457,7 @@ function installInteractions() {
   document.addEventListener("visibilitychange", () => { clearInterval(state.timer); if (document.visibilityState === "visible") { startPolling(); poll(); } });
   document.addEventListener("keydown", event => {
     if (refs["source-dialog"].open) return;
-    if (event.key === "Escape") { drawer("sidebar", false); drawer("inspector", false); return; }
+    if (event.key === "Escape") { drawer(refs.sidebar.classList.contains("is-open") && floating("sidebar") ? "sidebar" : "inspector", false); return; }
     if (event.ctrlKey || event.metaKey || event.altKey || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
     if (event.key === "/") { event.preventDefault(); drawer("sidebar", true); refs["file-search"].focus(); }
     if (event.key.toLowerCase() === "f") graph.fit();
