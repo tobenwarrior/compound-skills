@@ -44,6 +44,8 @@ NOISE_DIRS_ANY = {
 # Generic names pruned ONLY as the top-level component — a tracked src/build/ or
 # src/env/ is real source and must still be audited.
 NOISE_DIRS_ROOT = {"venv", "env", "build", "dist", "target", "out"}
+# Root env/ and venv/ count as dependency folders only when these files show a Python environment.
+VENV_MARKERS = ("pyvenv.cfg", "bin/activate", "Scripts/activate", "conda-meta/history")
 WORKTREE_DIRS = (".claude/worktrees", ".worktrees")
 
 # Files allowed at repo root (exact names). Anything else at root is a defect.
@@ -149,10 +151,10 @@ class Finding:
 # file discovery
 # ---------------------------------------------------------------------------
 
-def _noise_folder(rel: str) -> str | None:
+def _noise_folder(rel: str, roots: set[str]) -> str | None:
     parts = rel.split("/")
     for index, part in enumerate(parts[:-1]):
-        if part in NOISE_DIRS_ANY or index == 0 and part in NOISE_DIRS_ROOT:
+        if part in NOISE_DIRS_ANY or index == 0 and part in roots:
             return "/".join(parts[:index + 1]) + "/"
     return None
 
@@ -447,7 +449,9 @@ def check_config(root: Path, cfg: Config) -> list[Finding]:
 
 def check_noise(inventory: set[str], cfg: Config) -> list[Finding]:
     """Dependency, cache and build folders that Git tracks or would add."""
-    folders = {_noise_folder(rel) for rel in inventory if not _excluded_worktree(rel)} - {None}
+    roots = {name for name in NOISE_DIRS_ROOT
+             if name not in ("env", "venv") or any(f"{name}/{marker}" in inventory for marker in VENV_MARKERS)}
+    folders = {_noise_folder(rel, roots) for rel in inventory if not _excluded_worktree(rel)} - {None}
     out = []
     for folder in sorted(folders):
         if _match_any(folder.rstrip("/"), cfg.litter_ignore):
