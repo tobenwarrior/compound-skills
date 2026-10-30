@@ -1192,12 +1192,14 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             entry, consumed, parse_note = _read_parse(info, remaining)
             remaining = max(0, remaining - consumed)
             bounded = entry is None and bool(parse_note) and ("read budget" in parse_note or "file limit" in parse_note)
-            if bounded and info["language"] not in OUTLINED_LANGUAGES:
-                parse_note = None  # a size limit costs a metadata-only file nothing but its line count
+            metadata_only = bounded and info["language"] not in OUTLINED_LANGUAGES
+            if metadata_only:
+                # A size limit costs a metadata-only file nothing but its line count, so only that file says which limit.
+                parse_note = "line count not read: " + ("64 MiB total read budget reached" if "read budget" in parse_note else "file exceeds the 1 MiB limit")
             elif bounded:
                 pending += int("read budget" in parse_note)
                 limited += 1
-            if parse_note:
+            if parse_note and not metadata_only:
                 _note(notes, parse_note)
             if entry is None:
                 if not bounded:
@@ -1206,7 +1208,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
                 entry = {
                     "fingerprint": info["fingerprint"], "language": info["language"],
                     "symbols": [], "imports": [], "lines": 0, "analysis": "metadata", "exports": [],
-                    "parse_note": parse_note or "line count not read: 1 MiB file limit or 64 MiB total read budget reached",
+                    "parse_note": parse_note,
                 }
             else:
                 reusable[rel] = entry
