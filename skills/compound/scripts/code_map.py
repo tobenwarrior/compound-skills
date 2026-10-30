@@ -112,6 +112,7 @@ JS_EXPORT_DECL = re.compile(
     re.MULTILINE,
 )
 JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
+STDLIB_MODULES = frozenset(sys.stdlib_module_names)
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
     pass
@@ -550,23 +551,37 @@ def _python_dep(path: str, module: str, level: int, imported: str | None, known:
         base = PurePosixPath(module.replace(".", "/"))
     elif module:
         base /= module.replace(".", "/")
-    candidates = []
+    candidates: list[str] = []
+    dotted: list[str] = []  # candidates whose module path has at least two segments
     if imported and (module or level):
-        candidates += [str(base / imported) + ext for ext in (".py", ".pyw", "/__init__.py")]
+        candidates += [PurePosixPath(str(base / imported) + ext).as_posix() for ext in (".py", ".pyw", "/__init__.py")]
+        dotted += candidates
     if str(base) not in {"", "."}:
-        candidates += [str(base) + ext for ext in (".py", ".pyw", "/__init__.py")]
+        names = [PurePosixPath(str(base) + ext).as_posix() for ext in (".py", ".pyw", "/__init__.py")]
+        candidates += names
+        dotted += names if "." in module else []
     for candidate in candidates:
-        normalized = PurePosixPath(candidate).as_posix()
-        if normalized in known:
-            return normalized
+        if candidate in known:
+            return candidate
     if level == 0:
         for candidate in candidates:
-            active = "src/" + PurePosixPath(candidate).as_posix()
-            if active in known:
-                return active
+            if "src/" + candidate in known:
+                return "src/" + candidate
+        # Unanchored matches would tie stdlib or third-party names such as json or celery to unrelated local files.
+        if module.split(".")[0] in STDLIB_MODULES:
+            return None
+        directory = source.parent
+        while directory != directory.parent:
+            # Scripts and nested projects import from non-package folders above them (and their src/).
+            if (directory / "__init__.py").as_posix() not in known:
+                for prefix in (directory, directory / "src"):
+                    for candidate in candidates:
+                        if (prefix / candidate).as_posix() in known:
+                            return (prefix / candidate).as_posix()
+            directory = directory.parent
         lookup = _python_modules(known) if modules is None else modules
-        for candidate in candidates:
-            match = lookup.get(PurePosixPath(candidate).as_posix())
+        for candidate in dotted:
+            match = lookup.get(candidate)
             if match:
                 return match
     return None
@@ -903,7 +918,7 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
             dep = _python_dep(path, module, level, imported, known, modules)
             if dep and dep != path and dep not in dependencies:
                 dependencies.append(dep)
-            elif not dep:
+            elif not dep or dep == path and not level:  # an absolute import of itself names another package
                 spec = _python_import_spec(module, level, imported)
                 if spec and spec not in unresolved:
                     unresolved.append(spec)

@@ -15,6 +15,7 @@ No compiler, package manager, subprocess, or workspace code is executed.
 from __future__ import annotations
 
 import ast
+import bisect
 import json
 import os
 import re
@@ -32,7 +33,7 @@ MAX_FILE_BYTES = 256 * 1024
 MAX_INDEX_BYTES = 16 * 1024 * 1024
 MAX_RESULTS = 64
 MAX_OUTPUT_BYTES = 16 * 1024
-_METADATA_VERSION = 1
+_METADATA_VERSION = 2
 
 _GO_MODULE_PATH = re.compile(r"^[A-Za-z0-9._~+-]+(?:/[A-Za-z0-9._~+-]+)*$")
 _GO_PACKAGE = re.compile(r"package\s+([A-Za-z_][A-Za-z0-9_]*)\b")
@@ -419,17 +420,35 @@ def _expand_rust_use(value: str, prefix: str = "", depth: int = 0) -> list[str]:
     return output
 
 
-def _rust_file_metadata(source: str) -> tuple[list[str], list[str], bool, bool, bool, list[str]]:
+def _rust_scopes(masked: str):
+    """Return a lookup of (brace depth, enclosing inline-module count) at a source offset."""
+    inline_opens = {match.end() - 1 for match in _RUST_INLINE_MOD.finditer(masked)}
+    offsets, scopes, stack = [0], [(0, 0)], []
+    for brace in re.finditer(r"[{}]", masked):
+        if brace.group() == "{":
+            stack.append(brace.start() in inline_opens)
+        elif stack:
+            stack.pop()
+        offsets.append(brace.end())
+        scopes.append((len(stack), sum(stack)))
+    return lambda offset: scopes[bisect.bisect_right(offsets, offset) - 1]
+
+
+def _rust_file_metadata(source: str) -> tuple[list[str], list[str], bool, bool, list[str]]:
     masked = _rust_mask(source)
     partial = False
     diagnostics = []
-    mods = [match.group(1) for match in _RUST_MOD.finditer(masked) if len(match.group(1)) <= 2048]
+    scope = _rust_scopes(masked)
+    # Only file-level `mod x;` names this file's children; ones inside an inline `mod m { }` belong to m.
+    mods = [match.group(1) for match in _RUST_MOD.finditer(masked) if len(match.group(1)) <= 2048 and scope(match.start())[0] == 0]
     if len(mods) > MAX_RESULTS:
         mods = mods[:MAX_RESULTS]
         partial = True
         diagnostics.append("spec_limit")
     uses = []
     for match in _RUST_USE_START.finditer(masked):
+        if scope(match.start())[1]:
+            continue  # paths inside an inline module are relative to it
         end = masked.find(";", match.end())
         if end < 0:
             partial = True
@@ -451,9 +470,8 @@ def _rust_file_metadata(source: str) -> tuple[list[str], list[str], bool, bool, 
             diagnostics.append("spec_limit")
             break
     uses = list(dict.fromkeys(uses))
-    inline_mod = bool(_RUST_INLINE_MOD.search(masked))
     path_attr = bool(_RUST_PATH_ATTR.search(masked))
-    return mods, uses, path_attr, inline_mod, partial, diagnostics
+    return mods, uses, path_attr, partial, diagnostics
 
 
 def _metadata_size(metadata: dict) -> int:
@@ -497,7 +515,6 @@ def extract_language_metadata(rel: str, source: str) -> dict:
         "rust_mods": [],
         "rust_uses": [],
         "rust_path_attr": False,
-        "rust_inline_mod": False,
         "partial": False,
         "diagnostics": [],
     }
@@ -535,11 +552,10 @@ def extract_language_metadata(rel: str, source: str) -> dict:
                 metadata["diagnostics"].append("module_missing")
                 metadata["partial"] = True
         elif kind == "rust":
-            mods, uses, path_attr, inline_mod, partial, diagnostics = _rust_file_metadata(source)
+            mods, uses, path_attr, partial, diagnostics = _rust_file_metadata(source)
             metadata["rust_mods"] = mods
             metadata["rust_uses"] = uses
             metadata["rust_path_attr"] = path_attr
-            metadata["rust_inline_mod"] = inline_mod
             metadata["partial"] = partial
             metadata["diagnostics"].extend(diagnostics)
     except Exception:  # One unusual file must not fail the whole map.
@@ -586,7 +602,6 @@ def _sanitize_metadata(rel: str, value) -> dict | None:
         "go_module": value.get("go_module") if isinstance(value.get("go_module"), str) and len(value["go_module"]) <= 2048 and _GO_MODULE_PATH.fullmatch(value["go_module"]) else None,
         "rust_mods": [], "rust_uses": [],
         "rust_path_attr": value.get("rust_path_attr") is True,
-        "rust_inline_mod": value.get("rust_inline_mod") is True,
         "partial": value.get("partial") is True,
         "diagnostics": [],
     }
@@ -697,13 +712,15 @@ def _build_local_import_index(root, parsed_metadata: dict, known=None, inherited
     declared_children: dict[str, dict[str, str]] = {}
     for rel in sorted(rust_files):
         metadata = records[rel]
-        # `#[path]` and inline modules change Rust's directory rules; do not guess.
-        if metadata["rust_path_attr"] or metadata["rust_inline_mod"]:
+        # `#[path]` changes Rust's directory rules; do not guess.
+        if metadata["rust_path_attr"]:
             diagnostics.append("unsupported_rust_module_layout")
             continue
         by_name: dict[str, list[str]] = {}
         parent = PurePosixPath(rel)
-        module_dir = parent.parent if parent.name in {"mod.rs", "lib.rs", "main.rs"} else parent.parent / parent.stem
+        # mod.rs, crate roots and Cargo's tests/, examples/, benches/ and src/bin/ targets own their directory.
+        target_root = parent.parent.name in {"tests", "examples", "benches"} and "src" not in parent.parts[:-2] or parent.parent.as_posix().endswith("src/bin")
+        module_dir = parent.parent if parent.name in {"mod.rs", "lib.rs", "main.rs"} or target_root else parent.parent / parent.stem
         for name in metadata["rust_mods"]:
             options = (module_dir / (name + ".rs")).as_posix(), (module_dir / name / "mod.rs").as_posix()
             found = [candidate for candidate in options if candidate in rust_files and _safe_rel(candidate)]
@@ -862,10 +879,10 @@ def resolve_rust_import(spec: str, source_path: str, index: dict) -> tuple[str, 
             offset += 1
         reached = module_file(module_path)
     else:
-        # Unqualified names can denote external crates; only resolve when the
-        # first segment is an explicitly declared local crate-root module.
-        module_path, offset = (), 0
-        reached = crate_root
+        # Since Rust 2018 an unqualified first segment names a module declared in the
+        # current module, or else an external crate, which stays unresolved.
+        module_path, offset = current, 0
+        reached = source_path
 
     if reached is None:
         return ()
