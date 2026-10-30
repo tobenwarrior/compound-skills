@@ -357,7 +357,7 @@ def _read_registry() -> dict[str, dict[str, str]]:
         path = _registry_path(False)
         if not path.exists():
             return {}
-        if path.stat().st_mode & 0o077:
+        if os.name == "posix" and path.stat().st_mode & 0o077:
             return {}
         with path.open("rb") as handle:
             raw = handle.read(MAX_REGISTRY_BYTES + 1)
@@ -449,7 +449,8 @@ def _read_runtime(path: Path) -> tuple[dict[str, Any] | None, str | None]:
     try:
         if path.is_symlink() or not path.is_file():
             return None, "runtime file is unavailable"
-        if path.stat().st_mode & 0o077:
+        # Windows reports every writable file as mode 0o666, so only POSIX modes show who can read it.
+        if os.name == "posix" and path.stat().st_mode & 0o077:
             return None, "runtime file permissions are unsafe"
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -501,6 +502,11 @@ def _startup_lock(directory: Path, timeout: float = 10.0):
                 os.close(fd)
                 break
             except FileExistsError:
+                with contextlib.suppress(OSError):
+                    # Startup holds the lock well under a minute; an older lock outlived a killed holder.
+                    if time.time() - path.stat().st_mtime > 60:
+                        path.unlink()
+                        continue
                 if time.monotonic() >= deadline:
                     raise MapServerError("timed out waiting for map service startup lock")
                 time.sleep(0.05)
