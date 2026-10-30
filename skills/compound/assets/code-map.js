@@ -78,11 +78,11 @@ function indexModel(model) {
 }
 
 function matcher() {
-  const terms = state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const all = file => terms.every(term => file.search.includes(term));
-  // Like the service's ranking, a topic matches any of its words when no file contains them all.
-  if (!state.model || state.model.files.some(all)) return all;
-  return file => terms.some(term => file.search.includes(term));
+  const query = state.query.toLowerCase(), terms = query.trim().split(/\s+/).filter(Boolean), words = query.match(/[\p{L}\p{N}_$]+/gu) || [];
+  const every = list => file => list.every(term => file.search.includes(term));
+  // Like the service's ranking, a topic falls back to its words split at punctuation, all of them and then any of them.
+  const strict = [every(terms), ...(words.length ? [every(words)] : [])].find(test => !state.model || state.model.files.some(test));
+  return strict || (file => words.some(word => file.search.includes(word)));
 }
 function scopedFiles() { return state.model ? state.model.files.filter(file => !state.folder || group(file.path) === state.folder) : []; }
 function updateUrl() {
