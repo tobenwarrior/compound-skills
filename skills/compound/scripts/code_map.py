@@ -415,6 +415,11 @@ def _python_exports(tree: ast.Module) -> list[str]:
         and not node.name.startswith("_")
     ]
     return list(dict.fromkeys(names))[:MAX_SYMBOLS]
+def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
+    """Symbols and imports of raw JS/TS text, in the shape Y Harness's vendored tests call."""
+    return javascript_outline(mask_javascript(text), MAX_IMPORTS)[:2]
+
+
 def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | None, int, str | None]:
     fp = info["fingerprint"]
     if fp["size"] > MAX_FILE_BYTES:
