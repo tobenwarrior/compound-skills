@@ -44,7 +44,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 8
+CACHE_VERSION = 9
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -358,7 +358,8 @@ def _candidate(root: Path, rel: str, *, git_inventory: bool = False) -> tuple[di
 def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], list[str], str | None]:
     try:
         tree = ast.parse(text)
-    except (SyntaxError, ValueError, TypeError):
+    except (SyntaxError, ValueError, TypeError, RecursionError, MemoryError):
+        # Valid but deeply nested generated code can exhaust the parser's recursion or stack limits.
         return [], [], [], "Python file could not be parsed"
     symbols: list[dict[str, Any]] = []
     imports: list[list[Any]] = []
@@ -477,16 +478,19 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     note = None
     analysis = "metadata"
     exports: list[str] = []
-    if info["language"] == "python":
-        analysis = "python-ast"
-        symbols, imports, exports, note = _python_outline(text)
-    elif info["language"] in {"javascript", "typescript"}:
-        analysis = "javascript-outline"
-        symbols, imports = _javascript_outline(text)
-        exports = _javascript_exports(text)
-    elif info["language"] in SUPPORTED_LANGUAGES:
-        analysis = "heuristic-outline"
-        symbols, note = _language_outline(text, info["language"], MAX_SYMBOLS)
+    try:
+        if info["language"] == "python":
+            analysis = "python-ast"
+            symbols, imports, exports, note = _python_outline(text)
+        elif info["language"] in {"javascript", "typescript"}:
+            analysis = "javascript-outline"
+            symbols, imports = _javascript_outline(text)
+            exports = _javascript_exports(text)
+        elif info["language"] in SUPPORTED_LANGUAGES:
+            analysis = "heuristic-outline"
+            symbols, note = _language_outline(text, info["language"], MAX_SYMBOLS)
+    except Exception:  # One unusual file must not fail the whole map.
+        symbols, imports, exports, note = [], [], [], "file analysis failed; file metadata retained"
     entry = {
         "fingerprint": fp,
         "language": info["language"],

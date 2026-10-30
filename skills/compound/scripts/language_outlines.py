@@ -40,22 +40,25 @@ _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 # The C-family and JVM method rule requires an explicit return type, avoiding
-# most ordinary calls. Constructors are added separately only for known types.
+# most ordinary calls; constructors and destructors are matched separately.
+# Possessive and atomic groups keep matching linear: a modifier is never retried as a type token.
 _METHOD_PATTERN = re.compile(
-    r"^\s*(?:(?:public|protected|private|internal|static|final|abstract|virtual|override|async|extern|unsafe|inline|constexpr|consteval|constinit|friend|virtual|explicit|synchronized|native|default|sealed|new|partial|readonly|volatile|register|typedef|inline|extern|auto)\s+)*"
-    r"(?:<[^;{}]+>\s+)?"
+    r"^\s*(?:(?:public|protected|private|internal|static|final|abstract|virtual|override|async|extern|unsafe|inline|constexpr|consteval|constinit|friend|explicit|synchronized|native|default|sealed|new|partial|readonly|volatile|register|typedef)\s+)*+"
+    r"(?><[^;{}]+>\s+)?"
     r"(?:[\w:$~*&<>.,?\[\]]+\s+)+"
     r"((?:[A-Za-z_$][\w$]*::)*(?:~?[A-Za-z_$][\w$]*))\s*\("
 )
 _CONSTRUCTOR_PATTERN = re.compile(
-    r"^\s*(?:(?:public|protected|private|internal|static|explicit|inline|constexpr|async)\s+)*"
+    r"^\s*(?:(?:public|protected|private|internal|static|inline|async|virtual)\s+|(explicit|constexpr|consteval)\s+)*+"
     r"(~?[A-Za-z_$][\w$]*)\s*\("
 )
+_STATEMENT_START = re.compile(r"\s*(?:(?:return|throw|yield|case|else|await|co_await|co_return|co_yield|goto|delete)\b|default\s*:)")
 _CONTROL_NAMES = {
     "if", "for", "while", "switch", "catch", "return", "throw", "new", "delete",
     "sizeof", "typeof", "instanceof", "do", "else", "case", "assert", "lock",
     "using", "yield", "await", "super", "this", "where", "when", "match",
 }
+_C_KEYWORDS = {"__asm__", "__attribute__", "__declspec", "alignas", "alignof", "consteval", "constexpr", "decltype", "noexcept", "static_assert"}
 _COMMENT_STYLES = {
     "go": ("//", "/*"), "rust": ("//", "/*"), "java": ("//", "/*"),
     "c": ("//", "/*"), "cpp": ("//", "/*"), "csharp": ("//", "/*"),
@@ -252,17 +255,18 @@ def _function_name(language: str, line: str, type_names: set[str]) -> str | None
         if match:
             return match.group(1)
         return None
-    if re.match(r"^\s*(?:return|throw|yield|case)\b", line):
+    if _STATEMENT_START.match(line):
         return None
     match = _METHOD_PATTERN.search(line)
     if match:
         name = match.group(1).split("::")[-1].lstrip("~")
-        if name.lower() not in _CONTROL_NAMES:
+        if name.lower() not in _CONTROL_NAMES and name not in _C_KEYWORDS:
             return name
     constructor = _CONSTRUCTOR_PATTERN.search(line)
-    if constructor and ("{" in line or "=>" in line):
-        name = constructor.group(1).lstrip("~")
-        if name in type_names:
+    if constructor:
+        name = constructor.group(2).lstrip("~")
+        # Constructor-only keywords and destructors cannot start a call, so they need no body or known type.
+        if name not in _C_KEYWORDS and (constructor.group(1) or constructor.group(2).startswith("~") or ("{" in line or "=>" in line) and name in type_names):
             return name
     return None
 

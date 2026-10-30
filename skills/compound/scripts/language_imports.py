@@ -38,6 +38,7 @@ _GO_MODULE_PATH = re.compile(r"^[A-Za-z0-9._~+-]+(?:/[A-Za-z0-9._~+-]+)*$")
 _GO_PACKAGE = re.compile(r"package\s+([A-Za-z_][A-Za-z0-9_]*)\b")
 _GO_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _RUST_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_RUST_CHAR = re.compile(r"'(?:[^'\\\n]|\\u\{[0-9A-Fa-f_]{1,8}\}|\\.)'")
 _RUST_MOD = re.compile(r"(?m)^[ \t]*(?:(?:pub(?:\([^)]*\))?)\s+)?mod\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
 _RUST_INLINE_MOD = re.compile(r"(?m)^[ \t]*(?:(?:pub(?:\([^)]*\))?)\s+)?mod\s+[A-Za-z_][A-Za-z0-9_]*\s*\{")
 _RUST_USE_START = re.compile(r"(?m)^[ \t]*(?:(?:pub(?:\([^)]*\))?)\s+)?use\s+")
@@ -200,7 +201,7 @@ def _rust_mask(source: str) -> str:
             blank(start, i)
             continue
         if source[i] == "'":
-            char = re.match(r"'(?:[^'\\\n]|\\.)'", source, i)
+            char = _RUST_CHAR.match(source, i)
             if char:
                 blank(i, i + len(char.group(0)))
                 i += len(char.group(0))
@@ -516,29 +517,33 @@ def extract_language_metadata(rel: str, source: str) -> dict:
         metadata["partial"] = True
         metadata["diagnostics"].append("source_limit")
         return metadata
-    if kind == "go":
-        package, imports, partial, diagnostics = _go_file_metadata(source)
-        metadata["go_package"] = package
-        metadata["go_imports"] = imports
-        metadata["partial"] = partial
-        metadata["diagnostics"].extend(diagnostics)
-    elif kind == "go_mod":
-        tokens, partial = _go_tokens(source)
-        metadata["go_module"] = _go_module_declaration(source, tokens)
-        metadata["partial"] = partial
-        if partial:
-            metadata["diagnostics"].append("token_limit_or_lex_error")
-        if metadata["go_module"] is None:
-            metadata["diagnostics"].append("module_missing")
-            metadata["partial"] = True
-    elif kind == "rust":
-        mods, uses, path_attr, inline_mod, partial, diagnostics = _rust_file_metadata(source)
-        metadata["rust_mods"] = mods
-        metadata["rust_uses"] = uses
-        metadata["rust_path_attr"] = path_attr
-        metadata["rust_inline_mod"] = inline_mod
-        metadata["partial"] = partial
-        metadata["diagnostics"].extend(diagnostics)
+    fallback = {**metadata, "partial": True, "diagnostics": ["analysis_failed"]}
+    try:
+        if kind == "go":
+            package, imports, partial, diagnostics = _go_file_metadata(source)
+            metadata["go_package"] = package
+            metadata["go_imports"] = imports
+            metadata["partial"] = partial
+            metadata["diagnostics"].extend(diagnostics)
+        elif kind == "go_mod":
+            tokens, partial = _go_tokens(source)
+            metadata["go_module"] = _go_module_declaration(source, tokens)
+            metadata["partial"] = partial
+            if partial:
+                metadata["diagnostics"].append("token_limit_or_lex_error")
+            if metadata["go_module"] is None:
+                metadata["diagnostics"].append("module_missing")
+                metadata["partial"] = True
+        elif kind == "rust":
+            mods, uses, path_attr, inline_mod, partial, diagnostics = _rust_file_metadata(source)
+            metadata["rust_mods"] = mods
+            metadata["rust_uses"] = uses
+            metadata["rust_path_attr"] = path_attr
+            metadata["rust_inline_mod"] = inline_mod
+            metadata["partial"] = partial
+            metadata["diagnostics"].extend(diagnostics)
+    except Exception:  # One unusual file must not fail the whole map.
+        metadata = fallback
     return _fit_language_metadata(metadata)
 
 
