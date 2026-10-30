@@ -613,7 +613,11 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
         raise MapServerError("map service did not become healthy before startup timeout")
     try:
         other = _request(port, "GET", "/api/health")[1] or {}
-    except MapServerError:
+    except MapServerError as exc:
+        runtime, _ = _read_runtime(runtime_path)
+        if runtime and runtime["port"] == port and isinstance(exc.__cause__, TimeoutError):
+            # A timeout, unlike a refusal, means the port is held; this state directory records its own service there.
+            raise MapServerError(f"map service (pid {runtime['pid']}) is busy; retry") from exc
         other = {}
     if other.get("service") == SERVICE:
         runtime, _ = _read_runtime(runtime_path)
