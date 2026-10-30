@@ -486,14 +486,14 @@ def _sig(f: Finding) -> str:
     return f"{f.check}:{f.path}"
 
 
-# Comparable findings store a metric (line count, missing ignores, worktree count) so getting worse re-flags them.
+# Comparable findings also store a metric (line count, missing ignore count, worktree count) so getting worse re-flags them.
 COMPARABLE_CHECKS = {"size", "gitignore", "worktrees"}
 
 
 def write_baseline(root: Path, findings: list[Finding]) -> int:
     """Record current findings as accepted."""
     data = {
-        "suppress": sorted({_sig(f) for f in findings if f.check not in COMPARABLE_CHECKS}),
+        "suppress": sorted({_sig(f) for f in findings}),
         "sizes": {f.path: f.metric for f in findings if f.check in COMPARABLE_CHECKS and f.metric is not None},
     }
     path = root / BASELINE_FILE
@@ -502,7 +502,7 @@ def write_baseline(root: Path, findings: list[Finding]) -> int:
         raise OSError("existing baseline is not a regular file")
     with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o644), "w", encoding="utf-8") as handle:
         handle.write(json.dumps(data, indent=2) + "\n")
-    return len(data["suppress"]) + len(data["sizes"])
+    return len(data["suppress"])
 
 
 def load_baseline(root: Path) -> dict | None:
@@ -527,10 +527,10 @@ def split_baselined(findings: list[Finding], baseline: dict | None) -> tuple[lis
         sizes = {}
     active, based = [], []
     for f in findings:
-        if f.check in COMPARABLE_CHECKS:
-            base = sizes.get(f.path)
-            grandfathered = isinstance(base, int) and f.metric is not None and f.metric <= base
-        else:
+        base = sizes.get(f.path) if f.check in COMPARABLE_CHECKS else None
+        if isinstance(base, int):
+            grandfathered = f.metric is not None and f.metric <= base
+        else:  # earlier releases recorded gitignore and worktree findings by signature only
             grandfathered = _sig(f) in suppress
         (based if grandfathered else active).append(f)
     return active, based
