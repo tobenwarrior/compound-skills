@@ -746,6 +746,7 @@ class Project:
     last_used: float = 0.0
     inventory_fingerprint: str | None = None
     stalled: bool = False
+    reparse: bool = False
     lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
 
 
@@ -908,7 +909,8 @@ class MapService:
                         project.revision += 1
                         project.updated_at = _now()
                     return
-            model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text")
+                refresh, project.reparse = project.reparse, False
+            model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text", refresh=refresh)
             after = _inventory_fingerprint(project.root)
             git_state = _model_git_state(model)
             with project.lock:
@@ -989,6 +991,9 @@ class MapService:
                     if query_changed:
                         project.query = query[:MAX_QUERY]
                 force = refresh
+            with project.lock:
+                # Like the in-process --refresh, an explicit refresh also reparses cached file outlines.
+                project.reparse = project.reparse or refresh
             self._remember(project)
             self._evict_loaded(keep=project)
         self._refresh(project, force=force, recheck=True)
