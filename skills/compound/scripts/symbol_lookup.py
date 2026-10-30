@@ -139,13 +139,21 @@ def _read_reference_text(
         return None, total, "non-UTF-8 files were skipped"
 
 
+def _budget_exempt(git_root: Path, path: str) -> bool:
+    """Cheap checks for paths _build excludes, which need no file-budget slot; symlinks still take one."""
+    if code_map._private(path) or code_map._skip_dir(path, git_inventory=True):
+        return True
+    # _build reports a missing tracked file as skipped, so only existing non-code files are exempt.
+    return code_map._language(path) is None and code_map._non_code_path(path) and os.path.lexists(os.path.join(git_root, path))
+
+
 def _coverage_partial(model_coverage: dict[str, Any]) -> bool:
     return bool(
         model_coverage.get("truncated")
         or model_coverage.get("skipped")
-        or model_coverage.get("excluded")
         or model_coverage.get("limited")
         or model_coverage.get("pending")
+        or model_coverage.get("excluded_source")
         or not model_coverage.get("inventory")
     )
 
@@ -307,6 +315,13 @@ def lookup_symbols(
         # Reuse the existing, Git-ignore-aware inventory to locate the canonical
         # worktree root. No non-Git filesystem walk is attempted.
         git_root, head, inventory, inventory_notes = code_map._git_context(root)
+        excluded = dropped = 0
+        # _build never reads source files with private names or in vendored folders.
+        unscanned_source = sum(
+            1 for path in inventory
+            if code_map._language(path) not in _NON_SOURCE_LANGUAGES | {None}
+            and (code_map._private(path) or code_map._skip_dir(path, git_inventory=True))
+        )
         if len(inventory) > file_limit:
             normalized_name = "".join(character for character in name.casefold() if character.isalnum())
             preferred: list[str] = []
@@ -314,24 +329,35 @@ def lookup_symbols(
             for path in inventory:
                 normalized_path = "".join(character for character in path.casefold() if character.isalnum())
                 group = preferred if normalized_name and normalized_name in normalized_path else remaining
-                if len(group) < file_limit:
+                full = len(group) >= file_limit
+                # Classify a path only while it could take a budget slot or prove truncation;
+                # once a file is dropped, later overflow counts as skipped without a check.
+                if (not full or not dropped) and _budget_exempt(git_root, path):
+                    excluded += 1
+                elif full:
+                    dropped += 1
+                else:
                     group.append(path)
             bounded_inventory = (preferred + remaining)[:file_limit]
+            dropped += len(preferred) + len(remaining) - len(bounded_inventory)
         else:
             bounded_inventory = inventory
         model_notes = list(inventory_notes)
-        inventory_capped = len(inventory) > len(bounded_inventory)
-        if inventory_capped:
+        if dropped:
             model_notes.append(f"symbol lookup inventory capped at {file_limit} files")
+        if unscanned_source:
+            model_notes.append(f"{unscanned_source} source files with private names or in vendored folders were not scanned")
         # Match build_map's default read-only cache behavior without rendering
         # or serializing the entire model; _build never writes when requested.
         model = code_map._build(
             git_root, head, bounded_inventory, model_notes, name, file_limit,
             use_cache=not no_cache, refresh=False, write_cache=False,
         )
-        if inventory_capped:
-            model["coverage"]["inventory"] = len(inventory)
-            model["coverage"]["skipped"] += len(inventory) - len(bounded_inventory)
+        model["coverage"]["inventory"] = len(inventory)
+        model["coverage"]["excluded"] += excluded
+        model["coverage"]["excluded_source"] = unscanned_source
+        if dropped:
+            model["coverage"]["skipped"] += dropped
             model["coverage"]["truncated"] = True
     except (code_map.CodeMapError, OSError, ValueError, ImportError) as exc:
         raise SymbolLookupError(str(exc)) from exc
@@ -341,6 +367,7 @@ def lookup_symbols(
     analysis_counts: dict[str, int] = {}
     metadata_only_files = 0
     heuristic_outline_files = 0
+    incomplete_outline_files = 0
     for record in model_files:
         if record.get("language") in _NON_SOURCE_LANGUAGES:
             continue
@@ -350,6 +377,9 @@ def lookup_symbols(
             metadata_only_files += 1
         elif analysis != "python-ast":
             heuristic_outline_files += 1
+        elif any(note and not note.startswith("local import links capped") for note in record.get("outline_note", "").split("; ")):
+            # A failed or capped syntax-tree outline can miss definitions.
+            incomplete_outline_files += 1
     definitions: list[dict[str, Any]] = []
     definitions_truncated = False
     for record in model_files:
@@ -488,6 +518,7 @@ def lookup_symbols(
         or definitions_truncated
         or metadata_only_files > 0
         or heuristic_outline_files > 0
+        or incomplete_outline_files > 0
     )
     references_partial = (
         model_coverage_partial
@@ -507,11 +538,12 @@ def lookup_symbols(
                 "files_indexed": len(model_files),
                 "metadata_only_files": metadata_only_files,
                 "heuristic_outline_files": heuristic_outline_files,
+                "incomplete_outline_files": incomplete_outline_files,
                 "analysis_counts": analysis_counts,
                 "results_truncated": definitions_truncated,
                 "limitations": [
                     "Definitions are exact-name matches only against available code-map symbols.",
-                    "Metadata-only files contribute no definitions; heuristic outlines can miss declarations.",
+                    "Metadata-only files contribute no definitions; heuristic, failed or capped outlines can miss declarations.",
                     "No semantic/LSP definition-recall guarantee is made.",
                 ],
                 "model": {
@@ -519,6 +551,7 @@ def lookup_symbols(
                     "indexed": model_coverage.get("indexed", len(model_files)),
                     "skipped": model_coverage.get("skipped", 0),
                     "excluded": model_coverage.get("excluded", 0),
+                    "excluded_source": model_coverage.get("excluded_source", 0),
                     "pending": model_coverage.get("pending", 0),
                     "limited": model_coverage.get("limited", 0),
                     "truncated": bool(model_coverage.get("truncated")),
