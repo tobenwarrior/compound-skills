@@ -775,7 +775,11 @@ def _payload(
 
 
 def _emit(value: dict[str, object]) -> int:
-    print(json.dumps(value, ensure_ascii=False))
+    try:
+        print(json.dumps(value, ensure_ascii=False))
+    except UnicodeEncodeError:
+        # A strict stdout, as under en_US.UTF-8, cannot encode undecodable path bytes; the files are already written.
+        print(json.dumps(value))
     return 0 if value["status"] != "error" else 2
 
 
