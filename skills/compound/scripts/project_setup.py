@@ -131,14 +131,14 @@ class GlobalContext:
     notes: tuple[str, ...] = ()
 
 
-def _newline(text: str) -> str:
+def _newline(text: str, default: str = "\n") -> str:
     if "\r\n" in text:
         return "\r\n"
     if "\n" in text:
         return "\n"
     if "\r" in text:
         return "\r"
-    return "\n"
+    return default
 
 
 def _has_line_ending(text: str) -> bool:
@@ -465,7 +465,7 @@ def _global_disable_plans(context: GlobalContext) -> list[tuple[TargetState, str
         for state in host.targets:
             if not state.exists or state.markers is None:
                 continue
-            new_text = _remove_block(state.text or "", state.markers, GLOBAL_BLOCK_LINES)
+            new_text = _remove_block(state.text or "", state.markers)
             remove_file = not new_text.strip()
             if remove_file or new_text != (state.text or ""):
                 plans.append((state, new_text, remove_file))
@@ -573,9 +573,10 @@ def _canonical_block(
 
 def _append_block(
     text: str,
-    newline: str,
+    preferred_newline: str,
     block_lines: Sequence[str] = BLOCK_LINES,
 ) -> str:
+    newline = _newline(text, preferred_newline)
     if not text:
         return _canonical_block(newline, False, block_lines)
     if _has_line_ending(text):
@@ -596,22 +597,13 @@ def _replace_block(
     )
 
 
-def _remove_block(
-    text: str,
-    markers: MarkerRange,
-    block_lines: Sequence[str] = BLOCK_LINES,
-) -> str:
+def _remove_block(text: str, markers: MarkerRange) -> str:
     before = text[: markers.start]
-    after = text[markers.end :]
-    result = before + after
-    if not markers.has_trailing_newline and not after and before:
-        newline = _newline(before)
-        canonical = _canonical_block(newline, False, block_lines)
-        if before.endswith(newline) and text[markers.start : markers.end] == canonical:
-            # Enable inserts this separator when the original file had no
-            # final newline; remove that separator during the exact round trip.
-            result = before[: -len(newline)]
-    return result
+    if not markers.has_trailing_newline:
+        # Enable separates a block it appends to a file without a final
+        # newline by one line ending; remove that separator again.
+        before = before.removesuffix("\n").removesuffix("\r")
+    return before + text[markers.end :]
 
 
 def _preferred_newline(context: Context) -> str:
