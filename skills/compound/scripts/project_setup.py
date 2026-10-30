@@ -228,29 +228,21 @@ def _read_target(
     )
 
 
-def _validate_no_symlink_chain(path: Path, label: str) -> None:
-    """Reject symlinks in the configured path and its existing local parents."""
+def _validate_not_symlink(path: Path, label: str) -> None:
+    """Reject a symlink at a directory the helper writes in, whether or not it exists yet.
 
-    candidate = path if path.is_absolute() else Path.cwd() / path
-    while not candidate.exists() and not candidate.is_symlink():
-        parent = candidate.parent
-        if parent == candidate:
-            break
-        candidate = parent
-    stop = candidate
+    Its ancestors may be links, such as a linked HOME or /home.
+    """
+
     try:
-        while True:
-            if candidate.is_symlink():
-                raise SetupError(f"refusing symlink {label}: {candidate}")
-            if candidate == stop:
-                break
-            candidate = candidate.parent
+        if path.is_symlink():
+            raise SetupError(f"refusing symlink {label}: {path}")
     except OSError as exc:
         raise SetupError(f"could not inspect {label} {path}: {exc}") from exc
 
 
 def _validate_global_base(path: Path, label: str) -> Path:
-    _validate_no_symlink_chain(path, label)
+    _validate_not_symlink(path, label)
     try:
         if path.exists() and not path.is_dir():
             raise SetupError(f"global {label} is not a directory: {path}")
@@ -273,7 +265,7 @@ def _configured_global_base(environment_name: str, default_directory: str, label
 
 
 def _global_file(name: str, path: Path) -> TargetState:
-    _validate_no_symlink_chain(path.parent, "global instruction parent")
+    _validate_not_symlink(path.parent, "global instruction parent")
     state = _read_target(
         name,
         path,
