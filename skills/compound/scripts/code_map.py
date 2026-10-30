@@ -22,13 +22,13 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 try:
     from .onboarding import _reject_symlink_chain, _state_paths
-    from .workspace_imports import load_workspace_packages, resolve_workspace_import
+    from .workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from .language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline, split_lines
     from .safe_open import open_regular_nofollow
     from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink_chain, _state_paths
-    from workspace_imports import load_workspace_packages, resolve_workspace_import
+    from workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from language_outlines import SUPPORTED_LANGUAGES, outline as _language_outline, split_lines
     from safe_open import open_regular_nofollow
     from language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
@@ -706,14 +706,18 @@ def _load_alias_configs(root: Path, candidates: dict[str, dict[str, Any]]) -> li
 
     names = {"tsconfig.json", "jsconfig.json"}
     ordered = sorted(candidates, key=lambda rel: (len(PurePosixPath(rel).parts), rel))
+    unloaded = []
     for rel in ordered:
-        if len(configs) >= MAX_ALIAS_CONFIGS:
-            break
-        if PurePosixPath(rel).name.lower() in names:
-            config = load(rel, set())
-            if config and (config["base_url"] or config["paths"]):
-                configs.append(config)
-    return configs
+        if PurePosixPath(rel).name.lower() not in names:
+            continue
+        if len(configs) >= MAX_ALIAS_CONFIGS or reads >= MAX_ALIAS_READS and rel not in cache:
+            # Past the caps, leave imports under this config unresolved rather than apply an ancestor's aliases.
+            unloaded.append({"directory": PurePosixPath(rel).parent.as_posix(), "base_url": None, "paths": [], "unloaded": True})
+            continue
+        config = load(rel, set())
+        if config and (config["base_url"] or config["paths"]):
+            configs.append(config)
+    return configs + unloaded
 
 
 def _alias_match(spec: str, pattern: str) -> str | None:
@@ -762,6 +766,8 @@ def _javascript_alias_dep(path: str, spec: str, known: set[str], configs: list[d
         reverse=True,
     )
     for config in applicable[:1]:
+        if config.get("unloaded"):
+            return None
         rules = sorted(config["paths"], key=lambda item: ("*" not in item[0], len(item[0])), reverse=True)
         for pattern, targets in rules:
             wildcard = _alias_match(spec, pattern)
@@ -1235,7 +1241,11 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     budget_hit = bool(limited) or inventory_capped or INVENTORY_CAP_NOTE in notes
     known = set(entries)
     aliases = _load_alias_configs(root, candidates)
+    if any(config.get("unloaded") for config in aliases):
+        _note(notes, f"tsconfig/jsconfig alias limits reached; imports under {sum(bool(config.get('unloaded')) for config in aliases)} configs stay unresolved")
     packages = load_workspace_packages(root, candidates)
+    if sum(PurePosixPath(rel).name == "package.json" and "node_modules" not in rel.split("/") for rel in candidates) > MAX_PACKAGE_FILES:
+        _note(notes, f"workspace package limit reached at {MAX_PACKAGE_FILES} manifests; some package imports stay unresolved")
     branch, changes, git_state_note = _git_state(root)
     if git_state_note:
         _note(notes, git_state_note)
