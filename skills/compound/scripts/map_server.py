@@ -616,6 +616,12 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
     except MapServerError:
         other = {}
     if other.get("service") == SERVICE:
+        runtime, _ = _read_runtime(runtime_path)
+        if runtime and other.get("pid") == runtime["pid"]:
+            # This state directory's own service answered only after the startup probes gave up.
+            if other.get("protocol") == PROTOCOL and other.get("build") == BUILD_SIGNATURE:
+                return runtime
+            raise MapServerError(f"map service (pid {runtime['pid']}) is busy; retry")
         raise MapServerError(f"another map service (pid {other.get('pid')}) holds port {port}, but this state directory has no usable record of it; stop it or set COMPOUND_MAP_PORT")
     raise MapServerError("map service exited during startup; inspect the state server.log")
 
