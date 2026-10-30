@@ -29,11 +29,9 @@ from typing import Any, Sequence
 
 try:
     from . import code_map
-    from .language_outlines import split_lines
     from .safe_open import open_regular_nofollow
 except ImportError:  # direct script execution
     import code_map
-    from language_outlines import split_lines
     from safe_open import open_regular_nofollow
 
 DEFAULT_TIMEOUT = 8.0
@@ -57,7 +55,6 @@ LANGUAGE_IDS = {
     ".tsx": "typescriptreact", ".jsx": "javascriptreact", ".jsonc": "jsonc", ".fish": "fish",
     **dict.fromkeys((".sh", ".bash", ".zsh"), "shellscript"),
 }
-CONFIG_LANGUAGE_IDS = {"dockerfile": "dockerfile", "makefile": "makefile", "go.mod": "go.mod"}
 
 
 class LspLookupError(ValueError):
@@ -95,6 +92,15 @@ def _relative_path(value: str) -> str:
     return path.as_posix()
 
 
+def _caller_path(path: str) -> str:
+    """Pin a relative path to the caller's directory, because the server starts in the repository root.
+
+    It is joined rather than normalized, so ``..`` after a symlinked directory
+    still names the file the kernel finds.
+    """
+    return path if os.path.isabs(path) else os.path.join(os.getcwd(), path)
+
+
 def _command_argv(command: Sequence[str]) -> list[str]:
     if isinstance(command, (str, bytes)) or not isinstance(command, Sequence):
         raise LspLookupError("server_command must be an explicit argument vector")
@@ -111,10 +117,9 @@ def _command_argv(command: Sequence[str]) -> list[str]:
         raise LspLookupError(f"server_command must be non-empty and at most {MAX_COMMAND_BYTES} UTF-8 bytes")
 
     # Resolve only the exact executable the caller named. No shell, package
-    # manager, workspace script, or fallback executable is considered. The path
-    # is made absolute here because the server starts in the repository root,
-    # and symlinks are kept because virtualenv interpreters and rustup proxies
-    # depend on the path they were invoked by.
+    # manager, workspace script, or fallback executable is considered. Symlinks
+    # are kept because virtualenv interpreters and rustup proxies depend on the
+    # path they were invoked by.
     if os.path.dirname(argv[0]):
         executable = os.path.expanduser(argv[0])
         resolved = executable if os.path.isfile(executable) and os.access(executable, os.X_OK) else None
@@ -122,8 +127,16 @@ def _command_argv(command: Sequence[str]) -> list[str]:
         resolved = shutil.which(argv[0])
     if resolved is None:
         raise LspLookupError("explicit language-server executable is unavailable")
-    argv[0] = os.path.abspath(resolved)
+    argv[0] = _caller_path(resolved)
     return argv
+
+
+def _server_env() -> dict[str, str]:
+    """Return the caller's environment with PATH pinned like argv[0], for programs the server runs by name."""
+    env = dict(os.environ)
+    if "PATH" in env:
+        env["PATH"] = os.pathsep.join(map(_caller_path, env["PATH"].split(os.pathsep)))
+    return env
 
 
 def _language_id(relative: str, language: str) -> str:
@@ -131,7 +144,7 @@ def _language_id(relative: str, language: str) -> str:
     if language != "config":
         return LANGUAGE_IDS.get(suffix, language)
     name = "dockerfile" if name.startswith("dockerfile.") else name
-    return CONFIG_LANGUAGE_IDS.get(name) or code_map.LANGUAGES.get(suffix, "plaintext")
+    return name if name in {"dockerfile", "makefile", "go.mod"} else code_map.LANGUAGES.get(suffix, "plaintext")
 
 
 def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
@@ -191,7 +204,8 @@ def _line_prefix(text: str, line: int, column: int) -> str:
         raise LspLookupError("line and column must be integers")
     if line < 1 or column < 1:
         raise LspLookupError("line and column are 1-based positive integers")
-    lines = split_lines(text)
+    # LSP ends lines at \n, \r\n and \r, and the position after a final line break is valid.
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     if line > len(lines):
         raise LspLookupError("line is past the end of the source file")
     content = lines[line - 1]
@@ -599,6 +613,7 @@ def lookup_lsp(
         kwargs: dict[str, Any] = {
             "args": command,
             "cwd": str(root),
+            "env": _server_env(),
             "stdin": subprocess.PIPE,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.DEVNULL,
