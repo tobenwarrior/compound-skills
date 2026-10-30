@@ -54,7 +54,11 @@ def _now() -> float:
 
 
 def _emit(value: dict[str, object]) -> int:
-    print(json.dumps(value, ensure_ascii=False))
+    try:
+        print(json.dumps(value, ensure_ascii=False))
+    except UnicodeEncodeError:
+        # A strict stdout, as under en_US.UTF-8, cannot encode undecodable path bytes; claim already stored the lease.
+        print(json.dumps(value))
     return 2 if value["status"] == "error" else 0
 
 
