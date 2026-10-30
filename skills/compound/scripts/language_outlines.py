@@ -112,13 +112,13 @@ _JS_REGEX_KEYWORD = re.compile(r"\b(?:return|typeof|case|do|else|in|of|new|delet
 _JS_BLANK = re.compile(r"[^\r\n]")
 JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
 JS_SYMBOLS = (
-    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)"), "function"),
-    (re.compile(r"^\s*(?:export\s+(?:default\s+)?)?class\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)"), "class"),
-    (re.compile(r"^\s*(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)"), "interface"),
-    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?type\s+([A-Za-z_$][\w$]*)\s*[=<]"), "type"),
-    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const\s+)?enum\s+([A-Za-z_$][\w$]*)"), "type"),
-    (re.compile(r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\("), "function"),
-    (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
+    (re.compile(r"^\s*+(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)"), "function"),
+    (re.compile(r"^\s*+(?:export\s+(?:default\s+)?)?class\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)"), "class"),
+    (re.compile(r"^\s*+(?:export\s+)?interface\s+([A-Za-z_$][\w$]*)"), "interface"),
+    (re.compile(r"^\s*+(?:export\s+)?(?:declare\s+)?type\s+([A-Za-z_$][\w$]*)\s*[=<]"), "type"),
+    (re.compile(r"^\s*+(?:export\s+)?(?:declare\s+)?(?:const\s+)?enum\s+([A-Za-z_$][\w$]*)"), "type"),
+    (re.compile(r"^\s*+(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\("), "function"),
+    (re.compile(r"^\s*+(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
 )
 JS_EXPORT_DECL = re.compile(
     r"(?:^|(?<=\r))[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function\*?|(?:abstract\s+)?class|interface|type|(?:const\s+)?enum|const|let|var)\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)",
@@ -182,6 +182,8 @@ def javascript_outline(text: str, max_imports: int) -> tuple[list[dict], list[st
     """Symbols and import specifiers of masked JavaScript/TypeScript, with a note when either is capped."""
     symbols: list[dict] = []
     for line, source in enumerate(split_lines(text), 1):
+        if not source.strip():  # masking leaves comment lines blank, and no symbol is blank
+            continue
         for expression, kind in JS_SYMBOLS:
             match = expression.search(source)
             if match:
@@ -530,6 +532,8 @@ def outline(text: str, language: str, max_symbols: int = 512) -> tuple[list[dict
         if len(line) > MAX_LINE_CHARS:
             notes.append(f"Skipped line {line_no} longer than {MAX_LINE_CHARS} characters.")
             continue
+        if not line.strip():
+            continue
         type_decl = _type_declaration(language, line)
         # A template parameter alone on its line, such as "class Alloc" before ">", declares no type.
         if type_decl and language == "cpp" and line.rstrip().endswith(type_decl[1]) and _next_code(lines, line_no).startswith((">", ",")):
@@ -540,7 +544,7 @@ def outline(text: str, language: str, max_symbols: int = 512) -> tuple[list[dict
             candidates.append((line_no, name, kind))
     typed = {(line_no, name) for line_no, name, _ in candidates}
     for line_no, line in enumerate(lines, 1):
-        if len(line) > MAX_LINE_CHARS:
+        if len(line) > MAX_LINE_CHARS or not line.strip():
             continue
         name = _function_name(language, line, type_names)
         # Records and primary constructors already appear as their type on the same line.
