@@ -103,18 +103,18 @@ def _command_argv(command: Sequence[str]) -> list[str]:
         raise LspLookupError(f"server_command must be non-empty and at most {MAX_COMMAND_BYTES} UTF-8 bytes")
 
     # Resolve only the exact executable the caller named. No shell, package
-    # manager, workspace script, or fallback executable is considered.
+    # manager, workspace script, or fallback executable is considered. The path
+    # is made absolute here because the server starts in the repository root,
+    # and symlinks are kept because virtualenv interpreters and rustup proxies
+    # depend on the path they were invoked by.
     if os.path.dirname(argv[0]):
-        try:
-            executable = Path(argv[0]).expanduser().resolve(strict=True)
-        except OSError as exc:
-            raise LspLookupError("explicit language-server executable is unavailable") from exc
-        resolved = str(executable) if executable.is_file() and os.access(executable, os.X_OK) else None
+        executable = os.path.expanduser(argv[0])
+        resolved = executable if os.path.isfile(executable) and os.access(executable, os.X_OK) else None
     else:
         resolved = shutil.which(argv[0])
     if resolved is None:
         raise LspLookupError("explicit language-server executable is unavailable")
-    argv[0] = resolved
+    argv[0] = os.path.abspath(resolved)
     return argv
 
 
