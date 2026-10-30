@@ -599,7 +599,8 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
         raise MapServerError("repository handoff is too large")
     try:
         with log_path.open("ab") as log:
-            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=log, start_new_session=True, close_fds=True)
+            # The shared service outlives this caller, so it must not keep the caller's directory busy.
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=log, cwd=runtime_path.parent, start_new_session=True, close_fds=True)
     except OSError as exc:
         raise MapServerError(f"could not start map service: {exc}") from exc
     threading.Thread(target=process.wait, daemon=True).start()
@@ -1107,6 +1108,11 @@ class MapHTTPServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        # Clients that disconnect mid-request are routine; their tracebacks would only grow the log.
+        if not isinstance(sys.exc_info()[1], ConnectionError):
+            super().handle_error(request, client_address)
+
 
 class MapHandler(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -1251,6 +1257,8 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
         self._error(404, "not found")
 
     def do_POST(self) -> None:  # noqa: N802
+        # Rejections leave the body unread, so close rather than parse it as another request.
+        self.close_connection = True
         if not self._route_guard():
             return
         parsed = urllib.parse.urlsplit(self.path)
