@@ -216,9 +216,9 @@ def _heredoc_end(source: str, start: int, terminator: str, indented: bool, php: 
     """Offset just after the line that closes a heredoc whose body starts at ``start``."""
     pos = start
     while pos < len(source):
-        end = source.find("\n", pos)
-        end = len(source) if end < 0 else end
-        line = source[pos:end].rstrip("\r")
+        found = _LINE_END.search(source, pos)
+        end = found.start() if found else len(source)
+        line = source[pos:end]
         if php and re.match(r"\s*" + re.escape(terminator) + r"\b", line) or (line.strip() if indented else line) == terminator:
             return end
         pos = end + 1
