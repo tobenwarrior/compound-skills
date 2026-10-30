@@ -329,7 +329,7 @@ def _warning_list(
     if shadows and fallback.markers is None:
         for path in shadows:
             warnings.append(f"Claude instruction may shadow AGENTS.md without managed fallback: {path}")
-    if fallback.exists and fallback.markers is None:
+    if (fallback.text or "").strip() and fallback.markers is None:
         warnings.append(f"Claude fallback contains unmanaged content and was left unchanged: {fallback.path}")
     if fallback.exists and not shadows and fallback.markers is not None:
         warnings.append(f"Managed Claude fallback has no current legacy shadow: {fallback.path}")
@@ -629,10 +629,10 @@ def _planned_enable(context: Context) -> list[tuple[TargetState, str, bool]]:
 
     if context.legacy_shadows:
         fallback = context.fallback
-        if fallback.exists:
-            if fallback.markers is None:
-                raise SetupError(f"refusing to overwrite unmanaged Claude fallback: {fallback.path}")
+        if fallback.markers is not None:
             new_text = _replace_block(fallback.text or "", fallback.markers)
+        elif (fallback.text or "").strip():
+            raise SetupError(f"refusing to overwrite unmanaged Claude fallback: {fallback.path}")
         else:
             new_text = _canonical_block(preferred, False)
         if new_text != (fallback.text or ""):
