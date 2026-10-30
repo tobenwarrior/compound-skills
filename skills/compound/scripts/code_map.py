@@ -319,7 +319,7 @@ def _language(rel: str) -> str | None:
         return "python" if name.endswith(".py") else "javascript" if name.endswith(".js") else "config"
     if name == "dockerfile" or name.startswith("dockerfile."):
         return "config"
-    return LANGUAGES.get(suffix)
+    return None if name in NON_CODE_NAMES else LANGUAGES.get(suffix)
 def _entry_config(rel: str) -> bool:
     name = PurePosixPath(rel).name.lower()
     return name in CONFIG_NAMES or name == "dockerfile" or name.startswith("dockerfile.")
