@@ -15,6 +15,8 @@ const unique = values => [...new Set(values)];
 const base = path => path.split("/").pop() || path;
 const parent = path => path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
 const group = path => path.includes("/") ? path.split("/").slice(0, Math.min(2, path.split("/").length - 1)).join("/") : "/";
+// The service keeps undecodable name bytes as lone surrogates U+DC80-U+DCFF, which encodeURIComponent rejects, so send the bytes.
+const encodePath = path => Array.from(path, char => { const code = char.codePointAt(0); return code >= 0xdc80 && code <= 0xdcff ? "%" + (code - 0xdc00).toString(16).toUpperCase() : encodeURIComponent(char); }).join("");
 const make = (tag, content, className) => {
   const node = document.createElement(tag);
   if (content !== undefined) node.textContent = String(content);
@@ -322,7 +324,7 @@ async function openSource(path, line = 0) {
   refs["source-title"].textContent = path; refs["source-meta"].textContent = "Reading from this repository…"; refs["source-content"].replaceChildren(make("p", "Loading source…", "detail-empty")); refs["source-note"].textContent = "Source is read only when requested and is not cached by the service.";
   if (!refs["source-dialog"].open) refs["source-dialog"].showModal();
   try {
-    const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodeURIComponent(path), request.signal);
+    const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodePath(path), request.signal);
     if (state.sourceRequest !== request || !refs["source-dialog"].open) return;
     const content = str(payload.content).split(/\r\n|\r|\n/); if (content.at(-1) === "") content.pop();
     const fragment = document.createDocumentFragment();

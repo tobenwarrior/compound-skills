@@ -199,7 +199,7 @@ def _canonical_repo(repo: str | os.PathLike[str]) -> Path:
 
 
 def _project_id(root: Path) -> str:
-    return hashlib.sha256(str(root).encode("utf-8")).hexdigest()
+    return hashlib.sha256(str(root).encode("utf-8", "surrogateescape")).hexdigest()
 
 
 def _source_relative(value: Any) -> str:
@@ -1172,7 +1172,8 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             self._respond(200, _json({"projects": projects, "version": BUILD_SIGNATURE}))
             return
         if parsed.path == "/api/file":
-            params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+            # Indexed paths keep undecodable name bytes as surrogate escapes, so a percent-encoded byte must decode to one.
+            params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True, errors="surrogateescape")
             project_values = params.get("project", [])
             path_values = params.get("path", [])
             if len(project_values) != 1 or len(path_values) != 1:

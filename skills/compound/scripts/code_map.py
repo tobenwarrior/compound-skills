@@ -1061,14 +1061,15 @@ def _cache_location(root: Path, write: bool) -> tuple[Path, Path]:
             raise CodeMapError(f"refusing code-map cache inside repository: {directory}")
         if directory.exists() and (directory.is_symlink() or not directory.is_dir()):
             raise CodeMapError(f"refusing unsafe code-map cache directory: {directory}")
+        # Undecodable path bytes arrive as surrogate escapes, which strict UTF-8 cannot encode.
+        path = directory / (hashlib.sha256(str(root).encode("utf-8", "surrogateescape")).hexdigest() + ".json")
         if write:
             state.mkdir(parents=True, exist_ok=True)
             _reject_symlink(state, "state directory")
             directory.mkdir(exist_ok=True)
             _reject_symlink(directory, "code-map cache directory")
         elif not directory.exists():
-            return directory, directory / (hashlib.sha256(str(root).encode()).hexdigest() + ".json")
-        path = directory / (hashlib.sha256(str(root).encode()).hexdigest() + ".json")
+            return directory, path
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise CodeMapError(f"refusing unsafe code-map cache: {path}")
         return directory, path
