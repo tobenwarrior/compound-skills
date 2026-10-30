@@ -109,7 +109,7 @@ function drawer(name, open) {
   if (open && (name === "inspector" || floating("inspector"))) {
     const other = name === "sidebar" ? "inspector" : "sidebar";
     // A floating panel hides as it closes, so focus in it moves to the button of the panel taking its place. Safari focuses no tapped button, which leaves focus there.
-    if (floating(other) && refs[other].contains(document.activeElement)) refs[name + "-button"].focus();
+    if (refs[other].contains(document.activeElement) && floating(other)) refs[name + "-button"].focus();
     refs[other].classList.remove("is-open"); refs[other + "-button"].setAttribute("aria-expanded", "false");
   }
   refs[name].classList.toggle("is-open", open);
@@ -332,7 +332,8 @@ async function openSource(path, line = 0) {
   if (!state.lookup.has(path)) return;
   state.sourceRequest?.abort(); const request = new AbortController(); state.sourceRequest = request;
   refs["source-title"].textContent = path; refs["source-meta"].textContent = "Reading from this repository…"; refs["source-content"].replaceChildren(make("p", "Loading source…", "detail-empty")); refs["source-note"].textContent = "Source is read only when requested and is not cached by the service.";
-  if (!refs["source-dialog"].open) { state.sourceReturn = rowFinder(document.activeElement); refs["source-dialog"].showModal(); }
+  // The preview shows the inspector's file, so opening it is use of the inspector, even by assistive technology, which can press a button with no pointer or focus event. A click that focused nothing, as in Safari, leaves the dialog no opener to return focus to.
+  if (!refs["source-dialog"].open) { state.used = "inspector"; state.sourceReturn = document.activeElement === document.body ? null : rowFinder(document.activeElement); refs["source-dialog"].showModal(); }
   try {
     const payload = await fetchJson(API.file + "?project=" + encodeURIComponent(state.project) + "&path=" + encodePath(path), request.signal);
     if (state.sourceRequest !== request || !refs["source-dialog"].open) return;
@@ -352,12 +353,14 @@ function rowFinder(row) {
   const key = node => node.dataset.key || node.title || node.textContent, twins = () => [...list.querySelectorAll("button")].filter(button => key(button) === key(row)), repeat = twins().indexOf(row);
   return () => list.contains(row) ? row : twins()[repeat];
 }
-// Runs a re-render that may replace the focused row, then focuses the row now in its place, which is no use of its panel.
+// Runs a re-render that may replace the focused row, then focuses the row now in its place, without scrolling a list the user may have scrolled away from it, and without counting as use of its panel.
 function keepingFocus(render) {
   const active = document.activeElement, find = rowFinder(active), used = state.used;
   render();
-  if (!active?.isConnected) { find()?.focus(); state.used = used; }
+  if (!active?.isConnected) { find()?.focus({ preventScroll: true }); state.used = used; }
 }
+// True when the middle of the element is on screen and on top, neither scrolled out of its panel nor under the Files drawer.
+const inView = node => { const box = node.getBoundingClientRect(); return node.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)); };
 function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
@@ -438,7 +441,7 @@ function installInteractions() {
   refs["notice-dismiss"].addEventListener("click", () => { state.dismissed = state.error || JSON.stringify([state.model?.coverage.skipped, state.model?.coverage.truncated, state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic") && !note.includes("response file cap"))]); renderStatus(); });
   refs["sidebar-button"].addEventListener("click", () => drawer("sidebar", !refs.sidebar.classList.contains("is-open"))); refs["sidebar-close"].addEventListener("click", () => drawer("sidebar", false));
   refs["inspector-button"].addEventListener("click", () => drawer("inspector", !refs.inspector.classList.contains("is-open"))); refs["inspector-close"].addEventListener("click", () => drawer("inspector", false));
-  // Narrowing until the docked inspector floats again would stack it and a Files drawer opened beside it, so the panel used last keeps the screen. Opening a panel, or a tap, focus or scroll in it, counts as use, since Safari focuses no tapped button.
+  // Narrowing until the docked inspector floats again would stack it and a Files drawer opened beside it, so the panel used last keeps the screen. Opening a panel or the source preview, or a tap, focus or scroll in a panel, counts as use, since Safari focuses no tapped button.
   for (const name of ["sidebar", "inspector"]) for (const type of ["pointerdown", "focusin", "wheel"]) refs[name].addEventListener(type, () => { state.used = name; }, { capture: true, passive: true });
   addEventListener("resize", () => { if (refs.sidebar.classList.contains("is-open") && refs.inspector.classList.contains("is-open") && floating("inspector")) drawer(state.used === "inspector" ? "sidebar" : "inspector", false); });
   refs["file-search"].value = state.query;
@@ -466,8 +469,8 @@ function installInteractions() {
   refs["source-button"].addEventListener("click", () => openSource(state.selected)); refs["source-close"].addEventListener("click", closeSource);
   refs["source-dialog"].addEventListener("close", () => {
     state.sourceRequest?.abort(); state.sourceRequest = null; refs["source-content"].replaceChildren();
-    // The dialog returns focus to its opener, but a refresh may have replaced that row, which leaves focus on the closed dialog, so it goes to the row now in its place, or to Source.
-    if (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement)) for (const target of [state.sourceReturn?.(), refs["source-button"], refs["inspector-button"]]) { target?.focus(); if (document.activeElement === target) break; }
+    // The dialog returns focus to its opener, unless a refresh replaced that row or removed its symbol, or a resize hid it, which leaves focus on the closed dialog. Focus then goes to the first in view of the row now in its place, Source and Details, without scrolling, like the dialog's own return.
+    if (state.sourceReturn && (document.activeElement === document.body || refs["source-dialog"].contains(document.activeElement))) for (const target of [state.sourceReturn(), refs["source-button"], refs["inspector-button"]]) { if (target && inView(target)) target.focus({ preventScroll: true }); if (document.activeElement === target) break; }
   });
   refs["context-button"].addEventListener("click", () => { const file = state.lookup.get(state.selected); if (file) copy(contextText(file), "Compact context copied · paste into your chat"); });
   refs["path-button"].addEventListener("click", () => copy(state.selected || "", "File path copied"));
