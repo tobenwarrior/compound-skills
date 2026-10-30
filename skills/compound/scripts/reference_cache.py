@@ -111,7 +111,11 @@ def _build_postings(text: str, deadline: float | None = None, sigils: bool = Fal
             token = match.group(0)
             if len(token) > _MAX_IDENTIFIER_CHARS:
                 return None
-            for name in (token, token.lstrip("$")) if sigils and token.startswith("$") else (token,):
+            names = (token,)
+            if sigils and "$" in token:
+                # The scan's sigil boundary lets a name start after any `$`, as in `backup_$NAME` or `$$NAME`.
+                names += tuple(token[index + 1:] for index, char in enumerate(token) if char == "$")
+            for name in names:
                 if not name or name in seen_on_line:
                     continue
                 seen_on_line.add(name)
