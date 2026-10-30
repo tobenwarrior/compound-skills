@@ -48,8 +48,9 @@ READ_CHUNK_BYTES = 64 * 1024
 
 # These are data/config formats, not source languages for the lexical scan.
 _NON_SOURCE_LANGUAGES = {"config", "json", "yaml", "toml", "xml", "ini", "properties"}
-# Shell, PHP and these formats write `$` before a name instead of inside it, so `$NAME` also counts as NAME there.
-_SIGIL_LANGUAGES = _NON_SOURCE_LANGUAGES | {"shell", "php"}
+# These languages and formats write `$` before a name, not inside it (shell and PHP variables, Kotlin, Groovy
+# and Scala string templates), so `$NAME` also counts as NAME there.
+_SIGIL_LANGUAGES = _NON_SOURCE_LANGUAGES | {"shell", "php", "kotlin", "groovy", "scala"}
 
 
 class SymbolLookupError(ValueError):
