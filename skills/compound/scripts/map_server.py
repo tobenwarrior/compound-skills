@@ -37,13 +37,13 @@ except ImportError:  # pragma: no cover - Windows has no fcntl
 
 try:
     from . import code_map as engine
-    from .onboarding import _reject_symlink_chain, _state_paths
+    from .onboarding import _reject_symlink, _state_paths
     from .safe_open import open_regular_nofollow
     from .reference_cache import IdentifierPostingsCache
     from . import symbol_lookup as lookup_engine
 except ImportError:  # direct script execution
     import code_map as engine
-    from onboarding import _reject_symlink_chain, _state_paths
+    from onboarding import _reject_symlink, _state_paths
     from safe_open import open_regular_nofollow
     from reference_cache import IdentifierPostingsCache
     import symbol_lookup as lookup_engine
@@ -319,7 +319,7 @@ def _runtime_for_repo(root: Path, write: bool) -> Path:
 
 def _runtime_without_repo() -> Path:
     state, _ = _state_paths()
-    _reject_symlink_chain(state, "state parent")
+    _reject_symlink(state, "state directory")
     directory = state / "code-map"
     if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
         raise MapServerError(f"refusing unsafe code-map runtime directory: {directory}")
@@ -335,7 +335,7 @@ def _registry_path(write: bool = False) -> Path:
             raise MapServerError(f"refusing unsafe code-map registry directory: {directory}")
         if write:
             directory.mkdir(parents=True, exist_ok=True)
-            _reject_symlink_chain(directory, "code-map registry parent")
+            _reject_symlink(directory, "code-map registry directory")
         path = directory / REGISTRY_FILE
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise MapServerError(f"refusing unsafe code-map registry: {path}")
@@ -836,7 +836,7 @@ class MapService:
             raw_root = Path(entry["root"])
             if not raw_root.is_absolute():
                 raise ValueError("registered repository is not absolute")
-            _reject_symlink_chain(raw_root, "registered repository")
+            _reject_symlink(raw_root, "registered repository")
             root = _canonical_repo(raw_root)
             if _project_id(root) != project_id:
                 raise ValueError("registered repository identity changed")

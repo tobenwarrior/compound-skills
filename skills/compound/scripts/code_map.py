@@ -21,13 +21,13 @@ import urllib.parse
 from pathlib import Path, PurePosixPath
 from typing import Any
 try:
-    from .onboarding import _reject_symlink_chain, _state_paths
+    from .onboarding import _reject_symlink, _state_paths
     from .workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from .language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
     from .safe_open import open_regular_nofollow
     from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
-    from onboarding import _reject_symlink_chain, _state_paths
+    from onboarding import _reject_symlink, _state_paths
     from workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
     from safe_open import open_regular_nofollow
@@ -1045,7 +1045,7 @@ def _cache_location(root: Path, write: bool) -> tuple[Path, Path]:
             pass
         else:
             raise CodeMapError(f"refusing code-map cache inside repository: {state}")
-        _reject_symlink_chain(state, "state parent")
+        _reject_symlink(state, "state directory")
         if state.exists() and not state.is_dir():
             raise CodeMapError(f"state path is not a directory: {state}")
         directory = state / "code-map"
@@ -1063,9 +1063,9 @@ def _cache_location(root: Path, write: bool) -> tuple[Path, Path]:
             raise CodeMapError(f"refusing unsafe code-map cache directory: {directory}")
         if write:
             state.mkdir(parents=True, exist_ok=True)
-            _reject_symlink_chain(state, "state parent")
+            _reject_symlink(state, "state directory")
             directory.mkdir(exist_ok=True)
-            _reject_symlink_chain(directory, "code-map cache parent")
+            _reject_symlink(directory, "code-map cache directory")
         elif not directory.exists():
             return directory, directory / (hashlib.sha256(str(root).encode()).hexdigest() + ".json")
         path = directory / (hashlib.sha256(str(root).encode()).hexdigest() + ".json")

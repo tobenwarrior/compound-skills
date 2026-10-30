@@ -153,23 +153,18 @@ def _state_paths() -> tuple[Path, Path]:
     return directory, directory / DATABASE_NAME
 
 
-def _reject_symlink_chain(path: Path, label: str) -> None:
-    current = path if path.is_absolute() else Path.cwd() / path
+def _reject_symlink(path: Path, label: str) -> None:
+    """Refuse a symlink at the path itself; its ancestors may be links, such as /home on FreeBSD."""
     try:
-        while True:
-            if current.is_symlink():
-                raise SetupError(f"refusing symlink {label}: {current}")
-            parent = current.parent
-            if parent == current:
-                break
-            current = parent
+        if path.is_symlink():
+            raise SetupError(f"refusing symlink {label}: {path}")
     except OSError as exc:
         raise SetupError(f"could not inspect {label} {path}: {exc}") from exc
 
 
 def _prepare_state(write: bool) -> tuple[Path, Path, bool]:
     directory, database = _state_paths()
-    _reject_symlink_chain(directory, "state parent")
+    _reject_symlink(directory, "state directory")
     try:
         if directory.exists() and not directory.is_dir():
             raise SetupError(f"state path is not a directory: {directory}")
@@ -178,7 +173,7 @@ def _prepare_state(write: bool) -> tuple[Path, Path, bool]:
                 directory.mkdir(parents=True)
             except FileExistsError:
                 pass
-            _reject_symlink_chain(directory, "state parent")
+            _reject_symlink(directory, "state directory")
         if database.is_symlink():
             raise SetupError(f"refusing symlink state database: {database}")
         if database.exists() and not database.is_file():
