@@ -288,7 +288,8 @@ def _claim(
             if lease_until is not None and lease_until > now:
                 connection.commit()
                 return _result("claim", identity, "busy", False)
-        token = supplied_token or secrets.token_urlsafe(32)
+        # Hex never starts with "-", which argparse would read as an option after --token.
+        token = supplied_token or secrets.token_hex(32)
         expires = now + LEASE_SECONDS
         connection.execute(
             "INSERT INTO onboarding(repo_key,state,token,lease_until,updated_at) VALUES(?,?,?,?,?) "
