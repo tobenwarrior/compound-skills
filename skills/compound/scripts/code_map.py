@@ -44,7 +44,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 9
+CACHE_VERSION = 10
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -90,8 +90,13 @@ LANGUAGES = {
     ".ini": "ini", ".cfg": "ini", ".service": "ini",
     ".conf": "ini", ".properties": "properties", ".gradle": "groovy", ".proto": "protobuf",
 }
-JS_IMPORT = re.compile(
-    r"(?:\bimport\s+(?:[^'\";]*?\s+from\s+)?|\bexport\s+[^'\";]*?\s+from\s+)['\"]([^'\"]+)['\"]"
+JS_IMPORT_KEYWORD = re.compile(r"\b(?:import|export)\b")
+# Matched from each keyword with bounded parts that stop at the characters ending them, so cost stays linear.
+_JS_BINDINGS = r"(?:\*\s*(?:as\s+[\w$]+\s*)?|\{[^{}'\"`]{0,8192}\}\s*)"
+JS_IMPORT_CLAUSE = re.compile(
+    r"(?:import(?:\s+|(?=[{*]))(?:(?:type|source|defer)\s+)?(?:(?:[\w$]+\s*,\s*)?(?:" + _JS_BINDINGS + r"|[\w$]+\s+)from\s*)?"
+    r"|export(?:\s+|(?=[{*]))(?:type\s+)?" + _JS_BINDINGS + r"from\s*)"
+    r"['\"]([^'\"\n]{1,1024})['\"]"
 )
 JS_CALL_IMPORT = re.compile(r"\b(?:require|import)\s*\(\s*['\"]([^'\"]+)['\"]\s*\)")
 JS_SYMBOLS = (
@@ -103,10 +108,10 @@ JS_SYMBOLS = (
     (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
 )
 JS_EXPORT_DECL = re.compile(
-    r"^\s*export\s+(?:default\s+)?(?:async\s+)?(?:function|class|interface|type|enum|const|let|var)\s+([A-Za-z_$][\w$]*)",
+    r"^[ \t]*export\s+(?:default\s+)?(?:async\s+)?(?:function|class|interface|type|enum|const|let|var)\s+([A-Za-z_$][\w$]*)",
     re.MULTILINE,
 )
-JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^}]*)\}")
+JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
     pass
@@ -363,6 +368,7 @@ def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], l
         return [], [], [], "Python file could not be parsed"
     symbols: list[dict[str, Any]] = []
     imports: list[list[Any]] = []
+    extra_names: list[list[Any]] = []
     for node in sorted(ast.walk(tree), key=lambda item: getattr(item, "lineno", 0)):
         line = int(getattr(node, "lineno", 1))
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -378,9 +384,14 @@ def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], l
         elif isinstance(node, ast.Import):
             imports.extend([[alias.name, 0, None] for alias in node.names])
         elif isinstance(node, ast.ImportFrom):
-            imports.extend([[node.module or "", int(node.level), alias.name] for alias in node.names])
-    note = f"Python symbol outline capped at {MAX_SYMBOLS} entries" if len(symbols) > MAX_SYMBOLS else None
-    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], _python_exports(tree), note
+            # The first name of each statement comes first, so one long name list cannot crowd out later modules.
+            names = [[node.module or "", int(node.level), alias.name] for alias in node.names]
+            imports.append(names[0])
+            extra_names.extend(names[1:])
+    imports += extra_names
+    notes = [f"Python symbol outline capped at {MAX_SYMBOLS} entries" if len(symbols) > MAX_SYMBOLS else "",
+             f"local import links capped at {MAX_IMPORTS} import entries" if len(imports) > MAX_IMPORTS else ""]
+    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], _python_exports(tree), "; ".join(filter(None, notes)) or None
 
 
 def _python_exports(tree: ast.Module) -> list[str]:
@@ -408,7 +419,7 @@ def _python_exports(tree: ast.Module) -> list[str]:
         and not node.name.startswith("_")
     ]
     return list(dict.fromkeys(names))[:MAX_SYMBOLS]
-def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
+def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str], str | None]:
     symbols: list[dict[str, Any]] = []
     for line, source in enumerate(split_lines(text), 1):
         for expression, kind in JS_SYMBOLS:
@@ -416,9 +427,19 @@ def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
             if match:
                 symbols.append({"name": match.group(1), "kind": kind, "line": line})
                 break
-        if len(symbols) == MAX_SYMBOLS:
+        if len(symbols) > MAX_SYMBOLS:
             break
-    return symbols, (JS_IMPORT.findall(text) + JS_CALL_IMPORT.findall(text))[:MAX_IMPORTS]
+    imports: list[str] = []
+    end = 0
+    for keyword in JS_IMPORT_KEYWORD.finditer(text):
+        clause = JS_IMPORT_CLAUSE.match(text, keyword.start()) if keyword.start() >= end else None
+        if clause:
+            imports.append(clause.group(1))
+            end = clause.end()
+    imports += JS_CALL_IMPORT.findall(text)
+    notes = [f"JavaScript/TypeScript symbol outline capped at {MAX_SYMBOLS} entries" if len(symbols) > MAX_SYMBOLS else "",
+             f"local import links capped at {MAX_IMPORTS} import entries" if len(imports) > MAX_IMPORTS else ""]
+    return symbols[:MAX_SYMBOLS], imports[:MAX_IMPORTS], "; ".join(filter(None, notes)) or None
 
 
 def _javascript_exports(text: str) -> list[str]:
@@ -484,7 +505,7 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
             symbols, imports, exports, note = _python_outline(text)
         elif info["language"] in {"javascript", "typescript"}:
             analysis = "javascript-outline"
-            symbols, imports = _javascript_outline(text)
+            symbols, imports, note = _javascript_outline(text)
             exports = _javascript_exports(text)
         elif info["language"] in SUPPORTED_LANGUAGES:
             analysis = "heuristic-outline"
@@ -930,7 +951,7 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
     }
     if entry.get("parse_note"):
         record["outline_note"] = entry["parse_note"]
-    if native_capped:
+    if native_capped or len(dependencies) > MAX_DEPS:
         record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), f"local import links capped at {MAX_DEPS}")))
     return record
 def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
@@ -1197,7 +1218,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         _note(notes, "Go/Rust local import resolution is partial; inspect unresolved imports")
     records = [_record(path, entry, known, aliases, changes, cochanges, modules, packages, native_index) for path, entry in entries.items()]
     if any("local import links capped" in record.get("outline_note", "") for record in records):
-        _note(notes, "Go/Rust local import link cap reached")
+        _note(notes, "local import link cap reached; some importers may be missing")
     ranked = _rank(records, query)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
