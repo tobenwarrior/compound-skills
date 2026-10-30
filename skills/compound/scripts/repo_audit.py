@@ -225,7 +225,9 @@ def _match_any(name: str, patterns: list[str]) -> bool:
 
 
 def _litter_ignored(rel: str, cfg: Config) -> bool:
-    return _match_any(rel.rstrip("/"), cfg.litter_ignore) or _match_any(Path(rel).name, cfg.litter_ignore)
+    # Findings print folders with a trailing slash, so an entry copied from one must match too.
+    patterns = [pattern.rstrip("/") for pattern in cfg.litter_ignore]
+    return _match_any(rel.rstrip("/"), patterns) or _match_any(Path(rel).name, patterns)
 
 
 # ---------------------------------------------------------------------------
