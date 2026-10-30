@@ -121,7 +121,7 @@ JS_SYMBOLS = (
     (re.compile(r"^\s*(?:export\s+)?(?:declare\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)"), "variable"),
 )
 JS_EXPORT_DECL = re.compile(
-    r"^[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function\*?|(?:abstract\s+)?class|interface|type|(?:const\s+)?enum|const|let|var)\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)",
+    r"(?:^|(?<=\r))[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function\*?|(?:abstract\s+)?class|interface|type|(?:const\s+)?enum|const|let|var)\s+(?!extends\b|implements\b)([A-Za-z_$][\w$]*)",
     re.MULTILINE,
 )
 JS_EXPORT_LIST = re.compile(r"\bexport\s*\{([^{}]*)\}")
