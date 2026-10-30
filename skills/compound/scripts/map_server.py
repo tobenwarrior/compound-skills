@@ -633,6 +633,12 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
         time.sleep(0.05)
     if process.poll() is None:
         raise MapServerError("map service did not become healthy before startup timeout")
+    try:
+        other = _request(port, "GET", "/api/health")[1] or {}
+    except MapServerError:
+        other = {}
+    if other.get("service") == SERVICE:
+        raise MapServerError(f"another map service (pid {other.get('pid')}) holds port {port}, but this state directory has no usable record of it; stop it or set COMPOUND_MAP_PORT")
     raise MapServerError("map service exited during startup; inspect the state server.log")
 
 
