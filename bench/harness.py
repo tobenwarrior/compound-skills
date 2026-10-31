@@ -838,3 +838,29 @@ def make_template(model: str) -> dict:
     return {"ok": ok, "exit": harness["exit_code"], "wall_ms": harness["wall_ms"], "model": parsed["init"].get("model"),
             "claude_code": parsed["init"].get("claude_code_version"), "reply": (parsed["result"] or {}).get("result"),
             "stderr": harness["stderr_tail"][-800:]}
+
+
+def rescore(label: str) -> int:
+    """Recompute habits and guide reads from saved transcripts with the current detectors."""
+    from tasks import TASKS
+    changed = 0
+    for path in sorted((RESULTS / label).glob("*.json")):
+        if path.name.endswith(".judge.json") or path.name in ("arms.json", "summary.json"):
+            continue
+        record = json.loads(path.read_text())
+        stream = path.with_suffix(".stream")
+        task = TASKS.get(record.get("task"))
+        if not isinstance(record, dict) or "pair_id" not in record or not stream.exists() or not task:
+            continue
+        calls = parse_stream(stream)["calls"]
+        before = (record.get("habits"), record["compound"].get("references"))
+        record["compound"]["references"] = guide_refs(calls)
+        if record.get("digests_pre") and record.get("digests_final"):
+            prep = {"task": task, "digests_pre": record["digests_pre"]}
+            record["habits"] = habits(prep, record["harness"], calls, tuple(record["digests_final"]))
+        if (record.get("habits"), record["compound"].get("references")) != before:
+            changed += 1
+            path.write_text(json.dumps(record, indent=1, default=str))
+    print(f"{label}: {changed} records rescored")
+    return 0
+

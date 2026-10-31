@@ -90,7 +90,12 @@ def judge(args) -> int:
     if args.calibrate:
         judging.calibrate(args.votes, args.model)
         return 0
-    return judging.judge_label(args.label, args.votes, args.workers, args.model)
+    return judging.judge_label(args.label, args.votes, args.workers, args.model, args.arms.split(",") if args.arms else None)
+
+
+def rescore(args) -> int:
+    import harness
+    return harness.rescore(args.label)
 
 
 def report(args) -> int:
@@ -177,8 +182,12 @@ def main() -> int:
     p.add_argument("--votes", type=int, default=3)
     p.add_argument("--workers", type=int, default=3)
     p.add_argument("--model", default="opus")
+    p.add_argument("--arms", help="only these arms, comma separated (default: all)")
     p.add_argument("--calibrate", action="store_true", help="grade the frozen perfect and flawed answers instead")
     p.set_defaults(func=judge)
+    p = sub.add_parser("rescore", help="recompute habits from saved transcripts with the current detectors")
+    p.add_argument("--label", required=True)
+    p.set_defaults(func=rescore)
     p = sub.add_parser("report", help="tables and paired tests for one or more labels")
     p.add_argument("--label", required=True)
     p.add_argument("--also", nargs="*", default=[], help="more labels to pool with the first")
@@ -199,7 +208,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "judge" and not args.calibrate and not args.label:
         parser.error("judge needs --label (or --calibrate)")
-    if args.command in ("setup", "tasks", "report", "run"):
+    if args.command in ("setup", "tasks", "report", "run", "rescore"):
         return args.func(args)
     with work_lock(exclusive=False):
         return args.func(args)

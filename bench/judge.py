@@ -127,11 +127,11 @@ def calibrate(votes: int, model: str) -> list[tuple]:
     return rows
 
 
-def judge_label(label: str, votes: int, workers: int, model: str) -> int:
+def judge_label(label: str, votes: int, workers: int, model: str, arms: list[str] | None = None) -> int:
     jobs = []
     for record in load_records(label):
         task = TASKS.get(record["task"])
-        if not task or not task.get("judge") or record.get("superseded"):
+        if not task or not task.get("judge") or record.get("superseded") or (arms and record["arm"] not in arms):
             continue
         out = RESULTS / label / f"{record['run_id']}.judge.json"
         if not out.exists():

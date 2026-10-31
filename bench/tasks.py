@@ -251,7 +251,7 @@ BUGFIX_PROMPTS = {
 
 # Output that shows the reported defect on the unfixed code (any of these, or a failing test run).
 SYMPTOMS = {
-    "refund": r"-99\.99|-33\.33\D*-33\.33\D*-33\.33",
+    "refund": r"-\$?99\.99|-\$?33\.33\D*-\$?33\.33\D*-\$?33\.33",
     "leap": r"(?m)15\.54|^28$",
     "december": r"2024-01-30|2023-12-31|date\(2024, 1, 30\)|date\(2023, 12, 31\)",
 }
