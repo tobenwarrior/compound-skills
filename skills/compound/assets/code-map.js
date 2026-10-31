@@ -359,8 +359,12 @@ function keepingFocus(render) {
   render();
   if (!active?.isConnected) { find()?.focus({ preventScroll: true }); state.used = used; }
 }
-// True when another panel, such as the Files drawer, lies over the middle of the element. One scrolled out of its own panel is not covered, and the dialog's own return also focuses it there.
-const covered = node => { const box = node.getBoundingClientRect(), top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("aside"); return !!top && top !== node.closest("aside"); };
+// True when another panel, such as the Files drawer, lies over the middle of the element, or would once its own panel scrolled it back into view.
+const covered = node => {
+  const own = node.closest("aside"), box = node.getBoundingClientRect(), edges = own?.getBoundingClientRect(), y = box.y + box.height / 2;
+  const panel = document.elementFromPoint(box.x + box.width / 2, edges ? Math.min(Math.max(y, edges.top + box.height / 2), edges.bottom - box.height / 2) : y)?.closest("aside");
+  return Boolean(panel) && panel !== own;
+};
 function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
 function resetTrace() {
   state.trace = []; if (state.view === "trace") state.view = "neighbors";
