@@ -39,6 +39,7 @@ DEFAULT_MAX_FILES = 2000
 MAX_FILES = 20000
 MAX_FILE_BYTES = 1024 * 1024
 MAX_READ_BYTES = 64 * 1024 * 1024
+MAX_REREADS = 3
 MAX_SYMBOLS = 512
 MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
@@ -58,6 +59,7 @@ MAX_COCHANGE_RESULTS = 6
 MAX_GIT_LOG_BYTES = 1024 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
 INVENTORY_CAP_NOTE = "Git inventory capped at 4 MiB of paths; later files are not indexed"
+CHANGED_FILE_NOTE = "changing files were skipped after re-stat"
 MAX_CACHE_BYTES = 8 * 1024 * 1024
 SKIP_DIRS = {".git", "vendor", "node_modules"}
 BUILD_DIRS = {"build", "dist"}
@@ -454,7 +456,7 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
                 getattr(opened, attr) != fp[key]
                 for key, attr in (("size", "st_size"), ("inode", "st_ino"), ("mtime_ns", "st_mtime_ns"), ("ctime_ns", "st_ctime_ns"))
             ):
-                return None, 0, "changing files were skipped after re-stat"
+                return None, 0, CHANGED_FILE_NOTE
             data = source.read(limit + 1)
     except OSError:
         return None, 0, "unreadable files were skipped"
@@ -472,7 +474,7 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
     except UnicodeDecodeError:
         return None, consumed, "binary or non-UTF-8 files were skipped"
     if _fingerprint(info["absolute"]) != fp:
-        return None, consumed, "changing files were skipped after re-stat"
+        return None, consumed, CHANGED_FILE_NOTE
     symbols: list[dict[str, Any]] = []
     imports: list[Any] = []
     note = None
@@ -1190,6 +1192,14 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         entry = cached.get(rel)
         if entry is None:
             entry, consumed, parse_note = _read_parse(info, remaining)
+            # A file saved since its inventory stat, even with the same bytes, fails the re-stat check; read it again from a fresh stat rather than drop it.
+            for _ in range(MAX_REREADS):
+                fresh = _candidate(root, rel, git_inventory=True)[0] if parse_note == CHANGED_FILE_NOTE else None
+                if fresh is None:
+                    break
+                remaining = max(0, remaining - consumed)
+                info = candidates[rel] = fresh
+                entry, consumed, parse_note = _read_parse(info, remaining)
             remaining = max(0, remaining - consumed)
             bounded = entry is None and bool(parse_note) and ("read budget" in parse_note or "file limit" in parse_note)
             metadata_only = bounded and info["language"] not in OUTLINED_LANGUAGES
