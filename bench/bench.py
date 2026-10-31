@@ -34,6 +34,13 @@ def setup(args) -> int:
     if problems:
         print("\n".join(f"cannot run: {problem}" for problem in problems))
         return 1
+    if args.real:
+        # Only these real bugs: their folders are new, so runs of other tasks may continue meanwhile.
+        with work_lock(exclusive=False):
+            report = fixtures.build_real_subset([name.strip() for name in args.real.split(",") if name.strip()])
+        for name, checks in report.items():
+            print(f"real bug {name}: {json.dumps(checks)}")
+        return 0 if all(checks.get("as_frozen") for checks in report.values()) else 1
     with work_lock(exclusive=True):
         return _setup(args, fixtures, harness)
 
@@ -163,6 +170,7 @@ def main() -> int:
     p.add_argument("--map", action="store_true", help="also fetch the repositories the map benchmarks read")
     p.add_argument("--template", action="store_true", help="rebuild the template config even if it exists")
     p.add_argument("--model", default="opus", help="model for the one-time template run")
+    p.add_argument("--real", help="build and check only these real bugs, comma separated, without rebuilding the rest")
     p.set_defaults(func=setup)
     p = sub.add_parser("tasks", help="list tasks and tags")
     p.set_defaults(func=list_tasks)

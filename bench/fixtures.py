@@ -562,6 +562,20 @@ def build_real(name: str) -> dict:
     return checks
 
 
+def build_real_subset(names: list[str]) -> dict:
+    """Fetch, install and check only the named real bugs; for adding bugs while other fixtures are in use."""
+    unknown = [name for name in names if name not in REAL_BUGS]
+    if unknown:
+        raise SystemExit(f"unknown real bugs: {', '.join(unknown)}")
+    sources = sorted({REAL_BUGS[name][0] for name in names})
+    for folder in (SOURCES, FIXTURES, REFS):
+        folder.mkdir(parents=True, exist_ok=True)
+    for source in sources:
+        fetch(source)
+        build_pyenv(source)
+    return {name: build_real(name) for name in names}
+
+
 def build_real_bugs() -> dict:
     report = {"pyenvs": [build_pyenv(name) for name in PYENV_PACKAGES]}
     for name in REAL_BUGS:

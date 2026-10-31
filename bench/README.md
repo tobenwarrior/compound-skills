@@ -30,7 +30,7 @@ python3 bench/bench.py judge --label my-change
 python3 bench/bench.py report --label my-change --baseline main
 ```
 
-- `setup` fetches the pinned sources and builds the fixtures. It checks each fixture against the frozen original and makes the template Claude config. Run it once; it reuses what it already fetched.
+- `setup` fetches the pinned sources and builds the fixtures. It checks each fixture against the frozen original and makes the template Claude config. Run it once; it reuses what it already fetched. `setup --real <name>[,<name>...]` builds and checks only those real bugs, so new ones can be added while other runs go on.
 - `run` runs every arm on the same task at the same moment, each on its own CPU, and rotates the arm order and CPUs by repetition. Rerunning a label resumes it. If a group fails on an API or harness error, it runs once more. To stop after the groups already running, create `bench/results/<label>/STOP`. Runs also stop on their own when seven-day usage reaches 80% (`--max-seven-day`).
 - `judge` blind-grades the review and investigation answers against frozen keys, with three votes per answer.
 - `report` prints per-arm tables and paired tests against the baseline. It also writes `summary.json` and `summary.md` into the label's folder.
