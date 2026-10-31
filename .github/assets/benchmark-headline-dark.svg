@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="643" viewBox="0 0 600 643" role="img" aria-labelledby="title desc">
 <title id="title">Compound in Claude Code: the headline result</title>
-<desc id="desc">With and without Compound, in Claude Code: three clearly reported bugs, 15 paired runs per arm and model. Reproduced the bug before changing code: Claude Opus 5.5 0 of 15 without Compound and 15 of 15 with it. Claude Sonnet 5.5 0 of 15 without Compound and 14 of 15 with it. Showed a test failing on the unfixed code: Claude Opus 5.5 0 of 15 without Compound and 15 of 15 with it. Claude Sonnet 5.5 0 of 15 without Compound and 14 of 15 with it. Claude Opus 5.5&#x27;s median fix for each bug took 1.14–1.50× the tokens and 1.37–1.56× the list-price cost. Claude Sonnet 5.5&#x27;s median fix for each bug took 1.01–1.36× the tokens and 1.14–1.75× the list-price cost. Every run fixed its bug, with or without Compound. Compound 0.14.0 in Claude Code 2.1.316 (31 October 2026); Codex and Cursor use the same guides.</desc>
+<desc id="desc">With and without Compound, in Claude Code: three clearly reported bugs, 15 paired runs per arm and model. Reproduced the bug before changing code: Claude Opus 5.5 0 of 15 without Compound and 15 of 15 with it. Claude Sonnet 5.5 0 of 15 without Compound and 15 of 15 with it. Showed a test failing on the unfixed code: Claude Opus 5.5 0 of 15 without Compound and 15 of 15 with it. Claude Sonnet 5.5 0 of 15 without Compound and 15 of 15 with it. Claude Opus 5.5&#x27;s median fix for each bug took 1.14–1.50× the tokens and 1.37–1.56× the list-price cost. Claude Sonnet 5.5&#x27;s median fix for each bug took 1.01–1.36× the tokens and 1.14–1.75× the list-price cost. Every run fixed its bug, with or without Compound. Compound 0.14.0 in Claude Code 2.1.316 (31 October 2026); Codex and Cursor use the same guides.</desc>
 <style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#f0f6fc;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
 <rect width="600" height="643" rx="12" fill="#0d1117"/>
 <text x="28.0" y="44.0" font-size="20" font-weight="600">With and without Compound, in Claude Code</text>
@@ -19,11 +19,11 @@
 <text x="572" y="190.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 15</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
 <text x="28.0" y="225.0" font-size="15" fill="#b1bac4">Sonnet 5.5</text>
 <rect x="130.0" y="217.0" width="250.0" height="6.0" rx="3" fill="#151b23"/>
-<line x1="148.0" y1="220.0" x2="345.4" y2="220.0" stroke="#3fb950" stroke-width="2" stroke-opacity="0.55"/>
-<path d="M340.4,216.0 L345.4,220.0 L340.4,224.0" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<line x1="148.0" y1="220.0" x2="361.0" y2="220.0" stroke="#3fb950" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M356.0,216.0 L361.0,220.0 L356.0,224.0" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
 <circle cx="138.0" cy="220.0" r="9" fill="none" stroke="#768390" stroke-width="2"/>
-<circle cx="356.4" cy="220.0" r="8" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
-<text x="572" y="230.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 14</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
+<circle cx="372.0" cy="220.0" r="8" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="572" y="230.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 15</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
 <text x="28.0" y="282.0" font-size="19" font-weight="600">Showed a test failing on the unfixed code</text>
 <text x="28.0" y="321.0" font-size="15" fill="#b1bac4">Opus 5.5</text>
 <rect x="130.0" y="313.0" width="250.0" height="6.0" rx="3" fill="#151b23"/>
@@ -34,11 +34,11 @@
 <text x="572" y="326.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 15</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
 <text x="28.0" y="361.0" font-size="15" fill="#b1bac4">Sonnet 5.5</text>
 <rect x="130.0" y="353.0" width="250.0" height="6.0" rx="3" fill="#151b23"/>
-<line x1="148.0" y1="356.0" x2="345.4" y2="356.0" stroke="#3fb950" stroke-width="2" stroke-opacity="0.55"/>
-<path d="M340.4,352.0 L345.4,356.0 L340.4,360.0" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<line x1="148.0" y1="356.0" x2="361.0" y2="356.0" stroke="#3fb950" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M356.0,352.0 L361.0,356.0 L356.0,360.0" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
 <circle cx="138.0" cy="356.0" r="9" fill="none" stroke="#768390" stroke-width="2"/>
-<circle cx="356.4" cy="356.0" r="8" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
-<text x="572" y="366.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 14</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
+<circle cx="372.0" cy="356.0" r="8" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="572" y="366.0" text-anchor="end"><tspan font-size="28" font-weight="600">0 → 15</tspan><tspan font-size="16" fill="#b1bac4"> of 15</tspan></text>
 <line x1="28.0" y1="402.0" x2="572.0" y2="402.0" stroke="#3d444d" stroke-width="1"/>
 <text x="28.0" y="430.0" font-size="17">Every run fixed its bug, with or without Compound.</text>
 <text x="28.0" y="455.0" font-size="17">Opus, median fix per bug: 1.14–1.50× the tokens,</text>

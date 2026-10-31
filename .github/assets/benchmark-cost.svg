@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="840" height="765" viewBox="0 0 840 765" role="img" aria-labelledby="title desc">
 <title id="title">Tokens, cost and time with Compound</title>
-<desc id="desc">Each task&#x27;s 5 pairs, with Compound ÷ without, on a log scale. Dot: median pair. Line: lowest to highest pair. Diamond: all 30 pairs with the six tasks weighted equally; its 95% interval is printed beneath. Time has no six-task figure. Claude Opus 5.5: Bug: refund split: tokens 1.14 times (pairs ranged 0.86 to 1.51), cost 1.37 times (1.16 to 1.57), time 1.13 times (1.05 to 1.25), 5 pairs. Bug: leap-year proration: tokens 1.50 times (pairs ranged 1.34 to 1.55), cost 1.51 times (1.40 to 1.63), time 1.39 times (0.77 to 1.77), 5 pairs. Bug: December due date: tokens 1.49 times (pairs ranged 1.34 to 1.57), cost 1.56 times (1.49 to 2.11), time 1.47 times (1.16 to 2.52), 5 pairs. Refactor: rounding helpers: tokens 1.93 times (pairs ranged 1.21 to 2.34), cost 1.61 times (1.29 to 1.87), time 1.40 times (1.07 to 2.34), 5 pairs. Review a Flask commit: tokens 2.29 times (pairs ranged 1.89 to 2.72), cost 1.72 times (1.70 to 2.48), time 1.41 times (1.01 to 1.94), 5 pairs. Question about Django: tokens 1.52 times (pairs ranged 1.23 to 1.96), cost 1.23 times (1.01 to 1.85), time 1.64 times (1.45 to 2.14), 5 pairs. All six tasks, weighted equally: 1.56× the tokens (1.47–1.65) and 1.56× the cost (1.48–1.64). Claude Sonnet 5.5: Bug: refund split: tokens 1.01 times (pairs ranged 0.90 to 1.34), cost 1.14 times (0.75 to 1.60), time 1.28 times (0.59 to 1.50), 5 pairs. Bug: leap-year proration: tokens 1.36 times (pairs ranged 0.96 to 1.78), cost 1.75 times (1.25 to 2.02), time 1.39 times (0.98 to 2.17), 5 pairs. Bug: December due date: tokens 1.14 times (pairs ranged 0.98 to 1.37), cost 1.55 times (1.33 to 1.69), time 1.32 times (0.92 to 1.52), 5 pairs. Refactor: rounding helpers: tokens 1.49 times (pairs ranged 0.94 to 2.41), cost 1.69 times (1.18 to 2.72), time 1.52 times (1.40 to 2.80), 5 pairs. Review a Flask commit: tokens 3.10 times (pairs ranged 1.61 to 4.98), cost 2.51 times (1.57 to 4.57), time 2.07 times (1.06 to 2.43), 5 pairs. Question about Django: tokens 1.83 times (pairs ranged 1.08 to 3.39), cost 1.57 times (1.13 to 2.87), time 1.75 times (1.26 to 2.74), 5 pairs. All six tasks, weighted equally: 1.55× the tokens (1.40–1.72) and 1.69× the cost (1.53–1.86). Cost: the API list price the client reported. Summed over the 30 pairs: Opus 1.56× tokens and 1.54× cost ($6.04 against $3.91), Sonnet 1.43× and 1.64× ($2.26 against $1.38). Always loaded: +418 tokens per request (Opus 18,561 → 18,979; Sonnet 18,514 → 18,932).</desc>
+<desc id="desc">Each task&#x27;s 5 pairs, with Compound ÷ without, on a log scale. Dot: median pair. Line: lowest to highest pair. Diamond: all 30 pairs with the six tasks weighted equally; its 95% interval is printed beneath. Time has no six-task figure. Claude Opus 5.5: Bug: refund split: tokens 1.14 times (pairs ranged 0.86 to 1.51), cost 1.37 times (1.16 to 1.57), time 1.13 times (1.05 to 1.25), 5 pairs. Bug: leap-year proration: tokens 1.50 times (pairs ranged 1.34 to 1.55), cost 1.51 times (1.40 to 1.63), time 1.39 times (0.77 to 1.77), 5 pairs. Bug: December due date: tokens 1.49 times (pairs ranged 1.34 to 1.57), cost 1.56 times (1.49 to 2.11), time 1.47 times (1.16 to 2.52), 5 pairs. Refactor: rounding helpers: tokens 1.93 times (pairs ranged 1.21 to 2.34), cost 1.61 times (1.29 to 1.87), time 1.40 times (1.07 to 2.34), 5 pairs. Review a Flask commit: tokens 2.29 times (pairs ranged 1.89 to 2.72), cost 1.72 times (1.70 to 2.48), time 1.41 times (1.01 to 1.94), 5 pairs. Question about Django: tokens 1.52 times (pairs ranged 1.23 to 1.96), cost 1.23 times (1.01 to 1.85), time 1.64 times (1.45 to 2.14), 5 pairs. All six tasks, weighted equally: 1.56× the tokens (1.47–1.65) and 1.56× the cost (1.48–1.64). Claude Sonnet 5.5: Bug: refund split: tokens 1.01 times (pairs ranged 0.90 to 1.19), cost 1.14 times (0.75 to 1.28), time 1.06 times (0.59 to 1.50), 5 pairs. Bug: leap-year proration: tokens 1.36 times (pairs ranged 0.96 to 1.78), cost 1.75 times (1.25 to 2.02), time 1.39 times (0.98 to 2.17), 5 pairs. Bug: December due date: tokens 1.14 times (pairs ranged 0.98 to 1.37), cost 1.55 times (1.33 to 1.69), time 1.32 times (0.92 to 1.52), 5 pairs. Refactor: rounding helpers: tokens 1.49 times (pairs ranged 0.94 to 2.41), cost 1.69 times (1.18 to 2.72), time 1.52 times (1.40 to 2.80), 5 pairs. Review a Flask commit: tokens 3.10 times (pairs ranged 1.61 to 4.98), cost 2.51 times (1.57 to 4.57), time 2.07 times (1.06 to 2.43), 5 pairs. Question about Django: tokens 1.83 times (pairs ranged 1.08 to 3.39), cost 1.57 times (1.13 to 2.87), time 1.75 times (1.26 to 2.74), 5 pairs. All six tasks, weighted equally: 1.55× the tokens (1.40–1.71) and 1.67× the cost (1.53–1.84). Cost: the API list price the client reported. Summed over the 30 pairs: Opus 1.56× tokens and 1.54× cost ($6.04 against $3.91), Sonnet 1.42× and 1.62× ($2.28 against $1.41). Always loaded: +418 tokens per request (Opus 18,561 → 18,979; Sonnet 18,514 → 18,932).</desc>
 <style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#1f2328;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
 <rect width="840" height="765" rx="12" fill="#ffffff"/>
 <text x="0.0" y="18.0" font-size="13" fill="#59636e">Each task&#x27;s 5 pairs, with Compound ÷ without, on a log scale. Dot: median pair. Line: lowest to highest pair. Diamond: all</text>
@@ -95,15 +95,15 @@
 <text x="763.5" y="374.0" font-size="12" text-anchor="middle" fill="#59636e">4×</text>
 <text x="0.0" y="414.0" font-size="14" font-weight="600">Claude Sonnet 5.5</text>
 <text x="0.0" y="447.0" font-size="14">Refund bug</text>
-<line x1="238.1" y1="442.0" x2="264.1" y2="442.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
+<line x1="238.1" y1="442.0" x2="256.5" y2="442.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
 <circle cx="245.6" cy="442.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
 <text x="404.0" y="447.0" font-size="14" font-weight="600" text-anchor="end">1.01×</text>
-<line x1="440.1" y1="442.0" x2="489.7" y2="442.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
+<line x1="440.1" y1="442.0" x2="475.2" y2="442.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
 <circle cx="467.7" cy="442.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
 <text x="618.0" y="447.0" font-size="14" font-weight="600" text-anchor="end">1.14×</text>
 <line x1="639.0" y1="442.0" x2="699.5" y2="442.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
-<circle cx="689.5" cy="442.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
-<text x="838.0" y="447.0" font-size="14" font-weight="600" text-anchor="end">1.28×</text>
+<circle cx="677.1" cy="442.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
+<text x="838.0" y="447.0" font-size="14" font-weight="600" text-anchor="end">1.06×</text>
 <text x="0.0" y="477.0" font-size="14">Leap-year bug</text>
 <line x1="242.7" y1="472.0" x2="282.7" y2="472.0" stroke="#818b98" stroke-width="2" stroke-linecap="round"/>
 <circle cx="265.4" cy="472.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
@@ -156,12 +156,12 @@
 <text x="838.0" y="597.0" font-size="14" font-weight="600" text-anchor="end">1.75×</text>
 <text x="0.0" y="633.0" font-size="14" font-weight="600">All six tasks</text>
 <text x="0.0" y="649.0" font-size="12" fill="#59636e">weighted equally</text>
-<path d="M273.8,621.0 L280.8,628.0 L273.8,635.0 L266.8,628.0 Z" fill="#1f2328"/>
+<path d="M273.5,621.0 L280.5,628.0 L273.5,635.0 L266.5,628.0 Z" fill="#1f2328"/>
 <text x="404.0" y="633.0" font-size="14" font-weight="600" text-anchor="end">1.55×</text>
-<text x="404.0" y="649.0" font-size="12" text-anchor="end" fill="#59636e">1.40–1.72</text>
-<path d="M493.1,621.0 L500.1,628.0 L493.1,635.0 L486.1,628.0 Z" fill="#1f2328"/>
-<text x="618.0" y="633.0" font-size="14" font-weight="600" text-anchor="end">1.69×</text>
-<text x="618.0" y="649.0" font-size="12" text-anchor="end" fill="#59636e">1.53–1.86</text>
+<text x="404.0" y="649.0" font-size="12" text-anchor="end" fill="#59636e">1.40–1.71</text>
+<path d="M492.7,621.0 L499.7,628.0 L492.7,635.0 L485.7,628.0 Z" fill="#1f2328"/>
+<text x="618.0" y="633.0" font-size="14" font-weight="600" text-anchor="end">1.67×</text>
+<text x="618.0" y="649.0" font-size="12" text-anchor="end" fill="#59636e">1.53–1.84</text>
 <text x="838.0" y="633.0" font-size="14" text-anchor="end" fill="#59636e">—</text>
 <line x1="245.2" y1="424.0" x2="245.2" y2="642.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
 <text x="200.0" y="668.0" font-size="12" text-anchor="middle" fill="#59636e">0.5×</text>
@@ -180,6 +180,6 @@
 <text x="763.5" y="668.0" font-size="12" text-anchor="middle" fill="#59636e">4×</text>
 <line x1="0.0" y1="686.0" x2="840.0" y2="686.0" stroke="#d1d9e0" stroke-width="1"/>
 <text x="0.0" y="708.0" font-size="13" fill="#59636e">Cost: the API list price the client reported. Summed over the 30 pairs: Opus 1.56× tokens and 1.54× cost ($6.04 against</text>
-<text x="0.0" y="727.0" font-size="13" fill="#59636e">$3.91), Sonnet 1.43× and 1.64× ($2.26 against $1.38). Always loaded: +418 tokens per request (Opus 18,561 → 18,979;</text>
+<text x="0.0" y="727.0" font-size="13" fill="#59636e">$3.91), Sonnet 1.42× and 1.62× ($2.28 against $1.41). Always loaded: +418 tokens per request (Opus 18,561 → 18,979;</text>
 <text x="0.0" y="746.0" font-size="13" fill="#59636e">Sonnet 18,514 → 18,932).</text>
 </svg>

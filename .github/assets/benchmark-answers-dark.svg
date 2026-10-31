@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="456" viewBox="0 0 840 456" role="img" aria-labelledby="title desc">
+<title id="title">Reviews and answers</title>
+<desc id="desc">Graded blind against a fixed key, 3 votes per answer, 5 answers per task, arm and model. Found all 3 planted defects: Opus 5.5 without Compound 5, with Compound 5 of 5. Sonnet 5.5 without Compound 5, with Compound 5 of 5. Covered all 11 key points: Opus 5.5 without Compound 4, with Compound 5 of 5. Sonnet 5.5 without Compound 0, with Compound 0 of 5. Key points covered, median answer: Opus 5.5 without Compound 11, with Compound 11 of 11. Sonnet 5.5 without Compound 9, with Compound 9 of 11. Incorrect statements, all 10 answers: Opus 5.5 without Compound 3, with Compound 3. Sonnet 5.5 without Compound 5, with Compound 9. The judge (Claude Opus 5.5) saw the question, the key and the answer, never the arm; a point counted only with a verbatim quote from the answer. Incorrect statements exclude 40 votes that called the reviewed commit&#x27;s id wrong, a harness error since fixed. Orange: more with Compound. Claude Code 2.1.316 · Compound 0.14.0 · 31 Oct 2026.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#f0f6fc;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
+<rect width="840" height="456" rx="12" fill="#0d1117"/>
+<text x="0.0" y="20.0" font-size="13" fill="#b1bac4">Graded blind against a fixed key, 3 votes per answer, 5 answers per task, arm and model</text>
+<circle cx="8.0" cy="41.0" r="7" fill="none" stroke="#768390" stroke-width="2"/>
+<text x="22.0" y="46.0" font-size="14" fill="#b1bac4">Without Compound</text>
+<circle cx="181.6" cy="41.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="195.6" y="46.0" font-size="14" fill="#b1bac4">With Compound</text>
+<text x="238.0" y="82.0" font-size="13" font-weight="600">Claude Opus 5.5</text>
+<text x="548.0" y="82.0" font-size="13" font-weight="600">Claude Sonnet 5.5</text>
+<text x="0" y="120.0" font-size="13"><tspan font-weight="600">Flask review</tspan><tspan fill="#b1bac4"> · three planted defects</tspan></text>
+<line x1="0.0" y1="129.0" x2="840.0" y2="129.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="151.0" font-size="14">Found all 3 planted defects</text>
+<line x1="238.0" y1="135.0" x2="238.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="313.0" y1="135.0" x2="313.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="388.0" y1="135.0" x2="388.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="388.0" cy="146.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="388.0" cy="146.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="522.0" y="151.0" font-size="14" font-weight="600" text-anchor="end">5 → 5 of 5</text>
+<line x1="548.0" y1="135.0" x2="548.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="623.0" y1="135.0" x2="623.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="698.0" y1="135.0" x2="698.0" y2="157.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="698.0" cy="146.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="698.0" cy="146.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="836.0" y="151.0" font-size="14" font-weight="600" text-anchor="end">5 → 5 of 5</text>
+<text x="0" y="187.0" font-size="13"><tspan font-weight="600">Django question</tspan><tspan fill="#b1bac4"> · 11 key points</tspan></text>
+<line x1="0.0" y1="196.0" x2="840.0" y2="196.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="218.0" font-size="14">Covered all 11 key points</text>
+<line x1="238.0" y1="202.0" x2="238.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="313.0" y1="202.0" x2="313.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="388.0" y1="202.0" x2="388.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="367.0" y1="213.0" x2="379.0" y2="213.0" stroke="#3fb950" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M374.0,209.0 L379.0,213.0 L374.0,217.0" fill="none" stroke="#3fb950" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<circle cx="358.0" cy="213.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="388.0" cy="213.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="522.0" y="218.0" font-size="14" font-weight="600" text-anchor="end">4 → 5 of 5</text>
+<line x1="548.0" y1="202.0" x2="548.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="623.0" y1="202.0" x2="623.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="698.0" y1="202.0" x2="698.0" y2="224.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="548.0" cy="213.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="548.0" cy="213.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="836.0" y="218.0" font-size="14" font-weight="600" text-anchor="end">0 → 0 of 5</text>
+<text x="0.0" y="248.0" font-size="14">Key points covered, median</text>
+<text x="0.0" y="266.0" font-size="14">answer</text>
+<line x1="238.0" y1="241.0" x2="238.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="313.0" y1="241.0" x2="313.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="388.0" y1="241.0" x2="388.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="388.0" cy="252.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="388.0" cy="252.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="522.0" y="257.0" font-size="14" font-weight="600" text-anchor="end">11 → 11 of 11</text>
+<line x1="548.0" y1="241.0" x2="548.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="623.0" y1="241.0" x2="623.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="698.0" y1="241.0" x2="698.0" y2="263.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="670.7" cy="252.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="670.7" cy="252.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="836.0" y="257.0" font-size="14" font-weight="600" text-anchor="end">9 → 9 of 11</text>
+<text x="0" y="302.0" font-size="13"><tspan font-weight="600">Incorrect statements</tspan><tspan fill="#b1bac4"> · fewer is better</tspan></text>
+<line x1="0.0" y1="311.0" x2="840.0" y2="311.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="333.0" font-size="14">Incorrect statements, all</text>
+<text x="0.0" y="351.0" font-size="14">10 answers</text>
+<line x1="238.0" y1="326.0" x2="238.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="313.0" y1="326.0" x2="313.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="388.0" y1="326.0" x2="388.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<circle cx="283.0" cy="337.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="283.0" cy="337.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="522.0" y="342.0" font-size="14" font-weight="600" text-anchor="end">3 → 3</text>
+<line x1="548.0" y1="326.0" x2="548.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="623.0" y1="326.0" x2="623.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="698.0" y1="326.0" x2="698.0" y2="348.0" stroke="#3d444d" stroke-width="1"/>
+<line x1="632.0" y1="337.0" x2="674.0" y2="337.0" stroke="#e0702f" stroke-width="2" stroke-opacity="0.7"/>
+<path d="M669.0,333.0 L674.0,337.0 L669.0,341.0" fill="none" stroke="#e0702f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.7"/>
+<circle cx="623.0" cy="337.0" r="8" fill="none" stroke="#768390" stroke-width="2"/>
+<circle cx="683.0" cy="337.0" r="6" fill="#3fb950" stroke="#0d1117" stroke-width="2"/>
+<text x="836.0" y="342.0" font-size="14" font-weight="600" text-anchor="end">5 → 9</text>
+<line x1="0.0" y1="377.0" x2="840.0" y2="377.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="399.0" font-size="13" fill="#b1bac4">The judge (Claude Opus 5.5) saw the question, the key and the answer, never the arm; a point counted only with a verbatim</text>
+<text x="0.0" y="418.0" font-size="13" fill="#b1bac4">quote from the answer. Incorrect statements exclude 40 votes that called the reviewed commit&#x27;s id wrong, a harness</text>
+<text x="0.0" y="437.0" font-size="13" fill="#b1bac4">error since fixed. Orange: more with Compound. Claude Code 2.1.316 · Compound 0.14.0 · 31 Oct 2026.</text>
+</svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="840" height="782" viewBox="0 0 840 782" role="img" aria-labelledby="title desc">
 <title id="title">What changes with Compound</title>
-<desc id="desc">Same tasks with and without Compound, 5 paired runs per task and model. Debugging habits (3 bug fixes, 15 runs per arm). Reproduced the bug before changing code: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 14 of 15. Showed a test failing on the unfixed code: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 14 of 15. Outcomes (20 coding runs per arm). Fixed the bug (hidden tests pass): Opus 5.5 without Compound 15 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 15 of 15, with Compound 15 of 15. Ran the tests on the final code: Opus 5.5 without Compound 20 of 20, with Compound 20 of 20. Sonnet 5.5 without Compound 16 of 20, with Compound 19 of 20. Planted regressions caught by the tests it left: Opus 5.5 without Compound 40 of 55, with Compound 49 of 55. Sonnet 5.5 without Compound 29 of 55, with Compound 42 of 55. Refactor (5 runs per arm). Kept how tax is rounded: Opus 5.5 without Compound 2 of 5, with Compound 5 of 5. Sonnet 5.5 without Compound 0 of 5, with Compound 5 of 5. Removed both rounding helpers, as asked: Opus 5.5 without Compound 5 of 5, with Compound 5 of 5. Sonnet 5.5 without Compound 5 of 5, with Compound 5 of 5. Commits (15 bug-fix runs per arm). Committed without an AI co-author line: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 14 of 15. Cost with Compound, six tasks weighted equally, with 95% intervals: Opus 5.5: 1.56× the tokens (1.47–1.65) and 1.56× the list-price cost (1.48–1.64). Sonnet 5.5: 1.55× the tokens (1.40–1.72) and 1.69× the list-price cost (1.53–1.86). Regressions: 3 planted per bug and 2 for the refactor, run against the tests each run left (55 checks per arm and model). Claude Code 2.1.316 · Compound 0.14.0 · 31 Oct 2026.</desc>
+<desc id="desc">Same tasks with and without Compound, 5 paired runs per task and model. Debugging habits (3 bug fixes, 15 runs per arm). Reproduced the bug before changing code: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 15 of 15. Showed a test failing on the unfixed code: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 15 of 15. Outcomes (20 coding runs per arm). Fixed the bug (hidden tests pass): Opus 5.5 without Compound 15 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 15 of 15, with Compound 15 of 15. Ran the tests on the final code: Opus 5.5 without Compound 20 of 20, with Compound 20 of 20. Sonnet 5.5 without Compound 16 of 20, with Compound 20 of 20. Planted regressions caught by the tests it left: Opus 5.5 without Compound 40 of 55, with Compound 49 of 55. Sonnet 5.5 without Compound 29 of 55, with Compound 42 of 55. Refactor (5 runs per arm). Kept how tax is rounded: Opus 5.5 without Compound 2 of 5, with Compound 5 of 5. Sonnet 5.5 without Compound 0 of 5, with Compound 5 of 5. Removed both rounding helpers, as asked: Opus 5.5 without Compound 5 of 5, with Compound 5 of 5. Sonnet 5.5 without Compound 5 of 5, with Compound 5 of 5. Commits (15 bug-fix runs per arm). Committed without an AI co-author line: Opus 5.5 without Compound 0 of 15, with Compound 15 of 15. Sonnet 5.5 without Compound 0 of 15, with Compound 14 of 15. Cost with Compound, six tasks weighted equally, with 95% intervals: Opus 5.5: 1.56× the tokens (1.47–1.65) and 1.56× the list-price cost (1.48–1.64). Sonnet 5.5: 1.55× the tokens (1.40–1.71) and 1.67× the list-price cost (1.53–1.84). Regressions: 3 planted per bug and 2 for the refactor, run against the tests each run left (55 checks per arm and model). Claude Code 2.1.316 · Compound 0.14.0 · 31 Oct 2026.</desc>
 <style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#1f2328;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
 <rect width="840" height="782" rx="12" fill="#ffffff"/>
 <text x="0.0" y="20.0" font-size="13" fill="#59636e">Same tasks with and without Compound, 5 paired runs per task and model</text>
@@ -31,11 +31,11 @@
 <line x1="548.0" y1="162.0" x2="548.0" y2="184.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="623.0" y1="162.0" x2="623.0" y2="184.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="698.0" y1="162.0" x2="698.0" y2="184.0" stroke="#d1d9e0" stroke-width="1"/>
-<line x1="557.0" y1="173.0" x2="679.0" y2="173.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
-<path d="M674.0,169.0 L679.0,173.0 L674.0,177.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<line x1="557.0" y1="173.0" x2="689.0" y2="173.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M684.0,169.0 L689.0,173.0 L684.0,177.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
 <circle cx="548.0" cy="173.0" r="8" fill="none" stroke="#818b98" stroke-width="2"/>
-<circle cx="688.0" cy="173.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
-<text x="836.0" y="178.0" font-size="14" font-weight="600" text-anchor="end">0/15 → 14/15</text>
+<circle cx="698.0" cy="173.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
+<text x="836.0" y="178.0" font-size="14" font-weight="600" text-anchor="end">0/15 → 15/15</text>
 <text x="0.0" y="217.0" font-size="14">Showed a test failing on the</text>
 <text x="0.0" y="235.0" font-size="14">unfixed code</text>
 <line x1="238.0" y1="210.0" x2="238.0" y2="232.0" stroke="#d1d9e0" stroke-width="1"/>
@@ -49,11 +49,11 @@
 <line x1="548.0" y1="210.0" x2="548.0" y2="232.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="623.0" y1="210.0" x2="623.0" y2="232.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="698.0" y1="210.0" x2="698.0" y2="232.0" stroke="#d1d9e0" stroke-width="1"/>
-<line x1="557.0" y1="221.0" x2="679.0" y2="221.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
-<path d="M674.0,217.0 L679.0,221.0 L674.0,225.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<line x1="557.0" y1="221.0" x2="689.0" y2="221.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M684.0,217.0 L689.0,221.0 L684.0,225.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
 <circle cx="548.0" cy="221.0" r="8" fill="none" stroke="#818b98" stroke-width="2"/>
-<circle cx="688.0" cy="221.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
-<text x="836.0" y="226.0" font-size="14" font-weight="600" text-anchor="end">0/15 → 14/15</text>
+<circle cx="698.0" cy="221.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
+<text x="836.0" y="226.0" font-size="14" font-weight="600" text-anchor="end">0/15 → 15/15</text>
 <text x="0" y="271.0" font-size="13"><tspan font-weight="600">Outcomes</tspan><tspan fill="#59636e"> · 20 coding runs per arm</tspan></text>
 <line x1="0.0" y1="280.0" x2="840.0" y2="280.0" stroke="#d1d9e0" stroke-width="1"/>
 <text x="0.0" y="302.0" font-size="14">Fixed the bug (hidden tests</text>
@@ -81,11 +81,11 @@
 <line x1="548.0" y1="343.0" x2="548.0" y2="365.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="623.0" y1="343.0" x2="623.0" y2="365.0" stroke="#d1d9e0" stroke-width="1"/>
 <line x1="698.0" y1="343.0" x2="698.0" y2="365.0" stroke="#d1d9e0" stroke-width="1"/>
-<line x1="677.0" y1="354.0" x2="681.5" y2="354.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
-<path d="M676.5,350.0 L681.5,354.0 L676.5,358.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
+<line x1="677.0" y1="354.0" x2="689.0" y2="354.0" stroke="#147a43" stroke-width="2" stroke-opacity="0.55"/>
+<path d="M684.0,350.0 L689.0,354.0 L684.0,358.0" fill="none" stroke="#147a43" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.55"/>
 <circle cx="668.0" cy="354.0" r="8" fill="none" stroke="#818b98" stroke-width="2"/>
-<circle cx="690.5" cy="354.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
-<text x="836.0" y="359.0" font-size="14" font-weight="600" text-anchor="end">16/20 → 19/20</text>
+<circle cx="698.0" cy="354.0" r="6" fill="#147a43" stroke="#ffffff" stroke-width="2"/>
+<text x="836.0" y="359.0" font-size="14" font-weight="600" text-anchor="end">16/20 → 20/20</text>
 <text x="0.0" y="398.0" font-size="14">Planted regressions caught</text>
 <text x="0.0" y="416.0" font-size="14">by the tests it left</text>
 <line x1="238.0" y1="391.0" x2="238.0" y2="413.0" stroke="#d1d9e0" stroke-width="1"/>
@@ -163,8 +163,8 @@
 <text x="0.0" y="704.0" font-size="13" fill="#59636e">with 95% intervals</text>
 <text x="238" y="668.0"><tspan font-size="16" font-weight="600">1.56×</tspan><tspan font-size="13" fill="#59636e"> tokens (1.47–1.65)</tspan></text>
 <text x="238" y="690.0"><tspan font-size="16" font-weight="600">1.56×</tspan><tspan font-size="13" fill="#59636e"> list price (1.48–1.64)</tspan></text>
-<text x="548" y="668.0"><tspan font-size="16" font-weight="600">1.55×</tspan><tspan font-size="13" fill="#59636e"> tokens (1.40–1.72)</tspan></text>
-<text x="548" y="690.0"><tspan font-size="16" font-weight="600">1.69×</tspan><tspan font-size="13" fill="#59636e"> list price (1.53–1.86)</tspan></text>
+<text x="548" y="668.0"><tspan font-size="16" font-weight="600">1.55×</tspan><tspan font-size="13" fill="#59636e"> tokens (1.40–1.71)</tspan></text>
+<text x="548" y="690.0"><tspan font-size="16" font-weight="600">1.67×</tspan><tspan font-size="13" fill="#59636e"> list price (1.53–1.84)</tspan></text>
 <line x1="0.0" y1="722.0" x2="840.0" y2="722.0" stroke="#d1d9e0" stroke-width="1"/>
 <text x="0.0" y="744.0" font-size="13" fill="#59636e">Regressions: 3 planted per bug and 2 for the refactor, run against the tests each run left (55 checks per arm and model).</text>
 <text x="0.0" y="763.0" font-size="13" fill="#59636e">Claude Code 2.1.316 · Compound 0.14.0 · 31 Oct 2026.</text>

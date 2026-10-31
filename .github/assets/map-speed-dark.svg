@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="773" viewBox="0 0 840 773" role="img" aria-labelledby="title desc">
+<title id="title">How fast is the map?</title>
+<desc id="desc">Seconds, median of 5 runs on 4 cores with Python 3.13.17, timed on 0.13.0; 0.14.0 did not change the map code. Each panel has its own scale. Building the map: Gin (Go, 130 files, 113 indexed): first build 0.42 s, nothing changed 0.05 s, one file edited 0.06 s. Click (Python, 178 files, 114 indexed): first build 0.61 s, nothing changed 0.09 s, one file edited 0.11 s. ripgrep (Rust, 226 files, 126 indexed): first build 2.48 s, nothing changed 0.10 s, one file edited 0.19 s. Flask (Python, 236 files, 125 indexed): first build 0.41 s, nothing changed 0.12 s, one file edited 0.14 s. Hono (TypeScript, 583 files, 531 indexed): first build 0.97 s, nothing changed 0.23 s, one file edited 0.19 s. Vue core (TypeScript, 703 files, 612 indexed): first build 1.24 s, nothing changed 0.27 s, one file edited 0.26 s. Django (Python, 7,085 files, 3,496 indexed): first build 8.20 s, nothing changed 2.29 s, one file edited 2.38 s. Agent queries: Gin (Go): coding task, first query 1.09 s, coding task, later queries 0.38 s, question or review 0.64 s. Click (Python): coding task, first query 1.20 s, coding task, later queries 0.42 s, question or review 0.70 s. ripgrep (Rust): coding task, first query 3.17 s, coding task, later queries 0.43 s, question or review 2.61 s. Flask (Python): coding task, first query 1.09 s, coding task, later queries 0.40 s, question or review 0.47 s. Hono (TypeScript): coding task, first query 1.74 s, coding task, later queries 0.41 s, question or review 1.11 s. Vue core (TypeScript): coding task, first query 2.00 s, coding task, later queries 0.42 s, question or review 1.40 s. Django (Python): coding task, first query 10.90 s, coding task, later queries 0.97 s, question or review 8.78 s. One file edited: the file most other files import. Coding task: the command the skill gives the agent when edits are allowed; its first query starts the local service and indexes. Question or review: the read-only command, which starts no service and writes no cache, timed with no cache yet.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#f0f6fc;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
+<rect width="840" height="773" rx="12" fill="#0d1117"/>
+<text x="0.0" y="18.0" font-size="13" fill="#b1bac4">Seconds, median of 5 runs on 4 cores with Python 3.13.17, timed on 0.13.0; 0.14.0 did not change the map code. Each panel</text>
+<text x="0.0" y="37.0" font-size="13" fill="#b1bac4">has its own scale.</text>
+<text x="0.0" y="94.0" font-size="15" font-weight="600">Building the map</text>
+<text x="206.0" y="118.0" font-size="13" font-weight="600">First build</text>
+<text x="420.0" y="118.0" font-size="13" font-weight="600">Nothing changed</text>
+<text x="634.0" y="118.0" font-size="13" font-weight="600">One file edited</text>
+<line x1="0.0" y1="130.0" x2="840.0" y2="130.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="151.0" font-size="14">Gin · Go</text>
+<text x="0.0" y="167.0" font-size="12" fill="#b1bac4">130 files, 113 indexed</text>
+<rect x="206.0" y="146.0" width="7.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="219.3" y="158.0" font-size="13" font-weight="600">0.42 s</text>
+<rect x="420.0" y="146.0" width="3.2" height="14.0" rx="2" fill="#3fb950"/>
+<text x="429.2" y="158.0" font-size="13" font-weight="600">0.05 s</text>
+<rect x="634.0" y="146.0" width="3.6" height="14.0" rx="2" fill="#3fb950"/>
+<text x="643.6" y="158.0" font-size="13" font-weight="600">0.06 s</text>
+<text x="0.0" y="191.0" font-size="14">Click · Python</text>
+<text x="0.0" y="207.0" font-size="12" fill="#b1bac4">178 files, 114 indexed</text>
+<rect x="206.0" y="186.0" width="10.5" height="14.0" rx="2" fill="#3fb950"/>
+<text x="222.5" y="198.0" font-size="13" font-weight="600">0.61 s</text>
+<rect x="420.0" y="186.0" width="5.7" height="14.0" rx="2" fill="#3fb950"/>
+<text x="431.7" y="198.0" font-size="13" font-weight="600">0.09 s</text>
+<rect x="634.0" y="186.0" width="6.8" height="14.0" rx="2" fill="#3fb950"/>
+<text x="646.8" y="198.0" font-size="13" font-weight="600">0.11 s</text>
+<text x="0.0" y="231.0" font-size="14">ripgrep · Rust</text>
+<text x="0.0" y="247.0" font-size="12" fill="#b1bac4">226 files, 126 indexed</text>
+<rect x="206.0" y="226.0" width="43.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="255.0" y="238.0" font-size="13" font-weight="600">2.48 s</text>
+<rect x="420.0" y="226.0" width="5.9" height="14.0" rx="2" fill="#3fb950"/>
+<text x="431.9" y="238.0" font-size="13" font-weight="600">0.10 s</text>
+<rect x="634.0" y="226.0" width="11.6" height="14.0" rx="2" fill="#3fb950"/>
+<text x="651.6" y="238.0" font-size="13" font-weight="600">0.19 s</text>
+<text x="0.0" y="271.0" font-size="14">Flask · Python</text>
+<text x="0.0" y="287.0" font-size="12" fill="#b1bac4">236 files, 125 indexed</text>
+<rect x="206.0" y="266.0" width="7.1" height="14.0" rx="2" fill="#3fb950"/>
+<text x="219.1" y="278.0" font-size="13" font-weight="600">0.41 s</text>
+<rect x="420.0" y="266.0" width="7.4" height="14.0" rx="2" fill="#3fb950"/>
+<text x="433.4" y="278.0" font-size="13" font-weight="600">0.12 s</text>
+<rect x="634.0" y="266.0" width="8.4" height="14.0" rx="2" fill="#3fb950"/>
+<text x="648.4" y="278.0" font-size="13" font-weight="600">0.14 s</text>
+<text x="0.0" y="311.0" font-size="14">Hono · TypeScript</text>
+<text x="0.0" y="327.0" font-size="12" fill="#b1bac4">583 files, 531 indexed</text>
+<rect x="206.0" y="306.0" width="16.8" height="14.0" rx="2" fill="#3fb950"/>
+<text x="228.8" y="318.0" font-size="13" font-weight="600">0.97 s</text>
+<rect x="420.0" y="306.0" width="14.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="440.0" y="318.0" font-size="13" font-weight="600">0.23 s</text>
+<rect x="634.0" y="306.0" width="11.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="651.3" y="318.0" font-size="13" font-weight="600">0.19 s</text>
+<text x="0.0" y="351.0" font-size="14">Vue core · TypeScript</text>
+<text x="0.0" y="367.0" font-size="12" fill="#b1bac4">703 files, 612 indexed</text>
+<rect x="206.0" y="346.0" width="21.4" height="14.0" rx="2" fill="#3fb950"/>
+<text x="233.4" y="358.0" font-size="13" font-weight="600">1.24 s</text>
+<rect x="420.0" y="346.0" width="17.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="443.0" y="358.0" font-size="13" font-weight="600">0.27 s</text>
+<rect x="634.0" y="346.0" width="15.2" height="14.0" rx="2" fill="#3fb950"/>
+<text x="655.2" y="358.0" font-size="13" font-weight="600">0.26 s</text>
+<text x="0.0" y="391.0" font-size="14">Django · Python</text>
+<text x="0.0" y="407.0" font-size="12" fill="#b1bac4">7,085 files, 3,496 indexed</text>
+<rect x="206.0" y="386.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="354.0" y="398.0" font-size="13" font-weight="600">8.20 s</text>
+<rect x="420.0" y="386.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="568.0" y="398.0" font-size="13" font-weight="600">2.29 s</text>
+<rect x="634.0" y="386.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="782.0" y="398.0" font-size="13" font-weight="600">2.38 s</text>
+<line x1="206.0" y1="134.0" x2="206.0" y2="406.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<line x1="420.0" y1="134.0" x2="420.0" y2="406.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<line x1="634.0" y1="134.0" x2="634.0" y2="406.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<text x="0.0" y="446.0" font-size="15" font-weight="600">Agent queries</text>
+<text x="206.0" y="470.0" font-size="13" font-weight="600">Coding task, first query</text>
+<text x="420.0" y="470.0" font-size="13" font-weight="600">Coding task, later queries</text>
+<text x="634.0" y="470.0" font-size="13" font-weight="600">Question or review</text>
+<line x1="0.0" y1="482.0" x2="840.0" y2="482.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="505.0" font-size="14">Gin · Go</text>
+<rect x="206.0" y="493.0" width="14.2" height="14.0" rx="2" fill="#3fb950"/>
+<text x="226.2" y="505.0" font-size="13" font-weight="600">1.09 s</text>
+<rect x="420.0" y="493.0" width="55.5" height="14.0" rx="2" fill="#3fb950"/>
+<text x="481.5" y="505.0" font-size="13" font-weight="600">0.38 s</text>
+<rect x="634.0" y="493.0" width="10.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="650.3" y="505.0" font-size="13" font-weight="600">0.64 s</text>
+<text x="0.0" y="535.0" font-size="14">Click · Python</text>
+<rect x="206.0" y="523.0" width="15.6" height="14.0" rx="2" fill="#3fb950"/>
+<text x="227.6" y="535.0" font-size="13" font-weight="600">1.20 s</text>
+<rect x="420.0" y="523.0" width="61.7" height="14.0" rx="2" fill="#3fb950"/>
+<text x="487.7" y="535.0" font-size="13" font-weight="600">0.42 s</text>
+<rect x="634.0" y="523.0" width="11.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="651.3" y="535.0" font-size="13" font-weight="600">0.70 s</text>
+<text x="0.0" y="565.0" font-size="14">ripgrep · Rust</text>
+<rect x="206.0" y="553.0" width="41.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="253.3" y="565.0" font-size="13" font-weight="600">3.17 s</text>
+<rect x="420.0" y="553.0" width="62.8" height="14.0" rx="2" fill="#3fb950"/>
+<text x="488.8" y="565.0" font-size="13" font-weight="600">0.43 s</text>
+<rect x="634.0" y="553.0" width="42.2" height="14.0" rx="2" fill="#3fb950"/>
+<text x="682.2" y="565.0" font-size="13" font-weight="600">2.61 s</text>
+<text x="0.0" y="595.0" font-size="14">Flask · Python</text>
+<rect x="206.0" y="583.0" width="14.1" height="14.0" rx="2" fill="#3fb950"/>
+<text x="226.1" y="595.0" font-size="13" font-weight="600">1.09 s</text>
+<rect x="420.0" y="583.0" width="58.1" height="14.0" rx="2" fill="#3fb950"/>
+<text x="484.1" y="595.0" font-size="13" font-weight="600">0.40 s</text>
+<rect x="634.0" y="583.0" width="7.6" height="14.0" rx="2" fill="#3fb950"/>
+<text x="647.6" y="595.0" font-size="13" font-weight="600">0.47 s</text>
+<text x="0.0" y="625.0" font-size="14">Hono · TypeScript</text>
+<rect x="206.0" y="613.0" width="22.7" height="14.0" rx="2" fill="#3fb950"/>
+<text x="234.7" y="625.0" font-size="13" font-weight="600">1.74 s</text>
+<rect x="420.0" y="613.0" width="60.3" height="14.0" rx="2" fill="#3fb950"/>
+<text x="486.3" y="625.0" font-size="13" font-weight="600">0.41 s</text>
+<rect x="634.0" y="613.0" width="17.9" height="14.0" rx="2" fill="#3fb950"/>
+<text x="657.9" y="625.0" font-size="13" font-weight="600">1.11 s</text>
+<text x="0.0" y="655.0" font-size="14">Vue core · TypeScript</text>
+<rect x="206.0" y="643.0" width="26.1" height="14.0" rx="2" fill="#3fb950"/>
+<text x="238.1" y="655.0" font-size="13" font-weight="600">2.00 s</text>
+<rect x="420.0" y="643.0" width="61.4" height="14.0" rx="2" fill="#3fb950"/>
+<text x="487.4" y="655.0" font-size="13" font-weight="600">0.42 s</text>
+<rect x="634.0" y="643.0" width="22.6" height="14.0" rx="2" fill="#3fb950"/>
+<text x="662.6" y="655.0" font-size="13" font-weight="600">1.40 s</text>
+<text x="0.0" y="685.0" font-size="14">Django · Python</text>
+<rect x="206.0" y="673.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="354.0" y="685.0" font-size="13" font-weight="600">10.90 s</text>
+<rect x="420.0" y="673.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="568.0" y="685.0" font-size="13" font-weight="600">0.97 s</text>
+<rect x="634.0" y="673.0" width="142.0" height="14.0" rx="2" fill="#3fb950"/>
+<text x="782.0" y="685.0" font-size="13" font-weight="600">8.78 s</text>
+<line x1="206.0" y1="486.0" x2="206.0" y2="688.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<line x1="420.0" y1="486.0" x2="420.0" y2="688.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<line x1="634.0" y1="486.0" x2="634.0" y2="688.0" stroke="#b1bac4" stroke-width="1" stroke-opacity="0.6"/>
+<line x1="0.0" y1="698.0" x2="840.0" y2="698.0" stroke="#3d444d" stroke-width="1"/>
+<text x="0.0" y="720.0" font-size="13" fill="#b1bac4">One file edited: the file most other files import. Coding task: the command the skill gives the agent when edits are</text>
+<text x="0.0" y="739.0" font-size="13" fill="#b1bac4">allowed; its first query starts the local service and indexes. Question or review: the read-only command, which starts</text>
+<text x="0.0" y="758.0" font-size="13" fill="#b1bac4">no service and writes no cache, timed with no cache yet.</text>
+</svg>
