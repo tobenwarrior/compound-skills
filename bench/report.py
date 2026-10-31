@@ -148,13 +148,13 @@ def describe(records: list[dict], model: str, arms: list[str]) -> dict:
                     "wall_s": median([r["harness"]["wall_ms"] / 1000 for r in done]),
                     "output_tokens": median([r["tokens"]["output"] for r in done]),
                     "tool_calls": median([r["trace"]["tool_calls"] for r in done]),
-                    "skill_used": kn(done, lambda r: r["compound"]["compound_skill"]),
+                    "skill_used": kn(done, lambda r: r["compound"]["compound_skill"] or r["compound"].get("plugin_skill_calls")),
                     "map_used": kn(done, lambda r: r["compound"]["map_calls"]),
                     "timeouts": sum(1 for r in done if r["timed_out"])}
         control = runs(("inactive",), arm)
         if control:
             out["control"][arm] = {"answered": kn(control, lambda r: r["outcome"].get("success")),
-                                   "skill_used": kn(control, lambda r: r["compound"]["compound_skill"]),
+                                   "skill_used": kn(control, lambda r: r["compound"]["compound_skill"] or r["compound"].get("plugin_skill_calls")),
                                    "files_changed": kn(control, lambda r: r["outcome"].get("files")),
                                    "cost_usd": median([r["tokens"]["cost_usd"] for r in control])}
     return out

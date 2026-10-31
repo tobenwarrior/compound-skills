@@ -166,7 +166,8 @@ def main() -> int:
     p = sub.add_parser("run", help="run arms side by side on tasks")
     p.add_argument("--label", required=True, help="results folder name; rerunning a label resumes it")
     p.add_argument("--arms", default="without,with",
-                   help="comma-separated: without, with (this worktree), rule, or name=none|rule|worktree|ref:<revision>|dir:<path>")
+                   help="comma-separated: without, with (this worktree), rule, or name=none|rule|worktree|ref:<revision>|dir:<path>, "
+                        "each optionally +rule:<file>")
     p.add_argument("--tasks", default="core", help="task names or tags: core, bugfix, judged, control, all")
     p.add_argument("--models", default="opus", help="comma-separated aliases (opus, sonnet, haiku) or model ids")
     p.add_argument("--reps", type=int, default=1)

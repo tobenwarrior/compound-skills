@@ -37,13 +37,16 @@ MODEL_ALIASES = ("opus", "sonnet", "haiku")
 HOMES = PurePosixPath("/home")
 SANDBOX_HOME = str(HOMES / "dev")
 SRC_ROOT = f"{SANDBOX_HOME}/src"
-PLUGIN_MOUNT = f"{SANDBOX_HOME}/.local/share/claude-plugins/compound-skills"
+PLUGINS_ROOT = f"{SANDBOX_HOME}/.local/share/claude-plugins"
+COMPOUND = "compound-skills"
+PLUGIN_MOUNT = f"{PLUGINS_ROOT}/{COMPOUND}"
 SCRIPTS_MOUNT = f"{PLUGIN_MOUNT}/skills/compound/scripts"
 TRACE_MOUNT = str(HOMES / ".devtrace")
 PYENV_MOUNT = str(HOMES / ".bench-python")
 GIT_IDENTITY = ("Alex Morgan", "alex.morgan@example.invalid")
 
 ARM_NAME = re.compile(r"^[a-z][a-z0-9-]{0,30}$")
+PLUGIN_NAME = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 BUILTIN_ARMS = {"without": "none", "with": "worktree", "rule": "rule"}
 # Arm "rule": generic habits as a short user rule, about as long as Compound's always-on rule.
 HABITS_RULE = ("Before fixing a reported bug, reproduce it by running the code. Add a regression test and show that it "
@@ -99,10 +102,13 @@ def same_model(requested: str, served: str | None) -> bool:
 # ---------------------------------------------------------------- arms
 
 def parse_arms(spec: str) -> list[dict]:
-    """`without,with` or `name=source` items; a source is none, rule, worktree, ref:<git revision> or dir:<path>."""
+    """`without,with` or `name=source[+rule:<file>]` items; a source is none, rule, worktree, ref:<git revision> or
+    dir:<path>. A dir: plugin need not be Compound: its manifest name decides where it is mounted. `+rule:<file>` also
+    installs that file as an always-on user rule, as a plugin's own setup step would."""
     arms, seen = [], set()
     for item in filter(None, (part.strip() for part in spec.split(","))):
         name, _, source = item.partition("=")
+        source, _, rule = source.partition("+rule:")
         if not source:
             if name not in BUILTIN_ARMS:
                 raise SystemExit(f"unknown arm {name!r}: use without, with, rule or name=source")
@@ -114,7 +120,15 @@ def parse_arms(spec: str) -> list[dict]:
         if name in seen:
             raise SystemExit(f"arm {name} given twice")
         seen.add(name)
-        arms.append({"name": name, "source": source})
+        arm = {"name": name, "source": source}
+        if rule:
+            if source == "rule":
+                raise SystemExit(f"arm {name}: the rule arm already has its rule; use none+rule:<file>")
+            path = Path(rule).expanduser().resolve()
+            if not path.is_file():
+                raise SystemExit(f"arm {name}: rule file {rule} not found")
+            arm["rule_file"] = str(path)
+        arms.append(arm)
     if not arms:
         raise SystemExit("no arms given")
     return arms
@@ -127,8 +141,9 @@ def _excluded(relative: str) -> bool:
 def materialize(arm: dict) -> dict:
     """Copy the plugin an arm runs into an immutable snapshot named by its content hash."""
     source = arm["source"]
+    rule = {"rule_sha256": sha256_bytes(Path(arm["rule_file"]).read_bytes())} if arm.get("rule_file") else {}
     if source in ("none", "rule"):
-        return {**arm, "plugin": None}
+        return {**arm, **rule, "plugin": None}
     PLUGINS.mkdir(parents=True, exist_ok=True)
     staging = PLUGINS / f".staging-{arm['name']}-{os.getpid()}"
     shutil.rmtree(staging, ignore_errors=True)
@@ -168,5 +183,19 @@ def materialize(arm: dict) -> dict:
         shutil.rmtree(staging)
     else:
         staging.rename(final)
-    version = json.loads((final / ".claude-plugin" / "plugin.json").read_text()).get("version")
-    return {**arm, **info, "plugin": str(final), "plugin_hash": digest, "plugin_version": version}
+    manifest = json.loads((final / ".claude-plugin" / "plugin.json").read_text())
+    name = manifest.get("name")
+    if not isinstance(name, str) or not PLUGIN_NAME.match(name):
+        raise SystemExit(f"arm {arm['name']}: plugin name {name!r} is not a plain lowercase name")
+    return {**arm, **info, **rule, "plugin": str(final), "plugin_hash": digest, "plugin_version": manifest.get("version"),
+            "plugin_name": name}
+
+
+def is_compound(arm: dict) -> bool:
+    """A plugin arm running Compound; records from before third-party arms existed carry no plugin name."""
+    return bool(arm.get("plugin_hash")) and (arm.get("plugin_name") or COMPOUND) == COMPOUND
+
+
+def plugin_mount(arm: dict) -> str:
+    """Where a plugin arm's snapshot appears in the sandbox: under its manifest name, as an installed plugin would."""
+    return f"{PLUGINS_ROOT}/{arm.get('plugin_name') or COMPOUND}"

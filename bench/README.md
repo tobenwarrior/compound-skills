@@ -1,6 +1,6 @@
 # Benchmark
 
-This folder holds the harness behind the results in the [main README](../README.md#benchmark). It runs headless Claude Code side by side on fixed engineering tasks, once per arm: no plugin, this checkout, or any other version of Compound. Then it grades what each run did and what it left behind. Rerun it whenever a change to the skills, references, rules or scripts could change how agents work.
+This folder holds the harness behind the results in the [main README](../README.md#benchmark). It runs headless Claude Code side by side on fixed engineering tasks, once per arm: no plugin, this checkout, any other version of Compound, or another plugin. Then it grades what each run did and what it left behind. Rerun it whenever a change to the skills, references, rules or scripts could change how agents work.
 
 Nothing here is loaded by Claude Code, Codex or Cursor. Results stay on your machine in the ignored `bench/results/` folder, and fetched sources stay in the ignored `bench/work/` folder.
 
@@ -47,10 +47,13 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 | `rule` | No plugin; a short generic habits rule (reproduce, failing test first, full suite) instead |
 | `name=worktree` | This checkout under another name |
 | `name=ref:<revision>` | Any commit, tag or branch of this repository, such as `ref:v0.13.0` or `ref:main` |
-| `name=dir:<path>` | A plugin folder on disk with `.claude-plugin/plugin.json` |
+| `name=dir:<path>` | A plugin folder on disk with `.claude-plugin/plugin.json`: another Compound, or any other Claude Code plugin |
 | `name=none` or `name=rule` | No plugin, under another name; `a=none,b=none` measures noise between identical arms |
+| `name=<source>+rule:<file>` | Also installs `<file>` as an always-on user rule, for a plugin whose setup asks for one, or `none+rule:<file>` for a rule alone |
 
-Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Write tasks also record the one-time repository check-up as completed, so runs measure everyday use. The `first-use` task measures the check-up itself.
+Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run of a Compound arm, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Write tasks also record the one-time repository check-up as completed, so runs measure everyday use. The `first-use` task measures the check-up itself.
+
+Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
 ## Tasks
 

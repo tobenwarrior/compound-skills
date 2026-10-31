@@ -25,8 +25,9 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from common import (BENCH, FIXTURES, GIT_IDENTITY, HABITS_RULE, PLUGIN_MOUNT, PYENV_MOUNT, PYENVS, RESULTS, RUNS, SANDBOX_HOME,
-                    SCRIPTS_MOUNT, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, materialize, same_model, sha256_bytes, tree_hash)
+from common import (BENCH, COMPOUND, FIXTURES, GIT_IDENTITY, HABITS_RULE, PYENV_MOUNT, PYENVS, RESULTS, RUNS, SANDBOX_HOME,
+                    SCRIPTS_MOUNT, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, is_compound, materialize, plugin_mount, same_model,
+                    sha256_bytes, tree_hash)
 
 sys.path.insert(0, str(BENCH / "shim"))
 from devtrace import digest  # noqa: E402
@@ -43,8 +44,8 @@ LOCK = threading.Lock()
 # then runs claude as a child of PID 1, so every process the run starts dies with the namespace.
 RUNNER = r'''
 set -eu
-R="$1"; P="$2"; PLUG="$3"; ONBOARD="$4"; SHIM="$5"; KEEP="$6"; D="$7"; TRACE="$8"; STAGE="$9"; PYENV="${10}"; PYMOUNT="${11}"
-shift 11
+R="$1"; P="$2"; PLUG="$3"; ONBOARD="$4"; SHIM="$5"; KEEP="$6"; D="$7"; TRACE="$8"; STAGE="$9"; PYENV="${10}"; PYMOUNT="${11}"; M="${12}"
+shift 12
 NL='
 '
 mount -t tmpfs -o mode=755 tmpfs "$STAGE"
@@ -68,7 +69,6 @@ mkdir -p "$D/src/$P" "$D/.claude" "$D/.cache/compound-skills"
 mount --bind "$STAGE/run/$P" "$D/src/$P"
 mount --bind "$STAGE/run/cfg" "$D/.claude"
 mount --bind "$STAGE/run/state" "$D/.cache/compound-skills"
-M="$D/.local/share/claude-plugins/compound-skills"
 if [ "$PLUG" != - ]; then mkdir -p "$M"; mount --bind "$STAGE/plug" "$M"; mount -o remount,bind,ro "$M"; fi
 if [ "$SHIM" != - ]; then
   mkdir -p "$D/.local/bin" "$TRACE"
@@ -176,8 +176,8 @@ def install_shim(folder: Path) -> None:
 
 # ---------------------------------------------------------------- one run
 
-def permission_args(task: dict) -> list[str]:
-    """One policy per task kind, identical in every arm."""
+def permission_args(task: dict, arm: dict | None = None) -> list[str]:
+    """One policy per task kind, identical in every arm except that a plugin arm may run its own helpers."""
     if task["kind"] == "write":
         return ["--permission-mode", "acceptEdits",
                 "--allowedTools", "Bash", "Read", "Edit", "Write", "Grep", "Glob", "Skill", "TodoWrite", "Task",
@@ -188,6 +188,11 @@ def permission_args(task: dict) -> list[str]:
     for helper in PLUGIN_HELPERS:
         for python in ("python3 -B", "python3"):
             allowed.append(f"Bash({python} {SCRIPTS_MOUNT}/{helper}:*)")
+    if arm and arm.get("plugin") and not is_compound(arm):
+        # Another plugin's helpers are unknown to us, so any command that runs a file from its own folder is allowed.
+        mount = plugin_mount(arm)
+        allowed += [f"Bash({runner} {mount}/:*)" for runner in ("python3 -B", "python3", "python", "bash", "sh", "node")]
+        allowed.append(f"Bash({mount}/:*)")
     return ["--permission-mode", "default",
             "--allowedTools", "Read", "Grep", "Glob", "Edit", "Write", "Skill", "TodoWrite", "Task", *allowed,
             "--disallowedTools", "WebFetch", "WebSearch", *NETWORK_DENY]
@@ -195,9 +200,9 @@ def permission_args(task: dict) -> list[str]:
 
 def claude_argv(task: dict, arm: dict, model: str) -> list[str]:
     argv = ["claude", "-p", task["prompt"], "--output-format", "stream-json", "--verbose", "--model", model,
-            "--no-session-persistence", *permission_args(task)]
+            "--no-session-persistence", *permission_args(task, arm)]
     if arm["plugin"]:
-        argv += ["--plugin-dir", PLUGIN_MOUNT]
+        argv += ["--plugin-dir", plugin_mount(arm)]
     return argv
 
 
@@ -217,7 +222,7 @@ def environment(task: dict, arm: dict, port: int | None) -> dict[str, str]:
     env.update({key: os.environ[key] for key in os.environ.get("BENCH_PASS_ENV", "").split(",") if key and key in os.environ})
     env.update(HOME=SANDBOX_HOME, CLAUDE_CONFIG_DIR=f"{SANDBOX_HOME}/.claude", PATH=sandbox_path(), LANG="C.UTF-8",
                TERM="dumb", DISABLE_AUTOUPDATER="1")
-    if arm["plugin"] and port:
+    if is_compound(arm) and port:
         env["COMPOUND_MAP_PORT"] = str(port)
     if task.get("pyenv"):
         # The project's test dependencies, read-only, and its src/ as an editable install would provide it.
@@ -267,13 +272,19 @@ def prepare(task: dict, arm: dict, model: str) -> dict:
         "[safe]\n\tdirectory = *\n")
     if task.get("plant_user_work"):
         task["plant_user_work"](run / project)
-    port = free_port() if arm["plugin"] else None
+    compound = is_compound(arm)
+    port = free_port() if compound else None
     setup: dict = {}
     if arm["source"] == "rule":
         (run / "cfg" / "rules").mkdir(exist_ok=True)
         (run / "cfg" / "rules" / "engineering.md").write_text(HABITS_RULE)
         setup["rule_sha256"] = sha256_bytes(HABITS_RULE.encode())
-    if arm["plugin"]:
+    if arm.get("rule_file"):
+        text = Path(arm["rule_file"]).read_bytes()
+        (run / "cfg" / "rules").mkdir(exist_ok=True)
+        (run / "cfg" / "rules" / f"{arm['name']}.md").write_bytes(text)
+        setup["extra_rule_sha256"] = sha256_bytes(text)
+    if compound:
         out = subprocess.run([sys.executable, "-B", str(Path(arm["plugin"]) / "skills/compound/scripts/project_setup.py"), "enable",
                               "--global", "--host", "claude"],
                              env={"PATH": "/usr/bin:/bin", "HOME": str(run / "home"), "CLAUDE_CONFIG_DIR": str(run / "cfg"),
@@ -281,7 +292,7 @@ def prepare(task: dict, arm: dict, model: str) -> dict:
         setup["rule_exit"] = out.returncode
         rule = run / "cfg" / "rules" / "compound-skills.md"
         setup["rule_sha256"] = sha256_bytes(rule.read_bytes()) if rule.exists() else None
-    onboard = bool(arm["plugin"]) and task["kind"] == "write" and not task.get("first_use")
+    onboard = compound and task["kind"] == "write" and not task.get("first_use")
     write = task["kind"] == "write"
     return {"run_id": run_id, "run": run, "task": task, "arm": arm, "model": model, "port": port, "setup": setup,
             "onboard": onboard, "fixture_head": git(run / project, "rev-parse", "HEAD").strip(),
@@ -299,11 +310,12 @@ def execute(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float
     stderr_path = out_dir / f"{prep['run_id']}.stderr"
     keep = keep_paths()
     plugin = arm["plugin"] or "-"
+    mount = plugin_mount(arm) if arm["plugin"] else "-"
     shim = str(run / "shim") if task["kind"] == "write" else "-"
     pyenv = str(PYENVS / task["pyenv"]) if task.get("pyenv") else "-"
     stage = stage_dir([str(run), plugin, shim, pyenv, *keep])
     argv = ["taskset", "-c", cpus, *unshare_prefix(), "/bin/sh", "-c", RUNNER, "runner", str(run), project, plugin,
-            "1" if prep["onboard"] else "0", shim, "\n".join(keep), SANDBOX_HOME, TRACE_MOUNT, stage, pyenv, PYENV_MOUNT,
+            "1" if prep["onboard"] else "0", shim, "\n".join(keep), SANDBOX_HOME, TRACE_MOUNT, stage, pyenv, PYENV_MOUNT, mount,
             *claude_argv(task, arm, prep["model"])]
     env = environment(task, arm, prep["port"])
     changes: list[tuple[int, str, str]] = []
@@ -540,11 +552,16 @@ def summarize(parsed: dict, prep: dict, harness: dict) -> dict:
     by_name: dict[str, int] = {}
     for call in calls:
         by_name[call["name"]] = by_name.get(call["name"], 0) + 1
+    arm = prep["arm"]
+    compound = is_compound(arm)
     skill_calls = [c["input"].get("skill") for c in calls if c["name"] == "Skill"]
-    compound_skill = [s for s in skill_calls if s and SKILL.match(s)]
-    references = guide_refs(calls)
+    compound_skill = [s for s in skill_calls if s and SKILL.match(s)] if compound else []
+    # Another plugin's skills are namespaced by its manifest name, as Compound's are by compound-skills.
+    plugin_skill = [s for s in skill_calls if s and not compound and arm.get("plugin")
+                    and s.startswith(f"{arm.get('plugin_name')}:")]
+    references = guide_refs(calls) if compound else []
     map_calls = []
-    for c in calls:
+    for c in calls if compound else []:
         command = str(c["input"].get("command", "")) if c["name"] == "Bash" else ""
         script = re.search(r"(code_map|symbol_lookup|lsp_lookup|map_server)\.py", command)
         if script:
@@ -554,10 +571,13 @@ def summarize(parsed: dict, prep: dict, harness: dict) -> dict:
     onboarding_calls = [re.search(r"onboarding\.py\s+(\w+)", str(c["input"].get("command", ""))).group(1)
                         for c in calls if c["name"] == "Bash" and re.search(r"onboarding\.py\s+\w+", str(c["input"].get("command", "")))]
     audit_calls = sum(1 for c in calls if c["name"] == "Bash" and "repo_audit.py" in str(c["input"].get("command", "")))
-    skill_loaded = any("Base directory for this skill:" in c["text"] and "/skills/compound" in c["text"] for c in calls if c["name"] == "Skill")
+    skill_loaded = compound and any("Base directory for this skill:" in c["text"] and "/skills/compound" in c["text"]
+                                    for c in calls if c["name"] == "Skill")
     activation = "none"
     if compound_skill or skill_loaded:
         activation = "skill" + ("+refs" if references else "") + ("+map" if map_calls else "")
+    elif plugin_skill:
+        activation = "plugin-skill"
     leak_text = "\n".join(json.dumps(c["input"]) + c["text"] for c in calls) + "\n".join(parsed["assistant_text"])
     control_leak = not prep["arm"]["plugin"] and bool(re.search(r"(?i)compound", leak_text))
     project = prep["run"] / prep["task"]["fixture"]
@@ -584,6 +604,7 @@ def summarize(parsed: dict, prep: dict, harness: dict) -> dict:
                   "fallback_events": parsed["fallback_events"]},
         "habits": habit, "digests_pre": prep.get("digests_pre"), "digests_final": final_digests,
         "compound": {"skill_calls": skill_calls, "compound_skill": bool(compound_skill), "skill_loaded": skill_loaded,
+                     "plugin_skill_calls": plugin_skill,
                      "references": references, "map_calls": map_calls, "onboarding_calls": onboarding_calls,
                      "audit_calls": audit_calls, "activation": activation, "control_leak": control_leak},
         "final_message": result.get("result") or "",
@@ -597,6 +618,8 @@ def validity(record: dict) -> tuple[bool, list[str], str | None]:
     reasons, infra = [], None
     init, result, harness, compound = record["init"], record["result"], record["harness"], record["compound"]
     plugin_arm = bool(record["plugin_hash"])
+    plugin_name = record.get("plugin_name") or COMPOUND
+    compound_arm = is_compound(record)
     if not result["present"]:
         tail = harness.get("stderr_tail", "")
         infra = "api" if re.search(r"(?i)api error|overloaded|rate.?limit|529|5\d\d|ECONNRESET|socket hang up|network", tail) else "harness"
@@ -612,18 +635,23 @@ def validity(record: dict) -> tuple[bool, list[str], str | None]:
         reasons.append(f"other models used: {result['models']}")
     if init.get("cwd") and not str(init["cwd"]).startswith(SRC_ROOT + "/"):
         reasons.append(f"cwd {init['cwd']}")
-    has_plugin = any(name == "compound-skills" for name, *_ in init.get("plugins", []))
-    has_skill = "compound-skills:compound" in (init.get("skills") or [])
-    if plugin_arm and init and not (has_plugin and has_skill):
+    # Claude Code's own bundled plugins (cc-plugin-*) load in every arm; any other plugin must be the arm's.
+    loaded = {name for name, *_ in init.get("plugins", []) if name and not str(name).startswith("cc-plugin-")}
+    has_skill = f"{COMPOUND}:compound" in (init.get("skills") or [])
+    if plugin_arm and init and (plugin_name not in loaded or (compound_arm and not has_skill)):
         reasons.append("plugin not loaded")
-    if not plugin_arm and (has_plugin or has_skill):
+    if plugin_arm and loaded - {plugin_name}:
+        reasons.append(f"other plugins loaded: {sorted(loaded - {plugin_name})}")
+    if not plugin_arm and (loaded or has_skill):
         reasons.append("plugin present in control")
     if compound["control_leak"]:
         reasons.append("control saw compound")
     if any(call["fallback"] for call in compound["map_calls"]):
         reasons.append("map fallback")
-    if plugin_arm and record["setup"].get("rule_sha256") is None:
+    if compound_arm and record["setup"].get("rule_sha256") is None:
         reasons.append("rule missing")
+    if record.get("extra_rule_sha256") and record["setup"].get("extra_rule_sha256") != record["extra_rule_sha256"]:
+        reasons.append("arm rule missing")
     if record.get("onboarding_status") not in (None, "completed"):
         reasons.append(f"onboarding {record.get('onboarding_status')}")
     if plugin_arm and record["onboard"] and (compound["audit_calls"] or "claim" in compound["onboarding_calls"]):
@@ -654,6 +682,7 @@ def one(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float, re
     harness["init_ms"] = parsed["init_ms"]
     record = {"schema": 3, "run_id": prep["run_id"], "pair_id": group_id, "task": task["name"], "arm": arm["name"],
               "arm_source": arm["source"], "plugin_hash": arm.get("plugin_hash"), "plugin_version": arm.get("plugin_version"),
+              "plugin_name": arm.get("plugin_name"), "extra_rule_sha256": arm.get("rule_sha256"),
               "plugin_commit": arm.get("commit"), "model": prep["model"], "rep": rep, "kind": task.get("cell", "measured"),
               "fixture": task["fixture"], "fixture_head": prep["fixture_head"],
               "prompt_sha256": sha256_bytes(task["prompt"].encode()), "setup": prep["setup"], "onboard": prep["onboard"],
@@ -756,8 +785,8 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
     known = json.loads((out / "arms.json").read_text()) if (out / "arms.json").exists() else {}
     for arm in arms:
         previous = known.get(arm["name"])
-        if previous and previous.get("plugin_hash") != arm.get("plugin_hash"):
-            raise SystemExit(f"arm {arm['name']} in label {label} ran a different plugin ({previous.get('plugin_hash')}); "
+        if previous and (previous.get("plugin_hash"), previous.get("rule_sha256")) != (arm.get("plugin_hash"), arm.get("rule_sha256")):
+            raise SystemExit(f"arm {arm['name']} in label {label} ran a different plugin or rule ({previous.get('plugin_hash')}); "
                              "use a new label or a new arm name")
         known[arm["name"]] = {k: v for k, v in arm.items() if k != "plugin"}
     (out / "arms.json").write_text(json.dumps(known, indent=1))
@@ -855,7 +884,7 @@ def rescore(label: str) -> int:
             continue
         calls = parse_stream(stream)["calls"]
         before = (record.get("habits"), record["compound"].get("references"))
-        record["compound"]["references"] = guide_refs(calls)
+        record["compound"]["references"] = guide_refs(calls) if is_compound(record) else []
         if record.get("digests_pre") and record.get("digests_final"):
             prep = {"task": task, "digests_pre": record["digests_pre"]}
             record["habits"] = habits(prep, record["harness"], calls, tuple(record["digests_final"]))
