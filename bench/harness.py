@@ -525,12 +525,15 @@ def habits(prep: dict, harness: dict, calls: list[dict], final: tuple[str, str])
         return ""
 
     before = [e for e in runs if e["src0"] == orig_src and (first_src_change is None or e["ms1"] <= first_src_change)]
+    failing_old = [e for e in runs if is_test(e) and e["src0"] == orig_src and e["tests0"] != orig_tests and e["exit"] != 0]
     return {
         "first_src_change_ms": first_src_change,
         "python_runs": len(runs), "test_runs": sum(1 for e in runs if is_test(e)),
         "ran_before_change": bool(before),
         "reproduced_before_fix": any((symptom and symptom.search(output(e))) or FAILURE.search(output(e)) for e in before),
-        "failing_test_on_old_code": any(is_test(e) and e["src0"] == orig_src and e["tests0"] != orig_tests and e["exit"] != 0 for e in runs),
+        # At any time, including a check after the fix with the fix set aside; failing_test_before_fix keeps the habit's order.
+        "failing_test_on_old_code": bool(failing_old),
+        "failing_test_before_fix": any(first_src_change is None or e["ms1"] <= first_src_change for e in failing_old),
         "final_state_tested": any(is_test(e) and e["exit"] == 0 and e["src0"] == final_src and e["tests0"] == final_tests for e in runs),
         "final_full_suite_ok": any(is_test(e) and e["exit"] == 0 and e["src0"] == final_src and e["tests0"] == final_tests
                                    and full_suite.search(" ".join(map(str, e["argv"]))) for e in runs),

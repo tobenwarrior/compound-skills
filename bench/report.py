@@ -29,6 +29,7 @@ GROUPS = {"bugfix": ("Bug fixes in invoicekit (three bugs pooled)", BUGFIX),
 HABITS = [  # (key, label, source)
     ("reproduced_before_fix", "Reproduced the bug before changing code", "habits"),
     ("failing_test_on_old_code", "Showed a new test failing on the old code", "habits"),
+    ("failing_test_before_fix", "Showed a new test failing before changing code", "habits"),
     ("final_full_suite_ok", "Ran the full suite on the final code", "habits"),
     ("hidden_pass", "Fix passes the hidden test", "outcome"),
     ("regression_valid", "Left a valid regression test", "outcome"),
@@ -273,7 +274,7 @@ def build(labels: list[str], baseline: str | None) -> tuple[dict, str]:
             rows = []
             for arm, comparison in against.items():
                 for group, (title, _) in GROUPS.items():
-                    for key, label, _ in HABITS[:3] + [h for h in HABITS if h[0] == "success"]:
+                    for key, label, _ in HABITS[:4] + [h for h in HABITS if h[0] == "success"]:
                         item = comparison[f"{group}:{key}"]
                         if item["pairs"]:
                             rows.append([arm, f"{title.split(' (')[0]}: {label}",

@@ -79,7 +79,8 @@ Prompts are the same in every arm, apart from a `+prefix:` an arm asks for, and 
 
 - **Habits**, from a `python3` shim that records the exact source and test state at every call, plus a watcher on the working tree:
   - the run reproduced the bug before its first source change;
-  - a new test failed on the old code;
+  - a new test failed on the old code, at any point (some runs check this after fixing, with the fix set aside);
+  - a new test failed on the old code before the first source change, the order the habit asks for;
   - the final code passed the full suite.
 - **Correctness**, graded outside the run:
   - hidden tests for each bug and for the refactor;
