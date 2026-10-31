@@ -25,8 +25,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from common import (BENCH, FIXTURES, GIT_IDENTITY, HABITS_RULE, PLUGIN_MOUNT, RESULTS, RUNS, SANDBOX_HOME, SCRIPTS_MOUNT,
-                    SHIM, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, materialize, same_model, sha256_bytes, tree_hash)
+from common import (BENCH, FIXTURES, GIT_IDENTITY, HABITS_RULE, PLUGIN_MOUNT, PYENV_MOUNT, PYENVS, RESULTS, RUNS, SANDBOX_HOME,
+                    SCRIPTS_MOUNT, SHIM, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, materialize, same_model, sha256_bytes, tree_hash)
 
 sys.path.insert(0, str(BENCH / "shim"))
 from devtrace import digest  # noqa: E402
@@ -43,7 +43,8 @@ LOCK = threading.Lock()
 # then runs claude as a child of PID 1, so every process the run starts dies with the namespace.
 RUNNER = r'''
 set -eu
-R="$1"; P="$2"; PLUG="$3"; ONBOARD="$4"; SHIM="$5"; KEEP="$6"; D="$7"; TRACE="$8"; STAGE="$9"; shift 9
+R="$1"; P="$2"; PLUG="$3"; ONBOARD="$4"; SHIM="$5"; KEEP="$6"; D="$7"; TRACE="$8"; STAGE="$9"; PYENV="${10}"; PYMOUNT="${11}"
+shift 11
 NL='
 '
 mount -t tmpfs -o mode=755 tmpfs "$STAGE"
@@ -51,6 +52,7 @@ mkdir "$STAGE/run"
 mount --bind "$R" "$STAGE/run"
 if [ "$PLUG" != - ]; then mkdir "$STAGE/plug"; mount --bind "$PLUG" "$STAGE/plug"; fi
 if [ "$SHIM" != - ]; then mkdir "$STAGE/shim"; mount --bind "$SHIM" "$STAGE/shim"; fi
+if [ "$PYENV" != - ]; then mkdir "$STAGE/pyenv"; mount --bind "$PYENV" "$STAGE/pyenv"; fi
 n=0; IFS=$NL
 for k in $KEEP; do n=$((n+1)); mkdir "$STAGE/k$n"; mount --bind "$k" "$STAGE/k$n"; done
 unset IFS
@@ -74,6 +76,7 @@ if [ "$SHIM" != - ]; then
   mount -o remount,bind,ro "$D/.local/bin"
   mount --bind "$STAGE/run/trace" "$TRACE"
 fi
+if [ "$PYENV" != - ]; then mkdir -p "$PYMOUNT"; mount --bind "$STAGE/pyenv" "$PYMOUNT"; mount -o remount,bind,ro "$PYMOUNT"; fi
 umount -R "$STAGE"
 cd "$D/src/$P"
 if [ "$ONBOARD" = 1 ]; then
@@ -166,7 +169,7 @@ def install_shim() -> None:
     if SHIM.exists():
         shutil.rmtree(SHIM)
     SHIM.mkdir(parents=True)
-    for name in ("python", "python3"):
+    for name in ("python", "python3", "pytest"):
         shutil.copy2(BENCH / "shim" / "python3", SHIM / name)
         (SHIM / name).chmod(0o755)
     shutil.copy2(BENCH / "shim" / "devtrace.py", SHIM / "devtrace.py")
@@ -210,13 +213,16 @@ def port_free(port: int) -> bool:
         return sock.connect_ex(("127.0.0.1", port)) != 0
 
 
-def environment(arm: dict, port: int | None) -> dict[str, str]:
+def environment(task: dict, arm: dict, port: int | None) -> dict[str, str]:
     env = {key: os.environ[key] for key in KEEP_ENV if key in os.environ}
     env.update({key: os.environ[key] for key in os.environ.get("BENCH_PASS_ENV", "").split(",") if key and key in os.environ})
     env.update(HOME=SANDBOX_HOME, CLAUDE_CONFIG_DIR=f"{SANDBOX_HOME}/.claude", PATH=sandbox_path(), LANG="C.UTF-8",
                TERM="dumb", DISABLE_AUTOUPDATER="1")
     if arm["plugin"] and port:
         env["COMPOUND_MAP_PORT"] = str(port)
+    if task.get("pyenv"):
+        # The project's test dependencies, read-only, and its src/ as an editable install would provide it.
+        env["PYTHONPATH"] = f"{PYENV_MOUNT}:{SRC_ROOT}/{task['fixture']}/src"
     return env
 
 
@@ -293,11 +299,12 @@ def execute(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float
     keep = keep_paths()
     plugin = arm["plugin"] or "-"
     shim = str(SHIM) if task["kind"] == "write" else "-"
-    stage = stage_dir([str(run), plugin, shim, *keep])
+    pyenv = str(PYENVS / task["pyenv"]) if task.get("pyenv") else "-"
+    stage = stage_dir([str(run), plugin, shim, pyenv, *keep])
     argv = ["taskset", "-c", cpus, *unshare_prefix(), "/bin/sh", "-c", RUNNER, "runner", str(run), project, plugin,
-            "1" if prep["onboard"] else "0", shim, "\n".join(keep), SANDBOX_HOME, TRACE_MOUNT, stage,
+            "1" if prep["onboard"] else "0", shim, "\n".join(keep), SANDBOX_HOME, TRACE_MOUNT, stage, pyenv, PYENV_MOUNT,
             *claude_argv(task, arm, prep["model"])]
-    env = environment(arm, prep["port"])
+    env = environment(task, arm, prep["port"])
     changes: list[tuple[int, str, str]] = []
     stop = threading.Event()
     while time.time() < start_at:
@@ -685,14 +692,14 @@ def one(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float, re
     return record
 
 
-def group(task: dict, arms: list[dict], model: str, rep: int, label: str, slot: int) -> list[dict]:
+def group(task: dict, arms: list[dict], model: str, rep: int, label: str, slot: int, first_cpu: int = 0) -> list[dict]:
     """Every arm on the same task at the same moment, each on its own CPU; order and CPUs rotate by repetition."""
     group_id = secrets.token_hex(4)
     count = len(arms)
     shift = rep % count
     order = arms[shift:] + arms[:shift]
     total = os.cpu_count() or 1
-    cpus = [str((slot * count + index) % total) for index in range(count)]
+    cpus = [str((first_cpu + slot * count + index) % total) for index in range(count)]
     turn = (rep // count) % count
     cpus = cpus[turn:] + cpus[:turn]
     preps = [prepare(task, arm, model) for arm in order]
@@ -739,7 +746,7 @@ def load_records(label: str) -> list[dict]:
 
 
 def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: list[str], reps: int, first_rep: int,
-               slots: int, retry: bool, max_seven_day: float, pause_five_hour: float) -> int:
+               slots: int, retry: bool, max_seven_day: float, pause_five_hour: float, first_cpu: int = 0) -> int:
     install_shim()
     out = RESULTS / label
     out.mkdir(parents=True, exist_ok=True)
@@ -752,6 +759,8 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
                              "use a new label or a new arm name")
         known[arm["name"]] = {k: v for k, v in arm.items() if k != "plugin"}
     (out / "arms.json").write_text(json.dumps(known, indent=1))
+    stop_file = out / "STOP"
+    stop_file.unlink(missing_ok=True)
     done = {(r["task"], r["model"], r["rep"], r["arm"]) for r in load_records(label) if not r.get("superseded")}
     queue = []
     for rep in range(first_rep, first_rep + reps):
@@ -774,6 +783,10 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
                 if not queue:
                     return
                 task, group_arms, model, rep = queue.pop(0)
+            if stop_file.exists():
+                print("stopping: STOP file", flush=True)
+                stop.set()
+                return
             seven, five, reset = utilization(label)
             if seven >= max_seven_day:
                 print(f"stopping: seven-day utilization {seven}", flush=True)
@@ -783,7 +796,7 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
                 wait = max(0, reset - time.time()) + 60
                 print(f"pausing {wait:.0f}s for the five-hour window ({five})", flush=True)
                 time.sleep(wait)
-            records = group(task, group_arms, model, rep, label, slot)
+            records = group(task, group_arms, model, rep, label, slot, first_cpu)
             if any(r["infra_failure"] for r in records) and retry:
                 print(f"re-running {task['name']} rep {rep} {model} after an infra failure", flush=True)
                 for r in records:
@@ -791,7 +804,7 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
                     data = json.loads(path.read_text())
                     data["superseded"] = True
                     path.write_text(json.dumps(data, indent=1, default=str))
-                group(task, group_arms, model, rep, label, slot)
+                group(task, group_arms, model, rep, label, slot, first_cpu)
 
     with concurrent.futures.ThreadPoolExecutor(slots) as pool:
         list(pool.map(worker, range(slots)))

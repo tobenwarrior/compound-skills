@@ -17,9 +17,13 @@ from pathlib import Path
 
 from common import RESULTS
 from harness import load_records
+from tasks import TASKS
 
 BUGFIX = ("bugfix-refund", "bugfix-leap", "bugfix-december")
 WRITE = BUGFIX + ("refactor-rounding",)
+REAL = tuple(name for name, task in TASKS.items() if "real" in task.get("tags", []))
+GROUPS = {"bugfix": ("Bug fixes in invoicekit (three bugs pooled)", BUGFIX),
+          "real": ("Real bugs in Flask and click (four bugs pooled)", REAL)}
 HABITS = [  # (key, label, source)
     ("reproduced_before_fix", "Reproduced the bug before changing code", "habits"),
     ("failing_test_on_old_code", "Showed a new test failing on the old code", "habits"),
@@ -116,12 +120,13 @@ def mutant_fraction(record: dict) -> float:
 def describe(records: list[dict], model: str, arms: list[str]) -> dict:
     runs = lambda task_names, arm: [r for r in records if r["model"] == model and r["arm"] == arm  # noqa: E731
                                     and r["task"] in task_names and r["valid"]]
-    out: dict = {"bugfix": {}, "refactor": {}, "judged": {}, "cost": {}, "control": {}}
+    out: dict = {**{group: {} for group in GROUPS}, "refactor": {}, "judged": {}, "cost": {}, "control": {}}
     for arm in arms:
-        fixes = runs(BUGFIX, arm)
-        row = {key: kn(fixes, lambda r, k=key, s=source: value(r, k, s)) for key, _, source in HABITS}
-        row["mutants_caught"] = f"{sum(r['outcome'].get('mutants_caught', 0) for r in fixes)}/{sum(r['outcome'].get('mutants_total', 0) for r in fixes)}"
-        out["bugfix"][arm] = row
+        for group, (_, names) in GROUPS.items():
+            fixes = runs(names, arm)
+            row = {key: kn(fixes, lambda r, k=key, s=source: value(r, k, s)) for key, _, source in HABITS}
+            row["mutants_caught"] = f"{sum(r['outcome'].get('mutants_caught', 0) for r in fixes)}/{sum(r['outcome'].get('mutants_total', 0) for r in fixes)}"
+            out[group][arm] = row
         refactors = runs(("refactor-rounding",), arm)
         out["refactor"][arm] = {key: kn(refactors, lambda r, k=key: r["outcome"].get(k)) for key, _ in REFACTOR}
         out["refactor"][arm]["mutants_caught"] = f"{sum(r['outcome'].get('mutants_caught', 0) for r in refactors)}/{sum(r['outcome'].get('mutants_total', 0) for r in refactors)}"
@@ -156,13 +161,12 @@ def describe(records: list[dict], model: str, arms: list[str]) -> dict:
 
 def compare(records: list[dict], model: str, arm: str, base: str) -> dict:
     out: dict = {}
-    for key, _, source in HABITS:
-        b = c = 0
-        found = pairs(records, BUGFIX, model, arm, base)
-        for a, z in found:
-            b += bool(value(a, key, source) and not value(z, key, source))
-            c += bool(value(z, key, source) and not value(a, key, source))
-        out[key] = {"arm_only": b, "base_only": c, "pairs": len(found), "p": mcnemar_exact(b, c)}
+    for group, (_, names) in GROUPS.items():
+        found = pairs(records, names, model, arm, base)
+        for key, _, source in HABITS:
+            b = sum(1 for a, z in found if value(a, key, source) and not value(z, key, source))
+            c = sum(1 for a, z in found if value(z, key, source) and not value(a, key, source))
+            out[f"{group}:{key}"] = {"arm_only": b, "base_only": c, "pairs": len(found), "p": mcnemar_exact(b, c)}
     found = pairs(records, ("refactor-rounding",), model, arm, base)
     for key, _ in REFACTOR:
         b = sum(1 for a, z in found if a["outcome"].get(key) and not z["outcome"].get(key))
@@ -231,10 +235,13 @@ def build(labels: list[str], baseline: str | None) -> tuple[dict, str]:
         summary["models"][model] = {"describe": described, "compare": compared}
         text += [f"## {model}", ""]
         has = lambda names: any(r["model"] == model and r["task"] in names and r["valid"] for r in records)  # noqa: E731
-        if has(BUGFIX):
-            text += ["### Bug fixes (all three bugs pooled)", ""]
-            rows = [[label] + [described["bugfix"][arm][key] for arm in arms] for key, label, _ in HABITS]
-            rows.append(["Mutants caught by the tests left behind"] + [described["bugfix"][arm]["mutants_caught"] for arm in arms])
+        for group, (title, names) in GROUPS.items():
+            if not has(names):
+                continue
+            text += [f"### {title}", ""]
+            rows = [[label] + [described[group][arm][key] for arm in arms] for key, label, _ in HABITS]
+            if group == "bugfix":
+                rows.append(["Mutants caught by the tests left behind"] + [described[group][arm]["mutants_caught"] for arm in arms])
             text += [table(["", *arms], rows), ""]
         if has(("refactor-rounding",)):
             text += ["### Refactor", ""]
@@ -262,9 +269,12 @@ def build(labels: list[str], baseline: str | None) -> tuple[dict, str]:
             text += [f"### Paired against {base}", ""]
             rows = []
             for arm, comparison in against.items():
-                for key, label, _ in HABITS[:3]:
-                    item = comparison[key]
-                    rows.append([arm, label, f"{item['arm_only']} vs {item['base_only']} of {item['pairs']} pairs", f"p={item['p']:.3g}"])
+                for group, (title, _) in GROUPS.items():
+                    for key, label, _ in HABITS[:3] + [h for h in HABITS if h[0] == "success"]:
+                        item = comparison[f"{group}:{key}"]
+                        if item["pairs"]:
+                            rows.append([arm, f"{title.split(' (')[0]}: {label}",
+                                         f"{item['arm_only']} vs {item['base_only']} of {item['pairs']} pairs", f"p={item['p']:.3g}"])
                 item = comparison["refactor_success"]
                 rows.append([arm, "Refactor finished correctly", f"{item['arm_only']} vs {item['base_only']} of {item['pairs']} pairs", f"p={item['p']:.3g}"])
                 for key, label in (("mutants_fraction", "Mutants caught (mean difference in share)"), ("judge_score", "Judge score (mean difference)")):

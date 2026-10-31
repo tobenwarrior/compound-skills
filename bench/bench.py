@@ -23,7 +23,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from common import RESULTS, SOURCES, TEMPLATE, materialize, parse_arms  # noqa: E402
+from common import RESULTS, SOURCES, TEMPLATE, materialize, parse_arms, work_lock  # noqa: E402
 
 
 def setup(args) -> int:
@@ -33,10 +33,21 @@ def setup(args) -> int:
     if problems:
         print("\n".join(f"cannot run: {problem}" for problem in problems))
         return 1
+    with work_lock(exclusive=True):
+        return _setup(args, fixtures, harness)
+
+
+def _setup(args, fixtures, harness) -> int:
     report = fixtures.build(map_sources=args.map)
     for name, checks in report["fixtures"].items():
         print(f"fixture {name}: {checks['head'][:12]} {'matches the frozen commit' if checks['matches_frozen_commit'] else 'DIFFERS from the frozen commit'}")
     print(f"reference trees: {', '.join(report['refs'])}; mutants: {len(report['mutants'])}")
+    for name, checks in report["real_bugs"].items():
+        if isinstance(checks, dict) and "hidden_tests" in checks:
+            print(f"real bug {name}: {checks['hidden_tests']} hidden tests, {checks['hidden_fail_on_parent']} fail before the fix; "
+                  f"suite at the parent: {checks['fixture_suite']}")
+    for warning in report["warnings"]:
+        print(f"warning: {warning}")
     if report["problems"]:
         print("\n".join(f"problem: {problem}" for problem in report["problems"]))
         return 1
@@ -57,7 +68,7 @@ def list_tasks(args) -> int:
     from tasks import TASKS
     for task in TASKS.values():
         print(f"{task['name']:20s} {task['kind']:5s} {','.join(task.get('tags', [])):16s} {task.get('about', '')}")
-    print("\ntags: core (the six measured tasks), bugfix, judged, control, all")
+    print("\ntags: core (the six measured tasks), bugfix, real, judged, control, all")
     return 0
 
 
@@ -68,8 +79,10 @@ def run(args) -> int:
     if problems:
         print("\n".join(f"cannot run: {problem}" for problem in problems))
         return 1
-    return harness.run_matrix(args.label, parse_arms(args.arms), tasks.select(args.tasks), args.models.split(","), args.reps,
-                              args.first_rep, args.slots, not args.no_retry, args.max_seven_day, args.pause_five_hour)
+    with work_lock(exclusive=False):
+        return harness.run_matrix(args.label, parse_arms(args.arms), tasks.select(args.tasks), args.models.split(","), args.reps,
+                                  args.first_rep, args.slots, not args.no_retry, args.max_seven_day, args.pause_five_hour,
+                                  args.first_cpu)
 
 
 def judge(args) -> int:
@@ -154,6 +167,7 @@ def main() -> int:
     p.add_argument("--reps", type=int, default=1)
     p.add_argument("--first-rep", type=int, default=1)
     p.add_argument("--slots", type=int, default=1, help="groups run at once; keep slots x arms within your CPU count")
+    p.add_argument("--first-cpu", type=int, default=0, help="first CPU to pin runs to, to keep two benchmarks apart")
     p.add_argument("--no-retry", action="store_true", help="do not rerun a group after an API or harness failure")
     p.add_argument("--max-seven-day", type=float, default=0.80, help="stop when seven-day usage reaches this share")
     p.add_argument("--pause-five-hour", type=float, default=0.75, help="wait for the reset when five-hour usage reaches this share")
@@ -185,7 +199,10 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "judge" and not args.calibrate and not args.label:
         parser.error("judge needs --label (or --calibrate)")
-    return args.func(args)
+    if args.command in ("setup", "tasks", "report", "run"):
+        return args.func(args)
+    with work_lock(exclusive=False):
+        return args.func(args)
 
 
 if __name__ == "__main__":

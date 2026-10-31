@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from common import DATA, FIXTURES, JUDGE_CONTEXT, REFS, SOURCES, git, sha256_bytes
+from common import BENCH, DATA, FIXTURES, JUDGE_CONTEXT, PYENVS, REFS, SOURCES, git, sha256_bytes
 
 # Upstream repositories at fixed commits. "full" keeps history (fixtures, retrieval); "shallow" is one commit.
 PINS = {
@@ -26,7 +26,7 @@ PINS = {
     "gin": ("https://github.com/gin-gonic/gin", "0f09c3a9b4626d9fe9979cf4d0521d6ae32ab646", "shallow"),
     "ripgrep": ("https://github.com/BurntSushi/ripgrep", "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b", "shallow"),
 }
-TASK_SOURCES = ("flask", "django")
+TASK_SOURCES = ("flask", "django", "click")
 MAP_SOURCES = ("flask", "click", "hono", "django", "vue-core", "gin", "ripgrep")
 
 # The frozen fixtures were signed commits; rebuilt ones are unsigned, so a rebuild must match tree, parent,
@@ -56,6 +56,24 @@ DJANGO_EXCERPTS = [
 ]
 CONTEXT_SHA256 = {"review-diff.txt": "3e79aaeb5add957d927928aeb675f38a054036f83986c682172fefbf5b5e8225",
                   "django-excerpts.txt": "d99b1d1763fb3feabc3752a8cdbad433b50c6144cd4b967524da3f9d7a004b2c"}
+
+# Real bugs fixed upstream in July to September 2026. Each fixture is the project at the fix's parent, with
+# history up to there; the fix's own new tests are the hidden tests.
+REAL_BUGS = {
+    "flask-ipv6-run": ("flask", "7203feabf723edae0286ae5dc64fec8ac4c91735"),
+    "flask-ipv6-session": ("flask", "de8429ffda8cfb54db175529e2bae72a24e1fa7e"),
+    "click-pickle-option": ("click", "f58ca3e81424a35626c8a475eb59ab95589008ce"),
+    "click-progress-final": ("click", "f316d5cb3aa89b57c14aee54da6ac9062ac5bec4"),
+}
+# Test dependencies at the versions each project's uv.lock pinned, installed as wheels only.
+PYENV_PACKAGES = {
+    "flask": ["pytest==9.1.1", "iniconfig==2.3.0", "pluggy==1.6.0", "packaging==26.2", "pygments==2.20.0", "werkzeug==3.1.8",
+              "jinja2==3.1.6", "itsdangerous==2.2.0", "click==8.4.2", "blinker==1.9.0", "markupsafe==3.0.3",
+              "asgiref==3.12.1", "python-dotenv==1.2.2"],
+    "click": ["pytest==9.0.2", "iniconfig==2.3.0", "pluggy==1.6.0", "packaging==26.0", "pygments==2.20.0"],
+}
+# Package metadata for the project itself, as an editable install would provide it.
+PYENV_PROJECT = {"flask": ("Flask", "3.2.0.dev"), "click": ("click", "8.5.0.dev0")}
 
 QUIET_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
              "-c", "init.defaultBranch=main"]
@@ -407,6 +425,12 @@ def build(map_sources: bool = False) -> dict:
     report["refs"] = build_refs()
     report["hidden"] = hidden_matrix()
     report["mutants"] = build_mutants()
+    try:
+        report["real_bugs"] = build_real_bugs()
+        report["warnings"] = []
+    except (RuntimeError, OSError, subprocess.CalledProcessError) as error:
+        report["real_bugs"] = {}
+        report["warnings"] = [f"real-bug tasks unavailable: {error}"]
     problems = [f"fixture {name} {key}" for name, checks in report["fixtures"].items() for key, value in checks.items()
                 if value is False]
     problems += [f"judge context {name} differs from the frozen text" for name, ok in report["judge_context"].items() if not ok]
@@ -414,6 +438,106 @@ def build(map_sources: bool = False) -> dict:
     if not report["hidden"]["suite_passes_everywhere"]:
         problems.append("the fixture suite fails on a reference tree")
     problems += [f"mutant {name} behaves differently" for name, row in report["mutants"].items() if not row["as_frozen"]]
+    problems += [f"real bug {name} {key}" for name, checks in report["real_bugs"].items() if isinstance(checks, dict)
+                 for key in ("matches_frozen_commit", "fix_not_reachable", "as_frozen", "only_expected_refs", "no_remote")
+                 if checks.get(key) is False]
     report["problems"] = problems
     (FIXTURES / "build.json").write_text(json.dumps(report, indent=1))
     return report
+
+
+def build_pyenv(name: str) -> dict:
+    dest = PYENVS / name
+    stamp = dest / ".packages"
+    wanted = "\n".join(PYENV_PACKAGES[name])
+    if not (stamp.exists() and stamp.read_text() == wanted):
+        shutil.rmtree(dest, ignore_errors=True)
+        dest.mkdir(parents=True)
+        out = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--disable-pip-version-check", "--no-input",
+                              "--no-deps", "--only-binary=:all:", "--target", str(dest), *PYENV_PACKAGES[name]],
+                             capture_output=True, text=True)
+        if out.returncode:
+            raise RuntimeError(f"pip could not install the {name} test dependencies: {out.stderr.strip()[-400:]}")
+        project, version = PYENV_PROJECT[name]
+        meta = dest / f"{project}-{version}.dist-info"
+        meta.mkdir()
+        (meta / "METADATA").write_text(f"Metadata-Version: 2.1\nName: {project}\nVersion: {version}\n")
+        stamp.write_text(wanted)
+    return {"pyenv": name, "packages": len(PYENV_PACKAGES[name])}
+
+
+def pytest_env(tree: Path, pyenv: str) -> dict:
+    return {"PATH": "/usr/bin:/bin", "PYTHONPATH": f"{PYENVS / pyenv}:{tree / 'src'}", "PYTHONDONTWRITEBYTECODE": "1",
+            "LANG": "C.UTF-8", "HOME": str(tree)}
+
+
+def pytest_probe(tree: Path, pyenv: str, *args: str) -> dict:
+    out = subprocess.run([sys.executable, "-B", str(BENCH / "probe_pytest.py"), *args], cwd=tree, env=pytest_env(tree, pyenv),
+                         capture_output=True, text=True, timeout=900)
+    try:
+        return json.loads(out.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return {"probe_error": (out.stderr or out.stdout)[-500:]}
+
+
+def pytest_suite(tree: Path, pyenv: str) -> dict:
+    out = subprocess.run([sys.executable, "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider"], cwd=tree,
+                         env=pytest_env(tree, pyenv), capture_output=True, text=True, timeout=1200)
+    lines = out.stdout.strip().splitlines()
+    return {"ok": out.returncode == 0, "summary": lines[-1] if lines else (out.stderr or "")[-300:]}
+
+
+def compose(base: Path, src_from: Path, tests_from: Path, dest: Path) -> Path:
+    """The base project with src/ from one tree and tests/ from another."""
+    shutil.rmtree(dest, ignore_errors=True)
+    top = lambda folder, names: [n for n in names if n in (".git", "__pycache__") or Path(folder) == base and n in ("src", "tests")]  # noqa: E731
+    shutil.copytree(base, dest, symlinks=True, ignore=top)
+    for part, origin in (("src", src_from), ("tests", tests_from)):
+        shutil.copytree(origin / part, dest / part, symlinks=True, ignore=shutil.ignore_patterns("__pycache__"))
+    return dest
+
+
+def build_real(name: str) -> dict:
+    source, fix = REAL_BUGS[name]
+    dest = FIXTURES / name
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(SOURCES / source, dest, symlinks=True)
+    parent = _git(dest, "rev-parse", f"{fix}^")
+    _git(dest, "checkout", "-q", "-B", "main", parent)
+    keep = {"refs/heads/main"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["matches_frozen_commit"] = checks["head"] == parent
+    checks["fix_not_reachable"] = subprocess.run(["git", "-C", str(dest), "cat-file", "-e", f"{fix}^{{commit}}"],
+                                                 capture_output=True).returncode != 0
+    ref = REFS / "real" / name
+    shutil.rmtree(ref, ignore_errors=True)
+    (ref / "fix").mkdir(parents=True)
+    archive = subprocess.run(["git", "-C", str(SOURCES / source), "archive", "--format=tar", fix, "src", "tests"],
+                             capture_output=True, check=True).stdout
+    subprocess.run(["tar", "-x", "-C", str(ref / "fix")], input=archive, check=True)
+    pyenv = source
+    scratch = ref / ".scratch"
+    before = pytest_probe(compose(dest, dest, dest, scratch / "fixture"), pyenv, "list")
+    after = pytest_probe(compose(dest, dest, ref / "fix", scratch / "fix-tests"), pyenv, "list")
+    hidden = [i for i in after.get("ids", []) if i not in before.get("ids", [])]
+    on_parent = pytest_probe(compose(dest, dest, ref / "fix", scratch / "parent"), pyenv, "run", *hidden)
+    on_fix = pytest_probe(compose(dest, ref / "fix", ref / "fix", scratch / "fixed"), pyenv, "run", *hidden)
+    suite = pytest_suite(scratch / "fixture", pyenv)
+    shutil.rmtree(scratch, ignore_errors=True)
+    (ref / "hidden.json").write_text(json.dumps({"ids": hidden, "fixture_info": before}, indent=1))
+    checks.update({
+        "hidden_tests": len(hidden), "fixture_suite_passes": suite["ok"], "fixture_suite": suite["summary"],
+        "hidden_fail_on_parent": sum(1 for status in on_parent.values() if status != "pass"),
+        "hidden_pass_on_fix": all(status == "pass" for status in on_fix.values()) and bool(hidden),
+    })
+    checks["as_frozen"] = bool(checks["hidden_fail_on_parent"] and checks["hidden_pass_on_fix"] and suite["ok"])
+    return checks
+
+
+def build_real_bugs() -> dict:
+    report = {"pyenvs": [build_pyenv(name) for name in PYENV_PACKAGES]}
+    for name in REAL_BUGS:
+        report[name] = build_real(name)
+    return report
+

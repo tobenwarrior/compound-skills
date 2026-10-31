@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 
 from common import BENCH, DATA, FIXTURES, GIT_IDENTITY, REFS
+from fixtures import compose, pytest_probe, pytest_suite
 
 FIXTURE = FIXTURES / "invoicekit"
 HIDDEN = DATA / "hidden"
@@ -330,8 +331,85 @@ TASKS["first-use"] = {
 }
 
 
+def _pytest_changes(fixture_info: dict, final_info: dict) -> tuple[list[str], list[str], list[str]]:
+    """New or changed pytest ids, removed existing ids, and existing tests with fewer checks."""
+    old_ids = set(fixture_info.get("ids", []))
+    new = [i for i in final_info.get("ids", []) if i not in old_ids]
+    changed = {key for key, dump in final_info.get("functions", {}).items()
+               if key in fixture_info.get("functions", {}) and fixture_info["functions"][key] != dump}
+    changed_ids = [i for i in final_info.get("ids", []) if i.split("[", 1)[0] in changed]
+    removed = [i for i in fixture_info.get("ids", []) if i not in set(final_info.get("ids", []))]
+    weakened = [key for key, count in fixture_info.get("asserts", {}).items()
+                if key in final_info.get("asserts", {}) and final_info["asserts"][key] < count]
+    return list(dict.fromkeys(new + changed_ids)), removed, weakened
+
+
+def real_bugfix(name: str):
+    """Hidden tests are the upstream fix's new tests, run on the final source with the fix's test files."""
+    def grade(project: Path, record: dict, prep: dict) -> dict:
+        pyenv, fixture, ref = prep["task"]["pyenv"], FIXTURES / name, REFS / "real" / name
+        frozen = json.loads((ref / "hidden.json").read_text())
+        with tempfile.TemporaryDirectory(prefix="grade-") as folder:
+            scratch = Path(folder)
+            final = _copy_final(project, scratch)
+            final_info = pytest_probe(final, pyenv, "list")
+            hidden = pytest_probe(compose(fixture, final, ref / "fix", scratch / "hidden"), pyenv, "run", *frozen["ids"])
+            original = pytest_suite(compose(fixture, final, fixture, scratch / "original"), pyenv)
+            own = pytest_suite(final, pyenv)
+            targets, removed, weakened = _pytest_changes(frozen["fixture_info"], final_info)
+            outcome = {"hidden_pass": bool(frozen["ids"]) and all(status == "pass" for status in hidden.values()),
+                       "hidden_failed": [i for i, status in hidden.items() if status != "pass"][:5],
+                       "original_suite_pass": original["ok"], "original_suite": original["summary"],
+                       "own_suite_pass": own["ok"], "own_suite": own["summary"],
+                       "test_ids": targets[:50], "removed_existing": removed, "weakened_existing": weakened,
+                       "regression_valid": False}
+            if targets:
+                buggy = pytest_probe(compose(fixture, fixture, final, scratch / "buggy"), pyenv, "run", *targets)
+                fixed = pytest_probe(compose(fixture, ref / "fix", final, scratch / "reference"), pyenv, "run", *targets)
+                mine = pytest_probe(final, pyenv, "run", *targets)
+                outcome["regression_valid"] = any(buggy.get(i) == "fail" and fixed.get(i) == "pass" and mine.get(i) == "pass"
+                                                  for i in targets)
+                outcome["errors_on_buggy"] = [i for i in targets if buggy.get(i) == "error"][:5]
+            outcome.update(_diff(project, prep["fixture_head"]))
+            outcome.update(_commits(project, prep["fixture_head"]))
+            outcome["success"] = bool(outcome["hidden_pass"] and original["ok"] and own["ok"] and not record["harness"]["timed_out"])
+            return outcome
+    return grade
+
+
+# A full pytest run: no file, node id or -k selection, only options and the tests folder.
+PYTEST_FULL = r"(^|\s)-m pytest(\s+(-[\w-]+|tests/?))*\s*$"
+REAL_PROMPTS = {
+    "flask-ipv6-run": ('Our Flask app sets SERVER_NAME to "[::1]:8080" so the development server listens on IPv6 localhost, '
+                       "but app.run() crashes before the server starts with \"ValueError: invalid literal for int() with base "
+                       "10: ':1]:8080'\". With SERVER_NAME set to \"localhost:8080\" it starts fine. Please fix it and commit "
+                       "the fix."),
+    "flask-ipv6-session": ('Our tests use the Flask test client with base_url="http://[::1]:8000/". A value we set inside '
+                           "client.session_transaction(base_url=...) never reaches the app: the next client.get(\"/\", "
+                           "base_url=...) sees an empty session. With base_url \"http://localhost:8000/\" the same test "
+                           "passes. Please fix it and commit the fix."),
+    "click-pickle-option": ('Pickling a click option no longer round-trips: pickle.loads(pickle.dumps(click.Option(["--name"]))) '
+                            "raises \"ValueError: <object object at 0x7f...> is not a valid Sentinel\". We pickle commands "
+                            "to hand them to worker processes. Please fix it and commit the fix."),
+    "click-progress-final": ("A progress bar made with click.progressbar(range(20), show_pos=True, update_min_steps=7) "
+                             'finishes on "14/20" instead of "20/20", even though the loop ran over all 20 items. Please fix '
+                             "it and commit the fix."),
+}
+REAL_SYMPTOMS = {
+    "flask-ipv6-run": r"invalid literal for int\(\)|':1\]:8080'",
+    "flask-ipv6-session": r"(?m)^None\s*$|'None'|b'None'",
+    "click-pickle-option": r"is not a valid Sentinel",
+    "click-progress-final": r"\b14/20\b",
+}
+for _name, _prompt in REAL_PROMPTS.items():
+    TASKS[_name] = {"name": _name, "fixture": _name, "kind": "write", "prompt": _prompt, "timeout": 1200,
+                    "grade": real_bugfix(_name), "symptom": REAL_SYMPTOMS[_name], "full_suite": PYTEST_FULL,
+                    "pyenv": _name.split("-", 1)[0], "tags": ["real"],
+                    "about": "a real bug fixed upstream in 2026, in the project's own code and test suite"}
+
+
 def select(spec: str) -> list[dict]:
-    """Task names or tags, comma separated: `core`, `bugfix`, `judged`, `control`, `all`, or names."""
+    """Task names or tags, comma separated: `core`, `bugfix`, `real`, `judged`, `control`, `all`, or names."""
     chosen: list[dict] = []
     for item in filter(None, (part.strip() for part in spec.split(","))):
         if item in TASKS:

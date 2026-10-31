@@ -1,6 +1,8 @@
 """Paths, model aliases, sandbox layout and plugin arms shared by the benchmark modules."""
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import hashlib
 import io
 import json
@@ -27,6 +29,7 @@ TEMPLATE = WORK / "template"
 PLUGINS = WORK / "plugins"
 RUNS = WORK / "runs"
 SHIM = WORK / "shim"
+PYENVS = WORK / "pyenv"
 
 # Aliases resolve to the newest model of each family in the installed Claude Code; full model ids also work.
 MODEL_ALIASES = ("opus", "sonnet", "haiku")
@@ -38,6 +41,7 @@ SRC_ROOT = f"{SANDBOX_HOME}/src"
 PLUGIN_MOUNT = f"{SANDBOX_HOME}/.local/share/claude-plugins/compound-skills"
 SCRIPTS_MOUNT = f"{PLUGIN_MOUNT}/skills/compound/scripts"
 TRACE_MOUNT = str(HOMES / ".devtrace")
+PYENV_MOUNT = str(HOMES / ".bench-python")
 GIT_IDENTITY = ("Alex Morgan", "alex.morgan@example.invalid")
 
 ARM_NAME = re.compile(r"^[a-z][a-z0-9-]{0,30}$")
@@ -49,6 +53,19 @@ HABITS_RULE = ("Before fixing a reported bug, reproduce it by running the code. 
                "not verify.\n")
 # Never copied into a plugin snapshot: answer keys, history, local tests.
 SNAPSHOT_EXCLUDE = ("bench", ".git", "tests", "__pycache__")
+
+
+@contextlib.contextmanager
+def work_lock(exclusive: bool):
+    """Runs share the fixtures; setup rebuilds them, so it waits for no run and no run starts during it."""
+    WORK.mkdir(parents=True, exist_ok=True)
+    with (WORK / ".lock").open("w") as handle:
+        try:
+            fcntl.flock(handle, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit("another benchmark command is using bench/work: " +
+                             ("wait for the running benchmark to finish" if exclusive else "wait for setup to finish")) from None
+        yield
 
 
 def git(repo: Path, *args: str, check: bool = False) -> str:

@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -I
-"""Stands in for python and python3 inside a benchmark run: records each call with the project's state before and after."""
+"""Stands in for python, python3 and pytest inside a benchmark run: records each call with the project's state before and after."""
 import json
 import os
 import subprocess
@@ -16,14 +16,15 @@ projects = [p for p in SOURCES.iterdir() if p.is_dir()] if SOURCES.is_dir() else
 repo = projects[0] if len(projects) == 1 else None
 before = (digest(repo, "src"), digest(repo, "tests")) if repo else ("", "")
 started = time.time()
+args = ["-m", "pytest", *sys.argv[1:]] if Path(sys.argv[0]).name in ("pytest", "py.test") else sys.argv[1:]
 try:
-    code = subprocess.call([sys.executable, *sys.argv[1:]])
+    code = subprocess.call([sys.executable, *args])
 except KeyboardInterrupt:
     code = 130
 after = (digest(repo, "src"), digest(repo, "tests")) if repo else ("", "")
 try:
     with open(LOG, "a") as log:
-        log.write(json.dumps({"t0": started, "t1": time.time(), "argv": sys.argv[1:], "cwd": os.getcwd(), "exit": code,
+        log.write(json.dumps({"t0": started, "t1": time.time(), "argv": args, "cwd": os.getcwd(), "exit": code,
                               "src0": before[0], "tests0": before[1], "src1": after[0], "tests1": after[1]}) + "\n")
 except OSError:
     pass
