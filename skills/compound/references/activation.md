@@ -18,7 +18,7 @@ Use the bundled [helper](../scripts/project_setup.py) through Python 3.11+, usin
 - Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
 - Claude Code: use its normal tool permissions; report any required native approval.
 
-Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves first-use cleanup unavailable. Use a fresh session to test the saved configuration, then enable routing:
+Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves project `setup` unable to record its assessment. Use a fresh session to test the saved configuration, then enable routing:
 
 ```bash
 python3 <installed-skill-dir>/scripts/project_setup.py enable --global
