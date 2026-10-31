@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="925" viewBox="0 0 1280 925" role="img" aria-labelledby="title desc">
+<title id="title">Same request, two final reports</title>
+<desc id="desc">The request: Invoices issued in December with &quot;NET 30 EOM&quot; terms get a due date a year too early: an invoice issued on 2024-12-10 says it is due on 2024-01-30. Other months look fine. Please fix it and commit the fix. Final report without Compound: I fixed the December due dates and committed it as e681388.
+
+Cause: end_of_month in src/invoicekit/terms.py:11 worked out the first day of next month as date(day.year, day.month % 12 + 1, 1). For December that gave January 1 of the same year, so subtracting a day landed on December 31 of the year before. Then &quot;NET 30&quot; added 30 days to that wrong date, which is how you got 2024-01-30.
+
+Fix: For December, the code now moves to January 1 of the next year. Now an invoice issued 2024-12-10 with &quot;NET 30 EOM&quot; is due 2025-01-30.
+
+The same bug affected plain &quot;EOM&quot; terms on December invoices: they came out as December 31 of the year before. That&#x27;s fixed too, since both terms go through the same function.
+
+I added a test that covers December for end_of_month, &quot;EOM&quot; and &quot;NET 30 EOM&quot;. pytest isn&#x27;t installed, so I ran the tests with unittest, and all 44 pass. Final report with Compound: I fixed the December due-date bug and committed it as 0c88eb1 on main.
+
+Cause: end_of_month in src/invoicekit/terms.py:13 works out the 1st of the next month and steps back one day. For December it moved to January but didn&#x27;t add a year. So it landed on Jan 1 of the same year and returned Dec 31 of the year before. Both &quot;EOM&quot; and &quot;NET n EOM&quot; use this function, so plain &quot;EOM&quot; was also wrong for December invoices, not only &quot;NET 30 EOM&quot;.
+
+Fix: a one-line change so December moves into the next year: date(day.year + day.month // 12, day.month % 12 + 1, 1).
+
+Checks:
+- I added a December regression test to tests/test_terms_and_proration.py. Before the fix it failed with 2023-12-31 != 2024-12-31, and now it passes.
+- All 44 tests pass.
+- Your example, an invoice issued 2024-12-10 with NET 30 EOM, now comes out due on 2025-01-30.
+- I found no other place in src that does the same month arithmetic.
+
+I left the AI co-author line out of the commit message because your Compound Skills git rules say not to add one.</desc>
+<defs>
+<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
+<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
+</defs>
+<style>
+text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
+.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
+.sub{font-size:18px;fill:#6b6f78}
+.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
+.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
+.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.without{font-size:16px;fill:#6b6f78}
+.with{font-size:16px;font-weight:550}
+.badge{font-size:13px;font-weight:650;fill:#147a43}
+.label{font-size:19px;font-weight:600}
+.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.green{fill:#147a43}
+.note{font-size:16px;fill:#6b6f78}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
+.small{font-size:14px;fill:#6b6f78}
+.smallb{font-size:14px;font-weight:650}
+.big{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.grey{fill:#6b6f78}
+</style>
+<rect width="1280" height="925" rx="28" fill="#fdf8ee"/>
+<rect width="1280" height="925" rx="28" fill="url(#glowGreen)"/>
+<rect width="1280" height="925" rx="28" fill="url(#glowGold)"/>
+<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="88" class="title">Same request, two final reports</text>
+<text x="76" y="124" class="sub">Claude Opus 5.5 · the pair chosen before the runs: rep 1 of the December bug</text>
+<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
+<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
+<text x="1137" y="92" class="badge">Measured</text>
+<rect x="40" y="196" width="1200" height="84" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="224" class="head">THE REQUEST</text>
+<text x="76" y="248" class="note">Invoices issued in December with &quot;NET 30 EOM&quot; terms get a due date a year too early: an invoice issued on 2024-12-10</text>
+<text x="76" y="270" class="note">says it is due on 2024-01-30. Other months look fine. Please fix it and commit the fix.</text>
+<rect x="40" y="300" width="580" height="585" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="70" y="332" class="head">WITHOUT COMPOUND</text>
+<text x="70" y="358" class="small">I fixed the December due dates and committed it as e681388.</text>
+<text x="70" y="379" class="small"></text>
+<text x="70" y="400" class="small">Cause: end_of_month in src/invoicekit/terms.py:11 worked out</text>
+<text x="70" y="421" class="small">the first day of next month as date(day.year, day.month % 12 +</text>
+<text x="70" y="442" class="small">1, 1). For December that gave January 1 of the same year, so</text>
+<text x="70" y="463" class="small">subtracting a day landed on December 31 of the year before.</text>
+<text x="70" y="484" class="small">Then &quot;NET 30&quot; added 30 days to that wrong date, which is how</text>
+<text x="70" y="505" class="small">you got 2024-01-30.</text>
+<text x="70" y="526" class="small"></text>
+<text x="70" y="547" class="small">Fix: For December, the code now moves to January 1 of the next</text>
+<text x="70" y="568" class="small">year. Now an invoice issued 2024-12-10 with &quot;NET 30 EOM&quot; is</text>
+<text x="70" y="589" class="small">due 2025-01-30.</text>
+<text x="70" y="610" class="small"></text>
+<text x="70" y="631" class="small">The same bug affected plain &quot;EOM&quot; terms on December invoices:</text>
+<text x="70" y="652" class="small">they came out as December 31 of the year before. That&#x27;s fixed</text>
+<text x="70" y="673" class="small">too, since both terms go through the same function.</text>
+<text x="70" y="694" class="small"></text>
+<text x="70" y="715" class="small">I added a test that covers December for end_of_month, &quot;EOM&quot;</text>
+<text x="70" y="736" class="small">and &quot;NET 30 EOM&quot;. pytest isn&#x27;t installed, so I ran the tests</text>
+<text x="70" y="757" class="small">with unittest, and all 44 pass.</text>
+<rect x="660" y="300" width="580" height="585" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="690" y="332" class="headg">WITH COMPOUND</text>
+<text x="690" y="358" class="small">I fixed the December due-date bug and committed it as 0c88eb1</text>
+<text x="690" y="379" class="small">on main.</text>
+<text x="690" y="400" class="small"></text>
+<text x="690" y="421" class="small">Cause: end_of_month in src/invoicekit/terms.py:13 works out</text>
+<text x="690" y="442" class="small">the 1st of the next month and steps back one day. For December</text>
+<text x="690" y="463" class="small">it moved to January but didn&#x27;t add a year. So it landed on Jan</text>
+<text x="690" y="484" class="small">1 of the same year and returned Dec 31 of the year before.</text>
+<text x="690" y="505" class="small">Both &quot;EOM&quot; and &quot;NET n EOM&quot; use this function, so plain &quot;EOM&quot;</text>
+<text x="690" y="526" class="small">was also wrong for December invoices, not only &quot;NET 30 EOM&quot;.</text>
+<text x="690" y="547" class="small"></text>
+<text x="690" y="568" class="small">Fix: a one-line change so December moves into the next year:</text>
+<text x="690" y="589" class="small">date(day.year + day.month // 12, day.month % 12 + 1, 1).</text>
+<text x="690" y="610" class="small"></text>
+<text x="690" y="631" class="small">Checks:</text>
+<text x="690" y="652" class="small">- I added a December regression test to</text>
+<text x="690" y="673" class="small">tests/test_terms_and_proration.py. Before the fix it failed</text>
+<text x="690" y="694" class="small">with 2023-12-31 != 2024-12-31, and now it passes.</text>
+<text x="690" y="715" class="small">- All 44 tests pass.</text>
+<text x="690" y="736" class="small">- Your example, an invoice issued 2024-12-10 with NET 30 EOM,</text>
+<text x="690" y="757" class="small">now comes out due on 2025-01-30.</text>
+<text x="690" y="778" class="small">- I found no other place in src that does the same month</text>
+<text x="690" y="799" class="small">arithmetic.</text>
+<text x="690" y="820" class="small"></text>
+<text x="690" y="841" class="small">I left the AI co-author line out of the commit message because</text>
+<text x="690" y="862" class="small">your Compound Skills git rules say not to add one.</text>
+</svg>

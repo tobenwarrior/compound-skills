@@ -1,0 +1,379 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1154" viewBox="0 0 1280 1154" role="img" aria-labelledby="title desc">
+<title id="title">Every bug-fix run, step by step</title>
+<desc id="desc">Bug: refund split, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 2: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 3: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 4: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 5: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 7: ran the unfixed code, edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, with Compound, run 1: ran the unfixed code, edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 2: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 3: ran the unfixed code, edited the source, edited tests, tests passed on the final code, other run, ran the unfixed code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 4: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 5: ran the unfixed code, edited the source, edited tests, other run, other run, ran the unfixed code, tests passed on the final code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 6: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 7: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, ran the unfixed code, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 8: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: leap-year proration, without Compound, run 1: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 5: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 7: edited the source, edited tests, tests passed on the final code, other run, committed, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 1: edited the source, edited tests, tests passed on the final code, ran the unfixed code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 3: edited the source, edited tests, tests passed on the final code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 4: edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 5: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, committed, edited tests, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 6: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 7: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 8: edited the source, edited tests, edited tests, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, committed. Bug: December due date, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 2: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 3: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 5: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 6: edited the source, edited tests, other run, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 7: edited the source, edited tests, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 1: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 3: edited tests, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 4: edited the source, edited tests, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: December due date, with Compound, run 5: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed, committed. Bug: December due date, with Compound, run 6: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 7: edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 8: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed.</desc>
+<defs>
+<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
+<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
+</defs>
+<style>
+text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
+.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
+.sub{font-size:18px;fill:#6b6f78}
+.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
+.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
+.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.without{font-size:16px;fill:#6b6f78}
+.with{font-size:16px;font-weight:550}
+.badge{font-size:13px;font-weight:650;fill:#147a43}
+.label{font-size:19px;font-weight:600}
+.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.green{fill:#147a43}
+.note{font-size:16px;fill:#6b6f78}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
+.small{font-size:14px;fill:#6b6f78}
+.smallb{font-size:14px;font-weight:650}
+.big{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.grey{fill:#6b6f78}
+</style>
+<rect width="1280" height="1154" rx="28" fill="#fdf8ee"/>
+<rect width="1280" height="1154" rx="28" fill="url(#glowGreen)"/>
+<rect width="1280" height="1154" rx="28" fill="url(#glowGold)"/>
+<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="88" class="title">Every bug-fix run, step by step</text>
+<text x="76" y="124" class="sub">Claude Opus 5.5 · each row is one run, steps in the order they happened · not to time scale</text>
+<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
+<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
+<text x="1137" y="92" class="badge">Measured</text>
+<rect x="76" y="198" width="14" height="14" rx="4" fill="#e0a33a"/>
+<text x="98" y="210" class="small">Ran the unfixed code</text>
+<rect x="272.0" y="198" width="14" height="14" rx="4" fill="#c2410c"/>
+<text x="294.0" y="210" class="small">A test failed on the unfixed code</text>
+<rect x="564.2" y="198" width="14" height="14" rx="4" fill="#7fb7e8"/>
+<text x="586.2" y="210" class="small">Edited tests</text>
+<rect x="701.0" y="198" width="14" height="14" rx="4" fill="#6b6f78"/>
+<text x="723.0" y="210" class="small">Edited the source</text>
+<rect x="76" y="224" width="14" height="14" rx="4" fill="#d6d1c4"/>
+<text x="98" y="236" class="small">Other run</text>
+<rect x="190.60000000000002" y="224" width="14" height="14" rx="4" fill="#147a43"/>
+<text x="212.60000000000002" y="236" class="small">Tests passed on the final code</text>
+<rect x="460.6" y="224" width="14" height="14" rx="4" fill="#14161c"/>
+<text x="482.6" y="236" class="small">Committed</text>
+<rect x="40" y="266" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="300" class="label" style="font-size:17px">Bug: refund split</text>
+<text x="330" y="298" class="head">WITHOUT COMPOUND</text>
+<rect x="330" y="312" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="312" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="312" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="312" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="312" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="336" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="336" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="336" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="336" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="360" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="360" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="360" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="360" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="384" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="384" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="384" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="384" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="408" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="408" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="408" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="408" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="432" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="432" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="432" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="432" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="350" y="456" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="370" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="456" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="456" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="480" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="480" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="480" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="480" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="480" width="16" height="16" rx="4" fill="#14161c"/>
+<text x="800" y="298" class="headg">WITH COMPOUND</text>
+<rect x="800" y="312" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="312" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="312" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="312" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="312" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="900" y="312" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="312" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="312" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="336" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="336" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="336" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="336" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="336" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="336" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="336" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="360" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="360" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="360" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="360" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="880" y="360" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="360" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="920" y="360" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="940" y="360" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="384" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="384" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="384" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="384" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="384" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="384" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="384" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="408" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="408" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="408" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="408" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="880" y="408" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="408" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="920" y="408" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="940" y="408" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="960" y="408" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="432" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="432" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="432" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="432" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="432" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="432" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="432" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="940" y="432" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="960" y="432" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="456" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="456" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="456" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="456" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="940" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="960" y="456" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="980" y="456" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="1000" y="456" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="480" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="480" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="840" y="480" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="480" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="480" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="480" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="480" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="40" y="522" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="556" class="label" style="font-size:17px">Bug: leap-year proration</text>
+<text x="330" y="554" class="head">WITHOUT COMPOUND</text>
+<rect x="330" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="370" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="410" y="568" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="430" y="568" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="592" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="592" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="592" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="616" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="616" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="616" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="616" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="616" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="430" y="616" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="640" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="640" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="640" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="430" y="640" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="450" y="640" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="370" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="410" y="664" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="430" y="664" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="688" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="688" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="688" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="712" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="712" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="390" y="712" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="410" y="712" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="430" y="712" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="450" y="712" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="736" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="736" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="736" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="736" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="430" y="736" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="450" y="736" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="470" y="736" width="16" height="16" rx="4" fill="#14161c"/>
+<text x="800" y="554" class="headg">WITH COMPOUND</text>
+<rect x="800" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="820" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="568" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="860" y="568" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="880" y="568" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="568" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="568" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="592" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="592" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="592" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="900" y="592" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="592" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="592" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="616" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="820" y="616" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="616" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="860" y="616" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="616" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="616" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="640" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="640" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="840" y="640" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="640" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="640" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="640" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="640" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="664" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="664" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="900" y="664" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="664" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="664" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="960" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="980" y="664" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="1000" y="664" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="688" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="688" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="688" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="688" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="688" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="940" y="688" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="712" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="712" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="712" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="712" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="712" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="712" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="736" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="820" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="736" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="880" y="736" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="900" y="736" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="920" y="736" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="40" y="778" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="812" class="label" style="font-size:17px">Bug: December due date</text>
+<text x="330" y="810" class="head">WITHOUT COMPOUND</text>
+<rect x="330" y="824" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="824" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="824" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="824" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="824" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="848" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="848" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="848" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="848" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="872" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="872" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="872" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="896" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="896" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="896" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="896" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="920" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="920" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="920" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="944" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="944" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="410" y="944" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="430" y="944" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="390" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="410" y="968" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="430" y="968" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="330" y="992" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="350" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="370" y="992" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="390" y="992" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="410" y="992" width="16" height="16" rx="4" fill="#14161c"/>
+<text x="800" y="810" class="headg">WITH COMPOUND</text>
+<rect x="800" y="824" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="824" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="840" y="824" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="860" y="824" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="880" y="824" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="824" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="848" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="848" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="848" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="900" y="848" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="848" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="848" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="872" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="840" y="872" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="860" y="872" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="880" y="872" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="872" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="872" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="896" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="820" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="896" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="896" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="896" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="920" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="920" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="920" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="920" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="920" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="940" y="920" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="944" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="944" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="944" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="860" y="944" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="944" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="900" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="944" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="820" y="968" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="840" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="860" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="880" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="900" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="920" y="968" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="940" y="968" width="16" height="16" rx="4" fill="#14161c"/>
+<rect x="800" y="992" width="16" height="16" rx="4" fill="#e0a33a"/>
+<rect x="820" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="840" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
+<rect x="860" y="992" width="16" height="16" rx="4" fill="#c2410c"/>
+<rect x="880" y="992" width="16" height="16" rx="4" fill="#6b6f78"/>
+<rect x="900" y="992" width="16" height="16" rx="4" fill="#147a43"/>
+<rect x="920" y="992" width="16" height="16" rx="4" fill="#d6d1c4"/>
+<rect x="940" y="992" width="16" height="16" rx="4" fill="#14161c"/>
+<text x="76" y="1052" class="note">Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked for tests.</text>
+</svg>

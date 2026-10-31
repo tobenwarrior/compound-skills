@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="832" viewBox="0 0 1280 832" role="img" aria-labelledby="title desc">
+<title id="title">What changes with Compound</title>
+<desc id="desc">Claude Code on the same tasks, with and without the plugin, run in pairs. Ran the bug before changing code: Opus 5.5 without Compound 0 of 24, with Compound 17 of 24. Sonnet 5.5 without Compound 0 of 24, with Compound 4 of 24. Showed a test failing on the unfixed code: Opus 5.5 without Compound 1 of 24, with Compound 23 of 24. Sonnet 5.5 without Compound 0 of 24, with Compound 5 of 24. Ran the tests on the final code: Opus 5.5 without Compound 32 of 32, with Compound 32 of 32. Sonnet 5.5 without Compound 32 of 32, with Compound 31 of 32. Planted regressions caught by the tests it left: Opus 5.5 without Compound 62 of 88, with Compound 63 of 88. Sonnet 5.5 without Compound 42 of 88, with Compound 42 of 88. Fixed the bug (hidden tests pass): Opus 5.5 without Compound 24 of 24, with Compound 24 of 24. Sonnet 5.5 without Compound 24 of 24, with Compound 24 of 24. Committed without an AI co-author line: Opus 5.5 without Compound 0 of 24, with Compound 24 of 24. Sonnet 5.5 without Compound 0 of 24, with Compound 24 of 24. Bug fixes: 3 tasks x 8 runs per arm and model. Regressions: 11 planted bugs the original tests miss, scored against the tests each run left behind (4 write tasks). Stock Claude Code 2.1.314 without Compound had its built-in skills.</desc>
+<defs>
+<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
+<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
+</defs>
+<style>
+text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
+.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
+.sub{font-size:18px;fill:#6b6f78}
+.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
+.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
+.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.without{font-size:16px;fill:#6b6f78}
+.with{font-size:16px;font-weight:550}
+.badge{font-size:13px;font-weight:650;fill:#147a43}
+.label{font-size:19px;font-weight:600}
+.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.green{fill:#147a43}
+.note{font-size:16px;fill:#6b6f78}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
+.small{font-size:14px;fill:#6b6f78}
+.smallb{font-size:14px;font-weight:650}
+.big{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.grey{fill:#6b6f78}
+</style>
+<rect width="1280" height="832" rx="28" fill="#fdf8ee"/>
+<rect width="1280" height="832" rx="28" fill="url(#glowGreen)"/>
+<rect width="1280" height="832" rx="28" fill="url(#glowGold)"/>
+<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="88" class="title">What changes with Compound</text>
+<text x="76" y="124" class="sub">Claude Code on the same tasks, with and without the plugin, run in pairs</text>
+<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
+<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
+<text x="1137" y="92" class="badge">Measured</text>
+<text x="450" y="214" class="head">CLAUDE OPUS 5.5</text>
+<text x="860" y="214" class="head">CLAUDE SONNET 5.5</text>
+<rect x="40" y="236" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="276" class="task" style="font-size:17px">Ran the bug before changing code</text>
+<text x="450" y="263" class="small">without</text>
+<rect x="520" y="251" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<text x="747" y="262" class="smallb">0/24</text>
+<text x="450" y="288" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="276" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="276" width="152.3" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="287" class="smallb">17/24</text>
+<text x="860" y="263" class="small">without</text>
+<rect x="930" y="251" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<text x="1157" y="262" class="smallb">0/24</text>
+<text x="860" y="288" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="276" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="276" width="35.8" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="287" class="smallb">4/24</text>
+<rect x="40" y="314" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="344" class="task" style="font-size:17px">Showed a test failing</text>
+<text x="76" y="366" class="task" style="font-size:17px">on the unfixed code</text>
+<text x="450" y="341" class="small">without</text>
+<rect x="520" y="329" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="329" width="14.0" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="747" y="340" class="smallb">1/24</text>
+<text x="450" y="366" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="354" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="354" width="206.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="365" class="smallb">23/24</text>
+<text x="860" y="341" class="small">without</text>
+<rect x="930" y="329" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<text x="1157" y="340" class="smallb">0/24</text>
+<text x="860" y="366" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="354" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="354" width="44.8" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="365" class="smallb">5/24</text>
+<rect x="40" y="392" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="432" class="task" style="font-size:17px">Ran the tests on the final code</text>
+<text x="450" y="419" class="small">without</text>
+<rect x="520" y="407" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="407" width="215.0" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="747" y="418" class="smallb">32/32</text>
+<text x="450" y="444" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="432" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="432" width="215.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="443" class="smallb">32/32</text>
+<text x="860" y="419" class="small">without</text>
+<rect x="930" y="407" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="407" width="215.0" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="1157" y="418" class="smallb">32/32</text>
+<text x="860" y="444" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="432" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="432" width="208.3" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="443" class="smallb">31/32</text>
+<rect x="40" y="470" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="500" class="task" style="font-size:17px">Planted regressions caught</text>
+<text x="76" y="522" class="task" style="font-size:17px">by the tests it left</text>
+<text x="450" y="497" class="small">without</text>
+<rect x="520" y="485" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="485" width="151.5" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="747" y="496" class="smallb">62/88</text>
+<text x="450" y="522" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="510" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="510" width="153.9" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="521" class="smallb">63/88</text>
+<text x="860" y="497" class="small">without</text>
+<rect x="930" y="485" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="485" width="102.6" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="1157" y="496" class="smallb">42/88</text>
+<text x="860" y="522" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="510" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="510" width="102.6" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="521" class="smallb">42/88</text>
+<rect x="40" y="548" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="588" class="task" style="font-size:17px">Fixed the bug (hidden tests pass)</text>
+<text x="450" y="575" class="small">without</text>
+<rect x="520" y="563" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="563" width="215.0" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="747" y="574" class="smallb">24/24</text>
+<text x="450" y="600" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="588" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="588" width="215.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="599" class="smallb">24/24</text>
+<text x="860" y="575" class="small">without</text>
+<rect x="930" y="563" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="563" width="215.0" height="14" rx="7.0" fill="#a7aaa1"/>
+<text x="1157" y="574" class="smallb">24/24</text>
+<text x="860" y="600" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="588" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="588" width="215.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="599" class="smallb">24/24</text>
+<rect x="40" y="626" width="1200" height="66" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="656" class="task" style="font-size:17px">Committed without an</text>
+<text x="76" y="678" class="task" style="font-size:17px">AI co-author line</text>
+<text x="450" y="653" class="small">without</text>
+<rect x="520" y="641" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<text x="747" y="652" class="smallb">0/24</text>
+<text x="450" y="678" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="520" y="666" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="520" y="666" width="215.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="747" y="677" class="smallb">24/24</text>
+<text x="860" y="653" class="small">without</text>
+<rect x="930" y="641" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<text x="1157" y="652" class="smallb">0/24</text>
+<text x="860" y="678" class="small" style="fill:#147a43;font-weight:650">with</text>
+<rect x="930" y="666" width="215" height="14" rx="7.0" fill="#f0ede6"/>
+<rect x="930" y="666" width="215.0" height="14" rx="7.0" fill="#147a43"/>
+<text x="1157" y="677" class="smallb">24/24</text>
+<text x="76" y="734" class="note">Bug fixes: 3 tasks x 8 runs per arm and model. Regressions: 11 planted bugs the original tests miss, scored against</text>
+<text x="76" y="758" class="note">the tests each run left behind (4 write tasks). Stock Claude Code 2.1.314 without Compound had its built-in skills.</text>
+</svg>

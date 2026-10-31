@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="792" viewBox="0 0 1280 792" role="img" aria-labelledby="title desc">
+<title id="title">What Compound costs</title>
+<desc id="desc">Bug: refund split: tokens 1.42 times (pairs ranged 1.10 to 1.83), time 1.42 times (1.10 to 2.23), 8 pairs. Bug: leap-year proration: tokens 1.45 times (pairs ranged 1.13 to 1.78), time 1.37 times (0.90 to 2.41), 8 pairs. Bug: December due date: tokens 1.45 times (pairs ranged 1.01 to 1.53), time 1.60 times (1.09 to 1.90), 8 pairs. Refactor: rounding helpers: tokens 1.05 times (pairs ranged 0.77 to 1.60), time 1.07 times (0.82 to 1.27), 8 pairs. Review a Flask commit: tokens 1.60 times (pairs ranged 1.48 to 2.28), time 1.31 times (0.75 to 1.51), 8 pairs. Question about Django: tokens 0.84 times (pairs ranged 0.70 to 1.07), time 0.92 times (0.82 to 1.08), 8 pairs. Dot: median of the 8 pairs. Line: lowest to highest pair. Over all six tasks Compound used 1.28× the tokens (95% interval 1.22–1.34). Always loaded: +369 tokens per request (18,590 → 18,959).</desc>
+<defs>
+<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
+<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
+</defs>
+<style>
+text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
+.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
+.sub{font-size:18px;fill:#6b6f78}
+.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
+.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
+.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.without{font-size:16px;fill:#6b6f78}
+.with{font-size:16px;font-weight:550}
+.badge{font-size:13px;font-weight:650;fill:#147a43}
+.label{font-size:19px;font-weight:600}
+.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.green{fill:#147a43}
+.note{font-size:16px;fill:#6b6f78}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
+.small{font-size:14px;fill:#6b6f78}
+.smallb{font-size:14px;font-weight:650}
+.big{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.grey{fill:#6b6f78}
+</style>
+<rect width="1280" height="792" rx="28" fill="#fdf8ee"/>
+<rect width="1280" height="792" rx="28" fill="url(#glowGreen)"/>
+<rect width="1280" height="792" rx="28" fill="url(#glowGold)"/>
+<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="88" class="title">What Compound costs</text>
+<text x="76" y="124" class="sub">Claude Opus 5.5: tokens and time per task with Compound, as a multiple of the paired run without it</text>
+<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
+<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
+<text x="1137" y="92" class="badge">Measured</text>
+<text x="400" y="214" class="head">TOKENS PROCESSED</text>
+<text x="820" y="214" class="head">WALL-CLOCK TIME</text>
+<rect x="40" y="236" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="271" class="label" style="font-size:17px">Bug: refund split</text>
+<line x1="496.7" y1="246" x2="496.7" y2="282" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="509.6" y1="264" x2="580.6" y2="264" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="545.3" cy="264" r="7" fill="#147a43"/>
+<text x="708" y="270" class="smallb">1.42×</text>
+<line x1="916.7" y1="246" x2="916.7" y2="282" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="929.4" y1="264" x2="1028.5" y2="264" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="965.8" cy="264" r="7" fill="#147a43"/>
+<text x="1128" y="270" class="smallb">1.42×</text>
+<rect x="40" y="302" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="337" class="label" style="font-size:17px">Bug: leap-year proration</text>
+<line x1="496.7" y1="312" x2="496.7" y2="348" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="513.8" y1="330" x2="577.0" y2="330" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="548.8" cy="330" r="7" fill="#147a43"/>
+<text x="708" y="336" class="smallb">1.45×</text>
+<line x1="916.7" y1="312" x2="916.7" y2="348" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="902.6" y1="330" x2="1039.2" y2="330" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="961.0" cy="330" r="7" fill="#147a43"/>
+<text x="1128" y="336" class="smallb">1.37×</text>
+<rect x="40" y="368" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="403" class="label" style="font-size:17px">Bug: December due date</text>
+<line x1="496.7" y1="378" x2="496.7" y2="414" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="498.0" y1="396" x2="555.9" y2="396" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="549.0" cy="396" r="7" fill="#147a43"/>
+<text x="708" y="402" class="smallb">1.45×</text>
+<line x1="916.7" y1="378" x2="916.7" y2="414" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="929.0" y1="396" x2="1006.4" y2="396" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="982.5" cy="396" r="7" fill="#147a43"/>
+<text x="1128" y="402" class="smallb">1.60×</text>
+<rect x="40" y="434" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="469" class="label" style="font-size:17px">Refactor: rounding helpers</text>
+<line x1="496.7" y1="444" x2="496.7" y2="480" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="460.9" y1="462" x2="562.6" y2="462" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="503.7" cy="462" r="7" fill="#147a43"/>
+<text x="708" y="468" class="smallb">1.05×</text>
+<line x1="916.7" y1="444" x2="916.7" y2="480" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="888.7" y1="462" x2="950.3" y2="462" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="926.3" cy="462" r="7" fill="#147a43"/>
+<text x="1128" y="468" class="smallb">1.07×</text>
+<rect x="40" y="500" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="535" class="label" style="font-size:17px">Review a Flask commit</text>
+<line x1="496.7" y1="510" x2="496.7" y2="546" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="551.6" y1="528" x2="611.9" y2="528" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="562.2" cy="528" r="7" fill="#147a43"/>
+<text x="708" y="534" class="smallb">1.60×</text>
+<line x1="916.7" y1="510" x2="916.7" y2="546" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="877.4" y1="528" x2="973.8" y2="528" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="953.9" cy="528" r="7" fill="#147a43"/>
+<text x="1128" y="534" class="smallb">1.31×</text>
+<rect x="40" y="566" width="1200" height="56" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
+<text x="76" y="601" class="label" style="font-size:17px">Question about Django</text>
+<line x1="496.7" y1="576" x2="496.7" y2="612" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="447.4" y1="594" x2="505.7" y2="594" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="472.7" cy="594" r="7" fill="#147a43"/>
+<text x="708" y="600" class="smallb">0.84×</text>
+<line x1="916.7" y1="576" x2="916.7" y2="612" stroke="#d6d1c4" stroke-dasharray="3 3"/>
+<line x1="888.7" y1="594" x2="927.2" y2="594" stroke="#a7aaa1" stroke-width="3" stroke-linecap="round"/>
+<circle cx="904.9" cy="594" r="7" fill="#147a43"/>
+<text x="1128" y="600" class="smallb">0.92×</text>
+<text x="388.0" y="646" class="small">0.5×</text>
+<text x="484.7" y="646" class="small">1×</text>
+<text x="581.3" y="646" class="small">2×</text>
+<text x="678.0" y="646" class="small">4×</text>
+<text x="808.0" y="646" class="small">0.5×</text>
+<text x="904.7" y="646" class="small">1×</text>
+<text x="1001.3" y="646" class="small">2×</text>
+<text x="1098.0" y="646" class="small">4×</text>
+<text x="76" y="684" class="note">Dot: median of the 8 pairs. Line: lowest to highest pair. Over all six tasks Compound used 1.28× the tokens</text>
+<text x="76" y="708" class="note">(95% interval 1.22–1.34). Always loaded: +369 tokens per request (18,590 → 18,959).</text>
+</svg>
