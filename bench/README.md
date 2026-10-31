@@ -66,7 +66,7 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 | `review-flask` | `core`, `judged` | Review a Flask commit with three planted defects |
 | `investigate-django` | `core`, `judged` | Find where Django treats the HTTP QUERY method differently |
 | `flask-ipv6-run`, `flask-ipv6-session`, `click-pickle-option`, `click-progress-final` | `real` | Fix a real bug that Flask or click fixed upstream between July and September 2026, in the project's own code and test suite |
-| `werkzeug-float-sign`, `attrs-evolve-name`, four `packaging-*` and three `marshmallow-*` bugs | `real`, `real-new` | The same, for nine bugs fixed upstream between August and October 2026, frozen on 31 October 2026 before any run |
+| `attrs-evolve-name`, four `packaging-*` and three `marshmallow-*` bugs | `real`, `real-new` | The same, for eight bugs fixed upstream between August and October 2026, frozen on 31 October 2026 before any run; a ninth, from werkzeug, was dropped before any run because its suite starts dev servers that hang in the sandbox |
 | `inactive` | `control` | A plain question where Compound should stay out of the way |
 | `first-use` | `control` | The December fix in a repository with no check-up yet and the user's own uncommitted notes |
 

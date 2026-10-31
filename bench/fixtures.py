@@ -11,6 +11,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 import sys
 from pathlib import Path
 
@@ -25,12 +26,11 @@ PINS = {
     "vue-core": ("https://github.com/vuejs/core", "24c9d0bffb2299635b8112a978d74a38723aaa10", "shallow"),
     "gin": ("https://github.com/gin-gonic/gin", "0f09c3a9b4626d9fe9979cf4d0521d6ae32ab646", "shallow"),
     "ripgrep": ("https://github.com/BurntSushi/ripgrep", "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b", "shallow"),
-    "werkzeug": ("https://github.com/pallets/werkzeug", "2adaad1ab68312fa46efb07ff072b15b720e2444", "full"),
     "attrs": ("https://github.com/python-attrs/attrs", "c8bb9bfaa2843e7844b5bb13bed4370b51feec4f", "full"),
     "packaging": ("https://github.com/pypa/packaging", "78d8673da4d275bb7aee0126a5edc3cf90976af1", "full"),
     "marshmallow": ("https://github.com/marshmallow-code/marshmallow", "b762ea2d59ca52fe5df76b90de14bed7e5ec5607", "full"),
 }
-TASK_SOURCES = ("flask", "django", "click", "werkzeug", "attrs", "packaging", "marshmallow")
+TASK_SOURCES = ("flask", "django", "click", "attrs", "packaging", "marshmallow")
 MAP_SOURCES = ("flask", "click", "hono", "django", "vue-core", "gin", "ripgrep")
 
 # The frozen fixtures were signed commits; rebuilt ones are unsigned, so a rebuild must match tree, parent,
@@ -69,7 +69,7 @@ REAL_BUGS = {
     "click-pickle-option": ("click", "f58ca3e81424a35626c8a475eb59ab95589008ce"),
     "click-progress-final": ("click", "f316d5cb3aa89b57c14aee54da6ac9062ac5bec4"),
     # Frozen on 31 October 2026, before any run: fixes merged August to October 2026 whose new tests fail before the fix.
-    "werkzeug-float-sign": ("werkzeug", "594452f6a4fe4de38a544962fbf04bfc9d37fbc2"),
+    # Dropped before any run: werkzeug 594452f6, whose suite starts live dev servers that hang in the sandbox.
     "attrs-evolve-name": ("attrs", "f53fc5440d7f86aac4328aec7a563eb48634177f"),
     "packaging-empty-platforms": ("packaging", "4e79787a31c99348649bb0dafee2a5078d3595be"),
     "packaging-licenseref-case": ("packaging", "2c87a33f665828b7aa0f650b1b50243b3ab95695"),
@@ -86,9 +86,6 @@ PYENV_PACKAGES = {
               "asgiref==3.12.1", "python-dotenv==1.2.2"],
     "click": ["pytest==9.0.2", "iniconfig==2.3.0", "pluggy==1.6.0", "packaging==26.0", "pygments==2.20.0"],
     # Resolved with pip on 31 October 2026 from each project's test dependency group, wheels only.
-    "werkzeug": ["markupsafe==3.0.4", "cffi==2.1.1", "cryptography==50.0.2", "ephemeral-port-reserve==1.1.4", "pytest==9.2.0",
-                 "pytest-timeout==2.4.0", "watchdog==7.0.0", "iniconfig==2.3.1", "packaging==26.3", "pluggy==1.7.0",
-                 "pycparser==3.12", "pygments==2.21.0"],
     "attrs": ["cloudpickle==3.1.2", "hypothesis==6.170.14", "pympler==1.1", "sortedcontainers==2.4.0", "pytest==9.2.0",
               "iniconfig==2.3.1", "packaging==26.3", "pluggy==1.7.0", "pygments==2.21.0"],
     # Not packaging itself: pytest imports it, and an installed copy would shadow the project's src/.
@@ -98,7 +95,7 @@ PYENV_PACKAGES = {
                     "pygments==2.21.0"],
 }
 # Package metadata for the project itself, as an editable install would provide it.
-PYENV_PROJECT = {"flask": ("Flask", "3.2.0.dev"), "click": ("click", "8.5.0.dev0"), "werkzeug": ("Werkzeug", "3.2.0.dev"),
+PYENV_PROJECT = {"flask": ("Flask", "3.2.0.dev"), "click": ("click", "8.5.0.dev0"),
                  "attrs": ("attrs", "26.2.0.dev0"), "packaging": ("packaging", "26.4.dev0"), "marshmallow": ("marshmallow", "4.3.1")}
 
 QUIET_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
@@ -546,13 +543,18 @@ def build_real(name: str) -> dict:
     pyenv = source
     scratch = ref / ".scratch"
     before = pytest_probe(compose(dest, dest, dest, scratch / "fixture"), pyenv, "list")
+    # Some suites put the clock in test ids (marshmallow: "[18:42:40 2026-10-31]"); a second listing a moment later
+    # names them, and they are never hidden tests or counted as added or removed.
+    time.sleep(1.1)
+    again = pytest_probe(scratch / "fixture", pyenv, "list")
+    volatile = sorted({i.split("[", 1)[0] for i in set(before.get("ids", [])) ^ set(again.get("ids", []))})
     after = pytest_probe(compose(dest, dest, ref / "fix", scratch / "fix-tests"), pyenv, "list")
-    hidden = [i for i in after.get("ids", []) if i not in before.get("ids", [])]
+    hidden = [i for i in after.get("ids", []) if i not in before.get("ids", []) and i.split("[", 1)[0] not in volatile]
     on_parent = pytest_probe(compose(dest, dest, ref / "fix", scratch / "parent"), pyenv, "run", *hidden)
     on_fix = pytest_probe(compose(dest, ref / "fix", ref / "fix", scratch / "fixed"), pyenv, "run", *hidden)
     suite = pytest_suite(scratch / "fixture", pyenv)
     shutil.rmtree(scratch, ignore_errors=True)
-    (ref / "hidden.json").write_text(json.dumps({"ids": hidden, "fixture_info": before}, indent=1))
+    (ref / "hidden.json").write_text(json.dumps({"ids": hidden, "volatile": volatile, "fixture_info": before}, indent=1))
     checks.update({
         "hidden_tests": len(hidden), "fixture_suite_passes": suite["ok"], "fixture_suite": suite["summary"],
         "hidden_fail_on_parent": sum(1 for status in on_parent.values() if status != "pass"),
