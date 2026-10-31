@@ -490,7 +490,9 @@ def parse_stream(path: Path) -> dict:
             "rate": rate, "assistant_text": texts, "fallback_events": fallback_events}
 
 
-FAILURE = re.compile(r"FAILED \(|AssertionError|^=+ .*\b\d+ failed\b", re.M)
+# unittest's "FAILED (failures=1)", an assertion, pytest's "=== 1 failed ===" banner, and pytest -q's bare "1 failed, 50 passed"
+# summary and "FAILED tests/x.py::test - ..." lines.
+FAILURE = re.compile(r"FAILED \(|AssertionError|^=+ .*\b\d+ failed\b|^\d+ failed\b|^FAILED \S+::", re.M)
 FULL_SUITE = r"\bdiscover\b"
 
 
