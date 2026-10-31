@@ -100,7 +100,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 ## The code map
 
-![The Compound code map of the open-source Hono repository. Hovering context.ts lights up every file it connects to and fades the rest.](.github/assets/code-map.svg)
+![The Compound code map of the open-source Hono repository. Hovering context.ts lights up the 8 files it imports and the 73 files that import it, and fades the rest of the graph.](.github/assets/code-map.svg)
 
 - **Explore it.** Hover a file to light up its connections, drag it to pull its neighbors along, and scroll or pinch to zoom.
 - **See what a change touches.** **Impact** shows the files that import the one you picked, directly or through other files, as far as the map resolves imports. **Trace** finds how two files connect, and **Changed** shows your Git edits and their neighbors.
@@ -108,7 +108,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 - **Your agent can ask it too.** Before searching a repository, Compound has the agent query the map once, unless the task names its file, and offers lookups of where a symbol is defined and mentioned. With the 0.12.1 wording only 1 of the 96 benchmark runs queried the map, and none used the symbol lookup. After we reworded that step, 43 of 48 runs on questions and edits in Flask, Hono and Django did, against 0 of 48; questions took 1.38× the tokens and 1.16× the list-price cost, edits cost about the same, and answers scored about the same ([details](#how-we-measured)).
 - **Languages.** Imports are linked for Python, JavaScript, TypeScript, Go, and Rust. Symbols are outlined for those plus Java, C, C++, C#, Ruby, PHP, Swift, and Kotlin.
 
-![Four views of the Compound code map on the Hono repository: Trace showing the import path from hono.ts to the trie router's node.ts, Changed showing uncommitted edits and the files wired to them, the source preview, and the tablet layout at 1024 by 768](.github/assets/code-map-views.svg)
+![Four views of the Compound code map on the Hono repository: Impact for url.ts, which counts 219 dependent files; Trace, showing the import path from hono.ts through the trie router to node.ts; Changed, with the two edited files ringed among the files wired to them; and the source preview of the smart router.](.github/assets/code-map-views.svg)
 
 The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache, outside the repository. Coverage and limits: [code maps](skills/compound/references/map.md).
 
