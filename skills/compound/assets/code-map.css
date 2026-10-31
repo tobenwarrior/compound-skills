@@ -974,6 +974,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   outline:3px solid var(--accent);
   outline-offset:2px;
 }
+/* Tab and focus() scroll a control only until its own box shows at the edge of its panel, so list rows and their Show buttons keep room for the 5px ring around them. */
+.folder-row,.file-row,.symbol-row,.edge-row,.symbol-button,.show-more { scroll-margin-block:6px; }
 input,select { color:var(--text); font-size:12px; }
 input::placeholder { color:var(--dim); opacity:1; }
 .topbar { padding-inline:22px; }
