@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="513" viewBox="0 0 600 513" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="537" viewBox="0 0 600 537" role="img" aria-labelledby="title desc">
 <title id="title">Compound in Claude Code: the headline result</title>
-<desc id="desc">Claude Opus 5.5 in Claude Code, three clearly reported bugs, 24 paired runs per arm. Reproduced the bug before changing code: without Compound 0 of 24, with Compound 17 of 24. Showed a test failing on the unfixed code: without Compound 1 of 24, with Compound 23 of 24. Every run fixed its bug, with or without Compound. The median fix for each bug took 1.42–1.45× the tokens and 1.45–1.97× the list-price cost; single fixes cost 1.27× to 2.47×. Claude Sonnet 5.5: 0 to 4 and 0 to 5 of 24, no clear difference. Only Claude Code 2.1.314 was measured (31 October 2026).</desc>
+<desc id="desc">Claude Opus 5.5, with and without Compound, three clearly reported bugs, 24 paired runs per arm. Reproduced the bug before changing code: without Compound 0 of 24, with Compound 17 of 24. Showed a test failing on the unfixed code: without Compound 1 of 24, with Compound 23 of 24. Every run fixed its bug, with or without Compound. The median fix for each bug took 1.42–1.45× the tokens and 1.45–1.97× the list-price cost; single fixes cost 1.27× to 2.47×. Claude Sonnet 5.5: 0 to 4 and 0 to 5 of 24, no clear difference. Run in Claude Code 2.1.314 (31 October 2026); Codex and Cursor use the same guides.</desc>
 <style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#f0f6fc;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
-<rect width="600" height="513" rx="12" fill="#0d1117"/>
-<text x="28.0" y="44.0" font-size="22" font-weight="600">Claude Opus 5.5 in Claude Code</text>
+<rect width="600" height="537" rx="12" fill="#0d1117"/>
+<text x="28.0" y="44.0" font-size="20" font-weight="600">Claude Opus 5.5, with and without Compound</text>
 <text x="28.0" y="70.0" font-size="16" fill="#b1bac4">Three clearly reported bugs, 24 paired runs per arm</text>
 <circle cx="36.0" cy="99.0" r="7" fill="none" stroke="#768390" stroke-width="2"/>
 <text x="50.0" y="104.0" font-size="15" fill="#b1bac4">Without Compound</text>
@@ -29,6 +29,7 @@
 <text x="28.0" y="398.0" font-size="18">1.45–1.97× the list price (single fixes: 1.27–2.47×).</text>
 <line x1="28.0" y1="433.0" x2="572.0" y2="433.0" stroke="#3d444d" stroke-width="1"/>
 <text x="28.0" y="461.0" font-size="16" fill="#b1bac4">Claude Sonnet 5.5: 0 → 4 and 0 → 5 of 24, no clear difference.</text>
-<text x="28.0" y="485.0" font-size="16" fill="#b1bac4">Only Claude Code 2.1.314 was measured (31 Oct 2026).</text>
-<rect x="0.5" y="0.5" width="599" height="512" rx="12" fill="none" stroke="#3d444d"/>
+<text x="28.0" y="485.0" font-size="16" fill="#b1bac4">Run in Claude Code 2.1.314 (31 Oct 2026).</text>
+<text x="28.0" y="509.0" font-size="16" fill="#b1bac4">Codex and Cursor use the same guides.</text>
+<rect x="0.5" y="0.5" width="599" height="536" rx="12" fill="none" stroke="#3d444d"/>
 </svg>
