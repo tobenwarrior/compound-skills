@@ -27,13 +27,7 @@ For denied local cache or network access, use the host's normal approval flow an
 
 See [code maps](references/map.md) for coverage and limits. Read relevant source and name the outcome, constraints, and evidence for success. Explanations and reviews stay read-only. Ask about missing product choices; investigate observable facts with available tools.
 
-Before the first write-authorized engineering task for a repository in this chat, check its onboarding state:
-
-```bash
-python3 <installed-skill-dir>/scripts/onboarding.py status --repo <repo-root>
-```
-
-Batch startup steps, such as this check, the map query, and reading the references you need, into one shell call when you can. Follow [repository assessment](references/onboarding.md) when not completed, and on every explicit project `setup`. Read-only requests, `setup global`, and activation-only modes skip cleanup. Remember completion for this chat; later chats check shared state.
+Batch startup steps, such as the map query and reading the references you need, into one shell call when you can. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
 Before each stage, read its matching reference below; switch when the task changes.
 
