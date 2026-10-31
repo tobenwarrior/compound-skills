@@ -26,7 +26,7 @@ const make = (tag, content, className) => {
 const params = new URLSearchParams(location.search);
 const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
-  query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
+  query: params.get("query") || "", selected: null, requested: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
   history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
   trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null, sourceReturn: null, used: "",
 };
@@ -89,7 +89,7 @@ function updateUrl() {
   const next = new URLSearchParams();
   if (state.project) next.set("project", state.project);
   if (state.query) next.set("query", state.query);
-  if (state.selected) next.set("file", state.selected);
+  if (state.requested || state.selected) next.set("file", state.requested || state.selected);
   history.replaceState(null, "", location.pathname + (next.size ? "?" + next : ""));
 }
 async function fetchJson(url, signal) {
@@ -227,7 +227,7 @@ function traceImports(start, target) {
 }
 function chooseFile(path, record = true) {
   if (!state.lookup.has(path)) return;
-  state.selected = path; state.trace = []; refs["trace-result"].textContent = "";
+  state.selected = path; state.requested = null; state.trace = []; refs["trace-result"].textContent = "";
   if (state.folder && group(path) !== state.folder) state.folder = "";
   if (state.query && !matcher()(state.lookup.get(path))) { state.query = ""; refs["file-search"].value = ""; }
   if (record && state.history[state.historyIndex] !== path) { state.history = state.history.slice(0, state.historyIndex + 1); state.history.push(path); state.historyIndex = state.history.length - 1; }
@@ -388,6 +388,8 @@ async function loadMap() {
     const hadModel = Boolean(state.model); state.model = normalizeModel(payload); indexModel(state.model);
     state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision);
     const current = state.projects.find(value => value.id === project); if (current) current.name = state.name;
+    // The URL's file stays requested until a revision lists it or the user chooses another file; until then a ranked file stands in.
+    if (state.lookup.has(state.requested)) { resetTrace(); state.selected = state.requested; state.requested = null; state.history = []; state.historyIndex = -1; }
     if (!state.lookup.has(state.selected)) {
       resetTrace();
       const matching = state.model.files.filter(matcher());
@@ -440,7 +442,7 @@ async function loadProjects() {
 function setView(view) { state.view = view; state.trace = view === "trace" ? state.trace : []; renderGraph(true); }
 function resetScope() { state.folder = ""; state.query = ""; state.view = "all"; state.page = 0; refs["file-search"].value = ""; renderTree(); renderGraph(true); updateUrl(); if (state.model?.coverage.truncated) loadMap(); }
 function installInteractions() {
-  refs["project-select"].addEventListener("change", event => { state.selected = null; state.query = ""; refs["file-search"].value = ""; activateProject(event.target.value); });
+  refs["project-select"].addEventListener("change", event => { state.selected = state.requested = null; state.query = ""; refs["file-search"].value = ""; activateProject(event.target.value); });
   refs["refresh-button"].addEventListener("click", () => poll(true)); refs["retry-button"].addEventListener("click", loadProjects);
   refs["notice-dismiss"].addEventListener("click", () => { state.dismissed = state.error || JSON.stringify([state.model?.coverage.skipped, state.model?.coverage.truncated, state.model?.coverage.notes.filter(note => !note.includes("import links are heuristic") && !note.includes("response file cap"))]); renderStatus(); });
   refs["sidebar-button"].addEventListener("click", () => drawer("sidebar", !refs.sidebar.classList.contains("is-open"))); refs["sidebar-close"].addEventListener("click", () => drawer("sidebar", false));
