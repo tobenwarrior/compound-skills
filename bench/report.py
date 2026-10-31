@@ -11,6 +11,7 @@ import itertools
 import json
 import math
 import random
+import re
 import statistics
 from collections import defaultdict
 from pathlib import Path
@@ -43,6 +44,18 @@ REFACTOR = [
     ("success", "Finished correctly"),
     ("tests_catch_naive_refactor", "Tests catch the naive refactor"),
 ]
+
+
+# In the first judged run (label improve), the judge's copy of the Flask commit showed an old commit id, and 40 votes
+# called the id in the answers wrong. Those complaints are about the harness, not the answers, so they are not counted.
+JUDGE_ARTIFACT = re.compile(r"7edd825a|5700176b")
+
+
+def incorrect_claims(judge: dict) -> int:
+    """Median incorrect claims over the judge's votes, without the commit-id complaints above."""
+    counts = sorted(sum(1 for claim in (vote.get("incorrect_claims") or [])
+                        if not JUDGE_ARTIFACT.search(claim.get("why", "") + claim.get("quote", ""))) for vote in judge["votes"])
+    return counts[len(counts) // 2]
 
 
 def load(labels: list[str]) -> list[dict]:
@@ -139,7 +152,8 @@ def describe(records: list[dict], model: str, arms: list[str]) -> dict:
             if judged:
                 out["judged"].setdefault(task, {})[arm] = {
                     "n": len(judged), "score_median": median([r["judge"]["score"] for r in judged]), "of": judged[0]["judge"]["of"],
-                    "incorrect_claims_median": median([r["judge"]["incorrect_claims_median"] for r in judged]),
+                    "incorrect_claims_median": median([incorrect_claims(r["judge"]) for r in judged]),
+                    "incorrect_claims_total": sum(incorrect_claims(r["judge"]) for r in judged),
                     "read_only_respected": kn(judged, lambda r: r["outcome"].get("read_only_respected"))}
         for task in sorted({r["task"] for r in records if r["model"] == model}):
             done = runs((task,), arm)
@@ -253,8 +267,8 @@ def build(labels: list[str], baseline: str | None) -> tuple[dict, str]:
             rows.append(["Mutants caught"] + [described["refactor"][arm]["mutants_caught"] for arm in arms])
             text += [table(["", *arms], rows), ""]
         if described["judged"]:
-            text += ["### Judged answers (median key items found, median incorrect claims)", ""]
-            rows = [[task] + [(f"{d['score_median']}/{d['of']}, {fmt(d['incorrect_claims_median'])} wrong (n={d['n']})"
+            text += ["### Judged answers (median key items found, median and total incorrect claims)", ""]
+            rows = [[task] + [(f"{d['score_median']}/{d['of']}, {fmt(d['incorrect_claims_median'])} wrong, {d['incorrect_claims_total']} in all (n={d['n']})"
                                if (d := described["judged"][task].get(arm)) else "–") for arm in arms]
                     for task in described["judged"]]
             text += [table(["task", *arms], rows), ""]
