@@ -189,8 +189,8 @@ The rule reproduced every bug first and showed a failing test before the fix, as
 
 What Compound added on these tasks:
 - a safe refactor with Sonnet, 5 of 5 against 0 of 5;
-- after the refactor, tests that caught 7 of 10 planted regressions with Opus against the rule's 5 (47 against 46 of 55 over all four write tasks);
-- commits without the AI co-author line, 15 of 15 against 0 of 15. The rule did not ask for that, and a sixth sentence or Claude Code's own `attribution` setting (`"commit": ""` in `settings.json`) may well do the same; we did not test either.
+- with Opus, tests that caught 7 of 10 planted regressions after the refactor against the rule's 5 (47 against 46 of 55 over all four write tasks);
+- commits without the AI co-author line, 15 of 15 with each model against 0 of 15. The rule did not ask for that, and a sixth sentence or Claude Code's own `attribution` setting (`"commit": ""` in `settings.json`) may well do the same; we did not test either.
 
 The map's effect was not measured. The plain rule asks for all five scored habits and Compound's always-on rule for three of them, so the differences between these two arms come mainly from Compound's skill, guides and map. We added the rule arm after the round began, so 10 of its 35 groups with Opus and 7 with Sonnet ran in a second pass, outside the side-by-side groups above.
 
