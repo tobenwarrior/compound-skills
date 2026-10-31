@@ -30,7 +30,7 @@ TASK_SOURCES = ("flask", "django", "click")
 MAP_SOURCES = ("flask", "click", "hono", "django", "vue-core", "gin", "ripgrep")
 
 # The frozen fixtures were signed commits; rebuilt ones are unsigned, so a rebuild must match tree, parent,
-# people, dates and message rather than the commit id. The judge context still names the frozen review commit.
+# people, dates and message rather than the commit id.
 INVOICEKIT = {"tree": "fa4f767dab83d25e53185e476b9b53831bad4e95", "parent": "", "message": "invoicekit 0.4.0\n",
               "who": ("Billing Team", "billing@example.invalid"), "date": "1793424106 +0000"}
 REVIEW = {"base": "49943b5a94413a530761350f04e896f76e8d620e", "tree": "719747b4621bddad647f0fbe89325ee1443b12d7",
@@ -197,8 +197,8 @@ def build_judge_context() -> dict:
     helpers = (review / path).read_text().splitlines()[first - 1:last]
     show = subprocess.run(["git", "-C", str(review), "-c", "diff.noprefix=false", "show", "--no-color", "--no-ext-diff", "HEAD"],
                           capture_output=True, text=True).stdout
+    # The judge must see the commit id the agent sees; the frozen text is checked with the frozen id put back.
     head = git(review, "rev-parse", "HEAD").strip()
-    show = show.replace(f"commit {head}\n", f"commit {REVIEW['frozen']}\n", 1)
     texts = {"review-diff.txt": show + "# git show HEAD of the reviewed commit is above. Relevant helpers:\n" + "\n".join(helpers) + "\n"}
     lines = []
     for name, about, segments in DJANGO_EXCERPTS:
@@ -210,7 +210,8 @@ def build_judge_context() -> dict:
     report = {}
     for name, text in texts.items():
         (JUDGE_CONTEXT / name).write_text(text)
-        report[name] = sha256_bytes(text.encode()) == CONTEXT_SHA256[name]
+        frozen = text.replace(f"commit {head}\n", f"commit {REVIEW['frozen']}\n", 1)
+        report[name] = sha256_bytes(frozen.encode()) == CONTEXT_SHA256[name]
     return report
 
 
