@@ -6,8 +6,10 @@ from __future__ import annotations
 import argparse
 import ast
 import datetime as dt
+import functools
 import hashlib
 import json
+import math
 import os
 import posixpath
 import re
@@ -101,6 +103,27 @@ LANGUAGES = {
 STDLIB_MODULES = frozenset(sys.stdlib_module_names)
 PYTHON_VERSION = f"{sys.version_info[0]}.{sys.version_info[1]}"
 OUTLINED_LANGUAGES = {"python", "javascript", "typescript", *SUPPORTED_LANGUAGES}
+# Query words that name no file: English function words and verbs that describe any change.
+QUERY_STOP_WORDS = frozenset("""
+a about after again all also am an and any are as at be because been before being both but by can could did do does doing
+during each for from further had has have having here how if in into is it its itself just more most no nor not now of off
+on once only or other our out over own same should so some such than that the their them then there these they this those
+through to too under until up very was we were what when where which while who why will with would you your
+fix fixes fixed add adds added update updates updated remove removes removed use uses used using support supports allow allows
+make makes change changes changed improve improves feat chore refactor perf wip revert bump typo typos minor
+""".split())
+QUERY_TEST_WORDS = frozenset({"test", "tests", "testing", "spec", "specs"})
+TEST_DIRS = frozenset({"test", "tests", "__tests__", "spec", "specs", "e2e"})
+TEST_FILE = re.compile(r"^test_.*\.py$|^conftest\.py$|_test\.[a-z0-9]+$|\.(?:test|spec)\.[a-z0-9]+$")
+IDENTIFIER = re.compile(r"[A-Za-z0-9_]+")
+WORD_PART = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+")
+# Focus weights were tuned on recent Flask, click and Hono commits; the README reports other commits.
+CONTENT_WEIGHT = 0.5
+SIZE_WEIGHT = 0.3
+IMPORTER_WEIGHT = 0.3
+TEST_FACTOR = 0.5
+CONTENT_RANK_FILES = 50
+CONTENT_RANK_BYTES = 8 * 1024 * 1024
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
     pass
@@ -429,6 +452,13 @@ def _javascript_outline(text: str) -> tuple[list[dict[str, Any]], list[str]]:
     return javascript_outline(mask_javascript(text), MAX_IMPORTS)[:2]
 
 
+def _open_source(root: Path, relative: str) -> int:
+    """Return a read-only descriptor for an indexed file without following symlinks."""
+    if os.name == "posix" and hasattr(os, "O_NOFOLLOW") and os.open in getattr(os, "supports_dir_fd", ()):
+        return open_regular_nofollow(root, relative)
+    return os.open(root / relative, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+
+
 def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | None, int, str | None]:
     fp = info["fingerprint"]
     if fp["size"] > MAX_FILE_BYTES:
@@ -439,16 +469,10 @@ def _read_parse(info: dict[str, Any], remaining: int) -> tuple[dict[str, Any] | 
         return None, 0, "64 MiB total read budget reached; file metadata retained"
     limit = min(MAX_FILE_BYTES, remaining)
     try:
-        absolute = Path(info["absolute"])
-        if os.name == "posix" and hasattr(os, "O_NOFOLLOW") and os.open in getattr(os, "supports_dir_fd", ()):
-            root = absolute
-            for _ in PurePosixPath(info["path"]).parts:
-                root = root.parent
-            fd = open_regular_nofollow(root, info["path"])
-        else:
-            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
-            fd = os.open(absolute, flags)
-        with os.fdopen(fd, "rb") as source:
+        root = Path(info["absolute"])
+        for _ in PurePosixPath(info["path"]).parts:
+            root = root.parent
+        with os.fdopen(_open_source(root, info["path"]), "rb") as source:
             opened = os.fstat(source.fileno())
             if not stat.S_ISREG(opened.st_mode) or any(
                 getattr(opened, attr) != fp[key]
@@ -953,29 +977,77 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
     if "source_limit" in entry.get("native_imports", {}).get("diagnostics", ()):
         record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), "local import links read from the first 256 KiB")))
     return record
-def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
-    terms = re.findall(r"[a-z0-9_]+", query.lower())
-    by_path = {record["path"]: record for record in records}
-    reverse = {path: set() for path in by_path}
-    for record in records:
-        for dependency in record["dependencies"]:
-            if dependency in reverse:
-                reverse[dependency].add(record["path"])
+def _word_parts(text: str) -> set[str]:
+    """Lowercase words of identifiers and prose, split at underscores, digits and case changes."""
+    return {part.lower() for token in set(IDENTIFIER.findall(text)) for chunk in token.split("_") for part in WORD_PART.findall(chunk)}
+
+
+@functools.lru_cache(maxsize=1 << 16)
+def _stem(word: str) -> str:
+    """Fold common English endings so handler, handles and handling, or cookie and cookies, compare equal."""
+    if len(word) <= 3:
+        return word
+    if word.endswith("ies") and len(word) > 4:
+        word = word[:-3] + "i"
+    elif word.endswith("sses"):
+        word = word[:-2]
+    elif word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        word = word[:-1]
+    if word.endswith("ing") and len(word) > 5:
+        word = word[:-3]
+    elif word.endswith("ed") and len(word) > 4:
+        word = word[:-2]
+    if word.endswith("er") and len(word) > 4:
+        word = word[:-2]
+    if word.endswith("y") and len(word) > 3:
+        word = word[:-1] + "i"
+    if word.endswith("e") and len(word) > 3:
+        word = word[:-1]
+    return word
+
+
+@functools.lru_cache(maxsize=1 << 16)
+def _name_terms(name: str) -> frozenset[str]:
+    return frozenset(_stem(part) for part in _word_parts(name))
+
+
+def _query_terms(query: str) -> tuple[list[str], bool]:
+    """Return the distinct folded query words that can name a file, and whether the query is about tests."""
+    words = [part.lower() for token in IDENTIFIER.findall(query) for chunk in token.split("_") for part in WORD_PART.findall(chunk)]
+    terms = [_stem(word) for word in words if len(word) > 1 and word not in QUERY_STOP_WORDS]
+    return list(dict.fromkeys(terms)), any(word in QUERY_TEST_WORDS for word in words)
+
+
+def _is_test(path: str) -> bool:
+    parts = path.lower().split("/")
+    return any(part in TEST_DIRS or part.endswith(("-tests", "_tests")) for part in parts[:-1]) or bool(TEST_FILE.search(parts[-1]))
+
+
+def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str], terms: set[str]) -> tuple[set[str], int]:
+    """Return which ``terms`` occur in the first ``limit`` bytes of an indexed file, and the bytes read.
+
+    ``finder`` keeps the identifiers that can fold to a term, so other words are never split or folded.
+    """
+    try:
+        with os.fdopen(_open_source(root, relative), "rb") as source:
+            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                return set(), 0
+            data = source.read(limit)
+    except OSError:
+        return set(), 0
+    if b"\0" in data:
+        return set(), len(data)
+    candidates = filter(finder.search, set(IDENTIFIER.findall(data.decode("utf-8", "replace"))))
+    return {term for term in map(_stem, _word_parts(" ".join(candidates))) if term in terms}, len(data)
+
+
+def _rank_unfocused(records: list[dict[str, Any]], by_path: dict[str, dict[str, Any]], reverse: dict[str, set[str]]) -> list[dict[str, Any]]:
+    """Without a query, entry configs, their neighbors, and connected or changed files come first."""
     scores: dict[str, int] = {}
-    base_scores: dict[str, int] = {}
     for path, record in by_path.items():
-        names = " ".join(symbol["name"] + " " + symbol.get("signature", "") for symbol in record["symbols"]).lower()
-        score = sum(5 for term in terms if term in path.lower()) + sum(4 for term in terms if term in names)
-        if not terms and _entry_config(path):
-            score += 6
-        base_scores[path] = score
         degree = len(record.get("dependencies", ())) + len(reverse[path])
-        score += min(2, (degree + 3) // 4)
-        if record.get("changed") in {"added", "modified", "untracked", "renamed"}:
-            score += 1
-        scores[path] = score
-    matched = [path for path, score in base_scores.items() if score]
-    for path in matched:
+        scores[path] = 6 * _entry_config(path) + min(2, (degree + 3) // 4) + (record.get("changed") in {"added", "modified", "untracked", "renamed"})
+    for path in [path for path in by_path if _entry_config(path)]:
         for neighbor in set(by_path[path]["dependencies"]) | reverse[path]:
             if neighbor in scores:
                 scores[neighbor] = max(scores[neighbor], 2)
@@ -984,6 +1056,61 @@ def _rank(records: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
             if neighbor in scores:
                 scores[neighbor] = max(scores[neighbor], 1)
     return sorted(records, key=lambda record: (-scores[record["path"]], not _entry_config(record["path"]), record["path"]))
+
+
+def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -> list[dict[str, Any]]:
+    """Order files by query words in paths, symbols and, given ``root``, the text of the leading candidates.
+
+    Rarer words weigh more. Larger code files, widely imported ones, current changes and recent co-changes of
+    matches rank higher; tests rank lower unless the query is about tests.
+    """
+    by_path = {record["path"]: record for record in records}
+    reverse: dict[str, set[str]] = {path: set() for path in by_path}
+    for record in records:
+        for dependency in record["dependencies"]:
+            if dependency in reverse:
+                reverse[dependency].add(record["path"])
+    if not IDENTIFIER.search(query):
+        return _rank_unfocused(records, by_path, reverse)
+    terms, about_tests = _query_terms(query)
+    path_terms = {path: _name_terms(path) for path in by_path}
+    symbol_terms = {path: frozenset().union(*(_name_terms(symbol["name"]) for symbol in record["symbols"])) for path, record in by_path.items()}
+    weights = {
+        term: math.log(1 + len(records) / (1 + sum(term in path_terms[path] or term in symbol_terms[path] for path in by_path)))
+        for term in terms
+    }
+    matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
+    bonus = dict.fromkeys(by_path, 0.0)
+    for path, record in by_path.items():
+        bonus[path] += IMPORTER_WEIGHT * math.log1p(len(reverse[path])) + (record.get("changed") in {"added", "modified", "untracked", "renamed"})
+        if record.get("analysis", "metadata") != "metadata":
+            bonus[path] += SIZE_WEIGHT * math.log1p(max(0, record.get("lines", 0)))
+    cochanged = {
+        cochange.get("path") for path, score in matched.items() if score
+        for cochange in by_path[path].get("cochanges", ()) if isinstance(cochange, dict)
+    }
+    for path in cochanged & bonus.keys():
+        bonus[path] += 1
+
+    def score(path: str, word_score: float) -> float:
+        value = word_score + bonus[path]
+        return value * TEST_FACTOR if not about_tests and _is_test(path) else value
+
+    first = {path: score(path, matched[path]) for path in by_path}
+    order = sorted(records, key=lambda record: (-first[record["path"]], not _entry_config(record["path"]), record["path"]))
+    if root is None or not terms:
+        return order
+    # Folding only removes endings or turns a final y into i, so a word that folds to a term contains the term
+    # without its final i's.
+    finder = re.compile("|".join(sorted({re.escape(term.rstrip("i") or term) for term in terms})), re.IGNORECASE)
+    head, budget, wanted, rescored = order[:CONTENT_RANK_FILES], CONTENT_RANK_BYTES, set(terms), {}
+    for record in head:
+        found, used = _content_terms(root, record["path"], min(MAX_FILE_BYTES, budget), finder, wanted) if budget > 0 else (set(), 0)
+        budget -= used
+        content = sum(weight for term, weight in weights.items() if term in found)
+        rescored[record["path"]] = score(record["path"], matched[record["path"]] + CONTENT_WEIGHT * content)
+    head.sort(key=lambda record: (-rescored[record["path"]], not _entry_config(record["path"]), record["path"]))
+    return head + order[CONTENT_RANK_FILES:]
 def _note(notes: list[str], value: str) -> None:
     if value and value not in notes:
         notes.append(value)
@@ -1164,10 +1291,9 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             else:
                 skipped += 1
                 _note(notes, reason or "inventory entry skipped")
-    terms = re.findall(r"[a-z0-9_]+", query.lower())
+    terms, about_tests = _query_terms(query)
     order = sorted(candidates, key=lambda path: (
-        -sum(term in path.lower() for term in terms), not _entry_config(path),
-        any(part.lower() in {"test", "tests"} for part in PurePosixPath(path).parts), path,
+        -sum(term in _name_terms(path) for term in terms), not _entry_config(path), not about_tests and _is_test(path), path,
     ))
     inventory_capped = len(order) > MAX_FILES
     if inventory_capped:
@@ -1237,7 +1363,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     records = [_record(path, entry, known, aliases, changes, cochanges, modules, packages, native_index) for path, entry in entries.items()]
     if any("local import links capped" in record.get("outline_note", "") for record in records):
         _note(notes, "local import link cap reached; some importers may be missing")
-    ranked = _rank(records, query)
+    ranked = _rank(records, query, root)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
     if file_cap:
@@ -1292,7 +1418,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
     lines.append("Focus:")
-    terms = re.findall(r"[a-z0-9_]+", query.lower())
+    terms = _query_terms(query)[0]
     by_path = {file["path"]: file for file in model["files"]}
     for path in model["focus"]:
         file = by_path.get(path)
@@ -1300,8 +1426,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             continue
         if terms:
             def relevance(symbol: dict[str, Any]) -> int:
-                name = symbol["name"].lower()
-                signature = symbol.get("signature", "").lower()
+                name = _name_terms(symbol["name"])
+                signature = _name_terms(symbol.get("signature", ""))
                 return sum(2 * (term in name) + (term in signature) for term in terms)
             symbol_values = sorted(file["symbols"], key=relevance, reverse=True)[:8]
         else:

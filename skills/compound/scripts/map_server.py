@@ -759,11 +759,11 @@ class Project:
     lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
 
 
-def _project_model(model: dict[str, Any], query: str, max_files: int) -> dict[str, Any]:
+def _project_model(model: dict[str, Any], query: str, max_files: int, root: Path | None = None) -> dict[str, Any]:
     """Bound a response without shrinking the daemon's shared index."""
     records = list(model.get("files", []))
     try:
-        ranked = engine._rank(records, query[:MAX_QUERY])
+        ranked = engine._rank(records, query[:MAX_QUERY], root)
     except (AttributeError, TypeError):
         ranked = records
     selected = sorted(ranked[:max_files], key=lambda record: record.get("path", ""))
@@ -1041,7 +1041,7 @@ class MapService:
         if current is None or error:
             return None, project_info, revision, indexing, error
         requested = RESPONSE_MAX_FILES if max_files is None else max(1, min(RESPONSE_MAX_FILES, int(max_files)))
-        return _project_model(current, selected_query, requested), project_info, revision, indexing, error
+        return _project_model(current, selected_query, requested, project.root), project_info, revision, indexing, error
 
     def model(self, project: Project, max_files: int | None = None, query: str | None = None) -> dict[str, Any] | None:
         model, _, _, _, _ = self._model_snapshot(project, max_files, query)
