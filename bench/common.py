@@ -28,7 +28,6 @@ JUDGE_CONTEXT = WORK / "judge"
 TEMPLATE = WORK / "template"
 PLUGINS = WORK / "plugins"
 RUNS = WORK / "runs"
-SHIM = WORK / "shim"
 PYENVS = WORK / "pyenv"
 
 # Aliases resolve to the newest model of each family in the installed Claude Code; full model ids also work.

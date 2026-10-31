@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from common import (BENCH, FIXTURES, GIT_IDENTITY, HABITS_RULE, PLUGIN_MOUNT, PYENV_MOUNT, PYENVS, RESULTS, RUNS, SANDBOX_HOME,
-                    SCRIPTS_MOUNT, SHIM, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, materialize, same_model, sha256_bytes, tree_hash)
+                    SCRIPTS_MOUNT, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, materialize, same_model, sha256_bytes, tree_hash)
 
 sys.path.insert(0, str(BENCH / "shim"))
 from devtrace import digest  # noqa: E402
@@ -165,14 +165,13 @@ def unshare_prefix() -> list[str]:
     return ["unshare", *user, "-m", "-p", "-f", "--mount-proc", "--propagation", "private", "--kill-child=SIGKILL"]
 
 
-def install_shim() -> None:
-    if SHIM.exists():
-        shutil.rmtree(SHIM)
-    SHIM.mkdir(parents=True)
+def install_shim(folder: Path) -> None:
+    """Each run gets its own copy: a shared copy could be replaced under a running sandbox by another benchmark."""
+    folder.mkdir(parents=True)
     for name in ("python", "python3", "pytest"):
-        shutil.copy2(BENCH / "shim" / "python3", SHIM / name)
-        (SHIM / name).chmod(0o755)
-    shutil.copy2(BENCH / "shim" / "devtrace.py", SHIM / "devtrace.py")
+        shutil.copy2(BENCH / "shim" / "python3", folder / name)
+        (folder / name).chmod(0o755)
+    shutil.copy2(BENCH / "shim" / "devtrace.py", folder / "devtrace.py")
 
 
 # ---------------------------------------------------------------- one run
@@ -256,6 +255,8 @@ def prepare(task: dict, arm: dict, model: str) -> dict:
     run = RUNS / run_id
     for name in ("home", "cfg", "state", "trace"):
         (run / name).mkdir(parents=True)
+    if task["kind"] == "write":
+        install_shim(run / "shim")
     shutil.copytree(TEMPLATE, run / "cfg", dirs_exist_ok=True, symlinks=True)
     project = task["fixture"]
     if not (FIXTURES / project).is_dir():
@@ -298,7 +299,7 @@ def execute(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float
     stderr_path = out_dir / f"{prep['run_id']}.stderr"
     keep = keep_paths()
     plugin = arm["plugin"] or "-"
-    shim = str(SHIM) if task["kind"] == "write" else "-"
+    shim = str(run / "shim") if task["kind"] == "write" else "-"
     pyenv = str(PYENVS / task["pyenv"]) if task.get("pyenv") else "-"
     stage = stage_dir([str(run), plugin, shim, pyenv, *keep])
     argv = ["taskset", "-c", cpus, *unshare_prefix(), "/bin/sh", "-c", RUNNER, "runner", str(run), project, plugin,
@@ -747,7 +748,6 @@ def load_records(label: str) -> list[dict]:
 
 def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: list[str], reps: int, first_rep: int,
                slots: int, retry: bool, max_seven_day: float, pause_five_hour: float, first_cpu: int = 0) -> int:
-    install_shim()
     out = RESULTS / label
     out.mkdir(parents=True, exist_ok=True)
     arms = [materialize(arm) for arm in arm_specs]
@@ -813,7 +813,6 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
 
 def make_template(model: str) -> dict:
     """One trivial run in the neutral layout with an empty config, then strip everything run-specific."""
-    install_shim()
     if TEMPLATE.exists():
         shutil.rmtree(TEMPLATE)
     TEMPLATE.mkdir(parents=True)

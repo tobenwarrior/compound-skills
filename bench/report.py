@@ -93,6 +93,7 @@ def mcnemar_exact(b: int, c: int) -> float:
 
 def geo_ratio(per_task: dict[str, list[float]], seed: int = 2) -> dict:
     """Mean over tasks of the mean paired log ratio; bootstrap pairs within tasks."""
+    per_task = {t: sorted(logs) for t, logs in per_task.items()}  # the bootstrap must not depend on file order
     tasks = [t for t, logs in per_task.items() if logs]
     if not tasks:
         return {}
