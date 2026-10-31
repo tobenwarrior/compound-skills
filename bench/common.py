@@ -171,6 +171,9 @@ def materialize(arm: dict) -> dict:
         origin = Path(source[4:]).expanduser().resolve()
         if not (origin / ".claude-plugin" / "plugin.json").is_file():
             raise SystemExit(f"arm {arm['name']}: {origin} has no .claude-plugin/plugin.json")
+        commit = git(origin, "rev-parse", "HEAD").strip()
+        if commit:  # a plugin checked out from Git: record the commit it ran, as ref: arms do
+            info = {"commit": commit, "dirty": bool(git(origin, "status", "--porcelain", "--", ".").strip())}
         shutil.copytree(origin, staging, dirs_exist_ok=True, symlinks=False,
                         ignore=lambda folder, names: [n for n in names if n in SNAPSHOT_EXCLUDE and Path(folder) == origin or n == "__pycache__"])
     manifest = staging / ".claude-plugin" / "plugin.json"

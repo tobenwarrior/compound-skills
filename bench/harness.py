@@ -280,9 +280,12 @@ def prepare(task: dict, arm: dict, model: str) -> dict:
         (run / "cfg" / "rules" / "engineering.md").write_text(HABITS_RULE)
         setup["rule_sha256"] = sha256_bytes(HABITS_RULE.encode())
     if arm.get("rule_file"):
-        text = Path(arm["rule_file"]).read_bytes()
+        # Under the file's own name, which a plugin's skills may look for (pstack reads pstack-models.md).
+        text, name = Path(arm["rule_file"]).read_bytes(), Path(arm["rule_file"]).name
+        if name in ("engineering.md", "compound-skills.md"):
+            name = f"{arm['name']}-{name}"
         (run / "cfg" / "rules").mkdir(exist_ok=True)
-        (run / "cfg" / "rules" / f"{arm['name']}.md").write_bytes(text)
+        (run / "cfg" / "rules" / name).write_bytes(text)
         setup["extra_rule_sha256"] = sha256_bytes(text)
     if compound:
         out = subprocess.run([sys.executable, "-B", str(Path(arm["plugin"]) / "skills/compound/scripts/project_setup.py"), "enable",
@@ -632,7 +635,10 @@ def validity(record: dict) -> tuple[bool, list[str], str | None]:
     if init.get("model") and not same_model(record["model"], init["model"]):
         reasons.append(f"init model {init['model']}")
     if result["models"] and set(result["models"]) - {init.get("model")}:
-        reasons.append(f"other models used: {result['models']}")
+        # Another plugin may send its own subagents to a cheaper model by design (Every's reviewers use Sonnet);
+        # the cost counts every model either way. Elsewhere a second model means a fallback.
+        if not (plugin_arm and not compound_arm and result.get("subagents")):
+            reasons.append(f"other models used: {result['models']}")
     if init.get("cwd") and not str(init["cwd"]).startswith(SRC_ROOT + "/"):
         reasons.append(f"cwd {init['cwd']}")
     # Claude Code's own bundled plugins (cc-plugin-*) load in every arm; any other plugin must be the arm's.
