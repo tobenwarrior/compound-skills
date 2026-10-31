@@ -102,12 +102,14 @@ def same_model(requested: str, served: str | None) -> bool:
 # ---------------------------------------------------------------- arms
 
 def parse_arms(spec: str) -> list[dict]:
-    """`without,with` or `name=source[+rule:<file>]` items; a source is none, rule, worktree, ref:<git revision> or
-    dir:<path>. A dir: plugin need not be Compound: its manifest name decides where it is mounted. `+rule:<file>` also
-    installs that file as an always-on user rule, as a plugin's own setup step would."""
+    """`without,with` or `name=source[+rule:<file>][+prefix:<text>]` items; a source is none, rule, worktree,
+    ref:<git revision> or dir:<path>. A dir: plugin need not be Compound: its manifest name decides where it is
+    mounted. `+rule:<file>` also installs that file as an always-on user rule, as a plugin's own setup step would.
+    `+prefix:<text>` starts every prompt with that text, such as the slash command a plugin asks its users to type."""
     arms, seen = [], set()
     for item in filter(None, (part.strip() for part in spec.split(","))):
         name, _, source = item.partition("=")
+        source, _, prefix = source.partition("+prefix:")
         source, _, rule = source.partition("+rule:")
         if not source:
             if name not in BUILTIN_ARMS:
@@ -128,6 +130,8 @@ def parse_arms(spec: str) -> list[dict]:
             if not path.is_file():
                 raise SystemExit(f"arm {name}: rule file {rule} not found")
             arm["rule_file"] = str(path)
+        if prefix:
+            arm["prompt_prefix"] = prefix.strip()
         arms.append(arm)
     if not arms:
         raise SystemExit("no arms given")

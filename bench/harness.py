@@ -199,7 +199,8 @@ def permission_args(task: dict, arm: dict | None = None) -> list[str]:
 
 
 def claude_argv(task: dict, arm: dict, model: str) -> list[str]:
-    argv = ["claude", "-p", task["prompt"], "--output-format", "stream-json", "--verbose", "--model", model,
+    prompt = f"{arm['prompt_prefix']} {task['prompt']}" if arm.get("prompt_prefix") else task["prompt"]
+    argv = ["claude", "-p", prompt, "--output-format", "stream-json", "--verbose", "--model", model,
             "--no-session-persistence", *permission_args(task, arm)]
     if arm["plugin"]:
         argv += ["--plugin-dir", plugin_mount(arm)]
@@ -691,7 +692,8 @@ def one(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float, re
               "plugin_name": arm.get("plugin_name"), "extra_rule_sha256": arm.get("rule_sha256"),
               "plugin_commit": arm.get("commit"), "model": prep["model"], "rep": rep, "kind": task.get("cell", "measured"),
               "fixture": task["fixture"], "fixture_head": prep["fixture_head"],
-              "prompt_sha256": sha256_bytes(task["prompt"].encode()), "setup": prep["setup"], "onboard": prep["onboard"],
+              "prompt_sha256": sha256_bytes(task["prompt"].encode()), "prompt_prefix": arm.get("prompt_prefix"),
+              "setup": prep["setup"], "onboard": prep["onboard"],
               "port": prep["port"], "flags_pre": prep["flags_pre"], "flags_post": flags_hash(prep["run"] / "cfg"),
               "synced": [str(p.relative_to(prep["run"])) for p in (prep["run"] / "cfg").glob("*/synced")],
               "onboarding_status": onboarding_status((RESULTS / label / f"{prep['run_id']}.stderr").read_text(errors="replace")) if prep["onboard"] else None,
@@ -791,7 +793,8 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
     known = json.loads((out / "arms.json").read_text()) if (out / "arms.json").exists() else {}
     for arm in arms:
         previous = known.get(arm["name"])
-        if previous and (previous.get("plugin_hash"), previous.get("rule_sha256")) != (arm.get("plugin_hash"), arm.get("rule_sha256")):
+        if previous and (previous.get("plugin_hash"), previous.get("rule_sha256"), previous.get("prompt_prefix")) != (
+                arm.get("plugin_hash"), arm.get("rule_sha256"), arm.get("prompt_prefix")):
             raise SystemExit(f"arm {arm['name']} in label {label} ran a different plugin or rule ({previous.get('plugin_hash')}); "
                              "use a new label or a new arm name")
         known[arm["name"]] = {k: v for k, v in arm.items() if k != "plugin"}

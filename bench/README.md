@@ -50,6 +50,7 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 | `name=dir:<path>` | A plugin folder on disk with `.claude-plugin/plugin.json`: another Compound, or any other Claude Code plugin |
 | `name=none` or `name=rule` | No plugin, under another name; `a=none,b=none` measures noise between identical arms |
 | `name=<source>+rule:<file>` | Also installs `<file>` as an always-on user rule, for a plugin whose setup asks for one, or `none+rule:<file>` for a rule alone |
+| `name=<source>+prefix:<text>` | Starts every prompt with `<text>`, such as the slash command another plugin asks its users to type (`+prefix:/pstack:poteto-mode`) |
 
 Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run of a Compound arm, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Write tasks also record the one-time repository check-up as completed, so runs measure everyday use. The `first-use` task measures the check-up itself.
 
@@ -72,7 +73,7 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 
 Each real-bug fixture is the project at the parent of the upstream fix, with its history up to that point. The bug report describes only the symptom. The hidden tests are the new tests from the upstream fix, and the project's whole suite must still pass. `setup` checks that these tests fail at the parent and pass on the upstream fix. It also installs each project's test dependencies into `bench/work/pyenv`: as pinned in its `uv.lock` for Flask and click, as resolved on the freeze date for the others, and never the project itself, which runs from its `src/`. Runs see them read-only on `PYTHONPATH`.
 
-Prompts are the same in every arm and never mention Compound. Write tasks may run code and commit. Read tasks may read and search but never run the project's code. Web access, package installs and network commands are denied in every arm.
+Prompts are the same in every arm, apart from a `+prefix:` an arm asks for, and never mention Compound. Write tasks may run code and commit. Read tasks may read and search but never run the project's code. Web access, package installs and network commands are denied in every arm.
 
 ## What is measured
 
