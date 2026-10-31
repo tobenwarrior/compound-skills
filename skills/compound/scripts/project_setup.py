@@ -52,7 +52,8 @@ BLOCK_LINES = (
     "",
     "For engineering work, including commit/PR drafts, load the installed Compound Skills "
     "`compound` skill before starting; use the host's skill tool when available. "
-    "Read only relevant references. Respect project instructions and user scope. "
+    "Run its map query before searching. Read only relevant references. "
+    "Respect project instructions and user scope. "
     "If unavailable, report it and follow project conventions.",
     END_MARKER,
 )

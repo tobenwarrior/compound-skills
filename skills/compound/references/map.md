@@ -1,6 +1,6 @@
 # Code maps
 
-Prefer a fresh, suitable index already provided by the host; do not duplicate its scan or repeat map output. Use focused files and import neighbors to choose source reads; confirm behavior and callers in source/tests. Missing entries prove nothing: coverage is bounded and import links are not a complete call graph. Use native search for reported limits. Skip mapping for activation-only requests, non-code work, and questions answerable from a supplied snippet.
+Query once per task and do not repeat map output. Use focused files and import neighbors to choose source reads; confirm behavior and callers in source/tests. Missing entries prove nothing: coverage is bounded and import links are not a complete call graph. Use native search for reported limits. Skip mapping for activation-only requests, non-code work, and tasks that name their file or supply the code.
 
 `code_map.py --cache-read-only` reuses fingerprint-validated metadata from an existing cache, parsing missing or changed files in memory without writing or starting a service. `--no-cache` bypasses the cache entirely. For write-authorized tasks, omit both to start or reuse the shared local service. Its index reuses unchanged file metadata and checks additions, edits, and deletions. Changing the query reranks the index without forcing a rebuild; `--refresh` requests one. Helpers truncate service queries to 512 characters; the API rejects longer ones. If service startup fails, the helper reports it and falls back to a bounded local scan.
 
