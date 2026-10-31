@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Good engineering habits for your coding agent, plus a live map of your code.</strong></p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · The code map runs locally with Python 3.11+ and Git</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor<br>The code map runs locally with Python 3.11+ and Git</p>
 
 <p align="center"><a href="#install">Install</a> · <a href="#use-it">Use it</a> · <a href="#nine-workflows">Workflows</a> · <a href="#the-code-map">Code map</a> · <a href="#benchmark">Benchmark</a> · <a href="#limits">Limits</a></p>
 
@@ -114,19 +114,33 @@ The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache
 
 ### How fast is it?
 
-Median of 5 runs on 4 cores with Python 3.13.17, timed on the current map:
+Median of 5 runs on 4 cores with Python 3.13.17, timed on the current map.
 
-| Repository | Files (indexed) | First build | Nothing changed | One file edited | Coding query, first | Coding query, later | Read-only query |
-| --- | --: | --: | --: | --: | --: | --: | --: |
-| Gin · Go | 130 (113) | 0.42 s | 0.05 s | 0.06 s | 1.09 s | 0.38 s | 0.64 s |
-| Click · Python | 178 (114) | 0.61 s | 0.09 s | 0.11 s | 1.20 s | 0.42 s | 0.70 s |
-| ripgrep · Rust | 226 (126) | 2.48 s | 0.10 s | 0.19 s | 3.17 s | 0.43 s | 2.61 s |
-| Flask · Python | 236 (125) | 0.41 s | 0.12 s | 0.14 s | 1.09 s | 0.40 s | 0.47 s |
-| Hono · TypeScript | 583 (531) | 0.97 s | 0.23 s | 0.19 s | 1.74 s | 0.41 s | 1.11 s |
-| Vue core · TypeScript | 703 (612) | 1.24 s | 0.27 s | 0.26 s | 2.00 s | 0.42 s | 1.40 s |
-| Django · Python | 7,085 (3,496) | 8.20 s | 2.29 s | 2.38 s | 10.90 s | 0.97 s | 8.78 s |
+**Building the map**
 
-One file edited: the file most other files import. Coding query: the command the skill gives the agent when edits are allowed; the first one starts the local service and indexes. Read-only query: the command for questions and reviews, which starts no service and writes no cache; timed here with no cache yet. The newer ranking (below) made queries slower than in 0.12.1 timed the same way, by 0.03 to 0.09 seconds when warm and 0.04 to 1.19 seconds when cold.
+| Repository | Files (indexed) | First build | Nothing changed | One file edited |
+| --- | --: | --: | --: | --: |
+| Gin · Go | 130 (113) | 0.42 s | 0.05 s | 0.06 s |
+| Click · Python | 178 (114) | 0.61 s | 0.09 s | 0.11 s |
+| ripgrep · Rust | 226 (126) | 2.48 s | 0.10 s | 0.19 s |
+| Flask · Python | 236 (125) | 0.41 s | 0.12 s | 0.14 s |
+| Hono · TypeScript | 583 (531) | 0.97 s | 0.23 s | 0.19 s |
+| Vue core · TypeScript | 703 (612) | 1.24 s | 0.27 s | 0.26 s |
+| Django · Python | 7,085 (3,496) | 8.20 s | 2.29 s | 2.38 s |
+
+**Agent queries**
+
+| Repository | Coding task, first query | Coding task, later queries | Question or review |
+| --- | --: | --: | --: |
+| Gin · Go | 1.09 s | 0.38 s | 0.64 s |
+| Click · Python | 1.20 s | 0.42 s | 0.70 s |
+| ripgrep · Rust | 3.17 s | 0.43 s | 2.61 s |
+| Flask · Python | 1.09 s | 0.40 s | 0.47 s |
+| Hono · TypeScript | 1.74 s | 0.41 s | 1.11 s |
+| Vue core · TypeScript | 2.00 s | 0.42 s | 1.40 s |
+| Django · Python | 10.90 s | 0.97 s | 8.78 s |
+
+One file edited: the file most other files import. Coding task: the command the skill gives the agent when edits are allowed; the first query starts the local service and indexes. Question or review: the read-only command, which starts no service and writes no cache; timed here with no cache yet. The newer ranking (below) made queries slower than in 0.12.1 timed the same way, by 0.03 to 0.09 seconds when warm and 0.04 to 1.19 seconds when cold.
 
 ### Does it find the files a change touches?
 
