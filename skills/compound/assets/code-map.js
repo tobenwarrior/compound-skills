@@ -288,7 +288,14 @@ function renderEdges(element, paths, arrow, maximum = 40) {
   if (!paths.length) { element.replaceChildren(make("li", "No recorded connections.", "detail-empty")); return; }
   element.replaceChildren(...paths.slice(0, maximum).map(path => edgeRow(path, arrow)));
   if (paths.length > maximum) {
-    const item = make("li"), more = make("button", "Show " + count(paths.length - maximum) + " more", "show-more"); more.addEventListener("click", () => renderEdges(element, paths, arrow, maximum + 80)); item.append(more); element.append(item);
+    const item = make("li"), more = make("button", "Show " + count(paths.length - maximum) + " more", "show-more");
+    // The rows the button reveals take its place, so focus on it moves on to the first of them, or the next such button, that can take focus, as Tab would, and else back to the last row that can. Unlike keepingFocus, this may scroll, so that a row taking the place of a button at the inspector's edge shows its whole focus ring.
+    more.addEventListener("click", () => {
+      const focused = document.activeElement === more; renderEdges(element, paths, arrow, maximum + 80);
+      const buttons = [...element.querySelectorAll("button")], enabled = button => !button.disabled;
+      if (focused) (buttons.slice(maximum).find(enabled) || buttons.slice(0, maximum).findLast(enabled))?.focus();
+    });
+    item.append(more); element.append(item);
   }
 }
 function renderInspector() {
