@@ -44,7 +44,7 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 |---|---|
 | `without` | No plugin and no rule |
 | `with` | This checkout, including uncommitted changes |
-| `rule` | No plugin; a short generic habits rule (reproduce, failing test first, full suite) instead |
+| `rule` | No plugin; instead, a five-sentence user rule asking for the habits the benchmark scores: reproduce the bug, show a failing test first, run the full suite, record behavior before a refactor, and report what was and was not verified |
 | `name=worktree` | This checkout under another name |
 | `name=ref:<revision>` | Any commit, tag or branch of this repository, such as `ref:v0.13.0` or `ref:main` |
 | `name=dir:<path>` | A plugin folder on disk with `.claude-plugin/plugin.json`: another Compound, or any other Claude Code plugin |
@@ -52,7 +52,7 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 | `name=<source>+rule:<file>` | Also installs `<file>` as an always-on user rule, for a plugin whose setup asks for one, or `none+rule:<file>` for a rule alone |
 | `name=<source>+prefix:<text>` | Starts every prompt with `<text>`, such as the slash command another plugin asks its users to type (`+prefix:/pstack:poteto-mode`) |
 
-Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run of a Compound arm, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Write tasks also record the one-time repository check-up as completed, so runs measure everyday use. The `first-use` task measures the check-up itself.
+Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run of a Compound arm, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Before 0.15.0, coding work also ran a one-time repository check-up; for those versions, write tasks record it as completed, so runs measure everyday use, and the `first-use` task runs without that record. From 0.15.0 the check-up runs only on an explicit project `setup`.
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
