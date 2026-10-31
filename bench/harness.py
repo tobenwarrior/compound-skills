@@ -493,7 +493,9 @@ def habits(prep: dict, harness: dict, calls: list[dict], final: tuple[str, str])
     first_src_change = min(starts) if starts else None
     helper = lambda e: any("/claude-plugins/" in str(a) for a in e["argv"])  # noqa: E731
     runs = [e for e in execs if not helper(e) and (e["src0"], e["tests0"]) == (e["src1"], e["tests1"])]
-    is_test = lambda e: (any(re.search(r"unittest|pytest", str(a)) for a in e["argv"])  # noqa: E731
+    # pytest counts only where it is installed: elsewhere `python -m pytest` exits 1 without running a test.
+    runner = r"unittest|pytest" if prep["task"].get("pyenv") else r"unittest"
+    is_test = lambda e: (any(re.search(runner, str(a)) for a in e["argv"])  # noqa: E731
                          or any(re.search(r"(^|/)tests/.+\.py$", str(a)) for a in e["argv"]))
     symptom = re.compile(prep["task"]["symptom"]) if prep["task"].get("symptom") else None
     full_suite = re.compile(prep["task"].get("full_suite", FULL_SUITE))

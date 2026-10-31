@@ -210,19 +210,19 @@ The same example slot as in the first benchmark: rep 1 of the December bug on Cl
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-reports-dark.svg">
-  <img src=".github/assets/benchmark-reports.svg" alt="The final reports from rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test, noticed that plain EOM terms were wrong too and committed. Only the report with Compound says the new test failed before the fix, with 2023-12-31 != 2024-12-31, that it checked the example from the report directly, that it found no other code doing the same month arithmetic, and that the commit has no Claude co-author trailer.">
+  <img src=".github/assets/benchmark-reports.svg" alt="The final reports from rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test that checks the reported example, noticed that plain EOM terms were wrong too and committed. Only the report with Compound says the new test failed before the fix, with 2023-12-31 != 2024-12-31, that it also called due_date with the reported example, that it found no other code doing the same month arithmetic, and that the commit has no Claude co-author trailer.">
 </picture>
 
-Only the report with Compound says “Before the fix it failed (`2023-12-31 != 2024-12-31`)”, “Calling `due_date` directly with the example from your report now returns `2025-01-30`”, “I found no other code in `src` doing the same month arithmetic” and that the commit “has no Claude co-author trailer”. Medians over the December bug's 5 Opus pairs, with Compound against without: 1.49× the tokens, 1.56× the list-price cost and 1.47× the time.
+Only the report with Compound says “Before the fix it failed (`2023-12-31 != 2024-12-31`)”, “Calling `due_date` directly with the example from your report now returns `2025-01-30`”, “I found no other code in `src` doing the same month arithmetic” and that the commit “has no Claude co-author trailer”. The run without Compound also searched for that month arithmetic, and its new test checks the reported example, but it ran its tests only once, after the fix, and its commit carries the AI co-author line. Medians over the December bug's 5 Opus pairs, with Compound against without: 1.49× the tokens, 1.56× the list-price cost and 1.47× the time.
 
-### Every Opus bug-fix run, step by step
+### The 30 Opus bug-fix runs, step by step
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-steps-dark.svg">
-  <img src=".github/assets/benchmark-steps.svg" alt="Every Claude Opus 5.5 bug-fix run as a row of steps, lined up on its first source edit. Without Compound, 14 of 15 runs started by editing the source. With Compound, all 15 showed a failing test before their first source edit.">
+  <img src=".github/assets/benchmark-steps.svg" alt="The 30 Claude Opus 5.5 runs on the three bug reports, without Compound and with 0.14.0, each as a row of steps lined up on its first source edit. Without Compound, 14 of 15 runs started by editing the source. With Compound, all 15 showed a failing test before their first source edit.">
 </picture>
 
-Without Compound, 14 of 15 runs started by editing the source; the other ran Python first, but only tried pytest, which this library does not have. With Compound, 15 of 15 ran the unfixed code or showed a failing test before their first source edit, 15 of them a failing test.
+Without Compound, 14 of 15 runs started by editing the source; the other ran Python first, but only tried pytest, which is not installed for this library, so no test ran. With Compound, 15 of 15 ran the unfixed code or showed a failing test before their first source edit, 15 of them a failing test.
 
 ### Cost
 
@@ -231,7 +231,7 @@ Without Compound, 14 of 15 runs started by editing the source; the other ran Pyt
   <img src=".github/assets/benchmark-cost.svg" alt="Context tokens, list-price cost and time with Compound as a multiple of the paired run without it, for each task and model. With the six tasks weighted equally, Opus used 1.56 times the tokens and the cost, Sonnet 1.55 and 1.67 times; the largest task median was Sonnet's Flask review at 3.10 times the tokens, with single pairs from 1.61 to 4.98 times.">
 </picture>
 
-For each bug, the median Opus fix took 1.14–1.50× the context tokens, 1.37–1.56× the cost ($0.05–0.07 more) and 4–14 seconds longer; single fixes ranged from 1.16× to 2.11× the cost. Reviews cost the most extra: Sonnet's Flask review took 3.10× the tokens, single pairs from 1.61 to 4.98 times. With Compound, every Sonnet review loaded the guides and tried to run the code, which the benchmark blocks; without it, most answered after a single command. The always-loaded part is 418 tokens per request.
+For each bug, the median Opus fix took 1.14–1.50× the context tokens, 1.37–1.56× the cost ($0.05–0.07 more) and 4–14 seconds longer; single fixes ranged from 1.16× to 2.11× the cost. Reviews had the largest ratios: 1.72× the cost with Opus and 2.51× with Sonnet, whose Flask review took 3.10× the context tokens, single pairs from 1.61 to 4.98 times. With Compound, every Sonnet review loaded the Compound skill and tried to run the code, which the benchmark blocks, and four of the five also read the review guide; without it, 4 of 5 answered after a single command. The always-loaded part is 418 tokens per request.
 
 ### Reviews and answers
 
