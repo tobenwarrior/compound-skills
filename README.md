@@ -6,16 +6,16 @@
 
 <p align="center"><a href="#install">Install</a> · <a href="#use-it">Use it</a> · <a href="#nine-workflows">Workflows</a> · <a href="#the-code-map">Code map</a> · <a href="#benchmark">Benchmark</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and it gives your agent the same guidance in every project: reproduce a bug before fixing it, show the new test failing on the unfixed code, and leave AI co-author lines out of commits.
+Turn it on once and it gives your agent the same guidance in every project: reproduce a bug before fixing it, show the new test failing on the unfixed code, pin current behavior before a refactor, and leave AI co-author lines out of commits.
 
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-headline-dark.svg">
-    <img src=".github/assets/benchmark-headline.svg" width="600" alt="With Compound, Claude Opus 5.5 reproduced the bug before changing code in 17 of 24 fixes (0 of 24 without) and showed a test failing on the unfixed code in 23 of 24 (1 of 24 without). Cost and limits follow in the text.">
+    <img src=".github/assets/benchmark-headline.svg" width="600" alt="With Compound, Claude Opus 5.5 reproduced the bug before changing code in 15 of 15 fixes and Claude Sonnet 5.5 in 14 of 15, against 0 of 15 each without, and both showed a test failing on the unfixed code just as often. Cost and limits follow in the text.">
   </picture>
 </p>
 
-Run with and without Compound on three clearly reported bugs, Claude Opus 5.5 went from almost never doing the first two to doing them in most fixes, at about 1.4× the tokens and 1.45–1.97× the list-price cost per fix (medians for each bug; single fixes ranged from 1.27× to 2.47× the cost). Claude Sonnet 5.5 rarely did them either way. [Benchmark](#benchmark) · [Limits](#limits)
+Run with and without Compound on three clearly reported bugs, Claude Opus 5.5 and Claude Sonnet 5.5 went from never doing the first two to doing them in 15 and 14 of 15 fixes, and both finished a tricky refactor safely in every run. A median fix cost 1.37–1.56× as much with Opus and 1.14–1.75× with Sonnet, at list prices. [Benchmark](#benchmark) · [Limits](#limits)
 
 ## Install
 
@@ -50,7 +50,7 @@ codex plugin add compound-skills@compound-skills
 > Before its first edit in a project, Compound asks the agent for a one-time check-up: review the structure and tests, apply only high-confidence cleanup (which can include deleting source, docs and tests it finds obsolete or redundant), verify it, and leave your uncommitted work alone. Its guide tells the agent not to stage or commit the cleanup just because the check-up ran. We have not measured the check-up itself. Details: [activation](skills/compound/references/activation.md) and [check-up](skills/compound/references/onboarding.md).
 
 <details>
-<summary>What first use looked like in our runs (3 Opus runs)</summary>
+<summary>What first use looked like in our first benchmark (3 Opus runs on 0.12.1)</summary>
 
 In 3 first-use runs with Opus where the first request was a bug fix, the agent read the check-up guide but skipped the check-up as going beyond the request, and said so in its report. It fixed the bug and left the uncommitted work alone, as stock Claude Code also did. In that first session it reproduced the bug first in 1 of 3 runs and showed a failing test in 2 of 3, against 7 and 8 of 8 on the same bug once set up, and used 1.46× the tokens of stock Claude Code.
 
@@ -108,13 +108,13 @@ Compound has one short guide for each kind of work and tells the agent to read t
 - **Explore it.** Hover a file to light up its connections, drag it to pull its neighbors along, and scroll or pinch to zoom.
 - **See what a change touches.** **Impact** shows the files that import the one you picked, directly or through other files, as far as the map resolves imports. **Trace** finds how two files connect, and **Changed** shows your Git edits and their neighbors.
 - **Read without switching apps.** Search files, folders, and symbols, preview source, and copy a compact summary into your chat.
-- **Your agent can ask it too.** Before searching a repository, Compound has the agent query the map once, unless the task names its file, and offers lookups of where a symbol is defined and mentioned. With the 0.12.1 wording only 1 of the 96 benchmark runs queried the map, and none used the symbol lookup. After we reworded that step, 43 of 48 runs on questions and edits in Flask, Hono and Django did, against 0 of 48 with the old wording; compared with the old wording, questions took 1.38× the tokens and 1.16× the list-price cost per pair, edits cost about the same, and answers scored about the same (method below).
+- **Your agent can ask it too.** Before searching a repository, Compound has the agent query the map once, unless the task names its file, and offers lookups of where a symbol is defined and mentioned. With the 0.12.1 wording only 1 of the 96 benchmark runs queried the map, and none used the symbol lookup. After we reworded that step, 43 of 48 runs on questions and edits in Flask, Hono and Django did, against 0 of 48 with the old wording; compared with the old wording, questions took 1.38× the tokens and 1.16× the list-price cost per pair, edits cost about the same, and answers scored about the same (method below). In the 0.14.0 benchmark, all 60 runs with Compound queried it.
 - **Languages.** Imports are linked for Python, JavaScript, TypeScript, Go, and Rust. Symbols are outlined for those plus Java, C, C++, C#, Ruby, PHP, Swift, and Kotlin.
 
 <details>
 <summary>How we measured the reworded map step</summary>
 
-In 0.12.1 the skill offered the map only as a fallback when the host had no suitable index, and in 77 of 94 runs that loaded the skill the agent searched or read code in the same turn, before the skill's text arrived. The skill now asks for one map query before any further search, read or edit, unless the task names its file or supplies the code, and the routing rule says to run it before searching. We compared the two wordings in Claude Code 2.1.316, 4 pairs per task and model, on three questions (Flask error handlers, Hono routing, Django `select_for_update`), two edits that name the command or method to change, a cookie bug planted in Hono and reported only by its symptom, and a question about a named file; agents could read the code but not run it. The map was queried in 43 of 48 runs, once each and as the first search in 41, against 0 of 48: all 24 questions, all 12 Opus edits and 7 of 12 Sonnet edits. Neither wording queried it for the named file. Per pair, questions took 1.38× the tokens, 1.16× the list-price cost and 1.23× the time (geometric means); edits took 0.98×, 1.00× and 1.04×. A blind judge scored answers and fixes about the same. Rewording the skill alone, without the rule sentence, reached 30 of 48 (2 of 12 Sonnet edits). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.13.0 and run it again, and both models know these repositories well; we have not measured unfamiliar code.
+In 0.12.1 the skill offered the map only as a fallback when the host had no suitable index, and in 77 of 94 runs that loaded the skill the agent searched or read code in the same turn, before the skill's text arrived. The skill now asks for one map query before any further search, read or edit, unless the task names its file or supplies the code, and the routing rule says to run it before searching. We compared the two wordings in Claude Code 2.1.316, 4 pairs per task and model, on three questions (Flask error handlers, Hono routing, Django `select_for_update`), two edits that name the command or method to change, a cookie bug planted in Hono and reported only by its symptom, and a question about a named file; agents could read the code but not run it. The map was queried in 43 of 48 runs, once each and as the first search in 41, against 0 of 48: all 24 questions, all 12 Opus edits and 7 of 12 Sonnet edits. Neither wording queried it for the named file. Per pair, questions took 1.38× the tokens, 1.16× the list-price cost and 1.23× the time (geometric means); edits took 0.98×, 1.00× and 1.04×. A blind judge scored answers and fixes about the same. Rewording the skill alone, without the rule sentence, reached 30 of 48 (2 of 12 Sonnet edits). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.14.0 and run it again, and both models know these repositories well; we have not measured unfamiliar code.
 
 </details>
 
@@ -124,7 +124,7 @@ The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache
 
 ### How fast is it?
 
-Median of 5 runs on 4 cores with Python 3.13.17, timed on 0.13.0.
+Median of 5 runs on 4 cores with Python 3.13.17, timed on 0.13.0; 0.14.0 did not change the map code.
 
 **Building the map**
 
@@ -183,73 +183,105 @@ Word-count search ranks files by how many words of the title they contain. Nothi
 
 ## Benchmark
 
-We gave Claude Code the same six tasks with and without Compound: three bug reports, a refactor, a code review and a question about Django. Each ran 8 times per arm and model, in pairs started together in isolated sandboxes ([how we measured](#how-we-measured)).
+We gave Claude Code the same six tasks with and without Compound 0.14.0: three bug reports, a refactor, a code review and a question about Django. Each ran 5 times per arm and model, side by side in isolated sandboxes, next to a third arm running 0.13.0 ([what changed](#what-changed-in-0140)). Four real bugs from Flask and click came after ([real bugs](#real-bugs)). The harness is in [bench/](bench/README.md), so you can rerun all of it ([how we measured](#how-we-measured)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-habits-dark.svg">
-  <img src=".github/assets/benchmark-habits.svg" alt="Scorecard for Claude Opus 5.5 and Claude Sonnet 5.5, without and with Compound. With Opus, reproducing the bug first rose from 0 to 17 of 24 and showing a failing test from 1 to 23 of 24; with Sonnet there was no clear difference. Fixes, final-code testing and planted regressions caught stayed about the same. On the refactor, Opus with Compound kept tax rounding in 8 of 8 runs but removed both helpers in none, against 5 of 8 without. No bug fix with Compound put an AI co-author line in its commits. Cost: 1.28 times the tokens and 1.38 times the list-price cost with Opus, 1.37 and 1.60 times with Sonnet.">
+  <img src=".github/assets/benchmark-habits.svg" alt="Scorecard for Claude Opus 5.5 and Claude Sonnet 5.5, without and with Compound. Reproducing the bug first rose from 0 to 15 of 15 with Opus and from 0 to 14 of 15 with Sonnet, and showing a failing test rose the same way. Every run fixed its bug in both arms. The tests each run left caught more planted regressions with Compound: 49 of 55 against 40 with Opus, 42 against 29 with Sonnet. On the refactor, both models with Compound kept tax rounding and removed both helpers in 5 of 5 runs. 29 of 30 bug fixes with Compound committed without an AI co-author line, against none without. Cost: 1.56 times the tokens and the list-price cost with Opus, 1.55 and 1.69 times with Sonnet.">
 </picture>
 
-- **With Opus, it usually reproduced the bug before fixing it:** in 17 of 24 bug fixes with Compound, against 0 of 24 without. It showed the new test failing on the unfixed code in 23 of 24, against 1 of 24 (13 before writing the fix, the rest by undoing the fix briefly).
-- **With Sonnet, no clear difference.** Claude Sonnet 5.5 read the same debugging guide in every bug fix but did these only 4 and 5 times out of 24, against 0 without.
-- **No clear difference in fixes or test strength.** Every run fixed its bug, with or without Compound. The tests each run left behind caught about as many planted regressions: 63 of 88 with Compound and 62 of 88 without on Opus, 42 of 88 in both arms on Sonnet.
-- **On the refactor, Opus with Compound stopped to ask instead of finishing.** The tax helper rounded differently, so a plain swap changes some tax amounts. With Compound, Opus kept tax rounding in all 8 runs but none removed both helpers; without it, 5 of 8 removed both, 2 of them keeping tax rounding, and the other 3 also stopped to ask. Sonnet removed both and changed tax rounding in all 16 runs, saying so each time.
-- **No AI co-author line.** None of the 48 bug-fix runs with Compound, from either model, put an AI co-author line in its commits; stock Claude Code did in all 48. Claude Code's own `attribution` setting can also remove it.
-- **It costs more.** With the six tasks weighted equally, Compound used 1.28× the tokens with Opus and 1.37× with Sonnet; at list prices, computed the same way but added after the runs, it cost 1.38× and 1.60× ([cost](#cost)).
+- **Both models reproduced the bug before fixing it.** With Compound, Opus did in 15 of 15 bug fixes and Sonnet in 14 of 15, against 0 of 15 each without. They showed the new test failing on the unfixed code just as often: 15 and 14 of 15, against 0.
+- **The refactor was finished safely.** It asked to remove two rounding helpers, but the tax helper rounded differently, so a plain swap changes some tax amounts. With Compound, both models removed both helpers and kept tax rounding in all 5 runs, each leaving a test that catches the plain swap. Without it, Opus did so in 2 of 5 runs and Sonnet in none, and no run left such a test.
+- **Stronger tests.** The tests each run left behind caught more of the regressions planted for its task: 49 of 55 with Compound against 40 of 55 without on Opus, 42 against 29 on Sonnet.
+- **The same fixes.** Every bug-fix run fixed its bug, with or without Compound.
+- **Almost no AI co-author lines.** 29 of the 30 bug fixes with Compound committed without one (one Sonnet run kept it); stock Claude Code added one in all 30. Claude Code's own `attribution` setting can also remove it.
+- **It costs more.** With the six tasks weighted equally, Compound used 1.56× the tokens and 1.56× the list-price cost with Opus, and 1.55× and 1.69× with Sonnet ([cost](#cost)).
 
 <details>
 <summary>Full results, with the statistics</summary>
 
-- **With Opus, it usually reproduced the bug before fixing it.** With Compound, Claude Opus 5.5 ran the failing case before touching the code in 17 of 24 bug fixes, against 0 of 24 without. It showed its new test failing on the unfixed code in 23 of 24, against 1 of 24; in 13 of them before writing the fix, in the rest by undoing the fix briefly. Claude Sonnet 5.5 read the same debugging guide in every bug fix but did these only 4 and 5 times out of 24, against 0 without: no clear difference (for reproducing first, the pre-registered test gave Holm-adjusted p = 0.25; the failing-test count was not tested).
-- **No clear difference in fixes or test strength.** Every run fixed its bug, with or without Compound, and stock Claude Code also tested its final code. On the four coding tasks, the tests each run left behind caught about as many of the regressions planted for its task (3 for each bug, 2 for the refactor; 88 checks over the 32 runs per arm): with Opus 63 of 88 with Compound, 62 of 88 without; with Sonnet 42 of 88 in both arms.
-- **On the refactor, Opus played it safe and stopped short.** The refactor asked to remove two rounding helpers so all rounding goes through one shared function, but the tax helper rounded differently, so a plain swap changes some tax amounts. With Compound, Opus kept tax rounding in all 8 runs but stopped to ask instead of finishing: none removed both helpers. Without it, 5 of 8 removed both: 2 kept tax rounding and 3 changed it, saying so; the other 3 stopped to ask. Sonnet removed both helpers and changed tax rounding in all 16 runs, and said so each time. No run in either arm left a test that would catch the change.
-- **No AI co-author line.** In all 48 bug-fix runs with Compound, from either model, the commit had no AI co-author line, and 45 used Conventional Commits titles such as `fix: …`. Stock Claude Code added a co-author line in all 48 and used such titles in none; Claude Code's own `attribution` setting can also remove the line.
-- **It costs more.** Weighting the six tasks equally (the geometric mean of all 48 paired ratios, 8 per task), Compound used 1.28× the tokens with Opus (95% interval 1.22–1.34) and 1.37× with Sonnet (1.29–1.45). At list prices, computed the same way but added after the runs, it cost 1.38× with Opus (1.33–1.44) and 1.60× with Sonnet (1.50–1.70). Summed over each model's 48 pairs, that was 1.28× the tokens and 1.34× the cost with Opus ($8.00 against $5.96), and 1.27× and 1.53× with Sonnet ($3.33 against $2.17).
+- **Reproduced first and failing test shown.** Opus 15 of 15 bug fixes with Compound against 0 of 15 without, for both; Sonnet 14 of 15 against 0 for both. Exact McNemar tests on the 15 pairs per model: p < 0.001 each.
+- **Test strength.** Per run, the share of its task's planted regressions that its own tests caught rose by 0.22 on average with Opus and 0.26 with Sonnet (20 pairs each, 3 regressions per bug and 2 for the refactor; sign-flip test p = 0.03 and p = 0.001). Sonnet without Compound left a test that fails on the buggy code in 13 of 15 bug fixes, against 15 of 15 with it; Opus did in all 15 in both arms.
+- **Refactor.** Done safely, meaning both helpers removed, tax rounding kept and the suites passing: Opus 5 of 5 with Compound against 2 of 5 without, Sonnet 5 of 5 against 0 of 5. The 3 Opus and 5 Sonnet runs without Compound that changed tax rounding said so in their reports. With 5 pairs, Sonnet's difference gives p = 0.06.
+- **Commits.** All 30 bug fixes in both arms committed. With Compound, 28 used Conventional Commits titles such as `fix: …`; stock Claude Code used none.
+- **Cost.** Weighting the six tasks equally (the geometric mean of the 30 paired ratios per model, 5 per task), Compound used 1.56× the tokens with Opus (95% interval 1.47–1.65) and 1.55× with Sonnet (1.40–1.72), and cost 1.56× (1.48–1.64) and 1.69× (1.53–1.86) at list prices. Summed over each model's 30 pairs: 1.56× the tokens and 1.54× the cost with Opus ($6.04 against $3.91), 1.43× and 1.64× with Sonnet ($2.26 against $1.38).
+- **Stopping.** We planned 6 repetitions and stopped after 5 to stay within our usage limit, a decision made after seeing interim results. No task, key, grader or detector changed during the runs.
 
 </details>
 
+### What changed in 0.14.0
+
+0.14.0 adds one sentence to the always-on rule: reproduce a reported bug and show its regression test failing before fixing it, and pin current behavior with a test before a refactor. Its refactor guide now says to keep behavior and still finish the change, asking first only when no behavior-preserving path exists. Against 0.13.0 in the same runs:
+
+| | 0.13.0 | 0.14.0 |
+| --- | --: | --: |
+| Opus: reproduced the bug before changing code | 11 of 15 | 15 of 15 |
+| Opus: showed a test failing on the unfixed code | 14 of 15 | 15 of 15 |
+| Sonnet: reproduced the bug before changing code | 1 of 15 | 14 of 15 |
+| Sonnet: showed a test failing on the unfixed code | 6 of 15 | 14 of 15 |
+| Refactor done safely, Opus and Sonnet | 2 and 0 of 5 | 5 and 5 of 5 |
+| Cost, with the six tasks weighted equally | | 1.06× and 1.03× of 0.13.0 |
+
+The same release also asks for fewer startup steps, a shorter final report and no retries of blocked commands in reviews; together they did not measurably cut cost. The always-loaded part grew from 378 to 418 tokens per request.
+
+### Real bugs
+
+Four bugs that Flask and click fixed upstream between July and September 2026: `app.run()` failing on an IPv6 `SERVER_NAME`, the test client losing the session with an IPv6 `base_url`, pickling a click option, and a click progress bar that stops at 14/20. Each run got the project at the fix's parent, with its history and test suite, and a report that describes only the symptom. The upstream fix's own new tests stayed hidden, and the project's whole suite had to pass. 3 runs per bug, arm and model.
+
+| | Opus 5.5, without → with | Sonnet 5.5, without → with |
+| --- | --: | --: |
+| Reproduced the bug before changing code | 5 → 10 of 12 | 0 → 12 of 12 |
+| Showed a test failing on the unfixed code | 8 → 12 of 12 | 3 → 12 of 12 |
+| Ran the whole suite on the final code | 8 → 10 of 12 | 3 → 11 of 12 |
+| Upstream's hidden tests pass | 9 → 9 of 12 | 9 → 9 of 12 |
+| Left a test that fails on the buggy code | 12 → 11 of 12 | 10 → 12 of 12 |
+| List-price cost, the four bugs weighted equally | 1.51× | 1.38× |
+
+Both arms fixed the same bugs: every run fixed the two Flask bugs and the pickling bug, and none fully fixed the progress bar. Its report describes a loop over the bar, and every run fixed that path, but upstream's tests also cover the same bug through `bar.update()`. Stock Claude Code already reproduced some of these bugs first, since the reports quote the error: Opus in 5 of 12 runs, 10 with Compound; Sonnet went from 0 to 12.
+
 ### What it looks like
 
-The pair chosen before the runs: rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test, noticed that plain EOM terms were wrong too and gave the corrected due date for the example. The highlighted sentences appear only in the report with Compound.
+The same example slot as in the first benchmark: rep 1 of the December bug on Claude Opus 5.5. Both runs fixed the bug, added a test, noticed that plain EOM terms were wrong too and committed. The highlighted sentences appear only in the report with Compound.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-reports-dark.svg">
-  <img src=".github/assets/benchmark-reports.svg" alt="The final reports from the pair chosen before the runs, rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test, noticed that plain EOM terms were wrong too and gave the corrected due date for the example. Only the report with Compound says the new test failed before the fix, with 2023-12-31 != 2024-12-31, that it found no other place with the same month arithmetic, and that it left the AI co-author line out.">
+  <img src=".github/assets/benchmark-reports.svg" alt="The final reports from rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test, noticed that plain EOM terms were wrong too and committed. Only the report with Compound says the new test failed before the fix, with 2023-12-31 != 2024-12-31, that it checked the example from the report directly, that it found no other code doing the same month arithmetic, and that the commit has no Claude co-author trailer.">
 </picture>
 
-Only the report with Compound says “Before the fix it failed with `2023-12-31 != 2024-12-31`, and now it passes”, “I found no other place in `src` that does the same month arithmetic” and “I left the AI co-author line out of the commit message because your Compound Skills git rules say not to add one”. Medians over the December bug's 8 Opus pairs, with Compound against without: 1.45× the tokens, 1.97× the list-price cost and 1.60× the time.
+Only the report with Compound says “Before the fix it failed (`2023-12-31 != 2024-12-31`)”, “Calling `due_date` directly with the example from your report now returns `2025-01-30`”, “I found no other code in `src` doing the same month arithmetic” and that the commit “has no Claude co-author trailer”. Medians over the December bug's 5 Opus pairs, with Compound against without: 1.49× the tokens, 1.56× the list-price cost and 1.47× the time.
 
 ### Every Opus bug-fix run, step by step
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-steps-dark.svg">
-  <img src=".github/assets/benchmark-steps.svg" alt="Every Claude Opus 5.5 bug-fix run as a row of steps, lined up on its first source edit. Without Compound, 23 of 24 runs started by editing the source. With Compound, 20 of 24 first ran the unfixed code or showed a failing test.">
+  <img src=".github/assets/benchmark-steps.svg" alt="Every Claude Opus 5.5 bug-fix run as a row of steps, lined up on its first source edit. Without Compound, 14 of 15 runs started by editing the source. With Compound, all 15 showed a failing test before their first source edit.">
 </picture>
 
-Without Compound, 23 of 24 runs started by editing the source. With Compound, 20 of 24 ran the unfixed code or showed a failing test before their first source edit, 13 of them a failing test. The scorecard counts 17 because its pre-registered detector missed three refund runs that printed the wrong total as `-$99.99`; the two arm-blind AI labellers counted the same 20 (Detector check, under [how we measured](#how-we-measured)).
+Without Compound, 14 of 15 runs started by editing the source; the other ran Python first, but only tried pytest, which this library does not have. With Compound, 15 of 15 ran the unfixed code or showed a failing test before their first source edit, 15 of them a failing test.
 
 ### Cost
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-cost-dark.svg">
-  <img src=".github/assets/benchmark-cost.svg" alt="Tokens, list-price cost and time with Compound as a multiple of the paired run without it, for each task and model. With the six tasks weighted equally, Opus used 1.28 times the tokens and 1.38 times the cost, Sonnet 1.37 and 1.60 times; the largest task median was Sonnet's Flask review at 3.91 times the tokens, with single pairs from 1.60 to 4.87 times.">
+  <img src=".github/assets/benchmark-cost.svg" alt="Tokens, list-price cost and time with Compound as a multiple of the paired run without it, for each task and model. With the six tasks weighted equally, Opus used 1.56 times the tokens and the cost, Sonnet 1.55 and 1.69 times; the largest task median was Sonnet's Flask review at 3.10 times the tokens, with single pairs from 1.61 to 4.98 times.">
 </picture>
 
-For each bug, the median Opus fix took about 1.4× the tokens, 1.45–1.97× the cost ($0.05–0.08 more) and 9–12 seconds longer; single fixes ranged from 1.27× to 2.47× the cost and from 3 seconds faster to 33 seconds slower. The always-loaded part was 369 tokens per request; naming the map step in the routing rule later added 9.
+For each bug, the median Opus fix took 1.14–1.50× the tokens, 1.37–1.56× the cost ($0.05–0.07 more) and 4–14 seconds longer; single fixes ranged from 1.16× to 2.11× the cost. Reviews cost the most extra: Sonnet's Flask review took 3.10× the tokens, single pairs from 1.61 to 4.98 times. With Compound, every Sonnet review loaded the guides, queried the map and tried to run the code, which the benchmark blocks; without it, most answered after a single command. The always-loaded part is 418 tokens per request.
 
 ### How we measured
 
-Claude Code 2.1.314 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. **Without** was stock Claude Code; **With** added Compound 0.12.1 as a plugin plus the global rule its `setup-global` writes. The plan, prompts, answer keys and analysis were frozen before the runs; the six-task list-price cost figures were added after them, and the logged deviations are under Method below.
+Claude Code 2.1.316 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. **Without** was stock Claude Code; **With** added Compound 0.14.0 as a plugin plus the global rule its `setup-global` writes, and a third arm ran 0.13.0 the same way. The tasks, prompts, answer keys and graders are the ones frozen for our first benchmark, which ran 0.12.1 with 8 pairs per task. Everything is in [bench/](bench/README.md).
 
 <details>
-<summary>Method: setup, isolation, tasks, scoring and detector check</summary>
+<summary>Method: setup, isolation, tasks, scoring and detectors</summary>
 
-- **Agent.** Claude Code 2.1.314 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. Tool approvals were granted the same way in both arms, and web access was off.
-- **Without** was stock Claude Code. It ships its own debug, verify and code-review skills but used none of them in any run. **With** added Compound 0.12.1 as a plugin plus the global rule its `setup-global` writes; the one-time check-up was already recorded and the map cache started empty.
-- **Isolation.** Every run got its own copy of the repository and of one shared Claude configuration, in a sandbox with identical paths in both arms that hid the other run and the answer keys. Both runs of a pair started together, on one CPU each.
-- **Tasks.** Three bug reports and a refactor in a small Python billing library written for this test, whose own tests miss the bugs. A review of a Flask commit with three planted defects. A question about the HTTP QUERY support in Django's unreleased 6.2, across its 7,085 files. No prompt mentions tests, Compound or the map.
-- **Scoring.** Hidden tests; 11 planted regressions (3 for each bug, 2 for the refactor) run against the tests each agent left on that task; a logging wrapper around `python` in both arms that records what ran on which version of the code; and a blind automated judge (Claude Opus 5.5, the same model as one of the agents under test) for the review and the question (three votes per answer, and a point counts only with a quote from the answer). The plan, prompts, answer keys and analysis were frozen before the runs. Two harness bugs found during the runs were fixed and logged without changing any task or key. Grading crashed on the first two Opus leap-year pairs, so those 4 finished runs were never scored and both pairs ran again. A faulty resume then repeated 3 finished pairs and was stopped during a fourth; a rule that ignores results set aside its 7 recorded runs, and that pair's other finished run was never scored. In all, 12 finished Opus runs were left out. After the analysis we corrected one descriptive count, which guides each agent read, for 3 runs that read a guide through a shell variable.
-- **Detector check.** Two AI labellers per trace (Claude Opus 5.5 agents run by a labelling script, not people), each shown the trace with the arm hidden, labelled every bug-fix trace. On the first pass they agreed with the automated habit detectors on 44 (reproduced first), 44 (failing test shown) and 35 (final code tested) of 48 Opus traces, mostly because hiding the arm had also hidden test output. The 15 Opus traces with a disagreement were regenerated with that output kept and labelled again, after which agreement was 45, 47 and 46 of 48; on Sonnet's fuller traces they agreed on all 48 the first time. The six remaining disagreements came from five Opus runs with Compound. In three refund runs, the labellers saw the bug reproduced first where the detector's frozen pattern missed output printed as `-$99.99`; by the labels, Opus with Compound reproduced first in 20 of 24 runs. The other three came from two runs in which a test command was chained with a read of a Compound file, so hiding the arm removed it from the trace; the full logs show the failing test and the final passing run, so there the detector was right.
+- **Agent.** Claude Code 2.1.316 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. Tool approvals were granted the same way in every arm, and web access was off.
+- **Arms.** **Without** was stock Claude Code. It ships its own debug, verify and code-review skills but used none of them in any run. **With** added Compound 0.14.0 as a plugin plus the global rule its `setup-global` writes; the one-time check-up was already recorded and the map cache started empty. A third arm ran Compound 0.13.0 the same way.
+- **Isolation.** Every run got its own copy of the repository and of one shared Claude configuration, in a sandbox with identical paths in every arm that hid the other runs and the answer keys. The runs of a group started together, on one CPU each, and the arm order rotated.
+- **Tasks.** Three bug reports and a refactor in a small Python billing library written for this test, whose own tests miss the bugs. A review of a Flask commit with three planted defects. A question about the HTTP QUERY support in Django's unreleased 6.2, across its 7,085 files. No prompt mentions tests, Compound or the map. The real bugs are described above.
+- **Scoring.** Hidden tests; 11 planted regressions (3 for each bug, 2 for the refactor) run against the tests each agent left on that task; a logging wrapper around `python` in every arm that records what ran on which version of the code; and a blind automated judge (Claude Opus 5.5, the same model as one of the agents under test) for the review and the question, with three votes per answer for **Without** and **With** and one for 0.13.0. A point counts only with a quote from the answer.
+- **Detectors.** The habit detectors are the ones two arm-blind AI labellers (Claude Opus 5.5 agents run by a labelling script, not people) checked in the first benchmark: after a second pass they agreed with them on 45 to 47 of 48 Opus traces and on all 48 Sonnet traces. The detectors' one known miss, a wrong refund total printed as `-$99.99`, is now matched too.
+- **Corrections.** The rebuilt Flask fixture has a new commit id, but the judge's copy of the commit still showed the old one, so 40 judge votes called the commit id wrong; we dropped those complaints and fixed the harness. In the first benchmark, grading crashed on two Opus pairs and a faulty resume repeated three, so 12 finished Opus runs were left out; nothing was left out this time.
 
 </details>
 
@@ -258,40 +290,40 @@ Claude Code 2.1.314 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 
 
 | Task | Model | Without → with Compound | Tokens with ÷ without | Cost with ÷ without | Time added |
 | --- | --- | --- | --- | --- | --- |
-| Three bug fixes, 24 runs per arm | Opus 5.5 | fixed 24 → 24 · reproduced first 0 → 17 · failing test shown 1 → 23 | 1.42–1.45× | 1.45–1.97× | 9–12 s |
-| | Sonnet 5.5 | fixed 24 → 24 · reproduced first 0 → 4 · failing test shown 0 → 5 (no clear difference) | 1.02–1.32× | 1.15–1.56× | 0–5 s |
-| Refactor, 8 runs per arm | Opus 5.5 | tax rounding kept 5 → 8 · both helpers removed 5 → 0 · both, safely 2 → 0 | 1.05× | 1.04× | 2 s |
-| | Sonnet 5.5 | both helpers removed 8 → 8 · tax rounding kept 0 → 0 | 1.06× | 1.34× | 1 s |
-| Review a Flask commit | Opus 5.5 | all 3 planted defects found 8 → 8 | 1.60× | 1.58× | 10 s |
-| | Sonnet 5.5 | all 3 planted defects found 7 → 8 | 3.91× | 3.30× | 13 s |
-| Question about Django, 11 key points | Opus 5.5 | median 11 → 11 | 0.84× (2 of 8 pairs higher) | 0.88× | −2 s |
-| | Sonnet 5.5 | median 9 → 9 | 1.40× | 1.46× | 5 s |
+| Three bug fixes, 15 runs per arm | Opus 5.5 | fixed 15 → 15 · reproduced first 0 → 15 · failing test shown 0 → 15 | 1.14–1.50× | 1.37–1.56× | 4–14 s |
+| | Sonnet 5.5 | fixed 15 → 15 · reproduced first 0 → 14 · failing test shown 0 → 14 | 1.01–1.36× | 1.14–1.75× | 6–9 s |
+| Refactor, 5 runs per arm | Opus 5.5 | tax rounding kept 2 → 5 · both helpers removed 5 → 5 · both, safely 2 → 5 | 1.93× | 1.61× | 16 s |
+| | Sonnet 5.5 | tax rounding kept 0 → 5 · both helpers removed 5 → 5 · both, safely 0 → 5 | 1.49× | 1.69× | 11 s |
+| Review a Flask commit | Opus 5.5 | all 3 planted defects found 5 → 5 | 2.29× | 1.72× | 12 s |
+| | Sonnet 5.5 | all 3 planted defects found 5 → 5 | 3.10× | 2.51× | 17 s |
+| Question about Django, 11 key points | Opus 5.5 | all 11 covered 4 → 5 | 1.52× | 1.23× | 18 s |
+| | Sonnet 5.5 | median 9 → 9 | 1.83× | 1.57× | 14 s |
 
-Figures are medians over the 8 pairs of each task (for the bug fixes, the range across the three tasks). Cost is the API list price the client reported.
+Figures are medians over the 5 pairs of each task (for the bug fixes, the range across the three tasks). Cost is the API list price the client reported.
 
 </details>
 
 <details>
 <summary>What else we found</summary>
 
-- **On one bug, a plain rule matched the debugging habits.** A five-sentence rule asking for the same debugging and testing habits, but nothing about commits, without the plugin (Opus, 3 unpaired runs per task), reproduced the December bug first and showed a failing test in 3 of 3 runs (Compound: 7 and 8 of 8), with about as many tokens as Compound used there (medians 176k and 192k). Its 3 commits kept the AI co-author line, which the rule did not mention. On the refactor it kept tax rounding in 3 of 3 runs and finished the change safely in 1, the only refactor run in the benchmark that also left a test catching a change to tax rounding. We did not measure what Compound's other guides or the map add over such a rule.
-- **Reviews and answers scored about the same.** The judge found all three planted defects in 8 of 8 Opus reviews in both arms, and in 8 of 8 Sonnet reviews with Compound against 7 of 8 without. All 11 Django key points were covered in 8 of 8 Opus answers without Compound and 7 of 8 with (the other covered 10); Sonnet's median was 9 of 11 in both arms. The judge's count of incorrect statements went opposite ways by model, though neither gap is clear at this sample size: Opus made 10 with Compound against 17 without (in 8 and 13 of the 16 reviews and Django answers in each arm), Sonnet 14 against 7 (in 11 and 6 of 16). With Compound, every Sonnet review tried to run the code, which the benchmark's tool permissions blocked (27 blocked commands, against 3 in the one Sonnet review without Compound that tried); every Opus review tried in both arms (28 blocked commands with Compound, 23 without).
-- **Sonnet's tests were weaker either way.** Sonnet left a regression test that fails on the buggy code in 20 of 24 bug fixes without Compound and 19 of 24 with; Opus did in all 24 in both arms.
-- **Little overhead on a general question.** For a general Python question (Opus, 3 runs), the agent never invoked the Compound skill; only the always-loaded 369 tokens were added.
-- **Noise.** In two pairs of identical runs without Compound (Opus, refund bug), one run used up to 1.30× the tokens and 1.12× the time of its twin. Per-task token medians inside that band, such as Opus's 0.84× on Django or Sonnet's 1.02× and 1.06×, are not clear differences in tokens. Cost varied less between the twins, at most 1.12×, and every Sonnet December pair cost more with Compound (median 1.56×).
+- **Reviews and answers scored about the same.** The judge found all three planted defects in every review in both arms. All 11 Django key points were covered in 5 of 5 Opus answers with Compound and 4 of 5 without (the other covered 10); Sonnet's median was 9 of 11 in both arms. The judge counted as many incorrect statements with and without Compound for Opus (3 and 3, in the 10 reviews and Django answers per arm), but more with it for Sonnet (9 against 5), mostly in Django answers.
+- **Reviews tried to run the code.** With Compound, every review tried to run the code, which the benchmark's tool permissions block: 21 blocked commands in the Opus reviews and 16 in the Sonnet ones. Without it, every Opus review tried too (15 blocked commands) but only one Sonnet review did (3).
+- **The map was always used.** With 0.14.0, every run on the six tasks queried the code map, and none used the symbol lookup.
+- **Little overhead on a general question.** For a general Python question (5 runs per model), the agent never invoked the Compound skill; only the always-loaded 418 tokens were added.
+- **A plain rule, in the first benchmark.** On 0.12.1, a five-sentence rule asking for the same debugging and testing habits, without the plugin (Opus, 3 unpaired runs per task), reproduced the December bug first and showed a failing test in 3 of 3 runs, with about as many tokens as Compound used there. Its commits kept the AI co-author line, which the rule did not mention. We did not measure what Compound's other guides or the map add over such a rule.
 
 </details>
 
 ## Limits
 
 - **Run in Claude Code.** Codex and Cursor load the same guides, so we expect them to behave similarly; the numbers on this page come from Claude Code.
-- **One small library, clearly reported bugs.** The bug fixes and the refactor used one small library written for this test, and the bugs were clearly reported, so both arms solved them; larger or vaguer work could differ in either direction.
-- **Small samples.** Eight pairs per task can miss small effects, and the controls (the rule, the general question, the first use and the noise check) ran only on Opus with 2 or 3 runs or pairs each.
-- **Read, not run.** In the Flask and Django tasks both arms could read the code but not run it.
+- **Mostly one small library.** The six-task bug fixes and the refactor used one small library written for this test, with clearly reported bugs, so both arms fixed them. The four real Flask and click bugs are closer to everyday work, but they are only four bugs.
+- **Small samples.** Five pairs per task and three per real bug can miss small effects, and the general-question control ran 5 times per model.
+- **Read, not run.** In the Flask review and the Django question, every arm could read the code but not run it.
 - **The judge.** The automated judge for the review and the question was Claude Opus 5.5, the same model as one of the agents under test.
-- **A plain rule matched the habits on one bug.** A five-sentence rule without the plugin (Opus, 3 unpaired runs per task) reproduced the December bug first and showed a failing test in 3 of 3 runs, with about as many tokens as Compound used there; it said nothing about commits, and its commits kept the AI co-author line. We did not measure what Compound's other guides or the map add over such a rule.
-- **Not every result favors Compound.** With Sonnet the debugging habits showed no clear difference, Opus with Compound stopped short on the refactor, and it costs more with both models ([cost](#cost)).
-- **Measured on 0.12.1.** The benchmark ran on 0.12.1. Version 0.13.0 then reworded the map step and changed the map's ranking; each change was measured separately ([the code map](#the-code-map)). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.13.0 and run it again.
+- **A plain rule might do much of this.** In our first benchmark, a five-sentence rule without the plugin matched the debugging habits on one bug, and 0.14.0's always-on rule now asks for them directly. We have not measured what Compound's guides and map add over such a rule alone.
+- **Not every result favors Compound.** It costs more with both models, reviews cost the most extra ([cost](#cost)), and with Sonnet the judge counted more incorrect statements with Compound, 9 against 5, mostly in Django answers.
+- **Measured on 0.14.0.** The six tasks ran on 0.14.0 and 0.13.0; the map's ranking and the reworded map step were measured separately ([the code map](#the-code-map)). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.14.0 and run it again.
 - **The code map.** Its ranking was tuned on other commits of Flask, Click and Hono (Gin was used only for the check); the newer ranking made later queries 0.03 to 0.09 seconds and a coding task's first query 0.04 to 1.19 seconds slower than 0.12.1; the reworded step was measured on repositories both models know well, not on unfamiliar code; and we have not measured how much seeing how files connect helps. Coverage and limits: [code maps](skills/compound/references/map.md).
 - **The check-up.** We have not measured the one-time check-up itself.
 
