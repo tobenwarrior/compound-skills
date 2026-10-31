@@ -359,10 +359,10 @@ function keepingFocus(render) {
   render();
   if (!active?.isConnected) { find()?.focus({ preventScroll: true }); state.used = used; }
 }
-// True when another panel, such as the Files drawer, lies over the middle of the element, or would once its own panel scrolled it back into view.
+// True when another panel, such as the Files drawer, lies over the middle of the element, or would once its own panel scrolled it just into view. Overlays that are not panels, such as the toast, neither cover it nor hide a panel that does.
 const covered = node => {
-  const own = node.closest("aside"), box = node.getBoundingClientRect(), edges = own?.getBoundingClientRect(), y = box.y + box.height / 2;
-  const panel = document.elementFromPoint(box.x + box.width / 2, edges ? Math.min(Math.max(y, edges.top + box.height / 2), edges.bottom - box.height / 2) : y)?.closest("aside");
+  const own = node.closest("aside"), box = node.getBoundingClientRect(), bounds = own?.getBoundingClientRect(), y = box.y + box.height / 2;
+  const panel = document.elementsFromPoint(box.x + box.width / 2, bounds ? Math.min(Math.max(y, bounds.top + box.height / 2), bounds.bottom - box.height / 2) : y).find(element => element.localName === "aside");
   return Boolean(panel) && panel !== own;
 };
 function renderAll() { keepingFocus(() => { renderProjects(); renderSummary(); renderStatus(); renderTree(); renderInspector(); renderGraph(); }); }
