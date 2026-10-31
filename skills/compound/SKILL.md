@@ -33,7 +33,7 @@ Before the first write-authorized engineering task for a repository in this chat
 python3 <installed-skill-dir>/scripts/onboarding.py status --repo <repo-root>
 ```
 
-Follow [repository assessment](references/onboarding.md) when not completed, and on every explicit project `setup`. Read-only requests, `setup global`, and activation-only modes skip cleanup. Remember completion for this chat; later chats check shared state.
+Batch startup steps, such as this check, the map query, and reading the references you need, into one shell call when you can. Follow [repository assessment](references/onboarding.md) when not completed, and on every explicit project `setup`. Read-only requests, `setup global`, and activation-only modes skip cleanup. Remember completion for this chat; later chats check shared state.
 
 Before each stage, read its matching reference below; switch when the task changes.
 
@@ -61,4 +61,4 @@ Use the host's available tools and models. Delegate independent work when useful
 
 At the commit/PR stage, reopen [Git and pull requests](references/git.md); never add AI coauthors or generated-by credits.
 
-Finish with the outcome, relevant evidence, and remaining limits. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.
+Finish with a short report: the outcome, relevant evidence, and remaining limits. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.

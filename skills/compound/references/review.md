@@ -6,4 +6,4 @@ Look for correctness failures, unsupported assumptions, concurrency or retry pro
 
 Use independent reviewers for distinct uncertainties when the host supports it and the benefit warrants the cost. Give them the same intent and artifact, then verify findings yourself. Reviewer agreement is supporting evidence, not proof.
 
-Return actionable findings with location, triggering condition, impact, and supporting evidence. Separate confirmed defects, unresolved questions, and optional improvements. Dismiss a false positive with a concrete reason. A review request remains read-only unless changes are authorized.
+Return actionable findings with location, triggering condition, impact, and supporting evidence. Separate confirmed defects, unresolved questions, and optional improvements. Dismiss a false positive with a concrete reason. A review request remains read-only unless changes are authorized. If running code is blocked, do not retry variants; say what you would run and continue from the code.
