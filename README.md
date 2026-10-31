@@ -20,7 +20,10 @@ In our Claude Code benchmark of three clearly reported bugs, Claude Opus 5.5 wen
 ## Install
 
 1. Install the plugin at **User** scope in each app you use (below).
-2. Start a new chat (or run `/reload-plugins` in Claude Code) and turn Compound on for every project, once, from any app: `/compound-skills:setup-global` in Claude Code, `$setup-global` in Codex or `/setup-global` in Cursor.
+2. Start a new chat (`/reload-plugins` also works in Claude Code) and turn Compound on for every project, once, from any app:<br>
+   `/compound-skills:setup-global` in Claude Code<br>
+   `$setup-global` in Codex<br>
+   `/setup-global` in Cursor
 3. Start a new chat and just ask for what you want.
 
 ### Claude Code
@@ -69,14 +72,14 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 <details>
 <summary>Exact command for each app</summary>
 
-| What you want | Codex | Cursor | Claude Code |
+| What you want | Claude Code | Codex | Cursor |
 | --- | --- | --- | --- |
-| Turn it on for every project (once, from any app) | `$setup-global` | `/setup-global` | `/compound-skills:setup-global` |
-| Check that it is on | `$status-global` | `/status-global` | `/compound-skills:status-global` |
-| Review and tidy the current project | `$setup` | `/setup` | `/compound-skills:setup` |
-| Open the code map | `$map` | `/map` | `/compound-skills:map` |
-| Use it in this chat only | `$compound` | `/compound` | `/compound-skills:compound` |
-| Remove the global setting | `$compound disable global` | `/compound disable global` | `/compound-skills:compound disable global` |
+| Turn it on for every project (once, from any app) | `/compound-skills:setup-global` | `$setup-global` | `/setup-global` |
+| Check that it is on | `/compound-skills:status-global` | `$status-global` | `/status-global` |
+| Review and tidy the current project | `/compound-skills:setup` | `$setup` | `/setup` |
+| Open the code map | `/compound-skills:map` | `$map` | `/map` |
+| Use it in this chat only | `/compound-skills:compound` | `$compound` | `/compound` |
+| Remove the global setting | `/compound-skills:compound disable global` | `$compound disable global` | `/compound disable global` |
 
 </details>
 
@@ -105,8 +108,15 @@ Compound has one short guide for each kind of work and tells the agent to read t
 - **Explore it.** Hover a file to light up its connections, drag it to pull its neighbors along, and scroll or pinch to zoom.
 - **See what a change touches.** **Impact** shows the files that import the one you picked, directly or through other files, as far as the map resolves imports. **Trace** finds how two files connect, and **Changed** shows your Git edits and their neighbors.
 - **Read without switching apps.** Search files, folders, and symbols, preview source, and copy a compact summary into your chat.
-- **Your agent can ask it too.** Before searching a repository, Compound has the agent query the map once, unless the task names its file, and offers lookups of where a symbol is defined and mentioned. With the 0.12.1 wording only 1 of the 96 benchmark runs queried the map, and none used the symbol lookup. After we reworded that step, 43 of 48 runs on questions and edits in Flask, Hono and Django did, against 0 of 48; questions took 1.38× the tokens and 1.16× the list-price cost, edits cost about the same, and answers scored about the same ([details](#how-we-measured)).
+- **Your agent can ask it too.** Before searching a repository, Compound has the agent query the map once, unless the task names its file, and offers lookups of where a symbol is defined and mentioned. With the 0.12.1 wording only 1 of the 96 benchmark runs queried the map, and none used the symbol lookup. After we reworded that step, 43 of 48 runs on questions and edits in Flask, Hono and Django did, against 0 of 48 with the old wording; compared with the old wording, questions took 1.38× the tokens and 1.16× the list-price cost per pair, edits cost about the same, and answers scored about the same (method below).
 - **Languages.** Imports are linked for Python, JavaScript, TypeScript, Go, and Rust. Symbols are outlined for those plus Java, C, C++, C#, Ruby, PHP, Swift, and Kotlin.
+
+<details>
+<summary>How we measured the reworded map step</summary>
+
+In 0.12.1 the skill offered the map only as a fallback when the host had no suitable index, and in 77 of 94 runs that loaded the skill the agent searched or read code in the same turn, before the skill's text arrived. The skill now asks for one map query before any further search, read or edit, unless the task names its file or supplies the code, and the routing rule says to run it before searching. We compared the two wordings in Claude Code 2.1.316, 4 pairs per task and model, on three questions (Flask error handlers, Hono routing, Django `select_for_update`), two edits that name the command or method to change, a cookie bug planted in Hono and reported only by its symptom, and a question about a named file; agents could read the code but not run it. The map was queried in 43 of 48 runs, once each and as the first search in 41, against 0 of 48: all 24 questions, all 12 Opus edits and 7 of 12 Sonnet edits. Neither wording queried it for the named file. Per pair, questions took 1.38× the tokens, 1.16× the list-price cost and 1.23× the time (geometric means); edits took 0.98×, 1.00× and 1.04×. A blind judge scored answers and fixes about the same. Rewording the skill alone, without the rule sentence, reached 30 of 48 (2 of 12 Sonnet edits). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.13.0 and run it again, and both models know these repositories well; we have not measured unfamiliar code.
+
+</details>
 
 ![Four views of the Compound code map on the Hono repository: Impact for url.ts, which counts 219 dependent files; Trace, showing the import path from hono.ts through the trie router to node.ts; Changed, with the two edited files ringed among the files wired to them; and the source preview of the smart router.](.github/assets/code-map-views.svg)
 
@@ -114,7 +124,7 @@ The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache
 
 ### How fast is it?
 
-Median of 5 runs on 4 cores with Python 3.13.17, timed on the current map.
+Median of 5 runs on 4 cores with Python 3.13.17, timed on 0.13.0.
 
 **Building the map**
 
@@ -140,7 +150,7 @@ Median of 5 runs on 4 cores with Python 3.13.17, timed on the current map.
 | Vue core · TypeScript | 2.00 s | 0.42 s | 1.40 s |
 | Django · Python | 10.90 s | 0.97 s | 8.78 s |
 
-One file edited: the file most other files import. Coding task: the command the skill gives the agent when edits are allowed; the first query starts the local service and indexes. Question or review: the read-only command, which starts no service and writes no cache; timed here with no cache yet. The newer ranking (below) made queries slower than in 0.12.1 timed the same way, by 0.03 to 0.09 seconds when warm and 0.04 to 1.19 seconds when cold.
+One file edited: the file most other files import. Coding task: the command the skill gives the agent when edits are allowed; the first query starts the local service and indexes. Question or review: the read-only command, which starts no service and writes no cache; timed here with no cache yet. The newer ranking (below) made queries slower than in 0.12.1 timed the same way: later queries by 0.03 to 0.09 seconds, a coding task's first query by 0.04 to 1.19 seconds, and a question or review by up to 0.97 seconds.
 
 ### Does it find the files a change touches?
 
@@ -156,7 +166,7 @@ Usually, and more often than a word-count search. For 240 real commits that were
 
 It was clearly ahead on Flask (60% against 35%, ahead on 21 commits to the search's 4), Hono (75% against 34%, 27 commits to 0) and Gin (81% against 63%, 15 commits to 2). On Click it was slightly ahead (81% against 73%, 10 commits to 5), a gap small enough to be noise.
 
-The map weighs the query's rarer words in file paths, symbols and the text of its 50 leading candidates, favors larger and widely imported code files, and lists tests lower unless the query mentions tests. We tuned it on the 60 most recent such commits of Flask, Click and Hono; Gin, a Go project, was used only for this check. Part of the gain comes from listing tests lower, since only non-test files were scored: a word search that also skips common words and lists tests last put 67% in its top 4, about level with the map on Click and Gin. Each commit's parent was copied into a fresh repository without history, so the map's co-change hints played no part. The newer ranking costs a little time: timed back to back on the seven repositories above, queries took 0.03 to 0.09 seconds longer than in 0.12.1 when warm and 0.04 to 1.19 seconds longer when cold, slower on every repository, while repeat runs of the same version differed by up to 0.14 seconds (0.42 on Django).
+The map weighs the query's rarer words in file paths, symbols and the text of its 50 leading candidates, favors larger and widely imported code files, and lists tests lower unless the query mentions tests. We tuned it on the 60 most recent such commits of Flask, Click and Hono; Gin, a Go project, was used only for this check. Part of the gain comes from listing tests lower, since only non-test files were scored: a word search that also skips common words and lists tests last put 67% in its top 4, about level with the map on Click and Gin. Each commit's parent was copied into a fresh repository without history, so the map's co-change hints played no part. The newer ranking costs a little time: timed back to back on the seven repositories above, later queries took 0.03 to 0.09 seconds longer than in 0.12.1 and a coding task's first query 0.04 to 1.19 seconds longer, slower on every repository, while repeat runs of the same version differed by up to 0.14 seconds (0.42 on Django). First builds took 0.10 to 0.43 seconds longer on five repositories and 0.06 and 0.18 seconds less on Gin and Django; only on Flask and Hono did the five runs of the two versions not overlap.
 
 Share of the changed source files in the top 4 · top 12:
 
@@ -183,9 +193,9 @@ We gave Claude Code the same six tasks with and without Compound: three bug repo
 - **With Opus, it usually reproduced the bug before fixing it:** in 17 of 24 bug fixes with Compound, against 0 of 24 without. It showed the new test failing on the unfixed code in 23 of 24, against 1 of 24 (13 before writing the fix, the rest by undoing the fix briefly).
 - **With Sonnet, no clear difference.** Claude Sonnet 5.5 read the same debugging guide in every bug fix but did these only 4 and 5 times out of 24, against 0 without.
 - **No clear difference in fixes or test strength.** Every run fixed its bug, with or without Compound. The tests each run left behind caught about as many planted regressions: 63 of 88 with Compound and 62 of 88 without on Opus, 42 of 88 in both arms on Sonnet.
-- **On the refactor, Opus with Compound stopped to ask instead of finishing.** The tax helper rounded differently, so a plain swap changes some tax amounts. With Compound, Opus kept tax rounding in all 8 runs but none removed both helpers; without it, 5 of 8 removed both, 2 of them keeping tax rounding. Sonnet removed both and changed tax rounding in all 16 runs, saying so each time.
+- **On the refactor, Opus with Compound stopped to ask instead of finishing.** The tax helper rounded differently, so a plain swap changes some tax amounts. With Compound, Opus kept tax rounding in all 8 runs but none removed both helpers; without it, 5 of 8 removed both, 2 of them keeping tax rounding, and the other 3 also stopped to ask. Sonnet removed both and changed tax rounding in all 16 runs, saying so each time.
 - **No AI co-author line.** None of the 48 bug-fix runs with Compound, from either model, put an AI co-author line in its commits; stock Claude Code did in all 48. Claude Code's own `attribution` setting can also remove it.
-- **It costs more.** With the six tasks weighted equally, Compound used 1.28× the tokens and 1.38× the list-price cost with Opus, and 1.37× and 1.60× with Sonnet ([cost](#cost)).
+- **It costs more.** With the six tasks weighted equally, Compound used 1.28× the tokens with Opus and 1.37× with Sonnet; at list prices, computed the same way but added after the runs, it cost 1.38× and 1.60× ([cost](#cost)).
 
 <details>
 <summary>Full results, with the statistics</summary>
@@ -207,7 +217,7 @@ The pair chosen before the runs: rep 1 of the December bug on Claude Opus 5.5. B
   <img src=".github/assets/benchmark-reports.svg" alt="The final reports from the pair chosen before the runs, rep 1 of the December bug on Claude Opus 5.5. Both fixed the bug, added a test, noticed that plain EOM terms were wrong too and gave the corrected due date for the example. Only the report with Compound says the new test failed before the fix, with 2023-12-31 != 2024-12-31, that it found no other place with the same month arithmetic, and that it left the AI co-author line out.">
 </picture>
 
-Medians over the December bug's 8 Opus pairs, with Compound against without: 1.45× the tokens, 1.97× the list-price cost and 1.60× the time.
+Only the report with Compound says “Before the fix it failed with `2023-12-31 != 2024-12-31`, and now it passes”, “I found no other place in `src` that does the same month arithmetic” and “I left the AI co-author line out of the commit message because your Compound Skills git rules say not to add one”. Medians over the December bug's 8 Opus pairs, with Compound against without: 1.45× the tokens, 1.97× the list-price cost and 1.60× the time.
 
 ### Every Opus bug-fix run, step by step
 
@@ -216,20 +226,20 @@ Medians over the December bug's 8 Opus pairs, with Compound against without: 1.4
   <img src=".github/assets/benchmark-steps.svg" alt="Every Claude Opus 5.5 bug-fix run as a row of steps, lined up on its first source edit. Without Compound, 23 of 24 runs started by editing the source. With Compound, 20 of 24 first ran the unfixed code or showed a failing test.">
 </picture>
 
-Without Compound, 23 of 24 runs started by editing the source. With Compound, 20 of 24 ran the unfixed code or showed a failing test before their first source edit, 13 of them a failing test.
+Without Compound, 23 of 24 runs started by editing the source. With Compound, 20 of 24 ran the unfixed code or showed a failing test before their first source edit, 13 of them a failing test. The scorecard counts 17 because its pre-registered detector missed three refund runs that printed the wrong total as `-$99.99`; the two arm-blind AI labellers counted the same 20 (Detector check, under [how we measured](#how-we-measured)).
 
 ### Cost
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/assets/benchmark-cost-dark.svg">
-  <img src=".github/assets/benchmark-cost.svg" alt="Tokens, list-price cost and time with Compound as a multiple of the paired run without it, for each task and model. With the six tasks weighted equally, Opus used 1.28 times the tokens and 1.38 times the cost, Sonnet 1.37 and 1.60 times; the largest was Sonnet's Flask review at 3.91 times the tokens.">
+  <img src=".github/assets/benchmark-cost.svg" alt="Tokens, list-price cost and time with Compound as a multiple of the paired run without it, for each task and model. With the six tasks weighted equally, Opus used 1.28 times the tokens and 1.38 times the cost, Sonnet 1.37 and 1.60 times; the largest task median was Sonnet's Flask review at 3.91 times the tokens, with single pairs from 1.60 to 4.87 times.">
 </picture>
 
 For each bug, the median Opus fix took about 1.4× the tokens, 1.45–1.97× the cost ($0.05–0.08 more) and 9–12 seconds longer; single fixes ranged from 1.27× to 2.47× the cost and from 3 seconds faster to 33 seconds slower. The always-loaded part was 369 tokens per request; naming the map step in the routing rule later added 9.
 
 ### How we measured
 
-Claude Code 2.1.314 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. **Without** was stock Claude Code; **With** added Compound 0.12.1 as a plugin plus the global rule its `setup-global` writes. The plan, prompts, answer keys and analysis were frozen before the runs.
+Claude Code 2.1.314 in headless mode with Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October 2026. **Without** was stock Claude Code; **With** added Compound 0.12.1 as a plugin plus the global rule its `setup-global` writes. The plan, prompts, answer keys and analysis were frozen before the runs; the six-task list-price cost figures were added after them, and the logged deviations are under Method below.
 
 <details>
 <summary>Method: setup, isolation, tasks, scoring and detector check</summary>
@@ -269,7 +279,6 @@ Figures are medians over the 8 pairs of each task (for the bug fixes, the range 
 - **Sonnet's tests were weaker either way.** Sonnet left a regression test that fails on the buggy code in 20 of 24 bug fixes without Compound and 19 of 24 with; Opus did in all 24 in both arms.
 - **Little overhead on a general question.** For a general Python question (Opus, 3 runs), the agent never invoked the Compound skill; only the always-loaded 369 tokens were added.
 - **Noise.** In two pairs of identical runs without Compound (Opus, refund bug), one run used up to 1.30× the tokens and 1.12× the time of its twin. Per-task token medians inside that band, such as Opus's 0.84× on Django or Sonnet's 1.02× and 1.06×, are not clear differences in tokens. Cost varied less between the twins, at most 1.12×, and every Sonnet December pair cost more with Compound (median 1.56×).
-- **Map queries after rewording the step.** In 0.12.1 the skill offered the map only as a fallback when the host had no suitable index, and in 77 of 94 runs that loaded the skill the agent searched or read code in the same turn, before the skill's text arrived. The skill now asks for one map query before any further search, read or edit, unless the task names its file or supplies the code, and the routing rule says to run it before searching. We compared the two wordings in Claude Code 2.1.316, 4 pairs per task and model, on three questions (Flask error handlers, Hono routing, Django `select_for_update`), two edits that name the command or method to change, a cookie bug planted in Hono and reported only by its symptom, and a question about a named file; agents could read the code but not run it. The map was queried in 43 of 48 runs, once each and as the first search in 41, against 0 of 48: all 24 questions, all 12 Opus edits and 7 of 12 Sonnet edits. Neither wording queried it for the named file. Per pair, questions took 1.38× the tokens, 1.16× the list-price cost and 1.23× the time (geometric means); edits took 0.98×, 1.00× and 1.04×. A blind judge scored answers and fixes about the same. Rewording the skill alone, without the rule sentence, reached 30 of 48 (2 of 12 Sonnet edits). Rules saved by an earlier `setup-global` or `setup` keep the old text until it is run again, and both models know these repositories well; we have not measured unfamiliar code.
 
 </details>
 
@@ -281,9 +290,9 @@ Figures are medians over the 8 pairs of each task (for the bug fixes, the range 
 - **Read, not run.** In the Flask and Django tasks both arms could read the code but not run it.
 - **The judge.** The automated judge for the review and the question was Claude Opus 5.5, the same model as one of the agents under test.
 - **A plain rule matched the habits on one bug.** A five-sentence rule without the plugin (Opus, 3 unpaired runs per task) reproduced the December bug first and showed a failing test in 3 of 3 runs, with about as many tokens as Compound used there; it said nothing about commits, and its commits kept the AI co-author line. We did not measure what Compound's other guides, the map or its Codex and Cursor setups add over such a rule.
-- **Not every result favors Compound.** Sonnet showed no clear difference, Opus with Compound stopped short on the refactor, and it costs more with both models ([cost](#cost)).
-- **Measured on 0.12.1.** Since the benchmark, the map step was reworded and the map's ranking changed; each change was measured separately ([the code map](#the-code-map)). Rules saved by an earlier `setup-global` or `setup` keep the old text until it is run again.
-- **The code map.** Its ranking was tuned on other commits of Flask, Click and Hono (Gin was used only for the check); the newer ranking made queries 0.03 to 0.09 seconds slower warm and 0.04 to 1.19 seconds slower cold than 0.12.1; the reworded step was measured on repositories both models know well, not on unfamiliar code; and we have not measured how much seeing how files connect helps. Coverage and limits: [code maps](skills/compound/references/map.md).
+- **Not every result favors Compound.** With Sonnet the debugging habits showed no clear difference, Opus with Compound stopped short on the refactor, and it costs more with both models ([cost](#cost)).
+- **Measured on 0.12.1.** The benchmark ran on 0.12.1. Version 0.13.0 then reworded the map step and changed the map's ranking; each change was measured separately ([the code map](#the-code-map)). Rules saved by an earlier `setup-global` or `setup` keep the old text until you update to 0.13.0 and run it again.
+- **The code map.** Its ranking was tuned on other commits of Flask, Click and Hono (Gin was used only for the check); the newer ranking made later queries 0.03 to 0.09 seconds and a coding task's first query 0.04 to 1.19 seconds slower than 0.12.1; the reworded step was measured on repositories both models know well, not on unfamiliar code; and we have not measured how much seeing how files connect helps. Coverage and limits: [code maps](skills/compound/references/map.md).
 - **The check-up.** We have not measured the one-time check-up itself.
 
 ## Credits

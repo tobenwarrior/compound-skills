@@ -66,15 +66,13 @@ I left the AI co-author line out of the commit message because your Compound Ski
 <text x="447.0" y="412.0" font-size="14">day.month % 12 + 1, 1).</text>
 <text x="447.0" y="443.0" font-size="14">Checks:</text>
 <text x="447.0" y="464.0" font-size="14">- I added a December regression test to</text>
-<rect x="435.0" y="470.0" width="405.0" height="21.0" rx="0" fill="#e3efe8"/>
-<rect x="435.0" y="470.0" width="3.0" height="21.0" rx="0" fill="#147a43"/>
-<text x="461.0" y="485.0" font-size="14">tests/test_terms_and_proration.py. Before the</text>
+<text x="461.0" y="485.0" font-size="14">tests/test_terms_and_proration.py.</text>
 <rect x="435.0" y="491.0" width="405.0" height="21.0" rx="0" fill="#e3efe8"/>
 <rect x="435.0" y="491.0" width="3.0" height="21.0" rx="0" fill="#147a43"/>
-<text x="461.0" y="506.0" font-size="14">fix it failed with 2023-12-31 != 2024-12-31, and</text>
+<text x="461.0" y="506.0" font-size="14">Before the fix it failed with</text>
 <rect x="435.0" y="512.0" width="405.0" height="21.0" rx="0" fill="#e3efe8"/>
 <rect x="435.0" y="512.0" width="3.0" height="21.0" rx="0" fill="#147a43"/>
-<text x="461.0" y="527.0" font-size="14">now it passes.</text>
+<text x="461.0" y="527.0" font-size="14">2023-12-31 != 2024-12-31, and now it passes.</text>
 <text x="447.0" y="548.0" font-size="14">- All 44 tests pass.</text>
 <text x="447.0" y="569.0" font-size="14">- Your example, an invoice issued 2024-12-10 with</text>
 <text x="461.0" y="590.0" font-size="14">NET 30 EOM, now comes out due on 2025-01-30.</text>
