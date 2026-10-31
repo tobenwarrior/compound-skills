@@ -1,130 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1010" viewBox="0 0 1280 1010" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="675" viewBox="0 0 840 675" role="img" aria-labelledby="title desc">
 <title id="title">Does the map point at the right files?</title>
-<desc id="desc">Flask (Python): 60 commits. Changed files found in the top 4 and top 12: code map 60% and 96%, map in 0.12.1 24% and 37%, text search 35% and 74%, random 5% and 15%. Click (Python): 60 commits. Changed files found in the top 4 and top 12: code map 81% and 95%, map in 0.12.1 49% and 71%, text search 73% and 92%, random 6% and 19%. Hono (TypeScript): 60 commits. Changed files found in the top 4 and top 12: code map 75% and 90%, map in 0.12.1 57% and 74%, text search 34% and 55%, random 1% and 3%. Gin (Go; repository not used for tuning): 60 commits. Changed files found in the top 4 and top 12: code map 81% and 92%, map in 0.12.1 64% and 75%, text search 63% and 81%, random 4% and 12%. Bars show the share of the changed source files found in the top 4 (solid; about what the agent sees) and top 12 (light). Text search ranks files by how many words of the title they contain. Nothing from the repositories was executed. The ranking was tuned on other, more recent commits of Flask, Click and Hono.</desc>
-<defs>
-<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
-<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
-<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
-</defs>
-<style>
-text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
-.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
-.sub{font-size:18px;fill:#6b6f78}
-.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
-.badge{font-size:13px;font-weight:650;fill:#147a43}
-.note{font-size:16px;fill:#6b6f78}
-.small{font-size:14px;fill:#6b6f78}
-.smallb{font-size:14px;font-weight:650}
-</style>
-<rect width="1280" height="1010" rx="28" fill="#fdf8ee"/>
-<rect width="1280" height="1010" rx="28" fill="url(#glowGreen)"/>
-<rect width="1280" height="1010" rx="28" fill="url(#glowGold)"/>
-<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="88" class="title">Does the map point at the right files?</text>
-<text x="76" y="124" class="sub">Real commits not used for tuning: query with the commit title, score the files the commit changed</text>
-<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
-<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
-<text x="1137" y="92" class="badge">Measured</text>
-<rect x="40" y="182" width="1200" height="168" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="224" class="task">Flask</text>
-<text x="76" y="250" class="small">Python</text>
-<text x="76" y="274" class="small">60 commits, 2023-03-04 to 2024-10-18</text>
-<text x="76" y="298" class="small">82 code files to choose from</text>
-<text x="420" y="221" class="small">Code map</text>
-<rect x="560" y="206" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="206" width="498.3" height="18" rx="9" fill="#147a43" opacity=".35"/>
-<rect x="560" y="206" width="310.6" height="18" rx="9" fill="#147a43"/>
-<text x="1100" y="221" class="smallb">60% · 96%</text>
-<text x="420" y="255" class="small">Map in 0.12.1</text>
-<rect x="560" y="240" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="240" width="192.1" height="18" rx="9" fill="#7fae8f" opacity=".35"/>
-<rect x="560" y="240" width="124.2" height="18" rx="9" fill="#7fae8f"/>
-<text x="1100" y="255" class="small">24% · 37%</text>
-<text x="420" y="289" class="small">Text search</text>
-<rect x="560" y="274" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="274" width="385.7" height="18" rx="9" fill="#a7aaa1" opacity=".35"/>
-<rect x="560" y="274" width="180.6" height="18" rx="9" fill="#a7aaa1"/>
-<text x="1100" y="289" class="small">35% · 74%</text>
-<text x="420" y="323" class="small">Random</text>
-<rect x="560" y="308" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="308" width="76.9" height="18" rx="9" fill="#d6d1c4" opacity=".35"/>
-<rect x="560" y="308" width="25.6" height="18" rx="9" fill="#d6d1c4"/>
-<text x="1100" y="323" class="small">5% · 15%</text>
-<rect x="40" y="366" width="1200" height="168" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="408" class="task">Click</text>
-<text x="76" y="434" class="small">Python</text>
-<text x="76" y="458" class="small">60 commits, 2025-05-25 to 2026-05-23</text>
-<text x="76" y="482" class="small">63 code files to choose from</text>
-<text x="420" y="405" class="small">Code map</text>
-<rect x="560" y="390" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="390" width="495.4" height="18" rx="9" fill="#147a43" opacity=".35"/>
-<rect x="560" y="390" width="420.3" height="18" rx="9" fill="#147a43"/>
-<text x="1100" y="405" class="smallb">81% · 95%</text>
-<text x="420" y="439" class="small">Map in 0.12.1</text>
-<rect x="560" y="424" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="424" width="366.9" height="18" rx="9" fill="#7fae8f" opacity=".35"/>
-<rect x="560" y="424" width="254.2" height="18" rx="9" fill="#7fae8f"/>
-<text x="1100" y="439" class="small">49% · 71%</text>
-<text x="420" y="473" class="small">Text search</text>
-<rect x="560" y="458" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="458" width="478.1" height="18" rx="9" fill="#a7aaa1" opacity=".35"/>
-<rect x="560" y="458" width="378.4" height="18" rx="9" fill="#a7aaa1"/>
-<text x="1100" y="473" class="small">73% · 92%</text>
-<text x="420" y="507" class="small">Random</text>
-<rect x="560" y="492" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="492" width="99.2" height="18" rx="9" fill="#d6d1c4" opacity=".35"/>
-<rect x="560" y="492" width="33.1" height="18" rx="9" fill="#d6d1c4"/>
-<text x="1100" y="507" class="small">6% · 19%</text>
-<rect x="40" y="550" width="1200" height="168" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="592" class="task">Hono</text>
-<text x="76" y="618" class="small">TypeScript</text>
-<text x="76" y="642" class="small">60 commits, 2026-07-21 to 2026-08-22</text>
-<text x="76" y="666" class="small">388 code files to choose from</text>
-<text x="420" y="589" class="small">Code map</text>
-<rect x="560" y="574" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="574" width="469.4" height="18" rx="9" fill="#147a43" opacity=".35"/>
-<rect x="560" y="574" width="391.4" height="18" rx="9" fill="#147a43"/>
-<text x="1100" y="589" class="smallb">75% · 90%</text>
-<text x="420" y="623" class="small">Map in 0.12.1</text>
-<rect x="560" y="608" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="608" width="384.2" height="18" rx="9" fill="#7fae8f" opacity=".35"/>
-<rect x="560" y="608" width="297.6" height="18" rx="9" fill="#7fae8f"/>
-<text x="1100" y="623" class="small">57% · 74%</text>
-<text x="420" y="657" class="small">Text search</text>
-<rect x="560" y="642" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="642" width="286.0" height="18" rx="9" fill="#a7aaa1" opacity=".35"/>
-<rect x="560" y="642" width="174.8" height="18" rx="9" fill="#a7aaa1"/>
-<text x="1100" y="657" class="small">34% · 55%</text>
-<text x="420" y="691" class="small">Random</text>
-<rect x="560" y="676" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="676" width="18.0" height="18" rx="9" fill="#d6d1c4" opacity=".35"/>
-<rect x="560" y="676" width="18.0" height="18" rx="9" fill="#d6d1c4"/>
-<text x="1100" y="691" class="small">1% · 3%</text>
-<rect x="40" y="734" width="1200" height="168" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="776" class="task">Gin</text>
-<text x="76" y="802" class="small">Go; repository not used for tuning</text>
-<text x="76" y="826" class="small">60 commits, 2025-10-08 to 2026-10-10</text>
-<text x="76" y="850" class="small">98 code files to choose from</text>
-<text x="420" y="773" class="small">Code map</text>
-<rect x="560" y="758" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="758" width="479.6" height="18" rx="9" fill="#147a43" opacity=".35"/>
-<rect x="560" y="758" width="423.2" height="18" rx="9" fill="#147a43"/>
-<text x="1100" y="773" class="smallb">81% · 92%</text>
-<text x="420" y="807" class="small">Map in 0.12.1</text>
-<rect x="560" y="792" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="792" width="390.0" height="18" rx="9" fill="#7fae8f" opacity=".35"/>
-<rect x="560" y="792" width="332.2" height="18" rx="9" fill="#7fae8f"/>
-<text x="1100" y="807" class="small">64% · 75%</text>
-<text x="420" y="841" class="small">Text search</text>
-<rect x="560" y="826" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="826" width="420.3" height="18" rx="9" fill="#a7aaa1" opacity=".35"/>
-<rect x="560" y="826" width="327.9" height="18" rx="9" fill="#a7aaa1"/>
-<text x="1100" y="841" class="small">63% · 81%</text>
-<text x="420" y="875" class="small">Random</text>
-<rect x="560" y="860" width="520" height="18" rx="9" fill="#f0ede6"/>
-<rect x="560" y="860" width="64.2" height="18" rx="9" fill="#d6d1c4" opacity=".35"/>
-<rect x="560" y="860" width="21.4" height="18" rx="9" fill="#d6d1c4"/>
-<text x="1100" y="875" class="small">4% · 12%</text>
-<text x="76" y="944" class="note">Bars: share of the changed source files found in the top 4 (solid; about what the agent sees) and top 12 (light).</text>
-<text x="76" y="968" class="note">Text search ranks files by how many words of the title they contain. Nothing from the repositories was executed.</text>
+<desc id="desc">Share of each commit&#x27;s changed source files that the map put in its top 4, querying with the commit&#x27;s title. 60 commits per repository, none used to tune the map. All 240 commits: Code map 74%, Map in 0.12.1 48%, Word-count search 51%, Random 4%. Word search that skips common words and lists tests last: 67%. Flask: Code map 60%, Map in 0.12.1 24%, Word-count search 35%, Random 5%. Python · 82 code files. Click: Code map 81%, Map in 0.12.1 49%, Word-count search 73%, Random 6%. Python · 63 code files; gap small enough to be noise. Hono: Code map 75%, Map in 0.12.1 57%, Word-count search 34%, Random 1%. TypeScript · 388 code files. Gin: Code map 81%, Map in 0.12.1 64%, Word-count search 63%, Random 4%. Go · 98 code files; not used for tuning. Word-count search ranks files by how many words of the title they contain; the outlined bar also skips common words and lists tests last. Nothing from the repositories was executed. The ranking was tuned on other, more recent commits of Flask, Click and Hono.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#1f2328;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
+<rect width="840" height="675" rx="12" fill="#ffffff"/>
+<line x1="230.0" y1="96.0" x2="230.0" y2="586.0" stroke="#d1d9e0" stroke-width="1"/>
+<text x="230.0" y="602.0" font-size="12" text-anchor="middle" fill="#59636e">0%</text>
+<line x1="360.0" y1="96.0" x2="360.0" y2="586.0" stroke="#d1d9e0" stroke-width="1"/>
+<text x="360.0" y="602.0" font-size="12" text-anchor="middle" fill="#59636e">25%</text>
+<line x1="490.0" y1="96.0" x2="490.0" y2="586.0" stroke="#d1d9e0" stroke-width="1"/>
+<text x="490.0" y="602.0" font-size="12" text-anchor="middle" fill="#59636e">50%</text>
+<line x1="620.0" y1="96.0" x2="620.0" y2="586.0" stroke="#d1d9e0" stroke-width="1"/>
+<text x="620.0" y="602.0" font-size="12" text-anchor="middle" fill="#59636e">75%</text>
+<line x1="750.0" y1="96.0" x2="750.0" y2="586.0" stroke="#d1d9e0" stroke-width="1"/>
+<text x="750.0" y="602.0" font-size="12" text-anchor="middle" fill="#59636e">100%</text>
+<text x="0.0" y="18.0" font-size="13" fill="#59636e">Share of each commit&#x27;s changed source files that the map put in its top 4, querying with the commit&#x27;s title. 60 commits</text>
+<text x="0.0" y="37.0" font-size="13" fill="#59636e">per repository, none used to tune the map.</text>
+<rect x="0.0" y="61.0" width="14.0" height="14.0" rx="3" fill="#147a43"/>
+<text x="20.0" y="72.0" font-size="14" fill="#59636e">Code map</text>
+<rect x="107.0" y="61.0" width="14.0" height="14.0" rx="3" fill="#7cc48c"/>
+<text x="127.0" y="72.0" font-size="14" fill="#59636e">Map in 0.12.1</text>
+<rect x="247.0" y="61.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<text x="267.0" y="72.0" font-size="14" fill="#59636e">Word-count search</text>
+<rect x="427.1" y="61.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<text x="447.1" y="72.0" font-size="14" fill="#59636e">Random</text>
+<rect x="522.5" y="62.0" width="12.0" height="12.0" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<text x="541.5" y="72.0" font-size="14" fill="#59636e">Word search, tests last</text>
+<text x="0.0" y="114.0" font-size="14" font-weight="600">All 240 commits</text>
+<text x="0.0" y="133.0" font-size="13" fill="#59636e">Flask, Click, Hono</text>
+<text x="0.0" y="151.0" font-size="13" fill="#59636e">and Gin</text>
+<rect x="230.0" y="102.0" width="384.8" height="14.0" rx="2" fill="#147a43"/>
+<text x="620.8" y="114.0" font-size="14" font-weight="600">74%</text>
+<rect x="230.0" y="120.0" width="249.6" height="14.0" rx="2" fill="#7cc48c"/>
+<text x="485.6" y="132.0" font-size="14" font-weight="600">48%</text>
+<rect x="230.0" y="138.0" width="265.2" height="14.0" rx="2" fill="#818b98"/>
+<text x="501.2" y="150.0" font-size="14" font-weight="600">51%</text>
+<rect x="230.0" y="156.0" width="20.8" height="14.0" rx="2" fill="#c8d1da"/>
+<text x="256.8" y="168.0" font-size="14" font-weight="600">4%</text>
+<rect x="230.8" y="174.8" width="346.9" height="12.5" rx="2" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<text x="584.4" y="186.0" font-size="14" font-weight="600">67%</text>
+<text x="0.0" y="228.0" font-size="14" font-weight="600">Flask</text>
+<text x="0.0" y="247.0" font-size="13" fill="#59636e">Python · 82 code files</text>
+<rect x="230.0" y="216.0" width="312.0" height="14.0" rx="2" fill="#147a43"/>
+<text x="548.0" y="228.0" font-size="14" font-weight="600">60%</text>
+<rect x="230.0" y="234.0" width="124.8" height="14.0" rx="2" fill="#7cc48c"/>
+<text x="360.8" y="246.0" font-size="14" font-weight="600">24%</text>
+<rect x="230.0" y="252.0" width="182.0" height="14.0" rx="2" fill="#818b98"/>
+<text x="418.0" y="264.0" font-size="14" font-weight="600">35%</text>
+<rect x="230.0" y="270.0" width="26.0" height="14.0" rx="2" fill="#c8d1da"/>
+<text x="262.0" y="282.0" font-size="14" font-weight="600">5%</text>
+<text x="0.0" y="324.0" font-size="14" font-weight="600">Click</text>
+<text x="0.0" y="343.0" font-size="13" fill="#59636e">Python · 63 code files</text>
+<text x="0.0" y="361.0" font-size="13" fill="#59636e">gap small enough to be noise</text>
+<rect x="230.0" y="312.0" width="421.2" height="14.0" rx="2" fill="#147a43"/>
+<text x="657.2" y="324.0" font-size="14" font-weight="600">81%</text>
+<rect x="230.0" y="330.0" width="254.8" height="14.0" rx="2" fill="#7cc48c"/>
+<text x="490.8" y="342.0" font-size="14" font-weight="600">49%</text>
+<rect x="230.0" y="348.0" width="379.6" height="14.0" rx="2" fill="#818b98"/>
+<text x="615.6" y="360.0" font-size="14" font-weight="600">73%</text>
+<rect x="230.0" y="366.0" width="31.2" height="14.0" rx="2" fill="#c8d1da"/>
+<text x="267.2" y="378.0" font-size="14" font-weight="600">6%</text>
+<text x="0.0" y="420.0" font-size="14" font-weight="600">Hono</text>
+<text x="0.0" y="439.0" font-size="13" fill="#59636e">TypeScript · 388 code files</text>
+<rect x="230.0" y="408.0" width="390.0" height="14.0" rx="2" fill="#147a43"/>
+<text x="626.0" y="420.0" font-size="14" font-weight="600">75%</text>
+<rect x="230.0" y="426.0" width="296.4" height="14.0" rx="2" fill="#7cc48c"/>
+<text x="532.4" y="438.0" font-size="14" font-weight="600">57%</text>
+<rect x="230.0" y="444.0" width="176.8" height="14.0" rx="2" fill="#818b98"/>
+<text x="412.8" y="456.0" font-size="14" font-weight="600">34%</text>
+<rect x="230.0" y="462.0" width="5.2" height="14.0" rx="2" fill="#c8d1da"/>
+<text x="241.2" y="474.0" font-size="14" font-weight="600">1%</text>
+<text x="0.0" y="516.0" font-size="14" font-weight="600">Gin</text>
+<text x="0.0" y="535.0" font-size="13" fill="#59636e">Go · 98 code files</text>
+<text x="0.0" y="553.0" font-size="13" fill="#59636e">not used for tuning</text>
+<rect x="230.0" y="504.0" width="421.2" height="14.0" rx="2" fill="#147a43"/>
+<text x="657.2" y="516.0" font-size="14" font-weight="600">81%</text>
+<rect x="230.0" y="522.0" width="332.8" height="14.0" rx="2" fill="#7cc48c"/>
+<text x="568.8" y="534.0" font-size="14" font-weight="600">64%</text>
+<rect x="230.0" y="540.0" width="327.6" height="14.0" rx="2" fill="#818b98"/>
+<text x="563.6" y="552.0" font-size="14" font-weight="600">63%</text>
+<rect x="230.0" y="558.0" width="20.8" height="14.0" rx="2" fill="#c8d1da"/>
+<text x="256.8" y="570.0" font-size="14" font-weight="600">4%</text>
+<text x="0.0" y="622.0" font-size="13" fill="#59636e">Word-count search ranks files by how many words of the title they contain; the outlined bar also skips common words and</text>
+<text x="0.0" y="641.0" font-size="13" fill="#59636e">lists tests last. Nothing from the repositories was executed. The ranking was tuned on other, more recent commits of</text>
+<text x="0.0" y="660.0" font-size="13" fill="#59636e">Flask, Click and Hono.</text>
 </svg>

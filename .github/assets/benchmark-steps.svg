@@ -1,379 +1,514 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1154" viewBox="0 0 1280 1154" role="img" aria-labelledby="title desc">
-<title id="title">Every bug-fix run, step by step</title>
-<desc id="desc">Bug: refund split, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 2: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 3: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 4: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 5: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 7: ran the unfixed code, edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, with Compound, run 1: ran the unfixed code, edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 2: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 3: ran the unfixed code, edited the source, edited tests, tests passed on the final code, other run, ran the unfixed code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 4: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 5: ran the unfixed code, edited the source, edited tests, other run, other run, ran the unfixed code, tests passed on the final code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 6: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 7: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, ran the unfixed code, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 8: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: leap-year proration, without Compound, run 1: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 5: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 7: edited the source, edited tests, tests passed on the final code, other run, committed, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 1: edited the source, edited tests, tests passed on the final code, ran the unfixed code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 3: edited the source, edited tests, tests passed on the final code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 4: edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 5: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, committed, edited tests, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 6: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 7: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 8: edited the source, edited tests, edited tests, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, committed. Bug: December due date, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 2: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 3: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 5: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 6: edited the source, edited tests, other run, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 7: edited the source, edited tests, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 1: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 3: edited tests, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 4: edited the source, edited tests, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: December due date, with Compound, run 5: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed, committed. Bug: December due date, with Compound, run 6: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 7: edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 8: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed.</desc>
-<defs>
-<radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
-<radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
-<linearGradient id="accent" x1="0" x2="1"><stop stop-color="#147a43"/><stop offset="1" stop-color="#2f7a4a"/></linearGradient>
-<filter id="shadow" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#14161c" flood-opacity=".09"/></filter>
-</defs>
-<style>
-text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;fill:#14161c}
-.title{font-size:40px;font-weight:700;letter-spacing:-.04em}
-.sub{font-size:18px;fill:#6b6f78}
-.head{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#6b6f78}
-.headg{font-size:13px;font-weight:700;letter-spacing:.12em;fill:#147a43}
-.task{font-size:19px;font-weight:650;letter-spacing:-.01em}
-.without{font-size:16px;fill:#6b6f78}
-.with{font-size:16px;font-weight:550}
-.badge{font-size:13px;font-weight:650;fill:#147a43}
-.label{font-size:19px;font-weight:600}
-.value{font-size:26px;font-weight:700;letter-spacing:-.03em}
-.green{fill:#147a43}
-.note{font-size:16px;fill:#6b6f78}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;fill:#14161c}
-.small{font-size:14px;fill:#6b6f78}
-.smallb{font-size:14px;font-weight:650}
-.big{font-size:30px;font-weight:700;letter-spacing:-.03em}
-.grey{fill:#6b6f78}
-</style>
-<rect width="1280" height="1154" rx="28" fill="#fdf8ee"/>
-<rect width="1280" height="1154" rx="28" fill="url(#glowGreen)"/>
-<rect width="1280" height="1154" rx="28" fill="url(#glowGold)"/>
-<rect x="40" y="36" width="1200" height="118" rx="24" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="88" class="title">Every bug-fix run, step by step</text>
-<text x="76" y="124" class="sub">Claude Opus 5.5 · each row is one run, steps in the order they happened · not to time scale</text>
-<rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
-<circle cx="1123" cy="87" r="5" fill="#4ade80"/>
-<text x="1137" y="92" class="badge">Measured</text>
-<rect x="76" y="198" width="14" height="14" rx="4" fill="#e0a33a"/>
-<text x="98" y="210" class="small">Ran the unfixed code</text>
-<rect x="272.0" y="198" width="14" height="14" rx="4" fill="#c2410c"/>
-<text x="294.0" y="210" class="small">A test failed on the unfixed code</text>
-<rect x="564.2" y="198" width="14" height="14" rx="4" fill="#7fb7e8"/>
-<text x="586.2" y="210" class="small">Edited tests</text>
-<rect x="701.0" y="198" width="14" height="14" rx="4" fill="#6b6f78"/>
-<text x="723.0" y="210" class="small">Edited the source</text>
-<rect x="76" y="224" width="14" height="14" rx="4" fill="#d6d1c4"/>
-<text x="98" y="236" class="small">Other run</text>
-<rect x="190.60000000000002" y="224" width="14" height="14" rx="4" fill="#147a43"/>
-<text x="212.60000000000002" y="236" class="small">Tests passed on the final code</text>
-<rect x="460.6" y="224" width="14" height="14" rx="4" fill="#14161c"/>
-<text x="482.6" y="236" class="small">Committed</text>
-<rect x="40" y="266" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="300" class="label" style="font-size:17px">Bug: refund split</text>
-<text x="330" y="298" class="head">WITHOUT COMPOUND</text>
-<rect x="330" y="312" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="312" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="312" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="312" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="312" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="336" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="336" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="336" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="336" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="360" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="360" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="360" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="360" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="384" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="384" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="384" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="384" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="408" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="408" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="408" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="408" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="432" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="432" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="432" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="432" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="350" y="456" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="370" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="456" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="456" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="480" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="480" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="480" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="480" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="480" width="16" height="16" rx="4" fill="#14161c"/>
-<text x="800" y="298" class="headg">WITH COMPOUND</text>
-<rect x="800" y="312" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="312" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="312" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="312" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="312" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="900" y="312" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="312" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="312" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="336" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="336" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="336" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="336" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="336" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="336" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="336" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="360" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="360" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="360" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="360" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="880" y="360" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="360" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="920" y="360" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="940" y="360" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="384" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="384" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="384" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="384" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="384" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="384" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="384" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="408" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="408" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="408" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="408" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="880" y="408" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="408" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="920" y="408" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="940" y="408" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="960" y="408" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="432" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="432" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="432" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="432" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="432" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="432" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="432" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="940" y="432" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="960" y="432" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="456" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="456" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="456" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="456" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="456" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="940" y="456" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="960" y="456" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="980" y="456" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="1000" y="456" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="480" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="480" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="840" y="480" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="480" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="480" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="480" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="480" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="40" y="522" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="556" class="label" style="font-size:17px">Bug: leap-year proration</text>
-<text x="330" y="554" class="head">WITHOUT COMPOUND</text>
-<rect x="330" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="370" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="410" y="568" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="430" y="568" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="592" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="592" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="592" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="616" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="616" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="616" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="616" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="616" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="430" y="616" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="640" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="640" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="640" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="430" y="640" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="450" y="640" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="370" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="410" y="664" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="430" y="664" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="688" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="688" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="688" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="712" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="712" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="390" y="712" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="410" y="712" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="430" y="712" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="450" y="712" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="736" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="736" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="736" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="736" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="430" y="736" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="450" y="736" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="470" y="736" width="16" height="16" rx="4" fill="#14161c"/>
-<text x="800" y="554" class="headg">WITH COMPOUND</text>
-<rect x="800" y="568" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="820" y="568" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="568" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="860" y="568" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="880" y="568" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="568" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="568" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="592" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="592" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="592" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="592" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="900" y="592" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="592" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="592" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="616" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="820" y="616" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="616" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="860" y="616" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="616" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="616" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="640" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="640" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="840" y="640" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="640" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="640" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="640" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="640" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="640" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="664" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="664" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="664" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="900" y="664" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="664" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="664" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="960" y="664" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="980" y="664" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="1000" y="664" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="688" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="688" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="688" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="688" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="688" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="688" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="940" y="688" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="712" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="712" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="712" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="712" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="712" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="712" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="712" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="736" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="820" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="736" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="736" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="880" y="736" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="900" y="736" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="920" y="736" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="40" y="778" width="1200" height="244" rx="18" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
-<text x="76" y="812" class="label" style="font-size:17px">Bug: December due date</text>
-<text x="330" y="810" class="head">WITHOUT COMPOUND</text>
-<rect x="330" y="824" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="824" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="824" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="824" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="824" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="848" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="848" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="848" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="848" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="872" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="872" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="872" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="896" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="896" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="896" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="896" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="920" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="920" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="920" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="944" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="944" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="410" y="944" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="430" y="944" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="390" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="410" y="968" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="430" y="968" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="330" y="992" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="350" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="370" y="992" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="390" y="992" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="410" y="992" width="16" height="16" rx="4" fill="#14161c"/>
-<text x="800" y="810" class="headg">WITH COMPOUND</text>
-<rect x="800" y="824" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="824" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="840" y="824" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="860" y="824" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="880" y="824" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="824" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="848" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="848" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="848" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="848" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="900" y="848" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="848" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="848" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="872" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="872" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="840" y="872" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="860" y="872" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="880" y="872" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="872" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="872" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="896" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="820" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="896" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="896" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="896" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="896" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="920" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="920" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="920" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="920" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="920" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="920" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="940" y="920" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="944" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="944" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="944" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="860" y="944" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="944" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="900" y="944" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="944" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="968" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="820" y="968" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="840" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="860" y="968" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="880" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="900" y="968" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="920" y="968" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="940" y="968" width="16" height="16" rx="4" fill="#14161c"/>
-<rect x="800" y="992" width="16" height="16" rx="4" fill="#e0a33a"/>
-<rect x="820" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="840" y="992" width="16" height="16" rx="4" fill="#7fb7e8"/>
-<rect x="860" y="992" width="16" height="16" rx="4" fill="#c2410c"/>
-<rect x="880" y="992" width="16" height="16" rx="4" fill="#6b6f78"/>
-<rect x="900" y="992" width="16" height="16" rx="4" fill="#147a43"/>
-<rect x="920" y="992" width="16" height="16" rx="4" fill="#d6d1c4"/>
-<rect x="940" y="992" width="16" height="16" rx="4" fill="#14161c"/>
-<text x="76" y="1052" class="note">Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked for tests.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="876" viewBox="0 0 840 876" role="img" aria-labelledby="title desc">
+<title id="title">Every Opus bug-fix run, step by step</title>
+<desc id="desc">Claude Opus 5.5, all 48 bug-fix runs in recorded order, each row lined up on its first source edit; steps in order, not to time scale. Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked for tests. A failing-test mark right of the line was shown by undoing the fix briefly. Running the unfixed code counts as reproducing the bug only when its output showed the bug. Bug: refund split, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 2: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 3: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 4: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 5: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 7: ran the unfixed code, edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, with Compound, run 1: ran the unfixed code, edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 2: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 3: ran the unfixed code, edited the source, edited tests, tests passed on the final code, other run, ran the unfixed code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 4: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 5: ran the unfixed code, edited the source, edited tests, other run, other run, ran the unfixed code, tests passed on the final code, a test failed on the unfixed code, committed. Bug: refund split, with Compound, run 6: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 7: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, other run, other run, ran the unfixed code, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: refund split, with Compound, run 8: ran the unfixed code, edited the source, edited tests, a test failed on the unfixed code, tests passed on the final code, other run, committed. Bug: leap-year proration, without Compound, run 1: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 5: edited the source, edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 6: edited the source, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 7: edited the source, edited tests, tests passed on the final code, other run, committed, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 1: edited the source, edited tests, tests passed on the final code, ran the unfixed code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 3: edited the source, edited tests, tests passed on the final code, a test failed on the unfixed code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 4: edited tests, a test failed on the unfixed code, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 5: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, committed, edited tests, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 6: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 7: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, other run, committed. Bug: leap-year proration, with Compound, run 8: edited the source, edited tests, edited tests, tests passed on the final code, ran the unfixed code, a test failed on the unfixed code, committed. Bug: December due date, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 2: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 3: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 5: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 6: edited the source, edited tests, other run, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 7: edited the source, edited tests, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 8: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 1: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 2: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 3: edited tests, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 4: edited the source, edited tests, edited tests, a test failed on the unfixed code, tests passed on the final code, committed. Bug: December due date, with Compound, run 5: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed, committed. Bug: December due date, with Compound, run 6: ran the unfixed code, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 7: edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 8: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#1f2328;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
+<rect width="840" height="876" rx="12" fill="#ffffff"/>
+<rect x="0.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M4.0,10.0 L11.0,14.0 L4.0,18.0 Z" fill="#ffffff"/>
+<text x="20.0" y="18.0" font-size="14" fill="#59636e">Ran the unfixed code</text>
+<rect x="199.2" y="7.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M202.7,10.5 L209.7,17.5 M209.7,10.5 L202.7,17.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="219.2" y="18.0" font-size="14" fill="#59636e">A test failed on the unfixed code</text>
+<rect x="493.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<text x="513.0" y="18.0" font-size="14" fill="#59636e">Edited the source</text>
+<rect x="0.0" y="31.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<text x="20.0" y="42.0" font-size="14" fill="#59636e">Edited tests</text>
+<rect x="141.5" y="31.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M144.5,38.0 L147.5,41.0 L152.5,34.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="161.5" y="42.0" font-size="14" fill="#59636e">Tests passed on the final code</text>
+<rect x="415.3" y="31.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<text x="434.6" y="42.0" font-size="14" fill="#59636e">Other run</text>
+<circle cx="538.7" cy="38.0" r="6.5" fill="#1f2328"/>
+<text x="551.7" y="42.0" font-size="14" fill="#59636e">Committed</text>
+<text x="0.0" y="76.0" font-size="14" font-weight="600">Bug: refund split</text>
+<text x="30.0" y="100.0" font-size="13" font-weight="600" fill="#59636e">Without Compound</text>
+<text x="460.0" y="100.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+<text x="110.0" y="118.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<text x="540.0" y="118.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<line x1="110.0" y1="124.0" x2="110.0" y2="288.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="22.0" y="139.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="116.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,135.0 L179.0,138.0 L184.0,131.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="135.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="159.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="116.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,155.0 L160.0,158.0 L165.0,151.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="155.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="179.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="116.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,175.0 L160.0,178.0 L165.0,171.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="175.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="199.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="116.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,195.0 L160.0,198.0 L165.0,191.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="195.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="219.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="116.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,215.0 L160.0,218.0 L165.0,211.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="215.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="239.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="116.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,235.0 L160.0,238.0 L165.0,231.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="235.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="259.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="92.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M96.0,251.0 L103.0,255.0 L96.0,259.0 Z" fill="#ffffff"/>
+<rect x="116.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,255.0 L160.0,258.0 L165.0,251.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="255.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="279.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="116.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="268.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,275.0 L179.0,278.0 L184.0,271.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="275.0" r="6.5" fill="#1f2328"/>
+<line x1="540.0" y1="124.0" x2="540.0" y2="288.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="452.0" y="139.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="465.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M469.0,131.0 L476.0,135.0 L469.0,139.0 Z" fill="#ffffff"/>
+<rect x="484.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M506.5,131.5 L513.5,138.5 M513.5,131.5 L506.5,138.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="522.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,131.5 L532.5,138.5 M532.5,131.5 L525.5,138.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,135.0 L571.0,138.0 L576.0,131.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="135.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="159.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="522.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,151.0 L533.0,155.0 L526.0,159.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M587.5,151.5 L594.5,158.5 M594.5,151.5 L587.5,158.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,155.0 L609.0,158.0 L614.0,151.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.8" y="148.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="648.0" cy="155.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="179.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="522.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,171.0 L533.0,175.0 L526.0,179.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M587.0,175.0 L590.0,178.0 L595.0,171.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.8" y="168.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="622.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M626.0,171.0 L633.0,175.0 L626.0,179.0 Z" fill="#ffffff"/>
+<rect x="641.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M644.5,171.5 L651.5,178.5 M651.5,171.5 L644.5,178.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="667.0" cy="175.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="199.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="522.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,191.0 L533.0,195.0 L526.0,199.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M587.5,191.5 L594.5,198.5 M594.5,191.5 L587.5,198.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,195.0 L609.0,198.0 L614.0,191.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="648.0" cy="195.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="219.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="522.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,211.0 L533.0,215.0 L526.0,219.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="603.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="622.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M626.0,211.0 L633.0,215.0 L626.0,219.0 Z" fill="#ffffff"/>
+<rect x="641.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M644.0,215.0 L647.0,218.0 L652.0,211.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="660.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M663.5,211.5 L670.5,218.5 M670.5,211.5 L663.5,218.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="686.0" cy="215.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="239.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="522.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,231.0 L533.0,235.0 L526.0,239.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M587.5,231.5 L594.5,238.5 M594.5,231.5 L587.5,238.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.8" y="228.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="622.8" y="228.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="641.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M644.5,231.5 L651.5,238.5 M651.5,231.5 L644.5,238.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="660.0" y="228.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M663.0,235.0 L666.0,238.0 L671.0,231.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="686.0" cy="235.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="259.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="522.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,251.0 L533.0,255.0 L526.0,259.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M587.5,251.5 L594.5,258.5 M594.5,251.5 L587.5,258.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.8" y="248.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="622.8" y="248.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="641.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M645.0,251.0 L652.0,255.0 L645.0,259.0 Z" fill="#ffffff"/>
+<rect x="660.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="679.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M682.5,251.5 L689.5,258.5 M689.5,251.5 L682.5,258.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="698.0" y="248.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M701.0,255.0 L704.0,258.0 L709.0,251.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="724.0" cy="255.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="279.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="522.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M526.0,271.0 L533.0,275.0 L526.0,279.0 Z" fill="#ffffff"/>
+<rect x="546.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M587.5,271.5 L594.5,278.5 M594.5,271.5 L587.5,278.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.0" y="268.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,275.0 L609.0,278.0 L614.0,271.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.8" y="268.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="648.0" cy="275.0" r="6.5" fill="#1f2328"/>
+<text x="0.0" y="320.0" font-size="14" font-weight="600">Bug: leap-year proration</text>
+<text x="30.0" y="344.0" font-size="13" font-weight="600" fill="#59636e">Without Compound</text>
+<text x="460.0" y="344.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+<text x="110.0" y="362.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<text x="540.0" y="362.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<line x1="110.0" y1="368.0" x2="110.0" y2="532.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="22.0" y="383.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="116.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="154.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="192.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M195.0,379.0 L198.0,382.0 L203.0,375.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="218.0" cy="379.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="403.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="116.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,399.0 L179.0,402.0 L184.0,395.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="399.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="423.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="116.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="412.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,419.0 L179.0,422.0 L184.0,415.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="192.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M195.0,419.0 L198.0,422.0 L203.0,415.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="218.0" cy="419.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="443.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="116.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="432.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,439.0 L179.0,442.0 L184.0,435.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="192.8" y="432.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="211.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M214.0,439.0 L217.0,442.0 L222.0,435.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="237.0" cy="439.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="463.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="116.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="154.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="192.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M195.0,459.0 L198.0,462.0 L203.0,455.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="218.0" cy="459.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="483.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="116.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,479.0 L160.0,482.0 L165.0,475.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="180.0" cy="479.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="503.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="116.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M157.0,499.0 L160.0,502.0 L165.0,495.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="173.8" y="492.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="199.0" cy="499.0" r="6.5" fill="#1f2328"/>
+<rect x="211.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M214.0,499.0 L217.0,502.0 L222.0,495.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="237.0" cy="499.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="523.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="116.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="512.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,519.0 L179.0,522.0 L184.0,515.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="192.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M196.0,515.0 L203.0,519.0 L196.0,523.0 Z" fill="#ffffff"/>
+<rect x="211.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M214.5,515.5 L221.5,522.5 M221.5,515.5 L214.5,522.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="230.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M233.0,519.0 L236.0,522.0 L241.0,515.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="256.0" cy="519.0" r="6.5" fill="#1f2328"/>
+<line x1="540.0" y1="368.0" x2="540.0" y2="532.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="452.0" y="383.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="546.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M587.0,379.0 L590.0,382.0 L595.0,375.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M607.0,375.0 L614.0,379.0 L607.0,383.0 Z" fill="#ffffff"/>
+<rect x="622.8" y="372.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="641.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M644.0,379.0 L647.0,382.0 L652.0,375.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="667.0" cy="379.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="403.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="465.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M469.0,395.0 L476.0,399.0 L469.0,403.0 Z" fill="#ffffff"/>
+<rect x="484.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,395.5 L532.5,402.5 M532.5,395.5 L525.5,402.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,399.0 L571.0,402.0 L576.0,395.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="392.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="399.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="423.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="546.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M587.0,419.0 L590.0,422.0 L595.0,415.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M606.5,415.5 L613.5,422.5 M613.5,415.5 L606.5,422.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.0" y="412.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M625.0,419.0 L628.0,422.0 L633.0,415.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="648.0" cy="419.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="443.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="484.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M506.5,435.5 L513.5,442.5 M513.5,435.5 L506.5,442.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="522.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,435.5 L532.5,442.5 M532.5,435.5 L525.5,442.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,439.0 L571.0,442.0 L576.0,435.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.0" y="432.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M587.0,439.0 L590.0,442.0 L595.0,435.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.8" y="432.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="629.0" cy="439.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="463.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="484.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M488.0,455.0 L495.0,459.0 L488.0,463.0 Z" fill="#ffffff"/>
+<rect x="503.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,455.5 L532.5,462.5 M532.5,455.5 L525.5,462.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="584.8" y="452.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="603.8" y="452.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="629.0" cy="459.0" r="6.5" fill="#1f2328"/>
+<rect x="641.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="660.0" y="452.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M663.0,459.0 L666.0,462.0 L671.0,455.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="686.0" cy="459.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="483.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="484.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,475.5 L532.5,482.5 M532.5,475.5 L525.5,482.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,479.0 L571.0,482.0 L576.0,475.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="472.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="603.0" y="472.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,479.0 L609.0,482.0 L614.0,475.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="629.0" cy="479.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="503.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="484.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,495.5 L532.5,502.5 M532.5,495.5 L525.5,502.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,499.0 L571.0,502.0 L576.0,495.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.0" y="492.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M587.0,499.0 L590.0,502.0 L595.0,495.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="603.8" y="492.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="629.0" cy="499.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="523.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="546.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="603.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,519.0 L609.0,522.0 L614.0,515.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M626.0,515.0 L633.0,519.0 L626.0,523.0 Z" fill="#ffffff"/>
+<rect x="641.0" y="512.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M644.5,515.5 L651.5,522.5 M651.5,515.5 L644.5,522.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="667.0" cy="519.0" r="6.5" fill="#1f2328"/>
+<text x="0.0" y="564.0" font-size="14" font-weight="600">Bug: December due date</text>
+<text x="30.0" y="588.0" font-size="13" font-weight="600" fill="#59636e">Without Compound</text>
+<text x="460.0" y="588.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+<text x="110.0" y="606.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<text x="540.0" y="606.0" font-size="12" text-anchor="middle" fill="#59636e">first source edit</text>
+<line x1="110.0" y1="612.0" x2="110.0" y2="776.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="22.0" y="627.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="116.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="616.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,623.0 L179.0,626.0 L184.0,619.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="623.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="647.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="116.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="636.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,643.0 L179.0,646.0 L184.0,639.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="643.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="667.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="116.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,663.0 L179.0,666.0 L184.0,659.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="663.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="687.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="116.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="676.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,683.0 L179.0,686.0 L184.0,679.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="683.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="707.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="116.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,703.0 L179.0,706.0 L184.0,699.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="703.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="727.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="116.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="716.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.8" y="716.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="192.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M195.0,723.0 L198.0,726.0 L203.0,719.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="218.0" cy="723.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="747.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="116.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="173.8" y="736.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="192.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M195.0,743.0 L198.0,746.0 L203.0,739.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="218.0" cy="743.0" r="6.5" fill="#1f2328"/>
+<text x="22.0" y="767.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="116.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="135.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="154.8" y="756.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="173.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M176.0,763.0 L179.0,766.0 L184.0,759.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="199.0" cy="763.0" r="6.5" fill="#1f2328"/>
+<line x1="540.0" y1="612.0" x2="540.0" y2="776.0" stroke="#59636e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="452.0" y="627.0" font-size="12" text-anchor="end" fill="#59636e">1</text>
+<rect x="503.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,619.5 L532.5,626.5 M532.5,619.5 L525.5,626.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="616.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,623.0 L571.0,626.0 L576.0,619.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="616.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="623.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="647.0" font-size="12" text-anchor="end" fill="#59636e">2</text>
+<rect x="465.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M469.0,639.0 L476.0,643.0 L469.0,647.0 Z" fill="#ffffff"/>
+<rect x="484.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,639.5 L532.5,646.5 M532.5,639.5 L525.5,646.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="636.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,643.0 L571.0,646.0 L576.0,639.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="636.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="643.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="667.0" font-size="12" text-anchor="end" fill="#59636e">3</text>
+<rect x="503.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,659.5 L532.5,666.5 M532.5,659.5 L525.5,666.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.8" y="656.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="584.8" y="656.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="603.0" y="656.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M606.0,663.0 L609.0,666.0 L614.0,659.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="629.0" cy="663.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="687.0" font-size="12" text-anchor="end" fill="#59636e">4</text>
+<rect x="546.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="584.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="603.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M606.5,679.5 L613.5,686.5 M613.5,679.5 L606.5,686.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="622.0" y="676.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M625.0,683.0 L628.0,686.0 L633.0,679.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="648.0" cy="683.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="707.0" font-size="12" text-anchor="end" fill="#59636e">5</text>
+<rect x="484.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,699.5 L532.5,706.5 M532.5,699.5 L525.5,706.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="696.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,703.0 L571.0,706.0 L576.0,699.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="696.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="703.0" r="6.5" fill="#1f2328"/>
+<circle cx="629.0" cy="703.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="727.0" font-size="12" text-anchor="end" fill="#59636e">6</text>
+<rect x="484.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M488.0,719.0 L495.0,723.0 L488.0,727.0 Z" fill="#ffffff"/>
+<rect x="503.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,719.5 L532.5,726.5 M532.5,719.5 L525.5,726.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="716.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,723.0 L571.0,726.0 L576.0,719.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="716.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="723.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="747.0" font-size="12" text-anchor="end" fill="#59636e">7</text>
+<rect x="503.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,739.5 L532.5,746.5 M532.5,739.5 L525.5,746.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="584.8" y="736.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="603.8" y="736.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<rect x="622.0" y="736.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M625.0,743.0 L628.0,746.0 L633.0,739.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="648.0" cy="743.0" r="6.5" fill="#1f2328"/>
+<text x="452.0" y="767.0" font-size="12" text-anchor="end" fill="#59636e">8</text>
+<rect x="465.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#d1571f"/>
+<path d="M469.0,759.0 L476.0,763.0 L469.0,767.0 Z" fill="#ffffff"/>
+<rect x="484.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="503.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#c8d1da"/>
+<rect x="522.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#2a78d6"/>
+<path d="M525.5,759.5 L532.5,766.5 M532.5,759.5 L525.5,766.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="546.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#1f2328"/>
+<rect x="565.0" y="756.0" width="14.0" height="14.0" rx="3" fill="#818b98"/>
+<path d="M568.0,763.0 L571.0,766.0 L576.0,759.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="584.8" y="756.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#59636e" stroke-width="1.5"/>
+<circle cx="610.0" cy="763.0" r="6.5" fill="#1f2328"/>
+<text x="0.0" y="800.0" font-size="13" fill="#59636e">Claude Opus 5.5, all 48 bug-fix runs in recorded order, each row lined up on its first source edit; steps in order, not to</text>
+<text x="0.0" y="819.0" font-size="13" fill="#59636e">time scale. Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked</text>
+<text x="0.0" y="838.0" font-size="13" fill="#59636e">for tests. A failing-test mark right of the line was shown by undoing the fix briefly. Running the unfixed code counts</text>
+<text x="0.0" y="857.0" font-size="13" fill="#59636e">as reproducing the bug only when its output showed the bug.</text>
 </svg>
