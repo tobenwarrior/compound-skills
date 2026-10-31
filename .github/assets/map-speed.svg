@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="794" viewBox="0 0 1280 794" role="img" aria-labelledby="title desc">
 <title id="title">Fast on real repositories</title>
-<desc id="desc">Gin · Go (130 files): first build 0.42 s, unchanged 0.04 s, after editing its most-imported file 0.05 s, agent query cold 0.95 s and warm 0.31 s. click · Python (178 files): first build 0.37 s, unchanged 0.07 s, after editing its most-imported file 0.08 s, agent query cold 0.94 s and warm 0.32 s. ripgrep · Rust (226 files): first build 2.09 s, unchanged 0.08 s, after editing its most-imported file 0.11 s, agent query cold 2.73 s and warm 0.34 s. Flask · Python (236 files): first build 0.26 s, unchanged 0.10 s, after editing its most-imported file 0.10 s, agent query cold 0.83 s and warm 0.32 s. Hono · TypeScript (583 files): first build 0.69 s, unchanged 0.16 s, after editing its most-imported file 0.18 s, agent query cold 1.39 s and warm 0.34 s. Vue core · TypeScript (703 files): first build 1.11 s, unchanged 0.23 s, after editing its most-imported file 0.23 s, agent query cold 1.86 s and warm 0.33 s. Django · Python (7085 files): first build 8.13 s, unchanged 1.96 s, after editing its most-imported file 2.04 s, agent query cold 9.76 s and warm 0.89 s. One file edited: the file most other files import. Agent query: the exact command the skill runs; cold includes starting the local service and indexing. The map keeps its data in your user cache, outside the repository.</desc>
+<desc id="desc">Gin · Go (130 files): first build 0.42 s, unchanged 0.04 s, after editing its most-imported file 0.05 s, coding-task query cold 0.95 s and warm 0.31 s, read-only query 0.58 s. click · Python (178 files): first build 0.37 s, unchanged 0.07 s, after editing its most-imported file 0.08 s, coding-task query cold 0.94 s and warm 0.32 s, read-only query 0.52 s. ripgrep · Rust (226 files): first build 2.09 s, unchanged 0.08 s, after editing its most-imported file 0.11 s, coding-task query cold 2.73 s and warm 0.34 s, read-only query 2.29 s. Flask · Python (236 files): first build 0.26 s, unchanged 0.10 s, after editing its most-imported file 0.10 s, coding-task query cold 0.83 s and warm 0.32 s, read-only query 0.37 s. Hono · TypeScript (583 files): first build 0.69 s, unchanged 0.16 s, after editing its most-imported file 0.18 s, coding-task query cold 1.39 s and warm 0.34 s, read-only query 0.90 s. Vue core · TypeScript (703 files): first build 1.11 s, unchanged 0.23 s, after editing its most-imported file 0.23 s, coding-task query cold 1.86 s and warm 0.33 s, read-only query 1.32 s. Django · Python (7085 files): first build 8.13 s, unchanged 1.96 s, after editing its most-imported file 2.04 s, coding-task query cold 9.76 s and warm 0.89 s, read-only query 8.23 s. One file edited: the file most other files import. Coding query: the command the skill gives the agent when edits are allowed; cold includes starting the local service and indexing. Read-only query: the command for questions and reviews, which starts no service and writes no cache; timed here with no cache yet. The map keeps its data in your user cache.</desc>
 <defs>
 <radialGradient id="glowGreen" cx="85%" cy="0%" r="75%"><stop offset="0" stop-color="#e6f3e8" stop-opacity=".95"/><stop offset="1" stop-color="#e6f3e8" stop-opacity="0"/></radialGradient>
 <radialGradient id="glowGold" cx="0%" cy="45%" r="65%"><stop offset="0" stop-color="#fbefd6" stop-opacity=".8"/><stop offset="1" stop-color="#fbefd6" stop-opacity="0"/></radialGradient>
@@ -36,67 +36,82 @@ text{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Ari
 <rect x="1103" y="70" width="101" height="34" rx="17" fill="#e5f3e9" stroke="#d3e8d8"/>
 <circle cx="1123" cy="87" r="5" fill="#4ade80"/>
 <text x="1137" y="92" class="badge">Measured</text>
-<text x="430" y="214" class="head" style="font-size:11px">FIRST BUILD</text>
-<text x="590" y="214" class="head" style="font-size:11px">NOTHING CHANGED</text>
-<text x="750" y="214" class="head" style="font-size:11px">ONE FILE EDITED</text>
-<text x="910" y="214" class="head" style="font-size:11px">AGENT QUERY, COLD</text>
-<text x="1070" y="214" class="head" style="font-size:11px">AGENT QUERY, WARM</text>
+<text x="400" y="204" class="head" style="font-size:11px">FIRST</text>
+<text x="400" y="219" class="head" style="font-size:11px">BUILD</text>
+<text x="538" y="204" class="head" style="font-size:11px">NOTHING</text>
+<text x="538" y="219" class="head" style="font-size:11px">CHANGED</text>
+<text x="676" y="204" class="head" style="font-size:11px">ONE FILE</text>
+<text x="676" y="219" class="head" style="font-size:11px">EDITED</text>
+<text x="814" y="204" class="head" style="font-size:11px">CODING QUERY,</text>
+<text x="814" y="219" class="head" style="font-size:11px">COLD</text>
+<text x="952" y="204" class="head" style="font-size:11px">CODING QUERY,</text>
+<text x="952" y="219" class="head" style="font-size:11px">WARM</text>
+<text x="1090" y="204" class="head" style="font-size:11px">READ-ONLY</text>
+<text x="1090" y="219" class="head" style="font-size:11px">QUERY</text>
 <rect x="40" y="232" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="258" class="label" style="font-size:17px">Gin · Go</text>
 <text x="76" y="278" class="small">130 files, 113 indexed</text>
-<text x="430" y="268" class="big" style="font-size:22px">0.42 s</text>
-<text x="590" y="268" class="big" style="font-size:22px">0.04 s</text>
-<text x="750" y="268" class="big" style="font-size:22px">0.05 s</text>
-<text x="910" y="268" class="big" style="font-size:22px">0.95 s</text>
-<text x="1070" y="268" class="big" style="font-size:22px">0.31 s</text>
+<text x="400" y="268" class="big" style="font-size:22px">0.42 s</text>
+<text x="538" y="268" class="big" style="font-size:22px">0.04 s</text>
+<text x="676" y="268" class="big" style="font-size:22px">0.05 s</text>
+<text x="814" y="268" class="big" style="font-size:22px">0.95 s</text>
+<text x="952" y="268" class="big" style="font-size:22px">0.31 s</text>
+<text x="1090" y="268" class="big" style="font-size:22px">0.58 s</text>
 <rect x="40" y="296" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="322" class="label" style="font-size:17px">click · Python</text>
 <text x="76" y="342" class="small">178 files, 114 indexed</text>
-<text x="430" y="332" class="big" style="font-size:22px">0.37 s</text>
-<text x="590" y="332" class="big" style="font-size:22px">0.07 s</text>
-<text x="750" y="332" class="big" style="font-size:22px">0.08 s</text>
-<text x="910" y="332" class="big" style="font-size:22px">0.94 s</text>
-<text x="1070" y="332" class="big" style="font-size:22px">0.32 s</text>
+<text x="400" y="332" class="big" style="font-size:22px">0.37 s</text>
+<text x="538" y="332" class="big" style="font-size:22px">0.07 s</text>
+<text x="676" y="332" class="big" style="font-size:22px">0.08 s</text>
+<text x="814" y="332" class="big" style="font-size:22px">0.94 s</text>
+<text x="952" y="332" class="big" style="font-size:22px">0.32 s</text>
+<text x="1090" y="332" class="big" style="font-size:22px">0.52 s</text>
 <rect x="40" y="360" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="386" class="label" style="font-size:17px">ripgrep · Rust</text>
 <text x="76" y="406" class="small">226 files, 126 indexed</text>
-<text x="430" y="396" class="big" style="font-size:22px">2.09 s</text>
-<text x="590" y="396" class="big" style="font-size:22px">0.08 s</text>
-<text x="750" y="396" class="big" style="font-size:22px">0.11 s</text>
-<text x="910" y="396" class="big" style="font-size:22px">2.73 s</text>
-<text x="1070" y="396" class="big" style="font-size:22px">0.34 s</text>
+<text x="400" y="396" class="big" style="font-size:22px">2.09 s</text>
+<text x="538" y="396" class="big" style="font-size:22px">0.08 s</text>
+<text x="676" y="396" class="big" style="font-size:22px">0.11 s</text>
+<text x="814" y="396" class="big" style="font-size:22px">2.73 s</text>
+<text x="952" y="396" class="big" style="font-size:22px">0.34 s</text>
+<text x="1090" y="396" class="big" style="font-size:22px">2.29 s</text>
 <rect x="40" y="424" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="450" class="label" style="font-size:17px">Flask · Python</text>
 <text x="76" y="470" class="small">236 files, 125 indexed</text>
-<text x="430" y="460" class="big" style="font-size:22px">0.26 s</text>
-<text x="590" y="460" class="big" style="font-size:22px">0.10 s</text>
-<text x="750" y="460" class="big" style="font-size:22px">0.10 s</text>
-<text x="910" y="460" class="big" style="font-size:22px">0.83 s</text>
-<text x="1070" y="460" class="big" style="font-size:22px">0.32 s</text>
+<text x="400" y="460" class="big" style="font-size:22px">0.26 s</text>
+<text x="538" y="460" class="big" style="font-size:22px">0.10 s</text>
+<text x="676" y="460" class="big" style="font-size:22px">0.10 s</text>
+<text x="814" y="460" class="big" style="font-size:22px">0.83 s</text>
+<text x="952" y="460" class="big" style="font-size:22px">0.32 s</text>
+<text x="1090" y="460" class="big" style="font-size:22px">0.37 s</text>
 <rect x="40" y="488" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="514" class="label" style="font-size:17px">Hono · TypeScript</text>
 <text x="76" y="534" class="small">583 files, 531 indexed</text>
-<text x="430" y="524" class="big" style="font-size:22px">0.69 s</text>
-<text x="590" y="524" class="big" style="font-size:22px">0.16 s</text>
-<text x="750" y="524" class="big" style="font-size:22px">0.18 s</text>
-<text x="910" y="524" class="big" style="font-size:22px">1.39 s</text>
-<text x="1070" y="524" class="big" style="font-size:22px">0.34 s</text>
+<text x="400" y="524" class="big" style="font-size:22px">0.69 s</text>
+<text x="538" y="524" class="big" style="font-size:22px">0.16 s</text>
+<text x="676" y="524" class="big" style="font-size:22px">0.18 s</text>
+<text x="814" y="524" class="big" style="font-size:22px">1.39 s</text>
+<text x="952" y="524" class="big" style="font-size:22px">0.34 s</text>
+<text x="1090" y="524" class="big" style="font-size:22px">0.90 s</text>
 <rect x="40" y="552" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="578" class="label" style="font-size:17px">Vue core · TypeScript</text>
 <text x="76" y="598" class="small">703 files, 612 indexed</text>
-<text x="430" y="588" class="big" style="font-size:22px">1.11 s</text>
-<text x="590" y="588" class="big" style="font-size:22px">0.23 s</text>
-<text x="750" y="588" class="big" style="font-size:22px">0.23 s</text>
-<text x="910" y="588" class="big" style="font-size:22px">1.86 s</text>
-<text x="1070" y="588" class="big" style="font-size:22px">0.33 s</text>
+<text x="400" y="588" class="big" style="font-size:22px">1.11 s</text>
+<text x="538" y="588" class="big" style="font-size:22px">0.23 s</text>
+<text x="676" y="588" class="big" style="font-size:22px">0.23 s</text>
+<text x="814" y="588" class="big" style="font-size:22px">1.86 s</text>
+<text x="952" y="588" class="big" style="font-size:22px">0.33 s</text>
+<text x="1090" y="588" class="big" style="font-size:22px">1.32 s</text>
 <rect x="40" y="616" width="1200" height="54" rx="16" fill="#fffdf8" stroke="#ece6d8" filter="url(#shadow)"/>
 <text x="76" y="642" class="label" style="font-size:17px">Django · Python</text>
 <text x="76" y="662" class="small">7,085 files, 3,496 indexed</text>
-<text x="430" y="652" class="big" style="font-size:22px">8.13 s</text>
-<text x="590" y="652" class="big" style="font-size:22px">1.96 s</text>
-<text x="750" y="652" class="big" style="font-size:22px">2.04 s</text>
-<text x="910" y="652" class="big" style="font-size:22px">9.76 s</text>
-<text x="1070" y="652" class="big" style="font-size:22px">0.89 s</text>
-<text x="76" y="706" class="note">One file edited: the file most other files import. Agent query: the exact command the skill runs; cold includes</text>
-<text x="76" y="730" class="note">starting the local service and indexing. The map keeps its data in your user cache, outside the repository.</text>
+<text x="400" y="652" class="big" style="font-size:22px">8.13 s</text>
+<text x="538" y="652" class="big" style="font-size:22px">1.96 s</text>
+<text x="676" y="652" class="big" style="font-size:22px">2.04 s</text>
+<text x="814" y="652" class="big" style="font-size:22px">9.76 s</text>
+<text x="952" y="652" class="big" style="font-size:22px">0.89 s</text>
+<text x="1090" y="652" class="big" style="font-size:22px">8.23 s</text>
+<text x="76" y="706" class="note">One file edited: the file most other files import. Coding query: the command the skill gives the agent when edits are</text>
+<text x="76" y="730" class="note">allowed; cold includes starting the local service and indexing. Read-only query: the command for questions and reviews,</text>
+<text x="76" y="754" class="note">which starts no service and writes no cache; timed here with no cache yet. The map keeps its data in your user cache.</text>
 </svg>
