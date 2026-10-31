@@ -1,6 +1,6 @@
 {
   "name": "compound-skills",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Compact engineering guidance for architecture, implementation, debugging, refactoring, and review.",
   "author": {
     "name": "tobenwarrior"
