@@ -21,9 +21,11 @@ from tasks import TASKS
 
 BUGFIX = ("bugfix-refund", "bugfix-leap", "bugfix-december")
 WRITE = BUGFIX + ("refactor-rounding",)
-REAL = tuple(name for name, task in TASKS.items() if "real" in task.get("tags", []))
+REAL = tuple(name for name, task in TASKS.items() if "real" in task.get("tags", []) and "real-new" not in task["tags"])
+REAL_NEW = tuple(name for name, task in TASKS.items() if "real-new" in task.get("tags", []))
 GROUPS = {"bugfix": ("Bug fixes in invoicekit (three bugs pooled)", BUGFIX),
-          "real": ("Real bugs in Flask and click (four bugs pooled)", REAL)}
+          "real": ("Real bugs in Flask and click (four bugs pooled)", REAL),
+          "real-new": ("Real bugs in werkzeug, attrs, packaging and marshmallow, frozen before running (nine pooled)", REAL_NEW)}
 HABITS = [  # (key, label, source)
     ("reproduced_before_fix", "Reproduced the bug before changing code", "habits"),
     ("failing_test_on_old_code", "Showed a new test failing on the old code", "habits"),

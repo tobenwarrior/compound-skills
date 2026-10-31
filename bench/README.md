@@ -8,7 +8,7 @@ Nothing here is loaded by Claude Code, Codex or Cursor. Results stay on your mac
 
 - Linux, as root or with unprivileged user namespaces. Every run gets its own mount and PID namespace, through `unshare` and `taskset` from util-linux.
 - The `claude` CLI, `git`, Python 3.11 or newer at `/usr/bin/python3` with `pip`, and network access for the first `setup`. `map-retrieval` also needs ripgrep (`rg`).
-- Sign-in that works without your home directory. Runs can't see `/root` or `/home`, so pass a token with `BENCH_PASS_ENV=ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`). Alternatively, keep a folder visible read-only with `BENCH_KEEP=<dir>[:<dir>...]`. Folders that hold the proxy CA files named by `NODE_EXTRA_CA_CERTS` or `SSL_CERT_FILE` stay visible automatically.
+- Sign-in that works without your home directory. Runs can't see `/root` or `/home`, so pass a token with `BENCH_PASS_ENV=ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`). Alternatively, keep a folder visible read-only with `BENCH_KEEP=<dir>[:<dir>...]` or `--keep <dir>` before the command. Folders that hold the proxy CA files named by `NODE_EXTRA_CA_CERTS` or `SSL_CERT_FILE` stay visible automatically.
 
 Every run is a real agent session billed to your account. Cost grows with arms × tasks × models × repetitions, and `report` shows the measured cost per task.
 
@@ -66,10 +66,11 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 | `review-flask` | `core`, `judged` | Review a Flask commit with three planted defects |
 | `investigate-django` | `core`, `judged` | Find where Django treats the HTTP QUERY method differently |
 | `flask-ipv6-run`, `flask-ipv6-session`, `click-pickle-option`, `click-progress-final` | `real` | Fix a real bug that Flask or click fixed upstream between July and September 2026, in the project's own code and test suite |
+| `werkzeug-float-sign`, `attrs-evolve-name`, four `packaging-*` and three `marshmallow-*` bugs | `real`, `real-new` | The same, for nine bugs fixed upstream between August and October 2026, frozen on 31 October 2026 before any run |
 | `inactive` | `control` | A plain question where Compound should stay out of the way |
 | `first-use` | `control` | The December fix in a repository with no check-up yet and the user's own uncommitted notes |
 
-Each real-bug fixture is the project at the parent of the upstream fix, with its history up to that point. The bug report describes only the symptom. The hidden tests are the new tests from the upstream fix, and the project's whole suite must still pass. `setup` checks that these tests fail at the parent and pass on the upstream fix. It also installs each project's test dependencies, as pinned in its `uv.lock`, into `bench/work/pyenv`. Runs see them read-only on `PYTHONPATH`.
+Each real-bug fixture is the project at the parent of the upstream fix, with its history up to that point. The bug report describes only the symptom. The hidden tests are the new tests from the upstream fix, and the project's whole suite must still pass. `setup` checks that these tests fail at the parent and pass on the upstream fix. It also installs each project's test dependencies into `bench/work/pyenv`: as pinned in its `uv.lock` for Flask and click, as resolved on the freeze date for the others, and never the project itself, which runs from its `src/`. Runs see them read-only on `PYTHONPATH`.
 
 Prompts are the same in every arm and never mention Compound. Write tasks may run code and commit. Read tasks may read and search but never run the project's code. Web access, package installs and network commands are denied in every arm.
 

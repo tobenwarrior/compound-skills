@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import sys
 from datetime import datetime, timezone
@@ -155,6 +156,8 @@ def map_retrieval(args) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--keep", action="append", default=[], metavar="DIR",
+                        help="a host folder runs still see, read-only, like BENCH_KEEP; give it before the command")
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("setup", help="fetch pinned sources, build and check fixtures, create the template config")
     p.add_argument("--map", action="store_true", help="also fetch the repositories the map benchmarks read")
@@ -207,6 +210,8 @@ def main() -> int:
     p.add_argument("--label")
     p.set_defaults(func=map_retrieval)
     args = parser.parse_args()
+    if args.keep:
+        os.environ["BENCH_KEEP"] = os.pathsep.join([*filter(None, os.environ.get("BENCH_KEEP", "").split(os.pathsep)), *args.keep])
     if args.command == "judge" and not args.calibrate and not args.label:
         parser.error("judge needs --label (or --calibrate)")
     if args.command in ("setup", "tasks", "report", "run", "rescore"):

@@ -25,8 +25,12 @@ PINS = {
     "vue-core": ("https://github.com/vuejs/core", "24c9d0bffb2299635b8112a978d74a38723aaa10", "shallow"),
     "gin": ("https://github.com/gin-gonic/gin", "0f09c3a9b4626d9fe9979cf4d0521d6ae32ab646", "shallow"),
     "ripgrep": ("https://github.com/BurntSushi/ripgrep", "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b", "shallow"),
+    "werkzeug": ("https://github.com/pallets/werkzeug", "2adaad1ab68312fa46efb07ff072b15b720e2444", "full"),
+    "attrs": ("https://github.com/python-attrs/attrs", "c8bb9bfaa2843e7844b5bb13bed4370b51feec4f", "full"),
+    "packaging": ("https://github.com/pypa/packaging", "78d8673da4d275bb7aee0126a5edc3cf90976af1", "full"),
+    "marshmallow": ("https://github.com/marshmallow-code/marshmallow", "b762ea2d59ca52fe5df76b90de14bed7e5ec5607", "full"),
 }
-TASK_SOURCES = ("flask", "django", "click")
+TASK_SOURCES = ("flask", "django", "click", "werkzeug", "attrs", "packaging", "marshmallow")
 MAP_SOURCES = ("flask", "click", "hono", "django", "vue-core", "gin", "ripgrep")
 
 # The frozen fixtures were signed commits; rebuilt ones are unsigned, so a rebuild must match tree, parent,
@@ -64,6 +68,16 @@ REAL_BUGS = {
     "flask-ipv6-session": ("flask", "de8429ffda8cfb54db175529e2bae72a24e1fa7e"),
     "click-pickle-option": ("click", "f58ca3e81424a35626c8a475eb59ab95589008ce"),
     "click-progress-final": ("click", "f316d5cb3aa89b57c14aee54da6ac9062ac5bec4"),
+    # Frozen on 31 October 2026, before any run: fixes merged August to October 2026 whose new tests fail before the fix.
+    "werkzeug-float-sign": ("werkzeug", "594452f6a4fe4de38a544962fbf04bfc9d37fbc2"),
+    "attrs-evolve-name": ("attrs", "f53fc5440d7f86aac4328aec7a563eb48634177f"),
+    "packaging-empty-platforms": ("packaging", "4e79787a31c99348649bb0dafee2a5078d3595be"),
+    "packaging-licenseref-case": ("packaging", "2c87a33f665828b7aa0f650b1b50243b3ab95695"),
+    "packaging-pylock-separators": ("packaging", "fa52d7237a74effdadd4ad2627d4ca413234cac2"),
+    "packaging-group-errors": ("packaging", "959bb79c06cb883bf1ecd1ddc94a079294907e0f"),
+    "marshmallow-timedelta-nan": ("marshmallow", "7dff08fcb7fb40d2772728bb8d8a76b5beff3200"),
+    "marshmallow-url-fragment": ("marshmallow", "902f99c4151d1f0c4c3b8e8dfbafc7b6a76aeaa6"),
+    "marshmallow-pluck-data-key": ("marshmallow", "5761beab3985d654d712f9326e08bfb2e2ec9c4c"),
 }
 # Test dependencies at the versions each project's uv.lock pinned, installed as wheels only.
 PYENV_PACKAGES = {
@@ -71,9 +85,21 @@ PYENV_PACKAGES = {
               "jinja2==3.1.6", "itsdangerous==2.2.0", "click==8.4.2", "blinker==1.9.0", "markupsafe==3.0.3",
               "asgiref==3.12.1", "python-dotenv==1.2.2"],
     "click": ["pytest==9.0.2", "iniconfig==2.3.0", "pluggy==1.6.0", "packaging==26.0", "pygments==2.20.0"],
+    # Resolved with pip on 31 October 2026 from each project's test dependency group, wheels only.
+    "werkzeug": ["markupsafe==3.0.4", "cffi==2.1.1", "cryptography==50.0.2", "ephemeral-port-reserve==1.1.4", "pytest==9.2.0",
+                 "pytest-timeout==2.4.0", "watchdog==7.0.0", "iniconfig==2.3.1", "packaging==26.3", "pluggy==1.7.0",
+                 "pycparser==3.12", "pygments==2.21.0"],
+    "attrs": ["cloudpickle==3.1.2", "hypothesis==6.170.14", "pympler==1.1", "sortedcontainers==2.4.0", "pytest==9.2.0",
+              "iniconfig==2.3.1", "packaging==26.3", "pluggy==1.7.0", "pygments==2.21.0"],
+    # Not packaging itself: pytest imports it, and an installed copy would shadow the project's src/.
+    "packaging": ["hypothesis==6.170.14", "pip==26.2.2", "pretend==1.0.9", "tomli-w==1.2.0", "sortedcontainers==2.4.0",
+                  "pytest==9.2.0", "iniconfig==2.3.1", "pluggy==1.7.0", "pygments==2.21.0"],
+    "marshmallow": ["pytest==9.2.0", "simplejson==4.2.0", "iniconfig==2.3.1", "packaging==26.3", "pluggy==1.7.0",
+                    "pygments==2.21.0"],
 }
 # Package metadata for the project itself, as an editable install would provide it.
-PYENV_PROJECT = {"flask": ("Flask", "3.2.0.dev"), "click": ("click", "8.5.0.dev0")}
+PYENV_PROJECT = {"flask": ("Flask", "3.2.0.dev"), "click": ("click", "8.5.0.dev0"), "werkzeug": ("Werkzeug", "3.2.0.dev"),
+                 "attrs": ("attrs", "26.2.0.dev0"), "packaging": ("packaging", "26.4.dev0"), "marshmallow": ("marshmallow", "4.3.1")}
 
 QUIET_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
              "-c", "init.defaultBranch=main"]
