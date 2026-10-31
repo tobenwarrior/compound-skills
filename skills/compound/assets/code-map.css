@@ -453,6 +453,7 @@ kbd {
   overflow-wrap:anywhere;
 }
 .detail-summary {
+  overflow-wrap:anywhere;
   margin:17px 0 6px;
 }
 .analysis-note {
