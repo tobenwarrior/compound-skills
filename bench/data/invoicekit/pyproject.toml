@@ -1,0 +1,8 @@
+[project]
+name = "invoicekit"
+version = "0.4.0"
+description = "Money, tax, payment terms and invoices for a small billing service"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]

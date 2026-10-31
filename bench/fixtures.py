@@ -1,0 +1,419 @@
+"""Fetch pinned sources and build the fixtures, reference trees, mutants and judge context the benchmark grades with.
+
+Fixtures (work/fixtures/<name>) are git repositories with no remote, no tags, no reflog and only the refs a task
+needs. Each is rebuilt from pinned inputs and checked against the commit it had when the benchmark was frozen,
+so results stay comparable. Reference trees (work/refs/<name>) are copies of the invoicekit sources with exactly
+one change: a bug fix, the refactor done right, or the naive refactor that changes tax rounding.
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from common import DATA, FIXTURES, JUDGE_CONTEXT, REFS, SOURCES, git, sha256_bytes
+
+# Upstream repositories at fixed commits. "full" keeps history (fixtures, retrieval); "shallow" is one commit.
+PINS = {
+    "flask": ("https://github.com/pallets/flask", "49943b5a94413a530761350f04e896f76e8d620e", "full"),
+    "django": ("https://github.com/django/django", "a05e16a7230fe33d3f43f4a3aaed103cebb42efc", "shallow"),
+    "click": ("https://github.com/pallets/click", "2247b35ea1c47c727d7a06e51fa280e12a863ff6", "full"),
+    "hono": ("https://github.com/honojs/hono", "17ad0e21f5a91c939eeafa3df05793a8ea60f016", "full"),
+    "vue-core": ("https://github.com/vuejs/core", "24c9d0bffb2299635b8112a978d74a38723aaa10", "shallow"),
+    "gin": ("https://github.com/gin-gonic/gin", "0f09c3a9b4626d9fe9979cf4d0521d6ae32ab646", "shallow"),
+    "ripgrep": ("https://github.com/BurntSushi/ripgrep", "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b", "shallow"),
+}
+TASK_SOURCES = ("flask", "django")
+MAP_SOURCES = ("flask", "click", "hono", "django", "vue-core", "gin", "ripgrep")
+
+# The frozen fixtures were signed commits; rebuilt ones are unsigned, so a rebuild must match tree, parent,
+# people, dates and message rather than the commit id. The judge context still names the frozen review commit.
+INVOICEKIT = {"tree": "fa4f767dab83d25e53185e476b9b53831bad4e95", "parent": "", "message": "invoicekit 0.4.0\n",
+              "who": ("Billing Team", "billing@example.invalid"), "date": "1793424106 +0000"}
+REVIEW = {"base": "49943b5a94413a530761350f04e896f76e8d620e", "tree": "719747b4621bddad647f0fbe89325ee1443b12d7",
+          "frozen": "7edd825a749148d92e1c630db4aa3ff3917077eb", "branch": "feature/static-folders",
+          "who": ("Sam Rivera", "sam.rivera@example.invalid"), "date": "1793423656 +0000",
+          "message": "Add App.add_static_folders for serving extra static folders\n"}
+DJANGO_HEAD = PINS["django"][1]
+
+# Judge context, rebuilt from the fixtures instead of committing third-party source excerpts.
+REVIEW_HELPERS = ("src/flask/helpers.py", 543, 587)
+DJANGO_EXCERPTS = [
+    ("django/middleware/csrf.py", "CsrfViewMiddleware.process_view", [(420, 432)]),
+    ("django/views/decorators/http.py", None, [(70, 80), (118, 135)]),
+    ("django/utils/cache.py", "get_conditional_response", [(185, 215)]),
+    ("django/middleware/http.py", "ConditionalGetMiddleware", [(1, 30)]),
+    ("django/views/generic/base.py", "View", [(40, 56), (135, 145)]),
+    ("django/middleware/common.py", "CommonMiddleware.get_full_path_with_slash", [(77, 100)]),
+    ("django/contrib/admin/options.py", None, [(2060, 2066), (2503, 2509)]),
+    ("django/contrib/auth/admin.py", None, [(113, 119)]),
+    ("django/test/client.py", "RequestFactory.query, Client.query, AsyncClient.query", [(638, 660), (1385, 1395), (1778, 1788)]),
+    ("django/middleware/cache.py", None, [(20, 35), (165, 180)]),
+    ("django/http/request.py", "_load_post_and_files", [(445, 458)]),
+]
+CONTEXT_SHA256 = {"review-diff.txt": "3e79aaeb5add957d927928aeb675f38a054036f83986c682172fefbf5b5e8225",
+                  "django-excerpts.txt": "d99b1d1763fb3feabc3752a8cdbad433b50c6144cd4b967524da3f9d7a004b2c"}
+
+QUIET_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", "-c", "core.autocrlf=false",
+             "-c", "init.defaultBranch=main"]
+
+
+def _git(repo: Path, *args: str, env: dict | None = None) -> str:
+    out = subprocess.run(["git", *QUIET_GIT, "-C", str(repo), *args], capture_output=True, text=True,
+                         env={**os.environ, **(env or {})})
+    if out.returncode:
+        raise RuntimeError(f"git {' '.join(args)}: {out.stderr.strip()}")
+    return out.stdout.strip()
+
+
+def _identity(who: tuple[str, str], date: str) -> dict:
+    return {"GIT_AUTHOR_NAME": who[0], "GIT_AUTHOR_EMAIL": who[1], "GIT_AUTHOR_DATE": date,
+            "GIT_COMMITTER_NAME": who[0], "GIT_COMMITTER_EMAIL": who[1], "GIT_COMMITTER_DATE": date}
+
+
+def fetch(name: str) -> dict:
+    """Clone one pinned source into work/sources/<name>, once."""
+    url, sha, depth = PINS[name]
+    dest = SOURCES / name
+    if dest.is_dir() and git(dest, "rev-parse", "HEAD").strip() == sha:
+        return {"source": name, "head": sha, "cached": True}
+    shutil.rmtree(dest, ignore_errors=True)
+    dest.mkdir(parents=True)
+    _git(dest, "init", "-q")
+    _git(dest, "remote", "add", "origin", url)
+    _git(dest, "fetch", "-q", *(["--depth", "1"] if depth == "shallow" else []), "origin", sha)
+    _git(dest, "checkout", "-q", "-B", "main", sha)
+    return {"source": name, "head": _git(dest, "rev-parse", "HEAD"), "cached": False}
+
+
+def scrub(repo: Path, keep: set[str]) -> None:
+    """Remove every ref outside keep, the remote, tags, reflogs and unreachable objects."""
+    if "origin" in git(repo, "remote").split():
+        _git(repo, "remote", "remove", "origin")
+    for tag in git(repo, "tag", "-l").splitlines():
+        _git(repo, "tag", "-d", tag)
+    for ref in git(repo, "for-each-ref", "--format=%(refname)").splitlines():
+        if ref not in keep:
+            _git(repo, "update-ref", "-d", ref)
+    for name in ("FETCH_HEAD", "ORIG_HEAD", "packed-refs.lock"):
+        (repo / ".git" / name).unlink(missing_ok=True)
+    shutil.rmtree(repo / ".git" / "refs" / "original", ignore_errors=True)
+    shutil.rmtree(repo / ".git" / "logs", ignore_errors=True)
+    _git(repo, "reflog", "expire", "--expire=now", "--all")
+    _git(repo, "gc", "-q", "--prune=now")
+
+
+def leak_checks(repo: Path, keep: set[str]) -> dict:
+    refs = set(git(repo, "for-each-ref", "--format=%(refname)").splitlines())
+    return {
+        "only_expected_refs": refs == keep,
+        "no_remote": git(repo, "remote").strip() == "",
+        "clean_status": git(repo, "status", "--porcelain").strip() == "",
+        "no_stash": git(repo, "stash", "list").strip() == "",
+        "no_orig_head": not (repo / ".git" / "ORIG_HEAD").exists(),
+        "no_reflog": not (repo / ".git" / "logs").exists() or not any((repo / ".git" / "logs").rglob("*")),
+        "head": git(repo, "rev-parse", "HEAD").strip(),
+        "branch": git(repo, "rev-parse", "--abbrev-ref", "HEAD").strip(),
+    }
+
+
+def same_commit(repo: Path, frozen: dict, parent: str) -> bool:
+    who, date = frozen["who"], frozen["date"]
+    fields = git(repo, "log", "-1", "--date=raw", "--format=%T%n%P%n%an%n%ae%n%ad%n%cn%n%ce%n%cd%n%B", "HEAD")
+    expected = "\n".join([frozen["tree"], parent, who[0], who[1], date, who[0], who[1], date, frozen["message"]])
+    return fields.rstrip("\n") == expected.rstrip("\n")
+
+
+def build_invoicekit() -> dict:
+    dest = FIXTURES / "invoicekit"
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(DATA / "invoicekit", dest, ignore=shutil.ignore_patterns("__pycache__"))
+    _git(dest, "init", "-q", "-b", "main")
+    _git(dest, "add", "-A")
+    message = dest / ".git" / "COMMIT_MESSAGE"
+    message.write_text(INVOICEKIT["message"])
+    _git(dest, "commit", "-q", "-F", str(message), env=_identity(INVOICEKIT["who"], INVOICEKIT["date"]))
+    message.unlink()
+    keep = {"refs/heads/main"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["matches_frozen_commit"] = same_commit(dest, INVOICEKIT, "")
+    return checks
+
+
+def build_flask_review() -> dict:
+    dest = FIXTURES / "flask-review"
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(SOURCES / "flask", dest, symlinks=True)
+    _git(dest, "checkout", "-q", "-B", REVIEW["branch"], REVIEW["base"])
+    who = REVIEW["who"]
+    _git(dest, "am", "-q", str(DATA / "flask-review.patch"),
+         env={"GIT_COMMITTER_NAME": who[0], "GIT_COMMITTER_EMAIL": who[1], "GIT_COMMITTER_DATE": REVIEW["date"]})
+    _git(dest, "branch", "-f", "main", REVIEW["base"])
+    keep = {"refs/heads/main", f"refs/heads/{REVIEW['branch']}"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["ahead_of_main"] = git(dest, "rev-list", "--count", "main..HEAD").strip()
+    checks["matches_frozen_commit"] = same_commit(dest, REVIEW, REVIEW["base"])
+    return checks
+
+
+def build_django() -> dict:
+    dest = FIXTURES / "django"
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(SOURCES / "django", dest, symlinks=True)
+    keep = {"refs/heads/main"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["matches_frozen_commit"] = checks["head"] == DJANGO_HEAD
+    return checks
+
+
+def build_judge_context() -> dict:
+    JUDGE_CONTEXT.mkdir(parents=True, exist_ok=True)
+    review = FIXTURES / "flask-review"
+    path, first, last = REVIEW_HELPERS
+    helpers = (review / path).read_text().splitlines()[first - 1:last]
+    show = subprocess.run(["git", "-C", str(review), "-c", "diff.noprefix=false", "show", "--no-color", "--no-ext-diff", "HEAD"],
+                          capture_output=True, text=True).stdout
+    head = git(review, "rev-parse", "HEAD").strip()
+    show = show.replace(f"commit {head}\n", f"commit {REVIEW['frozen']}\n", 1)
+    texts = {"review-diff.txt": show + "# git show HEAD of the reviewed commit is above. Relevant helpers:\n" + "\n".join(helpers) + "\n"}
+    lines = []
+    for name, about, segments in DJANGO_EXCERPTS:
+        source = (FIXTURES / "django" / name).read_text().splitlines()
+        lines.append(f"== {name}" + (f" ({about})" if about else ""))
+        for first, last in segments:
+            lines.extend(source[first - 1:last])
+    texts["django-excerpts.txt"] = "\n".join(lines) + "\n"
+    report = {}
+    for name, text in texts.items():
+        (JUDGE_CONTEXT / name).write_text(text)
+        report[name] = sha256_bytes(text.encode()) == CONTEXT_SHA256[name]
+    return report
+
+
+REFERENCE_EDITS = {
+    # One change per tree, applied to the fixture sources only.
+    "refund": ("money.py", [(
+        "        unit = self.currency.minor_unit\n"
+        "        units = int(self.amount / unit)\n"
+        "        total = sum(ratios)\n"
+        "        shares = [int(units * ratio / total) for ratio in ratios]\n"
+        "        remainder = units - sum(shares)\n"
+        "        for index in range(remainder):\n"
+        "            shares[index] += 1\n"
+        "        return [Money(Decimal(share) * unit, self.currency) for share in shares]\n",
+        "        unit = self.currency.minor_unit\n"
+        "        units = int(self.amount / unit)\n"
+        "        sign = -1 if units < 0 else 1\n"
+        "        units = abs(units)\n"
+        "        total = sum(ratios)\n"
+        "        shares = [units * ratio // total for ratio in ratios]\n"
+        "        remainder = units - sum(shares)\n"
+        "        for index in range(remainder):\n"
+        "            shares[index] += 1\n"
+        "        return [Money(Decimal(sign * share) * unit, self.currency) for share in shares]\n",
+    )]),
+    "leap": ("proration.py", [(
+        "    return _DAYS_IN_MONTH[month - 1]\n",
+        "    if month == 2 and year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):\n"
+        "        return 29\n"
+        "    return _DAYS_IN_MONTH[month - 1]\n",
+    )]),
+    "december": ("terms.py", [(
+        "    first_of_next = date(day.year, day.month % 12 + 1, 1)\n",
+        "    first_of_next = date(day.year + day.month // 12, day.month % 12 + 1, 1)\n",
+    )]),
+    # The refactor done right keeps half-up rounding for tax by passing it through money.quantize.
+    "refactor": ("", []),
+    # The naive refactor routes tax through banker's rounding and changes tax amounts.
+    "refactor-naive": ("tax.py", [(
+        "    return amount.quantize(currency.minor_unit, rounding=ROUND_HALF_UP)\n",
+        "    from .money import quantize\n"
+        "    return quantize(amount, currency)\n",
+    )]),
+}
+
+
+def _replace_once(text: str, old: str, new: str, where: str) -> str:
+    if text.count(old) != 1:
+        raise RuntimeError(f"{where}: edit anchor not found exactly once")
+    return text.replace(old, new)
+
+
+def _refactor_right(package: Path) -> None:
+    money = package / "money.py"
+    money.write_text(_replace_once(
+        money.read_text(),
+        'def quantize(amount: Decimal, currency: Currency) -> Decimal:\n    """Round to the currency\'s minor unit with banker\'s rounding."""\n    return amount.quantize(currency.minor_unit, rounding=ROUND_HALF_EVEN)\n',
+        'def quantize(amount: Decimal, currency: Currency, rounding: str = ROUND_HALF_EVEN) -> Decimal:\n    """Round to the currency\'s minor unit, with banker\'s rounding unless told otherwise."""\n    return amount.quantize(currency.minor_unit, rounding=rounding)\n',
+        "refactor money.py"))
+    tax = package / "tax.py"
+    text = tax.read_text()
+    text = _replace_once(text, "from .money import Money\n", "from .money import Money, quantize\n", "refactor tax.py import")
+    text = _replace_once(text, 'def _round_tax(amount: Decimal, currency: Currency) -> Decimal:\n    """Round a tax amount to the currency\'s minor unit."""\n    return amount.quantize(currency.minor_unit, rounding=ROUND_HALF_UP)\n\n\n', "", "refactor tax.py helper")
+    text = _replace_once(text, "_round_tax(net.amount * rate, net.currency)", "quantize(net.amount * rate, net.currency, ROUND_HALF_UP)", "refactor tax.py net")
+    text = _replace_once(text, "_round_tax(gross.amount / (1 + rate), gross.currency)", "quantize(gross.amount / (1 + rate), gross.currency, ROUND_HALF_UP)", "refactor tax.py gross")
+    text = _replace_once(text, "from .currency import Currency\n", "", "refactor tax.py currency")
+    tax.write_text(text)
+    invoice = package / "invoice.py"
+    text = invoice.read_text()
+    text = _replace_once(text, 'def _round_money(amount: Decimal, currency: Currency) -> Decimal:\n    """Round a line amount to the currency\'s minor unit."""\n    return amount.quantize(currency.minor_unit, rounding=ROUND_HALF_EVEN)\n\n\n', "", "refactor invoice.py helper")
+    text = _replace_once(text, "_round_money(self.unit_price.amount * self.quantity, self.unit_price.currency)", "quantize(self.unit_price.amount * self.quantity, self.unit_price.currency)", "refactor invoice.py line")
+    text = _replace_once(text, "from .money import Money\n", "from .money import Money, quantize\n", "refactor invoice.py import")
+    text = _replace_once(text, "from decimal import ROUND_HALF_EVEN, Decimal\n", "from decimal import Decimal\n", "refactor invoice.py decimal")
+    text = _replace_once(text, "from .currency import Currency\n", "", "refactor invoice.py currency")
+    invoice.write_text(text)
+
+
+def build_refs() -> list[str]:
+    fixture = FIXTURES / "invoicekit"
+    for name, (filename, edits) in REFERENCE_EDITS.items():
+        dest = REFS / name
+        shutil.rmtree(dest, ignore_errors=True)
+        shutil.copytree(fixture, dest, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+        package = dest / "src" / "invoicekit"
+        if name == "refactor":
+            _refactor_right(package)
+        for old, new in edits:
+            target = package / filename
+            target.write_text(_replace_once(target.read_text(), old, new, f"reference {name}"))
+    return sorted(REFERENCE_EDITS)
+
+
+MUTANTS = {
+    # Plausible wrong or partial fixes, applied to the task's reference tree. Each must survive the original
+    # suite; the tests an agent leaves behind are scored by how many they catch.
+    "refund": {
+        "revert": ("money.py", None),
+        "remainder-on-first-part": ("money.py", [(
+            "        sign = -1 if units < 0 else 1\n"
+            "        units = abs(units)\n"
+            "        total = sum(ratios)\n"
+            "        shares = [units * ratio // total for ratio in ratios]\n"
+            "        remainder = units - sum(shares)\n"
+            "        for index in range(remainder):\n"
+            "            shares[index] += 1\n"
+            "        return [Money(Decimal(sign * share) * unit, self.currency) for share in shares]\n",
+            "        total = sum(ratios)\n"
+            "        shares = [int(units * ratio / total) for ratio in ratios]\n"
+            "        remainder = units - sum(shares)\n"
+            "        if remainder < 0:\n"
+            "            shares[0] += remainder\n"
+            "        for index in range(max(remainder, 0)):\n"
+            "            shares[index] += 1\n"
+            "        return [Money(Decimal(share) * unit, self.currency) for share in shares]\n")]),
+        "sign-dropped": ("money.py", [(
+            "        return [Money(Decimal(sign * share) * unit, self.currency) for share in shares]\n",
+            "        return [Money(Decimal(share) * unit, self.currency) for share in shares]\n")]),
+    },
+    "leap": {
+        "revert": ("proration.py", None),
+        "every-fourth-year": ("proration.py", [(
+            "    if month == 2 and year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):\n",
+            "    if month == 2 and year % 4 == 0:\n")]),
+        "no-400-rule": ("proration.py", [(
+            "    if month == 2 and year % 4 == 0 and (year % 100 != 0 or year % 400 == 0):\n",
+            "    if month == 2 and year % 4 == 0 and year % 100 != 0:\n")]),
+    },
+    "december": {
+        "revert": ("terms.py", None),
+        "net-eom-path-unfixed": ("terms.py", [(
+            "            return end_of_month(issued) + timedelta(days=days)\n",
+            "            return date(issued.year, issued.month % 12 + 1, 1) - timedelta(days=1) + timedelta(days=days)\n")]),
+        "eom-path-unfixed": ("terms.py", [(
+            "        return end_of_month(issued)\n",
+            "        return date(issued.year, issued.month % 12 + 1, 1) - timedelta(days=1)\n")]),
+    },
+    "refactor": {
+        "tax-half-even": ("tax.py", [(
+            "    return Money(quantize(net.amount * rate, net.currency, ROUND_HALF_UP), net.currency)\n",
+            "    return Money(quantize(net.amount * rate, net.currency), net.currency)\n")]),
+        "line-gross-half-up": ("invoice.py", [(
+            "        amount = quantize(self.unit_price.amount * self.quantity, self.unit_price.currency)\n",
+            "        amount = quantize(self.unit_price.amount * self.quantity, self.unit_price.currency, \"ROUND_HALF_UP\")\n")]),
+    },
+}
+# The one mutant the hidden test does not catch: the remainder lands on the first part, so totals still add up.
+HIDDEN_MISSES = {"refund/remainder-on-first-part"}
+
+
+def unittest_run(tree: Path, *args: str) -> bool:
+    env = {"PATH": "/usr/bin:/bin", "PYTHONPATH": str(tree / "src"), "PYTHONDONTWRITEBYTECODE": "1", "LANG": "C.UTF-8"}
+    out = subprocess.run([sys.executable, "-B", "-m", "unittest", *args], cwd=tree, env=env, capture_output=True, text=True, timeout=300)
+    return out.returncode == 0
+
+
+def _with_hidden(tree: Path, test: Path, scratch: Path) -> Path:
+    shutil.rmtree(scratch, ignore_errors=True)
+    shutil.copytree(tree, scratch, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+    shutil.copy(test, scratch / test.name)
+    return scratch
+
+
+def build_mutants() -> dict:
+    report = {}
+    scratch = REFS / ".scratch"
+    for task, mutants in MUTANTS.items():
+        for name, (filename, edits) in mutants.items():
+            dest = REFS / "mutants" / task / name
+            shutil.rmtree(dest, ignore_errors=True)
+            shutil.copytree(REFS / task, dest)
+            target = dest / "src" / "invoicekit" / filename
+            if edits is None:
+                shutil.copy(FIXTURES / "invoicekit" / "src" / "invoicekit" / filename, target)
+            else:
+                text = target.read_text()
+                for old, new in edits:
+                    text = _replace_once(text, old, new, f"mutant {task}/{name}")
+                target.write_text(text)
+            survives = unittest_run(dest, "discover", "-s", "tests")
+            caught = not unittest_run(_with_hidden(dest, DATA / "hidden" / f"hidden_{task}.py", scratch), f"hidden_{task}")
+            expected_caught = f"{task}/{name}" not in HIDDEN_MISSES
+            report[f"{task}/{name}"] = {"survives_original_suite": survives, "hidden_test_catches": caught,
+                                        "as_frozen": survives and caught == expected_caught}
+    shutil.rmtree(scratch, ignore_errors=True)
+    return report
+
+
+def hidden_matrix() -> dict:
+    """Each bug's hidden test fails on the fixture and passes only on its own fix; the refactor test catches only the naive refactor."""
+    trees = {"fixture": FIXTURES / "invoicekit", **{name: REFS / name for name in REFERENCE_EDITS}}
+    scratch = REFS / ".scratch"
+    matrix = {"suite_passes_everywhere": all(unittest_run(tree, "discover", "-s", "tests") for tree in trees.values())}
+    for test in sorted((DATA / "hidden").glob("hidden_*.py")):
+        name = test.stem.removeprefix("hidden_")
+        row = {label: unittest_run(_with_hidden(tree, test, scratch), test.stem) for label, tree in trees.items()}
+        if name == "refactor":
+            expected = {label: label != "refactor-naive" for label in trees}
+        else:
+            expected = {label: label == name for label in trees}
+        matrix[test.stem] = {"passes_on": sorted(label for label, ok in row.items() if ok), "as_frozen": row == expected}
+    shutil.rmtree(scratch, ignore_errors=True)
+    return matrix
+
+
+def build(map_sources: bool = False) -> dict:
+    """Everything the tasks need; with map_sources, also the repositories the map benchmarks read."""
+    for folder in (SOURCES, FIXTURES, REFS):
+        folder.mkdir(parents=True, exist_ok=True)
+    report: dict = {"sources": [fetch(name) for name in (MAP_SOURCES if map_sources else TASK_SOURCES)]}
+    report["fixtures"] = {"invoicekit": build_invoicekit(), "flask-review": build_flask_review(), "django": build_django()}
+    report["judge_context"] = build_judge_context()
+    report["refs"] = build_refs()
+    report["hidden"] = hidden_matrix()
+    report["mutants"] = build_mutants()
+    problems = [f"fixture {name} {key}" for name, checks in report["fixtures"].items() for key, value in checks.items()
+                if value is False]
+    problems += [f"judge context {name} differs from the frozen text" for name, ok in report["judge_context"].items() if not ok]
+    problems += [f"hidden test {name} behaves differently" for name, row in report["hidden"].items() if isinstance(row, dict) and not row["as_frozen"]]
+    if not report["hidden"]["suite_passes_everywhere"]:
+        problems.append("the fixture suite fails on a reference tree")
+    problems += [f"mutant {name} behaves differently" for name, row in report["mutants"].items() if not row["as_frozen"]]
+    report["problems"] = problems
+    (FIXTURES / "build.json").write_text(json.dumps(report, indent=1))
+    return report

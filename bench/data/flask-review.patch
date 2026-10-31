@@ -1,0 +1,100 @@
+From 7edd825a749148d92e1c630db4aa3ff3917077eb Mon Sep 17 00:00:00 2001
+From: Sam Rivera <sam.rivera@example.invalid>
+Date: Sat, 31 Oct 2026 05:14:16 +0000
+Subject: [PATCH] Add App.add_static_folders for serving extra static folders
+
+---
+ CHANGES.rst           |  2 ++
+ src/flask/app.py      | 32 ++++++++++++++++++++++++++++++++
+ tests/test_helpers.py | 15 +++++++++++++++
+ 3 files changed, 49 insertions(+)
+
+diff --git a/CHANGES.rst b/CHANGES.rst
+index c1bcf629..cbef2369 100644
+--- a/CHANGES.rst
++++ b/CHANGES.rst
+@@ -4,6 +4,8 @@ Version 3.2.0
+ Unreleased
+ 
+ -   Drop support for Python 3.9 and 3.10. :pr:`5730` :pr:`6168`
++-   Add ``App.add_static_folders`` to serve files from additional folders,
++    each under its own URL prefix and endpoint.
+ -   Remove previously deprecated code: ``__version__``. :pr:`5648`
+ -   ``RequestContext`` has merged with ``AppContext``. ``RequestContext`` is now
+     a deprecated alias. If an app context is already pushed, it is not reused
+diff --git a/src/flask/app.py b/src/flask/app.py
+index 9b8b249e..590ef9fd 100644
+--- a/src/flask/app.py
++++ b/src/flask/app.py
+@@ -39,6 +39,7 @@ from .helpers import _CollectErrors
+ from .helpers import get_debug_flag
+ from .helpers import get_flashed_messages
+ from .helpers import get_load_dotenv
++from .helpers import send_file
+ from .helpers import send_from_directory
+ from .sansio.app import App
+ from .sessions import SecureCookieSessionInterface
+@@ -409,6 +410,37 @@ class Flask(App):
+             t.cast(str, self.static_folder), filename, max_age=max_age
+         )
+ 
++    def add_static_folders(
++        self,
++        folders: cabc.Mapping[str, str | os.PathLike[str]],
++        max_age: int | None = None,
++    ) -> None:
++        """Serve files from additional folders, each under its own URL
++        prefix, alongside :attr:`static_folder`.
++
++        ``folders`` maps a URL prefix such as ``"/media"`` to a folder,
++        either absolute or relative to :attr:`root_path`. Each prefix gets
++        its own endpoint, ``static_<prefix>``, for use with
++        :func:`url_for`.
++
++        ``max_age`` overrides :meth:`get_send_file_max_age` for these
++        files. Pass ``0`` to disable caching for them.
++
++        .. versionadded:: 3.2
++        """
++        for url_path, folder in folders.items():
++            directory = os.path.join(self.root_path, folder)
++
++            def view(filename: str) -> Response:
++                cache = max_age or self.get_send_file_max_age(filename)
++                return send_file(os.path.join(directory, filename), max_age=cache)
++
++            self.add_url_rule(
++                f"{url_path.rstrip('/')}/<path:filename>",
++                endpoint=f"static_{url_path.strip('/')}",
++                view_func=view,
++            )
++
+     def open_resource(
+         self, resource: str, mode: str = "rb", encoding: str | None = None
+     ) -> t.IO[t.AnyStr]:
+diff --git a/tests/test_helpers.py b/tests/test_helpers.py
+index c195b028..3f97fdff 100644
+--- a/tests/test_helpers.py
++++ b/tests/test_helpers.py
+@@ -375,3 +375,18 @@ def test_open_resource_with_encoding(tmp_path, encoding):
+ 
+     with app.open_resource("test", mode="rt", encoding=encoding) as f:
+         assert f.read() == "test"
++
++
++def test_add_static_folders(app, client, tmp_path):
++    media = tmp_path / "media"
++    media.mkdir()
++    (media / "hello.txt").write_text("hello")
++    app.add_static_folders({"/media": media})
++
++    rv = client.get("/media/hello.txt")
++    assert rv.status_code == 200
++    assert rv.data == b"hello"
++    rv.close()
++
++    with app.test_request_context():
++        assert flask.url_for("static_media", filename="hello.txt") == "/media/hello.txt"
+-- 
+2.43.0
+

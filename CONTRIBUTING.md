@@ -12,7 +12,7 @@ Identify the concrete failure the candidate addresses. Compare it with the curre
 
 ## Integrate and measure
 
-Use representative task fixtures before editing. Compare current guidance with the proposed version in fresh contexts using the same inputs, tools, and model version. Inspect actual outputs or artifacts for correctness, scope, evidence, and tool authority. Include a task where the candidate should stay inactive. Keep local evaluation artifacts out of the distributed package.
+Use representative task fixtures before editing. Compare current guidance with the proposed version in fresh contexts using the same inputs, tools, and model version; `python3 bench/bench.py run --arms main=ref:main,new=worktree` does this on the tracked tasks in [bench/](bench/README.md), and new behavior gets a task there. Inspect actual outputs or artifacts for correctness, scope, evidence, and tool authority. Include a task where the candidate should stay inactive. Keep local evaluation artifacts out of the distributed package.
 
 Every integration or compaction includes pruning. Replace weaker guidance in place; delete superseded instructions and unused supporting files, updating callers, links, manifests, and evaluations in the same change. Keep no archive, disabled copy, or redundant entrypoint; Git history retains prior versions. Preserve required notices and behavior that evaluations still justify. Add a reference only when conditional use saves unrelated reads; `compound` owns the shared engineering guidance; `map` and the three setup/status shortcuts are thin entrypoints. Keep workflow logic in the core and add no redundant discoverable workflows.
 
