@@ -2,6 +2,13 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.15.0 (2026-10-31)
+
+- **Only what you asked for.** Coding work no longer runs the repository check-up before the first edit in a repository. The check-up could tidy or delete files nobody asked about, and in our first benchmark the agent mostly skipped it anyway and then reproduced the bug first less often in that session. It now runs only when you ask for `compound setup`, and the skill's startup is one step shorter.
+- **Measured against the alternatives.** The README now compares Compound with a five-sentence rule in CLAUDE.md and with Every's Compound Engineering and pstack on the same tasks, and adds eight real bugs from attrs, packaging and marshmallow, frozen before any run.
+- **Tried and not shipped:** a 30% shorter SKILL.md and Git guide. In 30 paired runs per model against 0.14.0 it kept every measured habit but did not lower cost (1.04× with Claude Opus 5.5, 95% interval 1.00–1.08; 0.99× with Claude Sonnet 5.5, 0.92–1.07), and Sonnet's five Flask reviews drew 10 incorrect statements from the judge against 2, so the 0.14.0 wording stays.
+- **Benchmark:** other plugins can run as arms (`dir:` with `+rule:` and `+prefix:`), real bugs can be added without rebuilding the rest (`setup --real`), test ids that change with the clock are ignored, and grading compares test ids with sets (packaging's 62,000 tests took minutes per run).
+
 ## 0.14.0 (2026-10-31)
 
 - The always-on rule now asks agents to reproduce a reported bug and show its regression test failing before fixing it, and to pin current behavior with a test before a refactor. Against 0.13.0 in the same runs, Claude Sonnet 5.5 reproduced the bug first in 15 of 15 fixes instead of 1, and both Claude Opus 5.5 and Sonnet finished the refactor safely in 5 of 5 runs instead of 2 and 0, at 1.06× and 1.03× 0.13.0's cost.
