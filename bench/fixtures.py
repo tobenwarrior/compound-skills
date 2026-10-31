@@ -549,7 +549,8 @@ def build_real(name: str) -> dict:
     again = pytest_probe(scratch / "fixture", pyenv, "list")
     volatile = sorted({i.split("[", 1)[0] for i in set(before.get("ids", [])) ^ set(again.get("ids", []))})
     after = pytest_probe(compose(dest, dest, ref / "fix", scratch / "fix-tests"), pyenv, "list")
-    hidden = [i for i in after.get("ids", []) if i not in before.get("ids", []) and i.split("[", 1)[0] not in volatile]
+    before_ids = set(before.get("ids", []))
+    hidden = [i for i in after.get("ids", []) if i not in before_ids and i.split("[", 1)[0] not in volatile]
     on_parent = pytest_probe(compose(dest, dest, ref / "fix", scratch / "parent"), pyenv, "run", *hidden)
     on_fix = pytest_probe(compose(dest, ref / "fix", ref / "fix", scratch / "fixed"), pyenv, "run", *hidden)
     suite = pytest_suite(scratch / "fixture", pyenv)

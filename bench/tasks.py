@@ -342,7 +342,8 @@ def _pytest_changes(fixture_info: dict, final_info: dict, volatile: tuple = ()) 
     changed = {key for key, dump in final_info.get("functions", {}).items()
                if key in fixture_info.get("functions", {}) and fixture_info["functions"][key] != dump}
     changed_ids = [i for i in final_info.get("ids", []) if i.split("[", 1)[0] in changed]
-    removed = [i for i in fixture_info.get("ids", []) if i not in set(final_info.get("ids", []))]
+    final_ids = set(final_info.get("ids", []))
+    removed = [i for i in fixture_info.get("ids", []) if i not in final_ids]
     weakened = [key for key, count in fixture_info.get("asserts", {}).items()
                 if key in final_info.get("asserts", {}) and final_info["asserts"][key] < count]
     return list(dict.fromkeys(new + changed_ids)), removed, weakened
