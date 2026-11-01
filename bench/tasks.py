@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 
 from common import BENCH, DATA, FIXTURES, GIT_IDENTITY, REFS
-from fixtures import compose, pytest_probe, pytest_suite
+from fixtures import SHOP_TASKS, compose, pytest_probe, pytest_suite
 
 FIXTURE = FIXTURES / "invoicekit"
 HIDDEN = DATA / "hidden"
@@ -211,6 +211,62 @@ def refactor(project: Path, record: dict, prep: dict) -> dict:
         return outcome
 
 
+SHOPKIT = FIXTURES / "shopkit"
+
+
+def _shared_helper(package: Path, shared: str, function: str, callers: tuple[str, ...], forbidden=(), no_loops=False) -> bool:
+    """The task's shared function exists, both callers use it, and their own copies of the logic are gone."""
+    import ast
+    module = package / f"{shared}.py"
+    if not module.exists() or f"def {function}" not in module.read_text():
+        return False
+    for name in callers:
+        path = package / name
+        if not path.exists():
+            return False
+        text = path.read_text()
+        if function not in text or any(token in text for token in forbidden):
+            return False
+        if no_loops and any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(ast.parse(text))):
+            return False
+    return True
+
+
+SHOP_DUPLICATION = {
+    "refactor-slugs": lambda package: _shared_helper(package, "text", "slugify", ("catalog.py", "search.py"),
+                                                     forbidden=("re.sub(", "unicodedata")),
+    "refactor-retry": lambda package: _shared_helper(package, "retrying", "retry", ("payments.py", "webhooks.py"), no_loops=True),
+    "refactor-money": lambda package: _shared_helper(package, "money", "parse_money", ("importing.py", "api.py"),
+                                                     forbidden=("quantize(",)),
+}
+
+
+def heldout_refactor(task: str):
+    """A shopkit refactor: the same measures as refactor-rounding, on a library Compound was never tuned on."""
+    def grade(project: Path, record: dict, prep: dict) -> dict:
+        with tempfile.TemporaryDirectory(prefix="grade-") as folder:
+            scratch = Path(folder)
+            final = _copy_final(project, scratch)
+            fixture_info = _probe(SHOPKIT, "list")
+            final_info = _probe(final, "list")
+            behaviour = _hidden(final, SHOP_TASKS[task])
+            original = _unittest(_tree(final, SHOPKIT, scratch / "original"), "discover", "-s", "tests")
+            own = _unittest(final, "discover", "-s", "tests")
+            duplication_removed = SHOP_DUPLICATION[task](final / "src" / "shopkit")
+            targets, removed, weakened = _test_changes(final, fixture_info, final_info)
+            pins = _probe(_tree(REFS / f"{task}-naive", final, scratch / "naive"), "run", *targets) if targets else {}
+            outcome = {"behaviour_preserved": behaviour, "duplication_removed": duplication_removed,
+                       "original_suite_pass": original["ok"], "own_suite_pass": own["ok"], "own_suite_tests": own["tests"],
+                       "test_ids": targets, "removed_existing": removed, "weakened_existing": weakened,
+                       "tests_catch_naive_refactor": any(status == "fail" for status in pins.values()),
+                       **_mutant_kills(final, task, scratch, final_info),
+                       **_diff(project, prep["fixture_head"]), **_commits(project, prep["fixture_head"])}
+            outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"]
+                                      and not record["harness"]["timed_out"])
+            return outcome
+    return grade
+
+
 def inactive(project: Path, record: dict, prep: dict) -> dict:
     text = (record.get("final_message") or "").lower()
     return {"success": "mutable" in text or "immutable" in text, "chars": len(text),
@@ -308,6 +364,21 @@ TASKS["refactor-rounding"] = {
     "prompt": ("tax.py and invoice.py have their own rounding helpers (`_round_tax` and `_round_money`). Please remove "
                "them so all rounding goes through `money.quantize`."),
 }
+# Held-out refactors on shopkit, written after Compound's refactor guide and frozen before any agent ran them.
+SHOP_PROMPTS = {
+    "refactor-slugs": ("catalog.py and search.py each turn names into URL keys with their own helper (`_product_slug` and "
+                       "`_facet_key`). Please replace both with one `slugify` function in a new `shopkit/text.py` and use it "
+                       "in both places."),
+    "refactor-retry": ("payments.py and webhooks.py each have their own retry loop (`_retry_charge` and `_retry_delivery`). "
+                       "Please replace them with one `retry` helper in a new `shopkit/retrying.py` and use it in both."),
+    "refactor-money": ("importing.py and api.py each parse money strings with their own helper (`_parse_price` and "
+                       "`_parse_amount`). Please replace both with one `parse_money` function in a new `shopkit/money.py` "
+                       "and use it in both places."),
+}
+for _task, _prompt in SHOP_PROMPTS.items():
+    TASKS[_task] = {"name": _task, "fixture": "shopkit", "kind": "write", "timeout": 900, "grade": heldout_refactor(_task),
+                    "prompt": _prompt, "tags": ["heldout"],
+                    "about": "a held-out refactor whose obvious version changes one caller's behavior; hidden test, mutants"}
 TASKS["review-flask"] = {
     "name": "review-flask", "fixture": "flask-review", "kind": "read", "timeout": 900, "grade": read_only,
     "judge": JUDGE_KEYS["review-flask"], "prompt": REVIEW_PROMPT, "tags": ["core", "judged"],

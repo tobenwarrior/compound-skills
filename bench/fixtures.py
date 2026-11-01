@@ -185,6 +185,101 @@ def build_invoicekit() -> dict:
     return checks
 
 
+# Held-out refactors: a second library Compound was never tuned on, frozen with its tasks before any agent ran them.
+SHOPKIT = {"tree": "f6eb7af84af580300d1f1a38f633195d91e9dbfe", "parent": "", "message": "shopkit 0.7.0\n", "who": ("Shop Team", "shop@example.invalid"),
+           "date": "1793510506 +0000"}
+SHOP_TASKS = {"refactor-slugs": "shop_slugs", "refactor-retry": "shop_retry", "refactor-money": "shop_money"}
+SHOP_MUTANTS = {
+    # Wrong refactors that still pass shopkit's own suite, applied to each task's reference.
+    "refactor-slugs": {
+        "facets-become-ascii": ("search.py", [("slugify(self.label, ascii_only=False)", "slugify(self.label)")]),
+        "products-keep-accents": ("catalog.py", [("slugify(self.name, max_length=_MAX_SLUG)",
+                                                  "slugify(self.name, ascii_only=False, max_length=_MAX_SLUG)")]),
+        "products-uncapped": ("catalog.py", [("slugify(self.name, max_length=_MAX_SLUG)", "slugify(self.name)")]),
+    },
+    "refactor-retry": {
+        "charge-retries-lost-connection": ("payments.py", [
+            ("from .errors import GatewayTimeout", "from .errors import ConnectionLost, GatewayTimeout"),
+            ("_RETRY_ON = (GatewayTimeout,)", "_RETRY_ON = (GatewayTimeout, ConnectionLost)")]),
+        "delivery-three-attempts": ("webhooks.py", [("_DELAYS = (1.0, 2.0, 4.0, 5.0)", "_DELAYS = (1.0, 2.0)")]),
+        "delivery-uncapped": ("webhooks.py", [("_DELAYS = (1.0, 2.0, 4.0, 5.0)", "_DELAYS = (1.0, 2.0, 4.0, 8.0)")]),
+    },
+    "refactor-money": {
+        "api-rounds-half-up": ("api.py", [("rounding=ROUND_HALF_EVEN, accounting=False", "accounting=False")]),
+        "api-accepts-dollar-sign": ("api.py", [('re.compile(r"^-?(', 're.compile(r"^-?\\$?(')]),
+        "import-drops-accounting-negatives": ("importing.py", [('parse_money(row["price"])',
+                                                                'parse_money(row["price"], accounting=False)')]),
+    },
+}
+
+
+def build_shopkit() -> dict:
+    dest = FIXTURES / "shopkit"
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(DATA / "shopkit", dest, ignore=shutil.ignore_patterns("__pycache__"))
+    _git(dest, "init", "-q", "-b", "main")
+    _git(dest, "add", "-A")
+    message = dest / ".git" / "COMMIT_MESSAGE"
+    message.write_text(SHOPKIT["message"])
+    _git(dest, "commit", "-q", "-F", str(message), env=_identity(SHOPKIT["who"], SHOPKIT["date"]))
+    message.unlink()
+    keep = {"refs/heads/main"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["matches_frozen_commit"] = same_commit(dest, SHOPKIT, "")
+    return checks
+
+
+def build_shop_refs() -> list[str]:
+    """Each task's right refactor and its naive one: the fixture with the task's files replaced."""
+    names = []
+    for task in SHOP_TASKS:
+        for name in (task, f"{task}-naive"):
+            dest = REFS / name
+            shutil.rmtree(dest, ignore_errors=True)
+            shutil.copytree(FIXTURES / "shopkit", dest, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            shutil.copytree(DATA / "shopkit-refs" / name, dest, dirs_exist_ok=True)
+            names.append(name)
+    return names
+
+
+def build_shop_mutants() -> dict:
+    report = {}
+    scratch = REFS / ".scratch"
+    for task, mutants in SHOP_MUTANTS.items():
+        hidden = DATA / "hidden" / f"hidden_{SHOP_TASKS[task]}.py"
+        for name, (filename, edits) in mutants.items():
+            dest = REFS / "mutants" / task / name
+            shutil.rmtree(dest, ignore_errors=True)
+            shutil.copytree(REFS / task, dest)
+            target = dest / "src" / "shopkit" / filename
+            text = target.read_text()
+            for old, new in edits:
+                text = _replace_once(text, old, new, f"mutant {task}/{name}")
+            target.write_text(text)
+            survives = unittest_run(dest, "discover", "-s", "tests")
+            caught = not unittest_run(_with_hidden(dest, hidden, scratch), hidden.stem)
+            report[f"{task}/{name}"] = {"survives_original_suite": survives, "hidden_test_catches": caught,
+                                        "as_frozen": survives and caught}
+    shutil.rmtree(scratch, ignore_errors=True)
+    return report
+
+
+def shop_matrix() -> dict:
+    """shopkit's suite passes on every tree; each hidden test fails only on its own task's naive refactor."""
+    trees = {"fixture": FIXTURES / "shopkit", **{name: REFS / name for name in
+                                                 (n for task in SHOP_TASKS for n in (task, f"{task}-naive"))}}
+    scratch = REFS / ".scratch"
+    matrix = {"suite_passes_everywhere": all(unittest_run(tree, "discover", "-s", "tests") for tree in trees.values())}
+    for task, stem in SHOP_TASKS.items():
+        test = DATA / "hidden" / f"hidden_{stem}.py"
+        row = {label: unittest_run(_with_hidden(tree, test, scratch), test.stem) for label, tree in trees.items()}
+        expected = {label: label != f"{task}-naive" for label in trees}
+        matrix[test.stem] = {"fails_on": sorted(label for label, ok in row.items() if not ok), "as_frozen": row == expected}
+    shutil.rmtree(scratch, ignore_errors=True)
+    return matrix
+
+
 def build_flask_review() -> dict:
     dest = FIXTURES / "flask-review"
     shutil.rmtree(dest, ignore_errors=True)
@@ -444,11 +539,15 @@ def build(map_sources: bool = False) -> dict:
     for folder in (SOURCES, FIXTURES, REFS):
         folder.mkdir(parents=True, exist_ok=True)
     report: dict = {"sources": [fetch(name) for name in (MAP_SOURCES if map_sources else TASK_SOURCES)]}
-    report["fixtures"] = {"invoicekit": build_invoicekit(), "flask-review": build_flask_review(), "django": build_django()}
+    report["fixtures"] = {"invoicekit": build_invoicekit(), "shopkit": build_shopkit(), "flask-review": build_flask_review(),
+                          "django": build_django()}
     report["judge_context"] = build_judge_context()
     report["refs"] = build_refs()
     report["hidden"] = hidden_matrix()
     report["mutants"] = build_mutants()
+    report["shop_refs"] = build_shop_refs()
+    report["shop_hidden"] = shop_matrix()
+    report["shop_mutants"] = build_shop_mutants()
     try:
         report["real_bugs"] = build_real_bugs()
         report["warnings"] = []
@@ -462,6 +561,11 @@ def build(map_sources: bool = False) -> dict:
     if not report["hidden"]["suite_passes_everywhere"]:
         problems.append("the fixture suite fails on a reference tree")
     problems += [f"mutant {name} behaves differently" for name, row in report["mutants"].items() if not row["as_frozen"]]
+    problems += [f"shopkit hidden test {name} behaves differently" for name, row in report["shop_hidden"].items()
+                 if isinstance(row, dict) and not row["as_frozen"]]
+    if not report["shop_hidden"]["suite_passes_everywhere"]:
+        problems.append("shopkit's suite fails on a reference tree")
+    problems += [f"shopkit mutant {name} behaves differently" for name, row in report["shop_mutants"].items() if not row["as_frozen"]]
     problems += [f"real bug {name} {key}" for name, checks in report["real_bugs"].items() if isinstance(checks, dict)
                  for key in ("matches_frozen_commit", "fix_not_reachable", "as_frozen", "only_expected_refs", "no_remote")
                  if checks.get(key) is False]

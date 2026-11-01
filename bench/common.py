@@ -101,14 +101,50 @@ def same_model(requested: str, served: str | None) -> bool:
 
 # ---------------------------------------------------------------- arms
 
+# Ablations of Compound: exact edits applied to an arm's snapshot before it is hashed, so the arm records the text it ran.
+# nomap removes the map query from the skill's startup and from the always-on rule, and keeps everything else.
+VARIANTS = {
+    "nomap": [
+        ("skills/compound/SKILL.md",
+         "Read the project's instructions. Then run one map query with the task's terms before any further search, read, or "
+         "edit, even if you already know where to look; skip it only when the task names its file or supplies the code:\n\n"
+         "- **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query \"<task terms>\"`. "
+         "This starts or reuses the local service and incremental cache.\n"
+         "- **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "
+         "\"<task terms>\" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; "
+         "missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.\n",
+         "Read the project's instructions.\n"),
+        ("skills/compound/SKILL.md", "See [code maps](references/map.md) for coverage and limits. ", ""),
+        ("skills/compound/SKILL.md",
+         "Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, "
+         "so one permission rule can allow it; read references with your file-reading tool, not the shell. ",
+         "Read references with your file-reading tool, not the shell. "),
+        ("skills/compound/scripts/project_setup.py", "Run its map query before searching. Reproduce", "Reproduce"),
+    ],
+}
+
+
+def apply_variant(root: Path, name: str) -> None:
+    if name not in VARIANTS:
+        raise SystemExit(f"unknown variant {name!r}; known: {', '.join(VARIANTS)}")
+    for relative, old, new in VARIANTS[name]:
+        path = root / relative
+        text = path.read_text(encoding="utf-8")
+        if text.count(old) != 1:
+            raise SystemExit(f"variant {name}: {relative} does not contain the edited text exactly once")
+        path.write_text(text.replace(old, new), encoding="utf-8")
+
+
 def parse_arms(spec: str) -> list[dict]:
-    """`without,with` or `name=source[+rule:<file>][+prefix:<text>]` items; a source is none, rule, worktree,
+    """`without,with` or `name=source[+rule:<file>][+prefix:<text>][+variant:<name>]` items; a source is none, rule, worktree,
     ref:<git revision> or dir:<path>. A dir: plugin need not be Compound: its manifest name decides where it is
     mounted. `+rule:<file>` also installs that file as an always-on user rule, as a plugin's own setup step would.
-    `+prefix:<text>` starts every prompt with that text, such as the slash command a plugin asks its users to type."""
+    `+prefix:<text>` starts every prompt with that text, such as the slash command a plugin asks its users to type.
+    `+variant:<name>` applies one of VARIANTS to the plugin snapshot, such as nomap to measure Compound without its map."""
     arms, seen = [], set()
     for item in filter(None, (part.strip() for part in spec.split(","))):
         name, _, source = item.partition("=")
+        source, _, variant = source.partition("+variant:")
         source, _, prefix = source.partition("+prefix:")
         source, _, rule = source.partition("+rule:")
         if not source:
@@ -132,6 +168,12 @@ def parse_arms(spec: str) -> list[dict]:
             arm["rule_file"] = str(path)
         if prefix:
             arm["prompt_prefix"] = prefix.strip()
+        if variant:
+            if source in ("none", "rule"):
+                raise SystemExit(f"arm {name}: a variant needs a plugin source")
+            if variant.strip() not in VARIANTS:
+                raise SystemExit(f"arm {name}: unknown variant {variant!r}; known: {', '.join(VARIANTS)}")
+            arm["variant"] = variant.strip()
         arms.append(arm)
     if not arms:
         raise SystemExit("no arms given")
@@ -184,6 +226,8 @@ def materialize(arm: dict) -> dict:
     if not manifest.is_file():
         shutil.rmtree(staging, ignore_errors=True)
         raise SystemExit(f"arm {arm['name']}: the snapshot has no .claude-plugin/plugin.json")
+    if arm.get("variant"):
+        apply_variant(staging, arm["variant"])
     digest = tree_hash(staging)[:12]
     final = PLUGINS / f"{arm['name']}-{digest}"
     if final.exists():

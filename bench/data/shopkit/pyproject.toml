@@ -1,0 +1,8 @@
+[project]
+name = "shopkit"
+version = "0.7.0"
+description = "Catalog, search, payments, webhooks and price imports for a small web shop"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]

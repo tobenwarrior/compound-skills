@@ -32,6 +32,7 @@ python3 bench/bench.py report --label my-change --baseline main
 
 - `setup` fetches the pinned sources and builds the fixtures. It checks each fixture against the frozen original and makes the template Claude config. Run it once; it reuses what it already fetched. `setup --real <name>[,<name>...]` builds and checks only those real bugs, so new ones can be added while other runs go on.
 - `run` runs every arm on the same task at the same moment, each on its own CPU, and rotates the arm order and CPUs by repetition. Rerunning a label resumes it. If a group fails on an API or harness error, it runs once more. To stop after the groups already running, create `bench/results/<label>/STOP`. Runs also stop on their own when seven-day usage reaches 80% (`--max-seven-day`).
+- `run --permissions strict` runs every task in Claude Code's default permission mode with only edits pre-approved, so each Read or Bash call that would ask a user is recorded as a denial; `--permissions helpers` also grants the rules `setup-global` gives Claude Code. A label keeps one profile.
 - `judge` blind-grades the review and investigation answers against frozen keys, with three votes per answer.
 - `report` prints per-arm tables and paired tests against the baseline. It also writes `summary.json` and `summary.md` into the label's folder.
 - `rescore` recomputes the habits from the saved transcripts after you change a detector, so older runs are scored the same way.
@@ -51,6 +52,7 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 | `name=none` or `name=rule` | No plugin, under another name; `a=none,b=none` measures noise between identical arms |
 | `name=<source>+rule:<file>` | Also installs `<file>` as an always-on user rule, for a plugin whose setup asks for one, or `none+rule:<file>` for a rule alone |
 | `name=<source>+prefix:<text>` | Starts every prompt with `<text>`, such as the slash command another plugin asks its users to type (`+prefix:/pstack:poteto-mode`) |
+| `name=<source>+variant:nomap` | Compound with the map query removed from its startup and its always-on rule, to measure what the map adds (`VARIANTS` in `common.py` lists the exact edits) |
 
 Plugin arms run from a snapshot named by its content hash. The snapshot leaves out `bench/`, which holds the answer keys, along with `tests/` and `.git`. Before each run of a Compound arm, the arm's own `project_setup.py enable --global --host claude` writes its always-on rule. Before 0.15.0, coding work also ran a one-time repository check-up; for those versions, write tasks record it as completed, so runs measure everyday use, and the `first-use` task runs without that record. From 0.15.0 the check-up runs only on an explicit project `setup`.
 
@@ -64,6 +66,7 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 |---|---|---|
 | `bugfix-refund`, `bugfix-leap`, `bugfix-december` | `core`, `bugfix` | Fix a clearly reported bug in a small billing library and commit it |
 | `refactor-rounding` | `core` | Remove duplicated rounding; the obvious version changes tax amounts |
+| `refactor-slugs`, `refactor-retry`, `refactor-money` | `heldout` | Merge two near-duplicate helpers in shopkit, a second small library written after Compound's refactor guide and frozen before any agent ran it; the obvious merge changes one caller (product URLs or facet keys, retrying a charge after a lost connection, or the API's validation and rounding) |
 | `review-flask` | `core`, `judged` | Review a Flask commit with three planted defects |
 | `investigate-django` | `core`, `judged` | Find where Django treats the HTTP QUERY method differently |
 | `flask-ipv6-run`, `flask-ipv6-session`, `click-pickle-option`, `click-progress-final` | `real` | Fix a real bug that Flask or click fixed upstream between July and September 2026, in the project's own code and test suite |
@@ -72,6 +75,8 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 | `first-use` | `control` | The December fix in a repository with no check-up yet and the user's own uncommitted notes |
 
 Each real-bug fixture is the project at the parent of the upstream fix, with its history up to that point. The bug report describes only the symptom. The hidden tests are the new tests from the upstream fix, and the project's whole suite must still pass. `setup` checks that these tests fail at the parent and pass on the upstream fix. It also installs each project's test dependencies into `bench/work/pyenv`: as pinned in its `uv.lock` for Flask and click, as resolved on the freeze date for the others, and never the project itself, which runs from its `src/`. Runs see them read-only on `PYTHONPATH`.
+
+Each held-out refactor has a right reference, a naive one that passes shopkit's own suite but changes one caller, and three mutants. `setup` checks that each hidden test fails only on its naive refactor and that every mutant passes shopkit's suite but fails its hidden test.
 
 Prompts are the same in every arm, apart from a `+prefix:` an arm asks for, and never mention Compound. Write tasks may run code and commit. Read tasks may read and search but never run the project's code. Web access, package installs and network commands are denied in every arm.
 
