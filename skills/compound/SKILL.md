@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for software engineering work, or enabling Compound guidance for a session, project, or all projects."
+description: "Use for refactors, new features, performance work, reviews and pull requests, or to enable Compound guidance for a session, project, or all projects."
 license: MIT
 ---
 

@@ -50,12 +50,14 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "For engineering work, including commit/PR drafts, load the installed Compound Skills "
-    "`compound` skill before starting; use the host's skill tool when available. "
-    "Run its map query before searching. Reproduce a reported bug and show its regression test failing "
-    "before fixing it; before a refactor, pin current behavior with a test. Read only relevant references. "
-    "Respect project instructions and user scope. "
-    "If unavailable, report it and follow project conventions.",
+    "Before fixing a reported bug, reproduce it by running the code, then add a regression test and show that "
+    "it fails on the unfixed code before you edit the source. Run the full test suite after your last change. "
+    "Before a refactor, record "
+    "current behavior with a test and compare afterwards. Commit without AI co-author trailers or generated-by "
+    "lines. For refactors, new features, performance work, reviews and pull requests, first load the installed "
+    "Compound Skills `compound` skill, using the host's skill tool when available, and read only the references "
+    "it points to. In your final message, list what you ran and what you did not verify. Respect project "
+    "instructions and user scope; if the skill is unavailable, report it and follow project conventions.",
     END_MARKER,
 )
 
