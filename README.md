@@ -2,11 +2,11 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.0 · benchmarked in Claude Code 2.1.316 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.0 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets an always-on rule: reproduce a reported bug, show a new test failing on the unfixed code before you edit the source, run the full test suite after your last change, pin behavior before a refactor, commit without AI co-author lines, and list what you ran and did not verify. For refactors, new features, performance work, reviews and pull requests, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
+Turn it on once and every project gets an always-on rule: reproduce a reported bug, show a new test failing on the unfixed code before you edit the source, run the full test suite after your last change, pin behavior before a refactor, commit without AI co-author lines, and list what you ran and did not verify. For refactors, new features, performance work and pull requests, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
 We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
@@ -26,7 +26,7 @@ We measured it against stock Claude Code and against a plain five-sentence rule 
 
 **Yes, for Python work in Claude Code, unless most of it is reviews.** Compound got every held-out refactor right where stock Claude Code and a plain rule got about a third of theirs wrong, and it makes bug fixes come with evidence first, a reproduction and a test shown failing on the unfixed code, as the plain rule does and for about the rule's cost. In money, that is 1.09× to 1.14× stock's cost per bug fix and about 1.6× per refactor; questions cost about the same as stock, and reviews cost more for no measured gain. If you only want the bug-fix habits, [the plain rule](#isnt-this-just-a-rule-in-claudemd) gives you most of them.
 
-All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 2.1.316 at default effort, on Python projects. The 0.16.0 numbers below are from 1 November 2026; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
+All numbers come from runs of [bench/](bench/README.md) in headless Claude Code at default effort, on Python projects. The 0.16.0 numbers below are from 1 November 2026, in Claude Code 2.1.316; a [smaller second round](#second-round-side-by-side) in 2.1.312 ran every arm side by side and agrees with them; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
 
 | Stock / plain rule / Compound 0.16.0 | Claude Opus 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 
 | [Cost against stock](#cost-and-time): a real-bug fix | 1× / 1.23× / 1.09× | 1× / 1.09× / 1.14× |
 | Cost against stock: a held-out refactor | 1× / 1.20× / 1.64× | 1× / 1.31× / 1.64× |
 | Cost against stock: [a question about Django](#where-it-doesnt-help-reviews), 3 runs | 1× / 1.10× / 1.05× | 1× / 0.97× / 1.17× |
-| Cost against stock: [a Flask review](#where-it-doesnt-help-reviews), 3 runs, same findings | 1× / 1.38× / 1.67× | 1× / 2.18× / 2.91× |
+| Cost against stock: [a Flask review](#where-it-doesnt-help-reviews), 2 runs in the second round, same findings | 1× / 1.57× / 1.61× | 1× / 2.28× / 2.21× |
 
 **What you get**
 
@@ -50,8 +50,8 @@ All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 
 **What it costs**
 
 - **About 9% (Opus) to 14% (Sonnet) more per bug fix than stock, and about 1.6× per refactor.** Bug by bug, a fix cost 1.09× and 1.14× stock's cost, about what the plain rule costs; a held-out refactor cost 1.64× with each model, against 1.20× and 1.31× for the rule, which got about a third of them wrong. A median fix took 66 seconds with Opus against stock's 41, and 36 against 24 with Sonnet. On a subscription, the extra comes out of your usage limits.
-- **Reviews cost more for no measured gain.** A review loads the skill and cost 1.67× stock with Opus and 2.91× with Sonnet, and every review in every arm found all three planted defects. Questions do not load it. [Where it doesn't help](#where-it-doesnt-help-reviews)
-- **No extra permission prompts from Compound itself.** `setup-global` adds Claude Code allow rules for Compound's own map query and guides. In 16 runs of refactors and reviews under Claude Code's default permission mode with those rules, none of Compound's own commands needed approval; running tests and committing still ask, as they do without Compound.
+- **Reviews cost more for no measured gain.** Reviews and questions do not load the skill: on a held-out review, loading it found nothing the always-on rule alone did not (the same score in all 10 pairs), and leaving it out cut a review's cost to 0.75× (95% interval 0.72–0.78). The rule's extra steps remain: a Flask review cost 1.61× stock with Opus and 2.21× with Sonnet, about what the plain rule costs, for the same findings. [Where it doesn't help](#where-it-doesnt-help-reviews)
+- **No extra permission prompts from Compound itself.** `setup-global` adds Claude Code allow rules for Compound's own map query and guides. In 12 held-out refactor runs under Claude Code's default permission mode with only those rules, loading the skill, the map query and reading guides never asked for approval; running tests still asks, as it does without Compound. Run `setup-global` from Claude Code: the rules name Claude Code's own copy of the plugin.
 - **About 510 tokens on every request** for the always-on rule and the plugin's skill list, against 210 for the plain rule.
 
 **What it changes**
@@ -149,6 +149,7 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 Every agent result comes from [bench/](bench/README.md). It runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. The run records stay local because they hold full transcripts; the commands [below](#how-we-measured-and-check-our-numbers) rerun them. All tasks are Python projects, in Claude Code 2.1.316 at default effort.
 
 - **0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its 0.16.0 redesign, and that version without its map query ran side by side on 12 real bugs (2 runs per bug, arm and model), 3 held-out refactors (5 runs each) and a Flask review (3 runs). The redesign, which is 0.16.0, ran just after them on the same tasks and is paired with them by task, model and repetition. Stock, the rule and 0.16.0 then ran side by side on a Django question and a plain question (3 runs each).
+- **Second 0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its redesign and 0.16.0 as shipped started together in every group, in Claude Code 2.1.312, on the same 12 real bugs (1 run per bug, arm and model), 3 held-out refactors, the Flask review, the Django question and the plain question (2 runs each). [Second round](#second-round-side-by-side)
 - **Earlier rounds with 0.14.0, 31 October 2026:** six controlled tasks written for this benchmark, which Compound was partly tuned on, against stock, the rule and two other plugins; and the same 12 real bugs against stock. [Earlier rounds](#earlier-rounds-with-0140)
 
 Outcome measures are hidden tests, upstream's own tests, planted wrong fixes and refactors, and a blind judge. The habit measures check Compound's own instructions, so read them as compliance with its checklist.
@@ -200,9 +201,30 @@ The first four are Flask and click bugs fixed upstream between July and Septembe
 
 ### How 0.16.0 was chosen
 
-This round first ran Compound as it was before 0.16.0, which loaded its skill, guides and map query for every engineering task, bug fixes included. On the real bugs it matched the rule's fixes and habits but cost 1.26× and 1.38× as much as the rule in the same groups; on the held-out refactors it got all 30 right. So 0.16.0 puts the bug-fix habits in Compound's always-on rule, in nearly the plain rule's words, adds "before you edit the source" and commits without AI co-author lines, and loads the skill only for refactors, new features, performance work, reviews and pull requests. In its runs, the skill loaded in 1 of 48 bug fixes and in none of 12 questions.
+This round first ran Compound as it was before 0.16.0, which loaded its skill, guides and map query for every engineering task, bug fixes included. On the real bugs it matched the rule's fixes and habits but cost 1.26× and 1.38× as much as the rule in the same groups; on the held-out refactors it got all 30 right. So 0.16.0 puts the bug-fix habits in Compound's always-on rule, in nearly the plain rule's words, adds "before you edit the source" and commits without AI co-author lines, and loads the skill only for refactors, new features, performance work, reviews and pull requests. In its runs, the skill loaded in 1 of 48 bug fixes and in none of 12 questions. A held-out review then showed the skill added nothing to reviews, so 0.16.0 as shipped loads it for refactors, new features, performance work and pull requests only ([below](#where-it-doesnt-help-reviews)).
 
 We chose this design after seeing this round's results and then ran it on the same tasks, so its numbers here are a second measurement of a version tuned on the first, not a held-out test. Against the version before it, it fixed about as many bugs (20 and 18 of 24, against 20 and 19), reproduced the bug and showed the failing test first in every run, as before, ran the whole suite on the final code more often (22 and 24 of 24, against 18 and 19), and cost 0.71× and 0.75× as much per fix. On the held-out refactors it again did all 30 correctly and caught all 90 planted wrong refactors, at 1.07× with each model the earlier version's cost (95% intervals 1.01–1.13 with Opus and 0.98–1.17 with Sonnet).
+
+### Second round, side by side
+
+To remove the "ran just after" caveat, a second, smaller round started all four arms together in every group: stock, the plain rule, Compound before its redesign, and 0.16.0 as shipped, which no longer loads the skill for reviews. It ran in Claude Code 2.1.312, 1 run per real bug and 2 per held-out refactor, review and question, for each arm and model.
+
+| Stock / plain rule / before the redesign / 0.16.0 | Claude Opus 5.5 | Claude Sonnet 5.5 |
+| --- | --- | --- |
+| Held-out refactors, 6 runs: done correctly | 4 / 4 / 6 / 6 | 4 / 2 / 5 / 6 |
+| Held-out refactors: planted wrong refactors their tests catch, of 18 | 0 / 5 / 18 / 18 | 0 / 0 / 15 / 18 |
+| Real bugs, 12 runs: fixed, upstream's hidden tests pass | 10 / 10 / 10 / 10 | 10 / 10 / 9 / 9 |
+| Real bugs: reproduced and a new test shown failing before the fix | 0 / 11 / 12 / 12 | 0 / 11 / 12 / 11 |
+| Real bugs: whole suite run on the final code | 9 / 12 / 12 / 12 | 3 / 12 / 9 / 11 |
+| Real bugs: commits without an AI co-author line | 0 / 0 / 12 / 12 | 0 / 0 / 12 / 11 |
+| Cost against stock: a real-bug fix | 1× / 1.17× / 1.44× / 1.16× | 1× / 1.26× / 1.50× / 1.20× |
+| Cost against stock: a held-out refactor | 1× / 1.21× / 1.43× / 1.65× | 1× / 1.24× / 1.43× / 1.56× |
+| Cost against stock: a Flask review | 1× / 1.57× / 1.91× / 1.61× | 1× / 2.28× / 3.30× / 2.21× |
+| Cost against stock: a question about Django | 1× / 0.85× / 1.14× / 1.07× | 1× / 0.97× / 1.38× / 1.13× |
+
+It agrees with the first round. Over both models, 0.16.0 did a held-out refactor correctly in 6 pairs where the rule did not and never the other way (McNemar p = 0.03), and in 4 pairs against stock's 0 (p = 0.13). All four arms fixed about as many bugs. 0.16.0 fixed one Sonnet bug fewer than stock and the rule: in that run, Claude Code refused its command to install Flask's dependencies into a new environment, so it could not run the code, and it stopped without editing, citing the rule's order to reproduce first, after naming the cause and a fix. It showed a new test failing before the fix in 23 of 24 pairs where stock did not (p < 0.001), and in 2 where the rule did not against 1 the other way. A fix cost 0.80× with each model what it cost before the redesign, and about what the rule costs (0.99× and 0.95×). The skill loaded in 1 of 0.16.0's 24 bug-fix runs, in none of its 8 review and question runs, and in all 12 of its refactor runs. Its commit count is out of 11 with Sonnet because of the run that stopped.
+
+With one run per bug, the real-bug cost multiples have no meaningful interval; the refactor multiples rest on 6 pairs per model and the review and question multiples on 2.
 
 ### Does the map query pay for itself?
 
@@ -234,17 +256,20 @@ Cents and seconds are medians per run at API list prices, as Claude Code reports
 | A real-bug fix, 24 pairs | 1.09× (1.03–1.16) | 1.14× (1.05–1.24) |
 | A held-out refactor, 15 pairs | 1.64× (1.52–1.77) | 1.64× (1.55–1.75) |
 | A question about Django, 3 pairs | 1.05× (0.79–1.32) | 1.17× (0.88–1.34) |
-| A Flask review, 3 pairs | 1.67× (1.23–2.32) | 2.91× (1.95–5.34) |
+| A Flask review, 3 pairs, with the skill loaded for reviews | 1.67× (1.23–2.32) | 2.91× (1.95–5.34) |
+| A Flask review as shipped, 2 pairs, [second round](#second-round-side-by-side) | 1.61× (1.45–1.79) | 2.21× (1.50–3.26) |
 
 Medians and multiples can disagree: with Opus, Compound's median fix cost 20.2¢ against stock's 20.9¢, but it cost more than stock on 8 of the 12 bugs. In the same groups as stock, the plain rule cost 1.23× and 1.09× stock per fix and 1.20× and 1.31× per refactor.
 
 The extra steps take time: a median fix took 66 seconds with Opus against stock's 41, and 36 against 24 with Sonnet; a median refactor took 54 against 39, and 33 against 21.
 
-The always-on rule and the plugin's skill list add about 510 tokens to every request, measured on a plain question; the plain rule adds about 210. Questions don't load the skill, and none of Compound's 12 question runs did, so a question costs about what it does on stock. A review does load it, and cost more for the same findings ([below](#where-it-doesnt-help-reviews)).
+The always-on rule and the plugin's skill list add about 510 tokens to every request, measured on a plain question; the plain rule adds about 210. Questions don't load the skill, and none of Compound's 12 question runs did, so a question costs about what it does on stock. Reviews no longer load it either, but still cost more than stock for the same findings, about what the plain rule costs ([below](#where-it-doesnt-help-reviews)).
 
 ### Where it doesn't help: reviews
 
-No measured gain. A blind judge graded every Flask review against a fixed key: every review in every arm, with both models, found all three planted defects, so this review was too easy to show a gain or a loss. Compound's reviews cost 1.67× stock with Opus and 2.91× with Sonnet, over 3 pairs each, and the judge counted 2 incorrect statements in Compound's six reviews against 2 in stock's. Every arm could read the code but not run it, and no review changed the repository.
+No measured gain. A blind judge graded every Flask review against a fixed key: every review in every arm, with both models, found all three planted defects, so this review was too easy to show a gain or a loss. With the skill loaded, Compound's reviews cost 1.67× stock with Opus and 2.91× with Sonnet, over 3 pairs each, and the judge counted 2 incorrect statements in Compound's six reviews against 2 in stock's. Every arm could read the code but not run it, and no review changed the repository.
+
+So 0.16.0 stopped loading the skill for reviews, by a rule fixed in [bench/README.md](bench/README.md#arms) before the test ran: on a held-out review of a commit whose three helper merges each change one caller, 0.16.0 without the skill for reviews found as much as with it (the same score in all 10 pairs) and cost 0.75× as much (95% interval 0.72–0.78). In the [second round](#second-round-side-by-side), 0.16.0 as shipped found all three Flask defects in all 4 of its reviews and cost 1.61× and 2.21× stock, about what the plain rule costs; the rule missed one defect in one Sonnet review.
 
 The question about Django, which no longer loads the skill, was answered as well with Compound as without: with Opus, every answer in every arm covered all 11 key points; with Sonnet, answers covered a median of 9 without Compound and 9 with it.
 
@@ -325,7 +350,7 @@ Without Compound, 14 of 15 runs started by editing the source; the other ran Pyt
 
 ### How we measured, and check our numbers
 
-Claude Code 2.1.316 in headless mode, Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October and 1 November 2026. The arms of a group started together in isolated sandboxes with identical paths, one CPU each, in rotating order. Compound 0.16.0 ran just after the other arms of its round, on the same tasks, Claude Code version and models. Prompts never mention a plugin, except the commands the other plugins ask their users to type. Write tasks may run code and commit; read tasks may only read; web access and installs are blocked in every arm.
+Claude Code 2.1.316 in headless mode, Claude Opus 5.5 and Claude Sonnet 5.5 at default effort, on 31 October and 1 November 2026. The arms of a group started together in isolated sandboxes with identical paths, one CPU each, in rotating order. Compound 0.16.0 ran just after the other arms of its round, on the same tasks, Claude Code version and models. In the second round, in Claude Code 2.1.312, all four arms started together. Prompts never mention a plugin, except the commands the other plugins ask their users to type. Write tasks may run code and commit; read tasks may only read; web access and installs are blocked in every arm.
 
 <details>
 <summary>Method: arms, tasks, scoring, detectors and corrections</summary>
@@ -335,7 +360,8 @@ Claude Code 2.1.316 in headless mode, Claude Opus 5.5 and Claude Sonnet 5.5 at d
 - **Scoring.** Hidden tests; planted wrong fixes and refactors run against the tests each agent left; upstream's new tests and the whole suite on the real bugs; a logging wrapper around `python` that records what ran on which version of the code; and a blind judge (Claude Opus 5.5, also one of the agents under test) that must quote the answer for each point it awards, with three votes per answer, except one vote in the second 0.14.0 round.
 - **Detectors.** The habit detectors were checked by two arm-blind AI labellers in our first benchmark, agreeing on 45 to 47 of 48 Opus traces and on all 48 Sonnet traces. A new test counts as shown failing before the fix only if it failed before the first source edit; stock often showed one failing only after its fix, with the fix set aside, which does not count.
 - **Statistics.** Cost multiples are geometric means of paired ratios with the tasks weighted equally, with bootstrap 95% intervals; outcome differences use exact McNemar tests on the pairs that disagree.
-- **Runs.** In the 0.16.0 round, 2 runs per real bug, 5 per held-out refactor and 3 per review and question, for each arm and model; in the 0.14.0 rounds, 10 per controlled task. None of the 1,142 runs this README cites was invalid.
+- **Runs.** In the first 0.16.0 round, 2 runs per real bug, 5 per held-out refactor and 3 per review and question, for each arm and model; in the second, 1 per real bug and 2 per held-out refactor, review and question; in the 0.14.0 rounds, 10 per controlled task. None of the 1,334 runs this README cites was invalid.
+- **Correction in the second round.** The check that a control arm never mentions Compound flagged two Opus control answers to the Django question, because Claude Code's own permission message spoke of a "compound command". The check now ignores that phrase, and both runs count.
 - **Corrections in the 0.16.0 round.** The judge checks that each quote it gives is in the answer, and it rejected quotes that ran across two bullet points of a list. Two Sonnet reviews that name all three defects scored 0 and 1 of 3 this way: one by Compound before the redesign and one by 0.16.0. The check now ignores list markup, and we regraded every judged answer of every round from the stored votes; that changed those two scores to 3 of 3, and one review by an arm this README does not cite. A batch of held-out refactor runs was stopped by a time limit outside the benchmark; groups cut off mid-run had written no records and ran again in full.
 - **Corrections in the 0.14.0 rounds.** In the first round, the judge's copy of the Flask commit showed an old commit id, so 40 votes called the id wrong; `bench.py report` leaves those complaints out, and the harness is fixed. One Sonnet group lost its log of Python calls when another benchmark started beside it; we gave every run its own logger and ran the group again. The rule arm's first groups ran in a second pass, after we added the arm. After the runs, we found the reproduction detector missed the short failure output of `pytest -q` (`1 failed, 50 passed`, `FAILED tests/…`); rescoring every arm's runs with the wider pattern raised Compound's real-bug reproductions from 24 to 28 with Opus and from 20 to 26 with Sonnet, and changed no stock run. We read the matching output of all 10 changed runs: each was a new test, named for the reported bug, failing before the first source edit.
 
@@ -406,8 +432,8 @@ The map weighs the query's rarer words in file paths, symbols and the text of it
 ## Limits
 
 - **Python projects in Claude Code only.** Every agent task is a Python project run in headless Claude Code; Codex and Cursor load the same skill files but were not measured.
-- **Small samples.** 2 runs per real bug, 5 per held-out refactor and 3 per review or question, for each arm and model, can miss small effects; the review and question cost multiples rest on 3 pairs each.
-- **0.16.0 was chosen after seeing this round.** Its always-on rule was written after the first runs of these real bugs and refactors, then measured on the same tasks just after the other arms rather than beside them. The refactor guide it loads was written before the held-out refactors.
+- **Small samples.** 2 runs per real bug, 5 per held-out refactor and 3 per review or question, for each arm and model, can miss small effects; the review and question cost multiples rest on 3 pairs each, and on 2 in the smaller second round.
+- **0.16.0 was chosen after seeing this round.** Its always-on rule was written after the first runs of these real bugs and refactors, then measured on the same tasks just after the other arms; the second round ran it beside them, on the same tasks, so neither is a held-out test of the rule. The refactor guide it loads was written before the held-out refactors.
 - **Three held-out refactors.** Stock and the rule failed only one of them, the slugs refactor, but failed it in all 20 of their runs; more refactor tasks would show how often such a trap comes up.
 - **An easy review.** Every arm found all three planted defects in every review, so that task could show neither a gain nor a loss.
 - **Tuned on the controlled tasks.** In the 0.14.0 rounds, Compound's rule sentence and refactor guide were revised after earlier runs of the same six tasks.
@@ -438,15 +464,16 @@ Compound has one short guide for each kind of work and tells the agent to read t
 ### What loads when
 
 - **Every request:** the always-on rule and the plugin's skill list, about 510 tokens.
-- **Refactors, new features, performance work, reviews and pull requests:** the `compound` skill ([SKILL.md](skills/compound/SKILL.md), about 660 words), once, then the map query.
+- **Refactors, new features, performance work and pull requests:** the `compound` skill ([SKILL.md](skills/compound/SKILL.md), about 660 words), once, then the map query.
 - **When a task needs it:** one guide, such as the refactor guide for a refactor.
-- **Bug fixes and questions:** only the always-on rule. In the 0.16.0 round, the skill loaded in 1 of Compound's 48 bug-fix runs and in none of its 12 question runs.
+- **Bug fixes, reviews and questions:** only the always-on rule. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
+- **One chat only:** typing `compound` alone applies the always-on rule's habits to every task in that chat and the skill to the same kinds of work, as a saved setup does.
 
 SKILL.md also holds a few rules for every task it loads for: run the map query even when the agent already knows where to look, unless the task names its files or supplies the code; delegate independent work to subagents when useful; and in frontend work keep every tooltip to at most two visible lines. Read it before you turn Compound on.
 
 The always-on rule, word for word, as `setup-global` saves it:
 
-> Before fixing a reported bug, reproduce it by running the code, then add a regression test and show that it fails on the unfixed code before you edit the source. Run the full test suite after your last change. Before a refactor, record current behavior with a test and compare afterwards. Commit without AI co-author trailers or generated-by lines. For refactors, new features, performance work, reviews and pull requests, first load the installed Compound Skills `compound` skill, using the host's skill tool when available, and read only the references it points to. In your final message, list what you ran and what you did not verify. Respect project instructions and user scope; if the skill is unavailable, report it and follow project conventions.
+> Before fixing a reported bug, reproduce it by running the code, then add a regression test and show that it fails on the unfixed code before you edit the source. Run the full test suite after your last change. Before a refactor, record current behavior with a test and compare afterwards. Commit without AI co-author trailers or generated-by lines. For refactors, new features, performance work and pull requests, first load the installed Compound Skills `compound` skill, using the host's skill tool when available, and read only the references it points to. In your final message, list what you ran and what you did not verify. Respect project instructions and user scope; if the skill is unavailable, report it and follow project conventions.
 
 ### Commits
 
