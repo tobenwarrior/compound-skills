@@ -54,7 +54,7 @@ BLOCK_LINES = (
     "it fails on the unfixed code before you edit the source. Run the full test suite after your last change. "
     "Before a refactor, record "
     "current behavior with a test and compare afterwards. Commit without AI co-author trailers or generated-by "
-    "lines. For refactors, new features, performance work, reviews and pull requests, first load the installed "
+    "lines. For refactors, new features, performance work and pull requests, first load the installed "
     "Compound Skills `compound` skill, using the host's skill tool when available, and read only the references "
     "it points to. In your final message, list what you ran and what you did not verify. Respect project "
     "instructions and user scope; if the skill is unavailable, report it and follow project conventions.",
