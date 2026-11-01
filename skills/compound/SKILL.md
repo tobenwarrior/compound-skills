@@ -27,7 +27,7 @@ For denied local cache or network access, use the host's normal approval flow an
 
 See [code maps](references/map.md) for coverage and limits. Read relevant source and name the outcome, constraints, and evidence for success. Explanations and reviews stay read-only. Ask about missing product choices; investigate observable facts with available tools.
 
-Batch startup steps, such as the map query and reading the references you need, into one shell call when you can. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
+Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
 Before each stage, read its matching reference below; switch when the task changes.
 
