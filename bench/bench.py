@@ -191,9 +191,10 @@ def main() -> int:
     p.add_argument("--no-retry", action="store_true", help="do not rerun a group after an API or harness failure")
     p.add_argument("--max-seven-day", type=float, default=0.80, help="stop when seven-day usage reaches this share")
     p.add_argument("--pause-five-hour", type=float, default=0.75, help="wait for the reset when five-hour usage reaches this share")
-    p.add_argument("--permissions", choices=("task", "strict", "helpers"), default="task",
+    p.add_argument("--permissions", choices=("task", "strict", "helpers", "setup"), default="task",
                    help="task: the policy for each task kind; strict: Claude Code's default mode with only edits pre-approved, "
-                        "so every other prompt shows up as a denial; helpers: strict plus Compound's own helper scripts")
+                        "so every other prompt shows up as a denial; helpers: strict plus Compound's own helper scripts; "
+                        "setup: default mode with only the rules setup-global gives Claude Code, without pre-approving the skill")
     p.set_defaults(func=run)
     p = sub.add_parser("judge", help="blind-grade the answers of judged tasks")
     p.add_argument("--label")

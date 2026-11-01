@@ -181,7 +181,7 @@ def install_shim(folder: Path) -> None:
 # would ask a user shows up as a denial; "helpers" is strict plus the two rules setup-global gives Claude Code: run
 # Compound's map helper and read Compound's own files.
 PERMISSIONS = os.environ.get("BENCH_PERMISSIONS", "task")
-if PERMISSIONS not in ("task", "strict", "helpers"):
+if PERMISSIONS not in ("task", "strict", "helpers", "setup"):
     raise SystemExit(f"unknown permission profile: {PERMISSIONS}")
 
 
@@ -191,6 +191,13 @@ def helper_rules() -> list[str]:
 
 def permission_args(task: dict, arm: dict | None = None) -> list[str]:
     """One policy per task kind, identical in every arm except that a plugin arm may run its own helpers."""
+    if PERMISSIONS == "setup":
+        # Exactly the rules setup-global gives Claude Code (project_setup._claude_permission_rules), plus edits and
+        # task tools, which a user approves for any agent. Loading the skill is not pre-approved.
+        code_map = f"{SCRIPTS_MOUNT}/code_map.py"
+        return ["--permission-mode", "default", "--allowedTools", "Edit", "Write", "TodoWrite", "Task",
+                f"Bash(python3 -B {code_map}:*)", f"Bash(python3 {code_map}:*)", f"Read(/{PLUGIN_MOUNT}/skills/compound/**)",
+                "--disallowedTools", "WebFetch", "WebSearch", *NETWORK_DENY]
     if PERMISSIONS != "task":
         allowed = [*helper_rules(), f"Read(/{PLUGIN_MOUNT}/**)"] if PERMISSIONS == "helpers" else []
         return ["--permission-mode", "default", "--allowedTools", "Edit", "Write", "Skill", "TodoWrite", "Task", *allowed,
