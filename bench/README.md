@@ -53,6 +53,7 @@ Add `--models opus,sonnet` to cover both models. Each model gets its own tables,
 | `name=<source>+rule:<file>` | Also installs `<file>` as an always-on user rule, for a plugin whose setup asks for one, or `none+rule:<file>` for a rule alone |
 | `name=<source>+prefix:<text>` | Starts every prompt with `<text>`, such as the slash command another plugin asks its users to type (`+prefix:/pstack:poteto-mode`) |
 | `name=<source>+variant:nomap` | Compound with the map query removed from its startup and its always-on rule, to measure what the map adds (`VARIANTS` in `common.py` lists the exact edits) |
+| `name=<source>+variant:noreview` | Compound 0.16.0 without loading its skill for reviews, to measure what the skill adds to a review |
 
 The no-map arm decides whether the startup map query stays. Fixed before label `v016` ran: Compound drops the startup query if, over the real bugs and the held-out refactors together, the no-map arm (1) fixes no fewer bugs and finishes no fewer refactors correctly beyond noise (a paired McNemar test against it with p < 0.1 counts as fewer), (2) stays within two runs of Compound on reproducing first and on showing a failing test before the fix, and (3) costs less, with the paired cost ratio's 95% upper bound at or below 1.0. Otherwise the query stays.
 
@@ -70,6 +71,7 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 | `refactor-rounding` | `core` | Remove duplicated rounding; the obvious version changes tax amounts |
 | `refactor-slugs`, `refactor-retry`, `refactor-money` | `heldout` | Merge two near-duplicate helpers in shopkit, a second small library written after Compound's refactor guide and frozen before any agent ran it; the obvious merge changes one caller (product URLs or facet keys, retrying a charge after a lost connection, or the API's validation and rounding) |
 | `review-flask` | `core`, `judged` | Review a Flask commit with three planted defects |
+| `review-shopkit` | `judged`, `review-heldout` | Review a shopkit commit that merges all three helper pairs the obvious way: it passes shopkit's own suite, and each merge changes one caller |
 | `investigate-django` | `core`, `judged` | Find where Django treats the HTTP QUERY method differently |
 | `flask-ipv6-run`, `flask-ipv6-session`, `click-pickle-option`, `click-progress-final` | `real` | Fix a real bug that Flask or click fixed upstream between July and September 2026, in the project's own code and test suite |
 | `attrs-evolve-name`, four `packaging-*` and three `marshmallow-*` bugs | `real`, `real-new` | The same, for eight bugs fixed upstream between August and October 2026, frozen on 31 October 2026 before any run; a ninth, from werkzeug, was dropped before any run because its suite starts dev servers that hang in the sandbox |
@@ -78,7 +80,7 @@ Another plugin is mounted under its manifest name and gets none of Compound's se
 
 Each real-bug fixture is the project at the parent of the upstream fix, with its history up to that point. The bug report describes only the symptom. The hidden tests are the new tests from the upstream fix, and the project's whole suite must still pass. `setup` checks that these tests fail at the parent and pass on the upstream fix. It also installs each project's test dependencies into `bench/work/pyenv`: as pinned in its `uv.lock` for Flask and click, as resolved on the freeze date for the others, and never the project itself, which runs from its `src/`. Runs see them read-only on `PYTHONPATH`.
 
-Each held-out refactor has a right reference, a naive one that passes shopkit's own suite but changes one caller, and three mutants. `setup` checks that each hidden test fails only on its naive refactor and that every mutant passes shopkit's suite but fails its hidden test.
+Each held-out refactor has a right reference, a naive one that passes shopkit's own suite but changes one caller, and three mutants. `setup` checks that each hidden test fails only on its naive refactor and that every mutant passes shopkit's suite but fails its hidden test. `review-shopkit` reviews a single commit that applies all three naive refactors; `setup` checks that shopkit's suite passes on it.
 
 Prompts are the same in every arm, apart from a `+prefix:` an arm asks for, and never mention Compound. Write tasks may run code and commit. Read tasks may read and search but never run the project's code. Web access, package installs and network commands are denied in every arm.
 

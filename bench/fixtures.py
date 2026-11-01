@@ -59,7 +59,8 @@ DJANGO_EXCERPTS = [
     ("django/http/request.py", "_load_post_and_files", [(445, 458)]),
 ]
 CONTEXT_SHA256 = {"review-diff.txt": "3e79aaeb5add957d927928aeb675f38a054036f83986c682172fefbf5b5e8225",
-                  "django-excerpts.txt": "d99b1d1763fb3feabc3752a8cdbad433b50c6144cd4b967524da3f9d7a004b2c"}
+                  "django-excerpts.txt": "d99b1d1763fb3feabc3752a8cdbad433b50c6144cd4b967524da3f9d7a004b2c",
+                  "shop-review-diff.txt": "9b7377ac247e5113de9c1cb24cc24346634e2ab084c6e0acc14967353d0c64ba"}
 
 # Real bugs fixed upstream in July to September 2026. Each fixture is the project at the fix's parent, with
 # history up to there; the fix's own new tests are the hidden tests.
@@ -189,6 +190,16 @@ def build_invoicekit() -> dict:
 SHOPKIT = {"tree": "f6eb7af84af580300d1f1a38f633195d91e9dbfe", "parent": "", "message": "shopkit 0.7.0\n", "who": ("Shop Team", "shop@example.invalid"),
            "date": "1793510506 +0000"}
 SHOP_TASKS = {"refactor-slugs": "shop_slugs", "refactor-retry": "shop_retry", "refactor-money": "shop_money"}
+
+# A review of one commit that merges all three pairs of helpers the obvious way. It passes shopkit's own suite, and
+# each merge changes one caller: search facet keys, card charges after a lost connection, and the refunds API's parsing.
+SHOP_REVIEW = {"branch": "share-helpers", "tree": "8fd7e87e15ccc43c2ff7b16ef117b4dc7ea3c2da",
+               "who": ("Alex Kim", "alex.kim@example.invalid"), "date": "1793514106 +0000",
+               "frozen": "d5cb2286c78a12ffc50193d7f112ee75e50aeeea",
+               "message": ("Share one slug, retry and money helper\n\nReplace the duplicated helpers in catalog and search, "
+                           "payments and webhooks,\nand importing and api with shared ones in text.py, retrying.py and "
+                           "money.py.\n")}
+
 SHOP_MUTANTS = {
     # Wrong refactors that still pass shopkit's own suite, applied to each task's reference.
     "refactor-slugs": {
@@ -227,6 +238,27 @@ def build_shopkit() -> dict:
     scrub(dest, keep)
     checks = leak_checks(dest, keep)
     checks["matches_frozen_commit"] = same_commit(dest, SHOPKIT, "")
+    return checks
+
+
+def build_shop_review() -> dict:
+    dest = FIXTURES / "shopkit-review"
+    shutil.rmtree(dest, ignore_errors=True)
+    shutil.copytree(FIXTURES / "shopkit", dest, symlinks=True)
+    _git(dest, "checkout", "-q", "-b", SHOP_REVIEW["branch"])
+    for task in SHOP_TASKS:
+        shutil.copytree(DATA / "shopkit-refs" / f"{task}-naive", dest, dirs_exist_ok=True)
+    _git(dest, "add", "-A")
+    message = dest / ".git" / "COMMIT_MESSAGE"
+    message.write_text(SHOP_REVIEW["message"])
+    _git(dest, "commit", "-q", "-F", str(message), env=_identity(SHOP_REVIEW["who"], SHOP_REVIEW["date"]))
+    message.unlink()
+    keep = {"refs/heads/main", f"refs/heads/{SHOP_REVIEW['branch']}"}
+    scrub(dest, keep)
+    checks = leak_checks(dest, keep)
+    checks["one_commit_ahead_of_main"] = git(dest, "rev-list", "--count", "main..HEAD").strip() == "1"
+    checks["matches_frozen_tree"] = git(dest, "rev-parse", "HEAD^{tree}").strip() == SHOP_REVIEW["tree"]
+    checks["suite_passes"] = unittest_run(dest, "discover", "-s", "tests")
     return checks
 
 
@@ -325,10 +357,16 @@ def build_judge_context() -> dict:
         for first, last in segments:
             lines.extend(source[first - 1:last])
     texts["django-excerpts.txt"] = "\n".join(lines) + "\n"
+    shop = FIXTURES / "shopkit-review"
+    texts["shop-review-diff.txt"] = subprocess.run(
+        ["git", "-C", str(shop), "-c", "diff.noprefix=false", "show", "--no-color", "--no-ext-diff", "HEAD"],
+        capture_output=True, text=True).stdout + "# git show HEAD of the reviewed commit is above.\n"
+    shop_head = git(shop, "rev-parse", "HEAD").strip()
     report = {}
     for name, text in texts.items():
         (JUDGE_CONTEXT / name).write_text(text)
         frozen = text.replace(f"commit {head}\n", f"commit {REVIEW['frozen']}\n", 1)
+        frozen = frozen.replace(f"commit {shop_head}\n", f"commit {SHOP_REVIEW['frozen']}\n", 1)
         report[name] = sha256_bytes(frozen.encode()) == CONTEXT_SHA256[name]
     return report
 
@@ -541,6 +579,7 @@ def build(map_sources: bool = False) -> dict:
     report: dict = {"sources": [fetch(name) for name in (MAP_SOURCES if map_sources else TASK_SOURCES)]}
     report["fixtures"] = {"invoicekit": build_invoicekit(), "shopkit": build_shopkit(), "flask-review": build_flask_review(),
                           "django": build_django()}
+    report["fixtures"]["shopkit-review"] = build_shop_review()
     report["judge_context"] = build_judge_context()
     report["refs"] = build_refs()
     report["hidden"] = hidden_matrix()

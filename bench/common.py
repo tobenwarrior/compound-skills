@@ -119,7 +119,16 @@ VARIANTS = {
          "Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, "
          "so one permission rule can allow it; read references with your file-reading tool, not the shell. ",
          "Read references with your file-reading tool, not the shell. "),
-        ("skills/compound/scripts/project_setup.py", "Run its map query before searching. Reproduce", "Reproduce"),
+        # Rules before 0.16.0 named the map query; 0.16.0's rule loads the skill only for some tasks and does not.
+        ("skills/compound/scripts/project_setup.py", "Run its map query before searching. Reproduce", "Reproduce", "optional"),
+    ],
+    # 0.16.0 without loading the skill for reviews: the rule and the skill's description leave reviews out.
+    "noreview": [
+        ("skills/compound/scripts/project_setup.py",
+         "lines. For refactors, new features, performance work, reviews and pull requests, first load the installed ",
+         "lines. For refactors, new features, performance work and pull requests, first load the installed "),
+        ("skills/compound/SKILL.md", "Use for refactors, new features, performance work, reviews and pull requests, or to enable",
+         "Use for refactors, new features, performance work and pull requests, or to enable"),
     ],
 }
 
@@ -127,9 +136,11 @@ VARIANTS = {
 def apply_variant(root: Path, name: str) -> None:
     if name not in VARIANTS:
         raise SystemExit(f"unknown variant {name!r}; known: {', '.join(VARIANTS)}")
-    for relative, old, new in VARIANTS[name]:
+    for relative, old, new, *optional in VARIANTS[name]:
         path = root / relative
         text = path.read_text(encoding="utf-8")
+        if optional and old not in text:
+            continue
         if text.count(old) != 1:
             raise SystemExit(f"variant {name}: {relative} does not contain the edited text exactly once")
         path.write_text(text.replace(old, new), encoding="utf-8")

@@ -332,6 +332,29 @@ JUDGE_KEYS = {
                         "of 404; the test covers only one folder and no traversal or max_age=0 case; endpoint names for nested "
                         "or duplicate prefixes; the view keeps a strong reference to the app; the versionadded number."),
     },
+    "review-shopkit": {
+        "items": {
+            "D1": ("Search facet keys change: Facet.key in search.py now uses the product-URL slugify, which strips accents, turns "
+                   "punctuation such as + or & into hyphens and caps keys at 50 characters, where _facet_key only lowercased the "
+                   "label and hyphenated whitespace and underscores, so existing filter URLs no longer match."),
+            "D2": ("Card charges are now retried after a lost connection: payments.charge uses the webhook retry loop, which "
+                   "retries on ConnectionLost as well as GatewayTimeout, where _retry_charge retried only gateway timeouts. A "
+                   "charge whose connection dropped may already have gone through, so retrying it risks charging the card twice."),
+            "D3": ("The refunds API now parses amounts with the importer's rules: refund_amount in api.py uses parse_money, which "
+                   "accepts input _parse_amount rejected (a $ sign, commas in any position, a leading +, exponents such as 1e3) "
+                   "and rounds half up instead of half to even, so \"0.125\" refunds 13 cents instead of 12."),
+        },
+        "rule": ("An item is met only when the answer states it as a problem with this commit, names the caller whose behavior "
+                 "changes (search facet keys, card charges, or the refunds API) and gives the mechanism: for D1 what changes "
+                 "in the keys, for D2 that a lost connection is now retried, for D3 at least one input now accepted or the "
+                 "rounding change. Saying only that behavior might change, or naming a shared helper without the affected "
+                 "caller and the change, is not enough."),
+        "context": "shop-review-diff.txt",
+        "extras_note": ("Known valid extra findings (not false): the commit adds no tests for the shared helpers or for the "
+                        "callers' old behavior; charges now make up to five attempts with longer delays instead of three; "
+                        "a refund of \"(12.00)\" is still rejected because it is not positive; webhooks and the importer keep "
+                        "their behavior."),
+    },
     "investigate-django": {
         "items": {
             "K1": "CSRF: CsrfViewMiddleware (django/middleware/csrf.py) treats QUERY as a safe method and skips the CSRF check.",
@@ -383,6 +406,11 @@ TASKS["review-flask"] = {
     "name": "review-flask", "fixture": "flask-review", "kind": "read", "timeout": 900, "grade": read_only,
     "judge": JUDGE_KEYS["review-flask"], "prompt": REVIEW_PROMPT, "tags": ["core", "judged"],
     "about": "review a Flask commit with three planted defects; blind judge",
+}
+TASKS["review-shopkit"] = {
+    "name": "review-shopkit", "fixture": "shopkit-review", "kind": "read", "timeout": 900, "grade": read_only,
+    "judge": JUDGE_KEYS["review-shopkit"], "prompt": REVIEW_PROMPT, "tags": ["judged", "review-heldout"],
+    "about": "review a commit that merges three helper pairs the obvious way; each merge changes one caller",
 }
 TASKS["investigate-django"] = {
     "name": "investigate-django", "fixture": "django", "kind": "read", "timeout": 1200, "grade": read_only,
