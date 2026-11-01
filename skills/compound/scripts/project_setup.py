@@ -17,7 +17,7 @@ import os
 import stat
 import sys
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -314,12 +314,25 @@ def _legacy_shadow_files(root: Path) -> tuple[Path, ...]:
     return tuple(found)
 
 
+def _outdated_warning(target: TargetState, block_lines: Sequence[str], command: str) -> str | None:
+    """A managed block whose text enable would rewrite was saved by an earlier version."""
+    if target.markers is None or target.text is None:
+        return None
+    if _replace_block(target.text, target.markers, block_lines) == target.text:
+        return None
+    return f"Compound rule is from an earlier version; run {command} again to update it: {target.path}"
+
+
 def _warning_list(
     override: TargetState,
     fallback: TargetState,
     shadows: Iterable[Path],
+    primary: TargetState | None = None,
 ) -> list[str]:
     warnings: list[str] = []
+    for state in (primary, override, fallback):
+        if state is not None and (warning := _outdated_warning(state, BLOCK_LINES, "setup")) is not None:
+            warnings.append(warning)
     if override.exists and override.text and override.text.strip() and override.markers is None:
         warnings.append(f"AGENTS.override.md may shadow AGENTS.md without managed routing: {override.path}")
     if shadows and fallback.markers is None:
@@ -344,17 +357,43 @@ def _load_context(root: Path) -> Context:
     fallback = _read_target(".claude/rules/compound.md", fallback_path)
     shadows = _legacy_shadow_files(root)
 
-    warnings = _warning_list(override, fallback, shadows)
+    warnings = _warning_list(override, fallback, shadows, primary)
     return Context(root, primary, override, fallback, shadows, tuple(warnings))
 
 
 GLOBAL_HOST_NAMES = ("codex", "cursor", "claude")
+HOST_LABELS = {"codex": "Codex", "cursor": "Cursor", "claude": "Claude Code"}
+
+
+def _host_home(name: str) -> Path:
+    if name == "codex":
+        return _configured_global_base("CODEX_HOME", ".codex", "Codex home")
+    if name == "claude":
+        return _configured_global_base("CLAUDE_CONFIG_DIR", ".claude", "Claude configuration directory")
+    return Path.home() / ".cursor"
+
+
+def _installed_hosts() -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """The apps whose configuration folder exists, and a note for each one skipped.
+
+    Enabling without --host sets up only these, so a machine without Codex or Cursor gets no files or settings for
+    them; --host names one app, and --host all sets up every app even before its folder exists.
+    """
+    selected: list[str] = []
+    notes: list[str] = []
+    for name in GLOBAL_HOST_NAMES:
+        home = _host_home(name)
+        if home.is_dir():
+            selected.append(name)
+        else:
+            notes.append(f"Skipped {HOST_LABELS[name]}: {home} does not exist; add --host {name} to set it up anyway.")
+    return tuple(selected), tuple(notes)
 
 
 def _global_target_warning(target: TargetState, description: str) -> str | None:
     if target.exists and (target.text or "").strip() and target.markers is None:
         return f"{description} contains unmanaged content and was left unchanged: {target.path}"
-    return None
+    return _outdated_warning(target, GLOBAL_BLOCK_LINES, "setup-global")
 
 
 def _load_global_context(host_names: Sequence[str]) -> GlobalContext:
@@ -503,6 +542,14 @@ def _global_status_name(context: GlobalContext) -> str:
     return base + "-with-warnings" if context.warnings else base
 
 
+def _claude_permission_rules() -> list[str]:
+    """Allow rules that let Claude Code run this install's map query and read its guides without asking each task."""
+    skill_dir = Path(__file__).resolve().parent.parent
+    code_map = skill_dir / "scripts" / "code_map.py"
+    # A leading // marks an absolute path in a Claude Code Read rule.
+    return [f"Bash(python3 -B {code_map}:*)", f"Bash(python3 {code_map}:*)", f"Read(/{skill_dir}/**)"]
+
+
 def _global_payload(
     action: str,
     status: str,
@@ -539,6 +586,8 @@ def _global_payload(
             if host.name == "cursor":
                 hosts[host.name]["managed_by"] = "native Cursor user-scope plugin rule"
                 hosts[host.name]["runtime_verified"] = False
+            if host.name == "claude":
+                hosts[host.name]["permission_rules"] = _claude_permission_rules()
     value: dict[str, object] = {
         "action": action,
         "status": status,
@@ -838,10 +887,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.host is not None and not args.global_scope:
         return _emit(_payload(action, "error", False, None, [], error="--host requires --global"))
     if args.global_scope:
-        host_names = GLOBAL_HOST_NAMES if args.host in (None, "all") else (args.host,)
         global_context: GlobalContext | None = None
         try:
+            skipped: tuple[str, ...] = ()
+            if args.host is None and action == "enable":
+                host_names, skipped = _installed_hosts()
+                if not host_names:
+                    raise SetupError("no Claude Code, Codex or Cursor configuration folder found; add --host to choose an app")
+            else:
+                host_names = GLOBAL_HOST_NAMES if args.host in (None, "all") else (args.host,)
             global_context = _load_global_context(host_names)
+            global_context = replace(global_context, notes=global_context.notes + skipped)
             if action == "status":
                 return _emit(
                     _global_payload(
@@ -858,6 +914,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             changed, changed_paths = _apply(plans)
             after = _load_global_context(host_names)
+            after = replace(after, notes=after.notes + skipped)
             return _emit(
                 _global_payload(
                     action,

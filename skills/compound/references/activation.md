@@ -12,11 +12,11 @@ The activation step writes no files; later tasks retain their normal authorizati
 
 Use the bundled [helper](../scripts/project_setup.py) through Python 3.11+, using the skill's actual install directory.
 
-`setup global` configures personal defaults for Codex, Cursor, and Claude Code across all projects on this machine. Preflight local state access first: resolve `COMPOUND_SKILLS_STATE_DIR`, defaulting to `~/.cache/compound-skills`, and create that directory. For the selected hosts, merge only its absolute path into the native write-path lists:
+`setup global` configures personal defaults across all projects on this machine for each of Codex, Cursor, and Claude Code that is installed, meaning its configuration folder exists. Preflight local state access first: resolve `COMPOUND_SKILLS_STATE_DIR`, defaulting to `~/.cache/compound-skills`, and create that directory. For each installed app among the selected hosts, merge only its absolute path into the native write-path lists:
 
 - Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
 - Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
-- Claude Code: use its normal tool permissions; report any required native approval.
+- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path; setup again after a plugin update replaces them.
 
 Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves project `setup` unable to record its assessment. Use a fresh session to test the saved configuration, then enable routing:
 
@@ -24,7 +24,7 @@ Preserve existing entries, modes, approvals, networking, and unrelated settings.
 python3 <installed-skill-dir>/scripts/project_setup.py enable --global
 ```
 
-It manages a small routing section in the Codex home's `AGENTS.md` and existing nonempty `AGENTS.override.md`, and a Claude user rule at `~/.claude/rules/compound-skills.md`. It respects `CODEX_HOME` and `CLAUDE_CONFIG_DIR`. For one app, add `--host codex`, `--host cursor`, or `--host claude`.
+It manages a small routing section in the Codex home's `AGENTS.md` and existing nonempty `AGENTS.override.md`, and a Claude user rule at `~/.claude/rules/compound-skills.md`. It respects `CODEX_HOME` and `CLAUDE_CONFIG_DIR`. Without `--host`, it sets up only apps whose configuration folder exists and names any it skipped; add `--host codex`, `--host cursor`, or `--host claude` for one app, or `--host all` for every app.
 
 Cursor carries the routing rule in the native plugin. Install at user scope and leave its `compound-default` rule set to Always in Customize → Rules. Global setup reports Cursor as host-managed; it cannot verify or change that UI setting. If available, inspect it through the host UI; otherwise explain this one-time installation requirement. Do not edit Cursor's private database or claim Cursor is configured from a file written by the helper.
 
@@ -42,4 +42,4 @@ The plugin must be installed and enabled at user scope in each app for global us
 
 ## Inspect or remove defaults
 
-For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report whether a project `setup` assessed it; global status checks routing; inspect the native cache-path entries separately for state access. Disable removes only the helper's managed sections in that scope, deletes files left empty, and ends the current chat preference. Global disable leaves independent project defaults intact. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
+For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report whether a project `setup` assessed it; global status checks routing and warns about a rule saved by an earlier version; inspect the native cache-path entries and the Claude Code permission rules separately. Disable removes only the helper's managed sections in that scope, deletes files left empty, and ends the current chat preference. Global disable leaves independent project defaults intact; also remove the Claude Code permission rules that global setup added. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
