@@ -25,9 +25,9 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from common import (BENCH, COMPOUND, FIXTURES, GIT_IDENTITY, HABITS_RULE, PYENV_MOUNT, PYENVS, RESULTS, RUNS, SANDBOX_HOME,
-                    SCRIPTS_MOUNT, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, is_compound, materialize, plugin_mount, same_model,
-                    sha256_bytes, tree_hash)
+from common import (BENCH, COMPOUND, FIXTURES, GIT_IDENTITY, HABITS_RULE, PLUGIN_MOUNT, PYENV_MOUNT, PYENVS, RESULTS, RUNS,
+                    SANDBOX_HOME, SCRIPTS_MOUNT, SRC_ROOT, TEMPLATE, TRACE_MOUNT, git, is_compound, materialize, plugin_mount,
+                    same_model, sha256_bytes, tree_hash)
 
 sys.path.insert(0, str(BENCH / "shim"))
 from devtrace import digest  # noqa: E402
@@ -176,18 +176,32 @@ def install_shim(folder: Path) -> None:
 
 # ---------------------------------------------------------------- one run
 
+# Permission profile for a whole label (bench.py run --permissions): "task" applies the policy per task kind below;
+# "strict" runs every task in Claude Code's default mode with only edits pre-approved, so each Read or Bash call that
+# would ask a user shows up as a denial; "helpers" is strict plus the two rules setup-global gives Claude Code: run
+# Compound's map helper and read Compound's own files.
+PERMISSIONS = os.environ.get("BENCH_PERMISSIONS", "task")
+if PERMISSIONS not in ("task", "strict", "helpers"):
+    raise SystemExit(f"unknown permission profile: {PERMISSIONS}")
+
+
+def helper_rules() -> list[str]:
+    return [f"Bash({python} {SCRIPTS_MOUNT}/{helper}:*)" for helper in PLUGIN_HELPERS for python in ("python3 -B", "python3")]
+
+
 def permission_args(task: dict, arm: dict | None = None) -> list[str]:
     """One policy per task kind, identical in every arm except that a plugin arm may run its own helpers."""
+    if PERMISSIONS != "task":
+        allowed = [*helper_rules(), f"Read(/{PLUGIN_MOUNT}/**)"] if PERMISSIONS == "helpers" else []
+        return ["--permission-mode", "default", "--allowedTools", "Edit", "Write", "Skill", "TodoWrite", "Task", *allowed,
+                "--disallowedTools", "WebFetch", "WebSearch", *NETWORK_DENY]
     if task["kind"] == "write":
         return ["--permission-mode", "acceptEdits",
                 "--allowedTools", "Bash", "Read", "Edit", "Write", "Grep", "Glob", "Skill", "TodoWrite", "Task",
                 "--disallowedTools", "WebFetch", "WebSearch", *NETWORK_DENY]
     # Third-party repositories: read and search freely, edit if the agent chooses (graded), but never execute
     # repository code. Compound's own helpers are part of the treatment and only exist in plugin arms.
-    allowed = [f"Bash({command}:*)" for command in READ_ONLY_BASH]
-    for helper in PLUGIN_HELPERS:
-        for python in ("python3 -B", "python3"):
-            allowed.append(f"Bash({python} {SCRIPTS_MOUNT}/{helper}:*)")
+    allowed = [f"Bash({command}:*)" for command in READ_ONLY_BASH] + helper_rules()
     if arm and arm.get("plugin") and not is_compound(arm):
         # Another plugin's helpers are unknown to us, so any command that runs a file from its own folder is allowed.
         mount = plugin_mount(arm)
@@ -694,7 +708,7 @@ def one(prep: dict, cpus: str, label: str, spawn_order: int, start_at: float, re
     harness["init_ms"] = parsed["init_ms"]
     record = {"schema": 3, "run_id": prep["run_id"], "pair_id": group_id, "task": task["name"], "arm": arm["name"],
               "arm_source": arm["source"], "plugin_hash": arm.get("plugin_hash"), "plugin_version": arm.get("plugin_version"),
-              "plugin_name": arm.get("plugin_name"), "extra_rule_sha256": arm.get("rule_sha256"),
+              "plugin_name": arm.get("plugin_name"), "extra_rule_sha256": arm.get("rule_sha256"), "permissions": PERMISSIONS,
               "plugin_commit": arm.get("commit"), "model": prep["model"], "rep": rep, "kind": task.get("cell", "measured"),
               "fixture": task["fixture"], "fixture_head": prep["fixture_head"],
               "prompt_sha256": sha256_bytes(task["prompt"].encode()), "prompt_prefix": arm.get("prompt_prefix"),
@@ -798,11 +812,12 @@ def run_matrix(label: str, arm_specs: list[dict], tasks: list[dict], models: lis
     known = json.loads((out / "arms.json").read_text()) if (out / "arms.json").exists() else {}
     for arm in arms:
         previous = known.get(arm["name"])
-        if previous and (previous.get("plugin_hash"), previous.get("rule_sha256"), previous.get("prompt_prefix")) != (
-                arm.get("plugin_hash"), arm.get("rule_sha256"), arm.get("prompt_prefix")):
-            raise SystemExit(f"arm {arm['name']} in label {label} ran a different plugin or rule ({previous.get('plugin_hash')}); "
-                             "use a new label or a new arm name")
-        known[arm["name"]] = {k: v for k, v in arm.items() if k != "plugin"}
+        if previous and (previous.get("plugin_hash"), previous.get("rule_sha256"), previous.get("prompt_prefix"),
+                         previous.get("permissions", "task")) != (
+                arm.get("plugin_hash"), arm.get("rule_sha256"), arm.get("prompt_prefix"), PERMISSIONS):
+            raise SystemExit(f"arm {arm['name']} in label {label} ran a different plugin, rule or permission profile "
+                             f"({previous.get('plugin_hash')}); use a new label or a new arm name")
+        known[arm["name"]] = {**{k: v for k, v in arm.items() if k != "plugin"}, "permissions": PERMISSIONS}
     (out / "arms.json").write_text(json.dumps(known, indent=1))
     stop_file = out / "STOP"
     stop_file.unlink(missing_ok=True)
