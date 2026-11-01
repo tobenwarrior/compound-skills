@@ -99,6 +99,8 @@ def judge(args) -> int:
     if args.calibrate:
         judging.calibrate(args.votes, args.model)
         return 0
+    if args.regrade:
+        return judging.regrade_label(args.label)
     return judging.judge_label(args.label, args.votes, args.workers, args.model, args.arms.split(",") if args.arms else None)
 
 
@@ -200,6 +202,7 @@ def main() -> int:
     p.add_argument("--model", default="opus")
     p.add_argument("--arms", help="only these arms, comma separated (default: all)")
     p.add_argument("--calibrate", action="store_true", help="grade the frozen perfect and flawed answers instead")
+    p.add_argument("--regrade", action="store_true", help="recheck the stored votes' quotes with the current check, without new votes")
     p.set_defaults(func=judge)
     p = sub.add_parser("rescore", help="recompute habits from saved transcripts with the current detectors")
     p.add_argument("--label", required=True)

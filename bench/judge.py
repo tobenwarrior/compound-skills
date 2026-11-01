@@ -34,6 +34,9 @@ SCHEMA = {
     "required": ["items", "incorrect_claims", "extra_findings"],
 }
 
+# Line breaks, list and heading markers and bold markers don't count when a quote is matched: a judge that quotes two
+# bullet points as one sentence has still quoted the answer.
+MARKUP = re.compile(r"(?m)^[ \t]*(?:#{1,6}[ \t]+|[-*+•][ \t]+|\d+[.)][ \t]+|>[ \t]?)")
 TOOLING = re.compile(r"(?i)compound|code[_ ]?map|symbol[_ ]lookup|onboarding\.py|references/[\w.-]+\.md|\bskill\b|/claude-plugins/")
 
 
@@ -94,10 +97,17 @@ def judge_once(prompt: str, model: str) -> dict:
     return verdict
 
 
+def flatten(text: str) -> str:
+    return re.sub(r"\s+", " ", MARKUP.sub("", text).replace("**", "")).strip()
+
+
 def check_quotes(verdict: dict, answer: str) -> dict:
-    flat = re.sub(r"\s+", " ", answer)
+    """An item counts as met only if its quote is in the answer; the judge's own verdict stays in met_raw."""
+    flat = flatten(answer)
     for item in (verdict.get("items") or {}).values():
-        quote = re.sub(r"\s+", " ", item.get("quote", "")).strip().strip('"').strip("…").strip()
+        if item.get("met_raw"):
+            item["met"] = True
+        quote = flatten(item.get("quote", "")).strip('"').strip("…").strip()
         item["quote_ok"] = bool(quote) and quote[:120] in flat
         if item.get("met") and not item["quote_ok"]:
             item["met_raw"], item["met"] = True, False
@@ -106,6 +116,10 @@ def check_quotes(verdict: dict, answer: str) -> dict:
 
 def grade(task: dict, answer: str, votes: int, seed: int, model: str) -> dict:
     results = [check_quotes(judge_once(prompt_for(task, answer, seed + vote), model), answer) for vote in range(votes)]
+    return tally(task, results, votes)
+
+
+def tally(task: dict, results: list[dict], votes: int) -> dict:
     names = list(task["judge"]["items"])
     met = {name: sum(1 for r in results if (r.get("items") or {}).get(name, {}).get("met")) for name in names}
     majority = {name: count * 2 > votes for name, count in met.items()}
@@ -125,6 +139,26 @@ def calibrate(votes: int, model: str) -> list[tuple]:
             rows.append((name, kind, result["score"], result["of"], result["incorrect_claims_median"]))
             print(name, kind, f"{result['score']}/{result['of']}", "incorrect:", result["incorrect_claims_median"], flush=True)
     return rows
+
+
+def regrade_label(label: str) -> int:
+    """Check the stored votes' quotes again with the current check_quotes, without asking the judge again."""
+    changed = 0
+    for record in load_records(label):
+        task = TASKS.get(record["task"])
+        out = RESULTS / label / f"{record['run_id']}.judge.json"
+        if not task or not task.get("judge") or not out.exists():
+            continue
+        old = json.loads(out.read_text())
+        answer = redact(record.get("final_message") or "", record["fixture"])
+        new = {**tally(task, [check_quotes(vote, answer) for vote in old["votes"]], len(old["votes"])),
+               "redacted_chars": old.get("redacted_chars", len(answer))}
+        if (new["score"], new["items"]) != (old["score"], old["items"]):
+            changed += 1
+            print(f"{out.name} {record['task']} {record['model']} {record['arm']}: {old['score']} -> {new['score']} of {new['of']}", flush=True)
+        out.write_text(json.dumps(new, indent=1))
+    print(f"{label}: {changed} scores changed", flush=True)
+    return 0
 
 
 def judge_label(label: str, votes: int, workers: int, model: str, arms: list[str] | None = None) -> int:
