@@ -527,7 +527,9 @@ def habits(prep: dict, harness: dict, calls: list[dict], final: tuple[str, str])
     starts = [ms for ms, src, _ in harness.get("changes") or [] if src != orig_src]
     starts += [e["ms0"] for e in execs if e["src0"] == orig_src and e["src1"] != orig_src]
     src_root = f"{SRC_ROOT}/{prep['task']['fixture']}/src/"
-    starts += [c["ms"] for c in calls if c["name"] in ("Edit", "Write", "MultiEdit") and not c["error"]
+    # An edit counts from when it was applied, not when it was issued: a test run issued in the same step just before
+    # the edit still ran on the unchanged source.
+    starts += [c["result_ms"] or c["ms"] for c in calls if c["name"] in ("Edit", "Write", "MultiEdit") and not c["error"]
                and str(c["input"].get("file_path", "")).startswith(src_root)]
     first_src_change = min(starts) if starts else None
     helper = lambda e: any("/claude-plugins/" in str(a) for a in e["argv"])  # noqa: E731
