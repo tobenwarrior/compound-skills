@@ -4,7 +4,7 @@ These modes choose when Compound guides engineering work. Explicit project `setu
 
 ## Current chat
 
-A bare invocation or `session` enables Compound for subsequent engineering tasks in this chat until the user opts out. Treat that choice as a standing preference; users can give normal requests afterward. Apply the core skill and load only the references each task needs. Acknowledge activation briefly and continue any supplied task.
+A bare invocation or `session` enables Compound for the rest of this chat until the user opts out, routed as the saved always-on rule routes it. For every task, reproduce a reported bug and show its new test failing before editing the source, run the full test suite after the last change, record current behavior with a test before a refactor, commit without AI co-author trailers or generated-by lines, and list what was run and not verified. Apply the core skill, loading only the references each task needs, to refactors, new features, performance work and pull requests. Treat that choice as a standing preference; users can give normal requests afterward. Acknowledge activation briefly and apply the core skill to any supplied task.
 
 The activation step writes no files; later tasks retain their normal authorization. New chats need activation unless project or global defaults apply. A request to stop using Compound in this chat overrides the preference without changing saved defaults.
 
@@ -16,7 +16,7 @@ Use the bundled [helper](../scripts/project_setup.py) through Python 3.11+, usin
 
 - Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
 - Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
-- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path; setup again after a plugin update replaces them.
+- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path, so they come only from Claude Code's own copy: run from another app's copy, the helper reports none and says so. Setup again after a plugin update replaces them.
 
 Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves project `setup` unable to record its assessment. Use a fresh session to test the saved configuration, then enable routing:
 
