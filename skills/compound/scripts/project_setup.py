@@ -544,6 +544,23 @@ def _global_status_name(context: GlobalContext) -> str:
     return base + "-with-warnings" if context.warnings else base
 
 
+CLAUDE_RULES_ELSEWHERE_NOTE = ("This copy of Compound belongs to {app}, so Claude Code allow rules would name a folder Claude Code "
+                               "does not run; run this from Claude Code to add or remove its allow rules.")
+
+
+def _other_app_holding_this_install() -> str | None:
+    """The other app whose folder holds this copy of the plugin; Claude Code's allow rules must name its own copy."""
+    here = Path(__file__).resolve()
+    for name in ("codex", "cursor"):
+        try:
+            home = _host_home(name).resolve()
+        except SetupError:
+            continue
+        if here.is_relative_to(home):
+            return HOST_LABELS[name]
+    return None
+
+
 def _claude_permission_rules() -> list[str]:
     """Allow rules that let Claude Code run this install's map query and read its guides without asking each task."""
     skill_dir = Path(__file__).resolve().parent.parent
@@ -589,7 +606,12 @@ def _global_payload(
                 hosts[host.name]["managed_by"] = "native Cursor user-scope plugin rule"
                 hosts[host.name]["runtime_verified"] = False
             if host.name == "claude":
-                hosts[host.name]["permission_rules"] = _claude_permission_rules()
+                other = _other_app_holding_this_install()
+                hosts[host.name]["permission_rules"] = [] if other else _claude_permission_rules()
+                if other:
+                    note = CLAUDE_RULES_ELSEWHERE_NOTE.format(app=other)
+                    hosts[host.name]["notes"].append(note)
+                    notes.append(note)
     value: dict[str, object] = {
         "action": action,
         "status": status,
