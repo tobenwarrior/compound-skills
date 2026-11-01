@@ -48,7 +48,8 @@ def setup(args) -> int:
 def _setup(args, fixtures, harness) -> int:
     report = fixtures.build(map_sources=args.map)
     for name, checks in report["fixtures"].items():
-        print(f"fixture {name}: {checks['head'][:12]} {'matches the frozen commit' if checks['matches_frozen_commit'] else 'DIFFERS from the frozen commit'}")
+        frozen = checks.get("matches_frozen_commit", checks.get("matches_frozen_tree"))
+        print(f"fixture {name}: {checks['head'][:12]} {'matches the frozen commit' if frozen else 'DIFFERS from the frozen commit'}")
     print(f"reference trees: {', '.join(report['refs'])}; mutants: {len(report['mutants'])}")
     for name, checks in report["real_bugs"].items():
         if isinstance(checks, dict) and "hidden_tests" in checks:

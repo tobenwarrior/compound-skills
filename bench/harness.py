@@ -611,7 +611,8 @@ def summarize(parsed: dict, prep: dict, harness: dict) -> dict:
     elif plugin_skill:
         activation = "plugin-skill"
     leak_text = "\n".join(json.dumps(c["input"]) + c["text"] for c in calls) + "\n".join(parsed["assistant_text"])
-    control_leak = not prep["arm"]["plugin"] and bool(re.search(r"(?i)compound", leak_text))
+    # Claude Code's own permission messages say "compound command" about shell command chains.
+    control_leak = not prep["arm"]["plugin"] and bool(re.search(r"(?i)compound(?!\s+command)", leak_text))
     project = prep["run"] / prep["task"]["fixture"]
     final_digests = (digest(project, "src"), digest(project, "tests")) if prep.get("digests_pre") else None
     habit = habits(prep, harness, calls, final_digests) if final_digests else {}
