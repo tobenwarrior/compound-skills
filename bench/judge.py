@@ -101,14 +101,23 @@ def flatten(text: str) -> str:
     return re.sub(r"\s+", " ", MARKUP.sub("", text).replace("**", "")).strip()
 
 
+ELISION = re.compile(r"\s*(?:\.\.\.|…|\[\.\.\.\])\s*")
+
+
+def quote_found(quote: str, flat: str) -> bool:
+    """Every part of the quote is in the answer: a judge may elide words with "..." between two passages it quotes."""
+    parts = [part.strip().strip('"').strip() for part in ELISION.split(flatten(quote).strip('"'))]
+    parts = [part for part in parts if part]
+    return bool(parts) and all(part[:120] in flat for part in parts)
+
+
 def check_quotes(verdict: dict, answer: str) -> dict:
     """An item counts as met only if its quote is in the answer; the judge's own verdict stays in met_raw."""
     flat = flatten(answer)
     for item in (verdict.get("items") or {}).values():
         if item.get("met_raw"):
             item["met"] = True
-        quote = flatten(item.get("quote", "")).strip('"').strip("…").strip()
-        item["quote_ok"] = bool(quote) and quote[:120] in flat
+        item["quote_ok"] = quote_found(item.get("quote", ""), flat)
         if item.get("met") and not item["quote_ok"]:
             item["met_raw"], item["met"] = True, False
     return verdict
