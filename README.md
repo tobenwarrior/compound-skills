@@ -2,11 +2,11 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.1 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.2 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
-<p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
+<p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#cost-over-repeated-work">Cost over repeated work</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets an always-on rule: reproduce a reported bug, show a new test failing on the unfixed code before you edit the source, run the full test suite after your last change, pin behavior before a refactor, commit without AI co-author lines, and list what you ran and did not verify. For refactors, new features, performance work and pull requests, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
+Turn it on once and every project gets an always-on rule: reproduce reported bugs, show a new test failing before editing source, and run the full suite on the final fix; pin behavior before a refactor, commit without AI co-author lines, and list what you ran and did not verify. For refactors, new features, performance work and pull requests, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
 We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
@@ -62,6 +62,37 @@ All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 
 **Skip it, or use it in one chat only, if** most of your agent work is reviews, you are close to your plan's usage limit, or you need evidence for languages other than Python or for Codex or Cursor, where it has not been measured.
 
 **Alternatives.** For the bug-fix habits alone, copy [the plain rule](#isnt-this-just-a-rule-in-claudemd) into `~/.claude/rules/` and set Claude Code's `attribution` setting to drop co-author lines: on the real bugs it matched Compound's fixes at about the same cost, though with Sonnet it skipped showing the failing test first in 6 of 24 runs, and it got about a third of the held-out refactors wrong. Every's Compound Engineering and pstack offer larger planning, review and orchestration workflows; in the 0.14.0 round, started with their own commands, they reproduced bugs first too, at 2–11× Compound 0.14.0's cost per Opus fix ([earlier rounds](#earlier-rounds-with-0140)).
+
+## Cost over repeated work
+
+Compound keeps the short rule active for bugs, reviews and questions, and loads the full skill for refactors, new features, performance work and pull requests. That routing already lowered recorded spend versus earlier Compound. The saved runs also show why keeping the refactor checks can be useful over repeated work: fewer incorrect results and tests that detect planted regressions. **They do not establish that Compound is cheaper than stock over a project’s lifetime.**
+
+### Spend less on routine startup
+
+![Saved real-bug runs: mean recorded cost per attempt. Opus: without Compound 21.4 cents, earlier Compound 30.6 cents, selective Compound routing 24.5 cents. Sonnet: 7.3, 10.8 and 8.9 cents. Selective routing lowered spend by 19.9% and 17.9% versus earlier Compound. Hidden-test passes stayed at 10 of 12 and 9 of 12 respectively.](.github/assets/cost-routing.svg)
+
+In the saved side-by-side round, selective routing lowered total bug-fix spend **19.9% with Opus and 17.9% with Sonnet** versus earlier Compound. Both versions passed the upstream hidden tests in 10/12 Opus fixes and 9/12 Sonnet fixes. Stock passed 10/12 with each model and cost less. These are arithmetic cohort totals over the same 12 bugs per model; the task-weighted ratios elsewhere use a different summary. [Saved-run method](bench/README.md#compare-saved-costs-and-recovery-scenarios).
+
+### Count accepted results, including what failed
+
+![Saved held-out refactors, six attempts per mode and model. Opus spend per accepted result: without Compound 24.3 cents, with Compound 26.7 cents. Sonnet: 9.87 versus 10.11 cents. Correct results: 4 of 6 versus 6 of 6 for both models. Tests detect 0 of 36 planted wrong refactors without Compound and 36 of 36 with Compound, pooled over both models.](.github/assets/cost-accepted.svg)
+
+For the three held-out refactors in that round, stock completed 4/6 correctly per model; Compound completed 6/6. Dividing **all recorded spend, including unsuccessful attempts**, by accepted results gives 24.3¢ versus 26.7¢ with Opus, and 9.87¢ versus 10.11¢ with Sonnet. Compound still costs more on that measure, but the gap is smaller than its cost per attempt. The tests left by Compound caught all 36 planted wrong refactors, versus none caught by stock’s tests; these are fixture mutations, not measured future production defects.
+
+### When could the extra checks pay back?
+
+![Recovery-cost scenario based on the saved refactor batch: Compound would break even if each avoided failed refactor adds more than 31.5 cents of later recovery with Opus, or 10.6 cents with Sonnet, assuming the observed success rates recur. Later recovery costs were not measured.](.github/assets/cost-recovery.svg)
+
+If those observed success rates recur, Compound’s extra initial spend breaks even when each avoided failed refactor would add **more than 31.5¢ of later recovery with Opus, or 10.6¢ with Sonnet**. This is a scenario, not measured savings: `(Compound mean cost − stock mean cost) ÷ (stock failure rate − Compound failure rate)`. It assumes the same recovery cost per failure, uses a small sample, and does not measure correction sessions or human time.
+
+### Keep recurring overhead small
+
+- Let normal requests use automatic routing. Explicitly loading `compound` for every review or question adds work the saved results did not justify.
+- If the task names its files or supplies the code, the skill skips its startup map query. Otherwise it queries once, then inspects source.
+- The saved rule is 633 UTF-8 bytes versus the earlier 745, a 15% source-text reduction; token usage depends on the host. Focused map summaries also fit more complete file entries into the same limit ([offline comparison](#more-useful-context-in-the-same-budget)).
+- **0.16.2:** reuse guidance already in context and passing checks for unchanged files, inputs and environment; commits and pushes alone do not require rerunning them. Scope the full-suite rule explicitly to bug fixes, choose relevant checks for other tasks, and report the result concisely. Project requirements still take priority. These instructions have not been remeasured in model runs.
+
+Costs are Claude Code’s reported API list-price estimates; subscription charges are not measured. No new model or judge calls were made for this update. The graphics reanalyse saved `v016b` records from 1 November 2026, with Claude Code 2.1.312 and Claude Opus/Sonnet 5.5; they describe the recorded 0.16.0 routing, not a new 0.16.2 benchmark.
 
 ## Install
 
@@ -472,7 +503,7 @@ SKILL.md also holds a few rules for every task it loads for: run the map query e
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source. Run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new features, performance work and pull requests, first load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. In your final message, list checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
+> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new features, performance work and pull requests, first load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. In your final message, list checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
 
 ### Commits
 

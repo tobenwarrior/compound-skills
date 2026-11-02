@@ -10,4 +10,4 @@ Choose evidence that could falsify the success claim. Run it against the final a
 
 Tests should detect an incorrect observable result while surviving a behavior-preserving internal rewrite. Derive expected values from the contract, not from the implementation being tested. Match verification effort to the change; a reversible wording edit needs inspection, not a new test suite.
 
-Run the relevant checks after the last change. Inspect the diff and repository status for unintended files. Report what was run, what it established, and what remains unverified. Existing green results, successful compilation, or an agent's completion message cannot establish a claim about a different artifact or surface.
+Run relevant checks against the final artifact. Reuse passing results while the checked files, inputs and environment are unchanged; a commit or push alone does not require a rerun. Rerun after relevant edits or to resolve failures. Inspect the diff and status for unintended files. Report the outcome, checks and limits once, concisely. A passing check establishes only the artifact and surface it exercised.

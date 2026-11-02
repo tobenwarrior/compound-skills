@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.2 (2026-11-02)
+
+- Reanalyse saved side-by-side costs in the README: selective routing reduced bug-fix spend by 19.9% (Opus) and 17.9% (Sonnet) versus earlier Compound, with the same hidden-test pass counts. Show stock alongside both, cost per accepted refactor including unsuccessful spend, and explicit recovery-cost scenarios; do not claim measured lifetime savings.
+- Extend `cost-audit` with matched-cohort comparisons. Reject different tasks, repetitions, pairing, settings or served models; keep unsuccessful, invalid and superseded spend and disclose missing usage. No new model or judge calls.
+- Reuse guidance already in context and passing checks for unchanged checked files, inputs and environment. Commits and pushes alone do not invalidate evidence. Clarify that the full-suite rule belongs to reported bug fixes; other tasks use relevant checks. Report results concisely. These instruction changes have not been remeasured in model runs; saved rules update through `setup-global`.
+
 ## 0.16.1 (2026-11-02)
 
 - Focus agent summaries on matching symbols while retaining two orientation symbols when needed. In 15 offline query pairs across five pinned repositories, full outlines contain 21.6% fewer UTF-8 bytes and the median complete file entries inside the same 2,500-character cap rises from 3 to 4. Ranking and JSON metadata are unchanged. These measurements do not establish lower model bills or improved task outcomes.

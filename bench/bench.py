@@ -120,7 +120,16 @@ def report(args) -> int:
 def cost_audit(args) -> int:
     import cost_audit as audit
     try:
-        result = audit.read_label(args.label)
+        records = audit.read_records(args.label)
+        result = audit.summarize(records)
+        result['label'] = args.label
+        if args.baseline or args.candidate or args.tasks:
+            if not (args.baseline and args.candidate and args.tasks):
+                raise ValueError('comparison requires --baseline, --candidate and --tasks')
+            from cost_comparison import compare
+            from tasks import select
+            names = {task['name'] for task in select(args.tasks)}
+            result['comparison'] = compare(records, args.baseline, args.candidate, names)
     except (ValueError, OSError) as error:
         raise SystemExit(str(error)) from error
     print(json.dumps(result, indent=2))
@@ -227,6 +236,9 @@ def main() -> int:
     p.set_defaults(func=report)
     p = sub.add_parser("cost-audit", help="read saved spend and accepted outcomes; no model calls")
     p.add_argument("--label", required=True)
+    p.add_argument("--baseline", help="saved arm to compare against")
+    p.add_argument("--candidate", help="saved arm to evaluate")
+    p.add_argument("--tasks", help="task names or tags to compare; requires both arms")
     p.set_defaults(func=cost_audit)
     p = sub.add_parser("map-speed", help="time map builds and agent queries on pinned repositories")
     p.add_argument("--plugin", default="worktree", help="worktree, ref:<revision> or dir:<path>")

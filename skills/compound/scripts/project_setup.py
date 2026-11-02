@@ -51,7 +51,7 @@ BLOCK_LINES = (
     "## Compound Skills default routing",
     "",
     "Reported bugs: run code to reproduce; add a regression test and show it failing before editing "
-    "source. Run the full test suite after the final change. Refactors: test current behavior first; "
+    "source; run the full test suite after the final change. Refactors: test current behavior first; "
     "compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new "
     "features, performance work and pull requests, first load installed Compound Skills `compound` with "
     "the host skill tool when available; read only its needed references. In your final message, list "

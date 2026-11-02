@@ -55,7 +55,7 @@ def summarize(records: list[dict]) -> dict:
             'groups': rows}
 
 
-def read_label(label: str) -> dict:
+def read_records(label: str) -> list[dict]:
     """Read a results label, including superseded attempts omitted by outcome reports."""
     folder = RESULTS / label
     if not folder.is_dir():
@@ -69,6 +69,11 @@ def read_label(label: str) -> dict:
             records.append(value)
     if not records:
         raise ValueError(f'no run records for {label}')
-    result = summarize(records)
+    return records
+
+
+def read_label(label: str) -> dict:
+    """Audit all saved attempts in a label, without new model or judge calls."""
+    result = summarize(read_records(label))
     result['label'] = label
     return result

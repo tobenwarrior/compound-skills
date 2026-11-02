@@ -149,3 +149,18 @@ Compare arms only within one run. Models, Claude Code and its feature flags chan
 `python3 -B bench/map_context.py --baseline-ref 890022e` compares that trusted local plugin revision’s text renderer with the working copy’s renderer on identical map metadata. It makes no model or network calls and reads the five existing source checkouts pinned in `fixtures.py`; it refuses a different revision or a dirty checkout. The 15 fixed queries are listed in the script. `--sources` chooses an existing source directory and `--baseline-repo` chooses a local plugin checkout containing the baseline revision.
 
 On 2 November 2026, the full query outlines totalled 97,350 UTF-8 bytes before and 76,283 after (21.6% fewer). Inside the same 2,500-character cap, the median number of complete file entries increased from 3 to 4; none of the 15 pairs displayed fewer complete entries. Full outlines exceed the default cap: this byte reduction is not a measurement of fewer billed tokens. The renderer leaves ranking and JSON metadata unchanged; it retains up to eight query-matching symbols per file and otherwise includes two symbols for orientation. This is a presentation comparison within Compound, not an agent navigation or task-quality comparison against stock.
+
+## Compare saved costs and recovery scenarios
+
+These commands read a saved label and never start an agent, judge, source setup or network request:
+
+```bash
+python3 -B bench/bench.py cost-audit --label v016b --baseline compound --candidate final --tasks real
+python3 -B bench/bench.py cost-audit --label v016b --baseline without --candidate final --tasks heldout
+```
+
+In this label, `without` is stock, `compound` is Compound before selective routing, and `final` is 0.16.0 as shipped. `--tasks` accepts the same names and tags as the benchmark. The comparison refuses missing tasks, unmatched repetitions, duplicate active attempts, different pair IDs, fixture revisions, prompt hashes, permission settings or served models. It includes recorded costs from invalid and superseded attempts in the selected cohort. Missing usage, invalid active attempts or ungraded outcomes prevent an accepted-cost or failure-rate scenario from being established; ungraded answers are not treated as failed fixes. Judge spend is excluded.
+
+Mean cost per task is cohort spend divided by active task repetitions. Cost per accepted result is the same spend divided by valid accepted results; unsuccessful spend stays in the numerator. These arithmetic summaries are distinct from `report`’s task-weighted geometric means of paired ratios. For the README’s saved refactor cohort, Opus spend is $0.9730812 stock versus $1.6040212 Compound, with 4 versus 6 accepted results; Sonnet spend is $0.3947231 versus $0.606608, also with 4 versus 6. The tests left behind detect 0/36 versus 36/36 planted wrong refactors across both models.
+
+The recovery scenario divides the extra mean initial cost by the difference in observed failure rates. It returns no threshold when Compound has no observed failure-rate advantage. Opus’s threshold is $0.31547 and Sonnet’s is $0.10594245 per avoided failure. This calculation assumes the observed rates recur and a common recovery cost per failure. It measures no corrections, human time, future failures or lifetime savings. The small batch has six refactor attempts per mode and model. Newer instruction wording is not evaluated by these saved runs.
