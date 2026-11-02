@@ -113,7 +113,15 @@ VARIANTS = {
          "- **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "
          "\"<task terms>\" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; "
          "missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.\n",
-         "Read the project's instructions.\n"),
+         "Read the project's instructions.\n", "optional"),
+        ("skills/compound/SKILL.md",
+         "Read the project's instructions. Use supplied code, named files and current context first. Run one focused map query only to locate unknown files or dependencies; skip it when the relevant files are known or an unchanged map already answers the question:\n\n"
+         "- **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query \"<task terms>\"`. "
+         "This starts or reuses the local service and incremental cache.\n"
+         "- **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "
+         "\"<task terms>\" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; "
+         "missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.\n",
+         "Read the project's instructions.\n", "optional"),
         ("skills/compound/SKILL.md", "See [code maps](references/map.md) for coverage and limits. ", ""),
         ("skills/compound/SKILL.md",
          "Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, "
@@ -144,6 +152,9 @@ def apply_variant(root: Path, name: str) -> None:
         if text.count(old) != 1:
             raise SystemExit(f"variant {name}: {relative} does not contain the edited text exactly once")
         path.write_text(text.replace(old, new), encoding="utf-8")
+
+    if name == "nomap" and "scripts/code_map.py --repo" in (root / "skills/compound/SKILL.md").read_text():
+        raise SystemExit("variant nomap: unrecognized map startup instructions")
 
 
 def parse_arms(spec: str) -> list[dict]:

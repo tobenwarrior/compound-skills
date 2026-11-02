@@ -16,7 +16,7 @@ For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` r
 
 `<installed-skill-dir>` means the directory containing this `SKILL.md`, normally `<plugin-root>/skills/compound`. Resolve relative resources there.
 
-Read the project's instructions. Then run one map query with the task's terms before any further search, read, or edit, even if you already know where to look; skip it only when the task names its file or supplies the code:
+Read the project's instructions. Use supplied code, named files and current context first. Run one focused map query only to locate unknown files or dependencies; skip it when the relevant files are known or an unchanged map already answers the question:
 
 - **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>"`. This starts or reuses the local service and incremental cache.
 - **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.
@@ -55,4 +55,4 @@ Use the host's available tools and models. Delegate independent work when useful
 
 At the commit/PR stage, reopen [Git and pull requests](references/git.md); never add AI coauthors or generated-by credits.
 
-Finish with a short report: the outcome, relevant evidence, and remaining limits. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.
+Finish with the outcome, checks and limits; omit repeated plans and edit-by-edit narration unless requested. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.

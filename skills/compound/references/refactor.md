@@ -1,6 +1,6 @@
 # Refactor
 
-Name the behavior that must remain stable and the structural problem the change removes. Record a baseline before moving code; when existing tests do not pin the behavior you must keep, add a characterization test first.
+Name the behavior that must remain stable and the structural problem the change removes. Use the project's test command and fixtures. Record a baseline before moving code; when existing tests do not pin the behavior you must keep, add a characterization test first.
 
 Choose a target with clearer ownership, fewer hidden state assumptions, or fewer layers to trace. Keep a cohesive file when splitting it would scatter one responsibility. Inspect configuration, generated references, dynamic entry points, and external consumers before removing apparent dead code.
 

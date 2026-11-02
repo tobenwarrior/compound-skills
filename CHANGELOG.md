@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.3 (2026-11-02)
+
+- Restore the README before the speculative cost section. Retain its original benchmark comparisons, measured costs and theme; remove the three added cost graphics and hypothetical repair-cost projections.
+- Use supplied code, named files and current context before navigation. Query the map only for unknown files or dependencies and reuse it when unchanged. Use the project's test command and fixtures for refactor baselines; keep completion reports brief. Saved traces identify these overhead targets; no new model runs establish savings from this wording.
+- Keep the no-map ablation compatible with both startup wordings. Saved cost comparisons now report only observed spend, accepted outcomes and whether the candidate meets a lower-cost/no-fewer-acceptances target. Remove recovery-cost scenarios.
+
 ## 0.16.2 (2026-11-02)
 
 - Reanalyse saved side-by-side costs in the README: selective routing reduced bug-fix spend by 19.9% (Opus) and 17.9% (Sonnet) versus earlier Compound, with the same hidden-test pass counts. Show stock alongside both, cost per accepted refactor including unsuccessful spend, and explicit recovery-cost scenarios; do not claim measured lifetime savings.

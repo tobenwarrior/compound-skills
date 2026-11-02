@@ -1,8 +1,4 @@
-"""Compare saved, matched cohorts and calculate an explicit recovery-cost scenario.
-
-The scenario uses the observed failure rates as assumptions. It does not predict
-future failures or measure correction sessions, human time, or lifetime savings.
-"""
+"""Compare recorded spend and accepted results in matched saved cohorts."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -69,18 +65,14 @@ def compare(records: list[dict], baseline: str, candidate: str, tasks: set[str])
             }
         before, after = totals[baseline], totals[candidate]
         cost_before, cost_after = before['spend_per_task_usd'], after['spend_per_task_usd']
-        rates = (before['failure_rate'], after['failure_rate'])
-        break_even = None
-        if cost_before is not None and cost_after is not None and None not in rates and rates[0] > rates[1]:
-            break_even = max(0, (cost_after - cost_before) / (rates[0] - rates[1]))
+        complete = before['failure_rate'] is not None and after['failure_rate'] is not None
+        target_met = None
+        if complete and cost_before is not None and cost_after is not None:
+            target_met = cost_after < cost_before and after['accepted'] >= before['accepted']
         models.append({'model': model, 'arms': totals,
                        'recorded_spend_ratio': cost_after / cost_before if cost_before and cost_after is not None else None,
-                       'recovery_scenario': {
-                           'break_even_usd_per_avoided_failure': break_even,
-                           'formula': '(candidate cost per task - baseline cost per task) / (baseline failure rate - candidate failure rate)',
-                           'assumptions': 'Observed rates recur; each failure adds the same recovery cost; no recovery spend was measured.',
-                       }})
+                       'saved_batch_cost_target_met': target_met})
     return {'baseline': baseline, 'candidate': candidate, 'tasks': sorted({r['task'] for r in selected}),
             'cost_basis': 'recorded API list-price estimates; all saved attempts in the selected cohort, including invalid and superseded',
-            'scope': 'matched first-attempt cohorts; recovery figures are scenarios, not measured long-term savings',
+            'scope': 'matched saved first-attempt cohorts; no correction sessions or project-lifetime costs measured',
             'models': models}
