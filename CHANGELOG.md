@@ -2,7 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
-## Unreleased
+## 0.16.1 (2026-11-02)
+
+- Focus agent summaries on matching symbols while retaining two orientation symbols when needed. In 15 offline query pairs across five pinned repositories, full outlines contain 21.6% fewer UTF-8 bytes and the median complete file entries inside the same 2,500-character cap rises from 3 to 4. Ranking and JSON metadata are unchanged. These measurements do not establish lower model bills or improved task outcomes.
+
+- Use the hey.trading cream-and-green theme across the live code map, source previews, mobile panels and every README graphic. Remove legacy host-skin overrides and dark chart variants; replace map screenshots with captures of the updated viewer on Flask. Benchmark data is unchanged.
 
 - Shorten the saved always-on rule from 745 to 633 UTF-8 bytes while retaining its task routing, verification requirements and project overrides. Existing installations update it by running `setup-global` again; the recorded agent results still describe the earlier wording. No new agent runs or billed-cost savings are claimed.
 - Add `bench.py cost-audit` to inspect saved agent spend and accepted outcomes without model calls, including recorded costs from invalid and superseded attempts.

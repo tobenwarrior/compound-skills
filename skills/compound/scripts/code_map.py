@@ -1429,7 +1429,10 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 name = _name_terms(symbol["name"])
                 signature = _name_terms(symbol.get("signature", ""))
                 return sum(2 * (term in name) + (term in signature) for term in terms)
-            symbol_values = sorted(file["symbols"], key=relevance, reverse=True)[:8]
+            ranked_symbols = sorted(file["symbols"], key=relevance, reverse=True)
+            matching = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
+            background = [symbol for symbol in ranked_symbols if relevance(symbol) == 0]
+            symbol_values = matching + background[:max(0, 2 - len(matching))]
         else:
             symbol_values = file["symbols"][:8]
         symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)

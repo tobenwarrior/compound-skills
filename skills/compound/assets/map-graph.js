@@ -18,7 +18,7 @@ const DRAG_REACH = 800;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const TAU = Math.PI * 2;
 export const FOLDER_PALETTE = Object.freeze([
-  "#2fb58f", "#4f8ff0", "#a477ee", "#e2a03f", "#e8698b", "#33afc6", "#8fbd45", "#d276b3",
+  "#147a43", "#3e7895", "#8c65ad", "#a87826", "#b85d79", "#2c9296", "#718c37", "#9b6d8c",
 ]);
 
 const finite = (value, fallback = 0) => {
@@ -253,7 +253,7 @@ export function createGraph(canvas, options = {}) {
 
   /** Resolve the page's theme tokens so the canvas matches light and dark surfaces. */
   function readTheme() {
-    const fallback = { text: "#18202a", dim: "#657180", accent: "#315fbd", halo: "#f5f7fa", font: "sans-serif", changed: "#d99a2b" };
+    const fallback = { text: "#14161c", dim: "#6b6f78", accent: "#147a43", halo: "#fdf8ee", font: "sans-serif", changed: "#d99a2b" };
     const stage = canvas.parentElement;
     if (typeof ownerWindow.getComputedStyle !== "function" || !ownerDocument || !stage) return fallback;
     if (!state.probe) {
@@ -273,7 +273,7 @@ export function createGraph(canvas, options = {}) {
       text: resolve("--text", fallback.text),
       dim: resolve("--dim", fallback.dim),
       accent: resolve("--accent", fallback.accent),
-      halo: opaque ? background : dark ? "#111720" : fallback.halo,
+      halo: opaque ? background : fallback.halo,
       font: canvasStyle.fontFamily || fallback.font,
       changed: dark ? "#f0c060" : fallback.changed,
     };

@@ -143,3 +143,9 @@ Neither benchmark runs an agent or executes repository code. For a quick offline
 ## Reading results
 
 Compare arms only within one run. Models, Claude Code and its feature flags change over time, so the report records the Claude Code version and the models it served. Each run's folder keeps the full stream transcript (`.stream`), the record (`.json`), the diff, the final `src/` and `tests/`, and the judge's votes.
+
+## Offline summary comparison
+
+`python3 -B bench/map_context.py --baseline-ref 890022e` compares that trusted local plugin revision’s text renderer with the working copy’s renderer on identical map metadata. It makes no model or network calls and reads the five existing source checkouts pinned in `fixtures.py`; it refuses a different revision or a dirty checkout. The 15 fixed queries are listed in the script. `--sources` chooses an existing source directory and `--baseline-repo` chooses a local plugin checkout containing the baseline revision.
+
+On 2 November 2026, the full query outlines totalled 97,350 UTF-8 bytes before and 76,283 after (21.6% fewer). Inside the same 2,500-character cap, the median number of complete file entries increased from 3 to 4; none of the 15 pairs displayed fewer complete entries. Full outlines exceed the default cap: this byte reduction is not a measurement of fewer billed tokens. The renderer leaves ranking and JSON metadata unchanged; it retains up to eight query-matching symbols per file and otherwise includes two symbols for orientation. This is a presentation comparison within Compound, not an agent navigation or task-quality comparison against stock.

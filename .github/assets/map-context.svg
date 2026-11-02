@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" role="img" aria-labelledby="title desc">
+<title id="title">More file context. Same summary budget.</title><desc id="desc">Offline paired renderers: median complete file entries 3 before and 4 with 0.16.1 inside 2,500 characters. 15 queries, five pinned repositories, identical map metadata. Full outlines: 97,350 vs 76,283 bytes. No model cost measurement.</desc>
+<defs><radialGradient id="wash"><stop stop-color="#e5f3e9"/><stop offset="1" stop-color="#fdf8ee"/></radialGradient></defs>
+<rect width="840" height="460" rx="28" fill="url(#wash)"/>
+<g font-family="Inter,system-ui,sans-serif" fill="#14161c">
+<rect x="24" y="24" width="792" height="108" rx="24" fill="#fffdf8" stroke="#ece6d8"/>
+<text x="48" y="68" font-size="28" font-weight="700">More file context. Same summary budget.</text>
+<text x="48" y="104" font-size="15" fill="#6b6f78">15 offline query pairs · 5 pinned repos · identical map metadata</text>
+<rect x="24" y="148" width="792" height="194" rx="24" fill="#fffdf8" stroke="#ece6d8"/>
+<text x="48" y="182" font-size="16" font-weight="600">Complete file entries · median within 2,500 characters</text>
+<text x="48" y="230" font-size="16">Compound 0.16.0</text><rect x="260" y="207" width="340" height="32" rx="16" fill="#9a9e95"/><text x="730" y="232" font-size="28" font-weight="700">3</text>
+<text x="48" y="289" font-size="16">Compound 0.16.1</text><rect x="260" y="266" width="453" height="32" rx="16" fill="#147a43"/><text x="730" y="291" font-size="28" font-weight="700" fill="#147a43">4</text>
+<text x="48" y="381" font-size="18" font-weight="700" fill="#147a43">21.6% smaller full outlines</text>
+<text x="48" y="412" font-size="14" fill="#6b6f78">97,350 → 76,283 UTF-8 bytes before the cap. Ranking unchanged.</text>
+<text x="48" y="437" font-size="14" fill="#6b6f78">Presentation evidence; model bills and task outcomes not remeasured.</text>
+</g></svg>

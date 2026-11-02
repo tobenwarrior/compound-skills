@@ -32,7 +32,7 @@ const state = {
 };
 const graph = createGraph(refs.graph, {
   onSelect: id => chooseFile(id),
-  onHover: id => { refs["graph-tooltip"].hidden = !id; refs["graph-tooltip"].textContent = id || ""; },
+  onHover: id => { refs["graph-tooltip"].hidden = !id; const label = (id || "").split("/").pop(); refs["graph-tooltip"].textContent = label.length <= 30 ? label : "Open file details"; },
   onStats: stats => {
     state.graphStats = stats;
     refs["layout-state"].textContent = stats.layoutActive ? "Arranging" : "Settled";
@@ -166,7 +166,7 @@ function renderSummary() {
 }
 
 function createFileRow(file) {
-  const button = make("button", undefined, "file-row"); button.setAttribute("aria-current", String(file.path === state.selected)); button.title = file.path;
+  const button = make("button", undefined, "file-row"); button.setAttribute("aria-current", String(file.path === state.selected));
   const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(file.path), "row-name"), make("span", parent(file.path) || "/", "row-path"));
   button.append(make("span", file.language === "python" ? "py" : file.language === "typescript" ? "ts" : "◇", "file-glyph"), copy);
   if (file.changed) button.append(make("span", file.changed === "untracked" ? "U" : file.changed[0].toUpperCase(), "change-mark"));
@@ -282,7 +282,7 @@ function renderGraph(fit = false) {
 function edgeRow(path, arrow) {
   const item = make("li"), button = make("button", undefined, "edge-row");
   const copy = make("span", undefined, "row-copy"); copy.append(make("span", base(path), "row-name"), make("span", parent(path) || "/", "row-path"));
-  button.append(make("span", arrow, "edge-arrow"), copy); button.title = path; button.disabled = !state.lookup.has(path); button.addEventListener("click", () => chooseFile(path)); item.append(button); return item;
+  button.append(make("span", arrow, "edge-arrow"), copy); button.disabled = !state.lookup.has(path); button.addEventListener("click", () => chooseFile(path)); item.append(button); return item;
 }
 function renderEdges(element, paths, arrow, maximum = 40) {
   if (!paths.length) { element.replaceChildren(make("li", "No recorded connections.", "detail-empty")); return; }
