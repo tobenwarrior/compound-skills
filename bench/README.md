@@ -39,6 +39,16 @@ python3 bench/bench.py report --label my-change --baseline main
 
 Add `--models opus,sonnet` to cover both models. Each model gets its own tables, because a change can help one and not the other.
 
+## Audit costs without new runs
+
+```bash
+python3 bench/bench.py cost-audit --label <saved-label>
+```
+
+This command only reads saved records and works without Linux or Claude Code. It makes no model or judge calls. Each task, model and arm reports recorded spend, accepted results (`outcome.success`), unresolved valid attempts, ungraded results, invalid attempts and superseded attempts, plus token and tool-call totals. Recorded spend includes invalid and superseded attempts rather than dropping their cost when the benchmark retries a group. Missing costs or a run without a final usage record leave spend per accepted result unknown; ungraded answers are not counted as failed fixes. Judge costs are excluded.
+
+Spend per accepted result is the batch's recorded spend divided by accepted results, including spend on unsuccessful attempts. Existing runs do not link agent correction sessions or sequences of project changes, so this is an audit of first-attempt batches, not a measurement of long-term savings. It does not estimate how many retries would succeed.
+
 ## Arms
 
 | Arm | What runs |

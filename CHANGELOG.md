@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## Unreleased
+
+- Shorten the saved always-on rule from 745 to 633 UTF-8 bytes while retaining its task routing, verification requirements and project overrides. Existing installations update it by running `setup-global` again; the recorded agent results still describe the earlier wording. No new agent runs or billed-cost savings are claimed.
+- Add `bench.py cost-audit` to inspect saved agent spend and accepted outcomes without model calls, including recorded costs from invalid and superseded attempts.
+
 ## 0.16.0 (2026-11-01)
 
 - **The bug-fix habits live in the always-on rule, and the skill loads only where it made the difference.** The rule now asks the agent itself to reproduce a reported bug, show a new test failing on the unfixed code before editing the source, run the full test suite after its last change, record current behavior with a test before a refactor, commit without AI co-author trailers or generated-by lines, and list what it ran and did not verify. The skill, with its guides and map query, loads for refactors, new features, performance work and pull requests; bug fixes, reviews and questions get only the rule. On 12 real bugs, the version before this one matched a plain five-sentence rule's fixes and habits at 1.26× (Claude Opus 5.5) and 1.38× (Claude Sonnet 5.5) the rule's cost. 0.16.0 fixed about as many bugs (38 of 48 runs, against 39), reproduced the bug and showed the failing test first in all 48 runs, ran the whole suite more often (46 of 48 runs, against 37), and cost 0.71× and 0.75× as much per fix as before: 1.09× and 1.14× stock. On three held-out refactors it again did all 30 runs correctly, where stock did 20 and the plain rule 19, at 1.07× the earlier version's cost. The longer rule and the skill list add about 510 tokens to each request. We chose this design after seeing the first runs, then measured it on the same tasks.

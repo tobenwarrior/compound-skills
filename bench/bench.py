@@ -117,6 +117,16 @@ def report(args) -> int:
     return 0
 
 
+def cost_audit(args) -> int:
+    import cost_audit as audit
+    try:
+        result = audit.read_label(args.label)
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error)) from error
+    print(json.dumps(result, indent=2))
+    return 0
+
+
 def plugin_scripts(spec: str) -> tuple[dict, Path]:
     arm = materialize(parse_arms(f"map={spec}")[0])
     if not arm["plugin"]:
@@ -215,6 +225,9 @@ def main() -> int:
     p.add_argument("--baseline", help="arm or comma-separated arms the others are paired against (default: without, else the first arm)")
     p.add_argument("--out", help="summary JSON path (default: results/<label>/summary.json, with a .md next to it)")
     p.set_defaults(func=report)
+    p = sub.add_parser("cost-audit", help="read saved spend and accepted outcomes; no model calls")
+    p.add_argument("--label", required=True)
+    p.set_defaults(func=cost_audit)
     p = sub.add_parser("map-speed", help="time map builds and agent queries on pinned repositories")
     p.add_argument("--plugin", default="worktree", help="worktree, ref:<revision> or dir:<path>")
     p.add_argument("--repos", default="django,vue-core,gin,ripgrep")
@@ -231,7 +244,7 @@ def main() -> int:
         os.environ["BENCH_KEEP"] = os.pathsep.join([*filter(None, os.environ.get("BENCH_KEEP", "").split(os.pathsep)), *args.keep])
     if args.command == "judge" and not args.calibrate and not args.label:
         parser.error("judge needs --label (or --calibrate)")
-    if args.command in ("setup", "tasks", "report", "run", "rescore"):
+    if args.command in ("setup", "tasks", "report", "run", "rescore", "cost-audit"):
         return args.func(args)
     with work_lock(exclusive=False):
         return args.func(args)

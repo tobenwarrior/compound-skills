@@ -52,7 +52,7 @@ All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 
 - **About 9% (Opus) to 14% (Sonnet) more per bug fix than stock, and about 1.6× per refactor.** Bug by bug, a fix cost 1.09× and 1.14× stock's cost, about what the plain rule costs; a held-out refactor cost 1.64× with each model, against 1.20× and 1.31× for the rule, which got about a third of them wrong. A median fix took 66 seconds with Opus against stock's 41, and 36 against 24 with Sonnet. On a subscription, the extra comes out of your usage limits.
 - **Reviews cost more for no measured gain.** Reviews and questions do not load the skill: on a held-out review, loading it found nothing the always-on rule alone did not (the same score in all 10 pairs), and leaving it out cut a review's cost to 0.75× (95% interval 0.72–0.78). The rule's extra steps remain: a Flask review cost 1.61× stock with Opus and 2.21× with Sonnet, about what the plain rule costs, for the same findings. [Where it doesn't help](#where-it-doesnt-help-reviews)
 - **No extra permission prompts from Compound itself.** `setup-global` adds Claude Code allow rules for Compound's own map query and guides. In 12 held-out refactor runs under Claude Code's default permission mode with only those rules, loading the skill, the map query and reading guides never asked for approval; running tests still asks, as it does without Compound. Run `setup-global` from Claude Code: the rules name Claude Code's own copy of the plugin.
-- **About 510 tokens on every request** for the always-on rule and the plugin's skill list, against 210 for the plain rule.
+- **About 510 tokens on every request in the recorded runs** for the always-on rule and the plugin's skill list, against 210 for the plain rule.
 
 **What it changes**
 
@@ -249,6 +249,8 @@ Commit lines are the other difference: the rule did not ask about them, and Clau
 
 ### Cost and time
 
+To audit existing runs without model usage, run `python3 bench/bench.py cost-audit --label <saved-label>`. It includes recorded spend from unsuccessful, invalid and superseded attempts, and reports accepted and unresolved outcomes separately by task, model and arm. Spend per accepted result includes failed attempts; missing cost records make it unknown. These are first-attempt batches, not measured correction sessions or project-lifetime savings.
+
 Cents and seconds are medians per run at API list prices, as Claude Code reports them. Multiples are geometric means of paired cost ratios with the tasks weighted equally, with 95% intervals. Arms that started together are paired by group; Compound 0.16.0, which ran just after the others on the real bugs, refactors and review, is paired with them by task, model and repetition.
 
 | Compound 0.16.0 against stock | Claude Opus 5.5 | Claude Sonnet 5.5 |
@@ -263,7 +265,7 @@ Medians and multiples can disagree: with Opus, Compound's median fix cost 20.2¢
 
 The extra steps take time: a median fix took 66 seconds with Opus against stock's 41, and 36 against 24 with Sonnet; a median refactor took 54 against 39, and 33 against 21.
 
-The always-on rule and the plugin's skill list add about 510 tokens to every request, measured on a plain question; the plain rule adds about 210. Questions don't load the skill, and none of Compound's 12 question runs did, so a question costs about what it does on stock. Reviews no longer load it either, but still cost more than stock for the same findings, about what the plain rule costs ([below](#where-it-doesnt-help-reviews)).
+The benchmarked always-on rule and the plugin's skill list added about 510 tokens to every request, measured on a plain question; the plain rule adds about 210. Questions don't load the skill, and none of Compound's 12 question runs did, so a question costs about what it does on stock. Reviews no longer load it either, but still cost more than stock for the same findings, about what the plain rule costs ([below](#where-it-doesnt-help-reviews)).
 
 ### Where it doesn't help: reviews
 
@@ -463,7 +465,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 ### What loads when
 
-- **Every request:** the always-on rule and the plugin's skill list, about 510 tokens.
+- **Every request:** the always-on rule and the plugin's skill list. The benchmarked rule added about 510 tokens; the shorter rule below has not been remeasured in a host.
 - **Refactors, new features, performance work and pull requests:** the `compound` skill ([SKILL.md](skills/compound/SKILL.md), about 660 words), once, then the map query.
 - **When a task needs it:** one guide, such as the refactor guide for a refactor.
 - **Bug fixes, reviews and questions:** only the always-on rule. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
@@ -471,9 +473,9 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 SKILL.md also holds a few rules for every task it loads for: run the map query even when the agent already knows where to look, unless the task names its files or supplies the code; delegate independent work to subagents when useful; and in frontend work keep every tooltip to at most two visible lines. Read it before you turn Compound on.
 
-The always-on rule, word for word, as `setup-global` saves it:
+The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Before fixing a reported bug, reproduce it by running the code, then add a regression test and show that it fails on the unfixed code before you edit the source. Run the full test suite after your last change. Before a refactor, record current behavior with a test and compare afterwards. Commit without AI co-author trailers or generated-by lines. For refactors, new features, performance work and pull requests, first load the installed Compound Skills `compound` skill, using the host's skill tool when available, and read only the references it points to. In your final message, list what you ran and what you did not verify. Respect project instructions and user scope; if the skill is unavailable, report it and follow project conventions.
+> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source. Run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new features, performance work and pull requests, first load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. In your final message, list checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
 
 ### Commits
 
