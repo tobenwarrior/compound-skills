@@ -2,13 +2,17 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.7 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.7 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek pilot: 2 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
 Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
-We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
+**Latest cost check — Compound 0.16.7:** a small [DeepSeek V4.1 Flash pilot](#latest-pilot-compound-0167) consumed **10.1% less OpenCode Go allowance** across two tasks, with **2/2 accepted in both modes**. The refund fix cost more; the retry refactor cost less. This is a measured two-task result, not evidence of long-term savings.
+
+![Two-task DeepSeek pilot: Go allowance $0.02106263 without Compound and $0.01893280 with Compound, both 2/2 tasks accepted, 21 versus 29 model requests. Cash charges were zero under the existing Go subscription.](.github/assets/benchmark-pilot-cost.svg)
+
+The larger historical benchmarks below measured Compound 0.16.0, before the later prompt and routing changes. We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
 - **Refactors.** On 3 refactors written after Compound's guides and frozen before any run, 15 runs per model, Compound did all 15 correctly with both Opus and Sonnet. The rule did 10 and 9, and stock 10 and 10. The tests Compound's runs left behind caught all 45 planted wrong refactors with each model, against 17 and 0 for the rule's.
 - **Bug fixes.** On 12 real bugs fixed upstream in 2026, with each fix's own tests hidden, all three fixed about as many. Compound and the rule both reproduced the bug and showed a failing test before the fix, which stock almost never did. Bug by bug, Compound cost 0.89× the rule's cost with Opus and 1.04× with Sonnet, and 1.09× and 1.14× stock's.
@@ -23,9 +27,9 @@ We measured it against stock Claude Code and against a plain five-sentence rule 
 
 ## Should you use it?
 
-**Yes, for Python work in Claude Code, unless most of it is reviews.** Compound got every held-out refactor right where stock Claude Code and a plain rule got about a third of theirs wrong, and it makes bug fixes come with evidence first, a reproduction and a test shown failing on the unfixed code, as the plain rule does and for about the rule's cost. In money, that is 1.09× to 1.14× stock's cost per bug fix and about 1.6× per refactor; questions cost about the same as stock, and reviews cost more for no measured gain. If you only want the bug-fix habits, [the plain rule](#isnt-this-just-a-rule-in-claudemd) gives you most of them.
+**The strongest larger-sample evidence is for refactor correctness; cost depends on the task and model.** In the historical 0.16.0 Claude Code runs, Compound got every held-out refactor right where stock Claude Code and a plain rule got about a third of theirs wrong, and it makes bug fixes come with evidence first, a reproduction and a test shown failing on the unfixed code, as the plain rule does and for about the rule's cost. In money, that is 1.09× to 1.14× stock's cost per bug fix and about 1.6× per refactor; questions cost about the same as stock, and reviews cost more for no measured gain. If you only want the bug-fix habits, [the plain rule](#isnt-this-just-a-rule-in-claudemd) gives you most of them.
 
-All numbers come from runs of [bench/](bench/README.md) in headless Claude Code at default effort, on Python projects. The 0.16.0 numbers below are from 1 November 2026, in Claude Code 2.1.316; a [smaller second round](#second-round-side-by-side) in 2.1.312 ran every arm side by side and agrees with them; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
+The larger historical numbers come from runs of [bench/](bench/README.md) in headless Claude Code at default effort, on Python projects. The [latest pilot](#latest-pilot-compound-0167) uses DeepSeek through Y Harness and is reported separately. The 0.16.0 numbers below are from 1 November 2026, in Claude Code 2.1.316; a [smaller second round](#second-round-side-by-side) in 2.1.312 ran every arm side by side and agrees with them; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
 
 | Stock / plain rule / Compound 0.16.0 | Claude Opus 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- |
@@ -46,7 +50,7 @@ All numbers come from runs of [bench/](bench/README.md) in headless Claude Code 
 - **Bug fixes with the evidence first.** The agent reproduces the bug, shows a new test failing before it edits the source, and runs the whole suite. A plain rule does much the same; Compound adds commits without AI co-author lines, which Claude Code's own `attribution` setting can also give you. [Real bugs](#real-bugs)
 - **A map of your code.** On 240 commits held out from tuning, an average of 74% of the source files each commit changed were in the map's top 4, against 67% for a word search that skips common words and lists tests last. The agent uses it when it needs to locate files or dependencies; in runs that left the query out, the habits were the same, one fewer bug was fixed, and cost was 2% lower, within noise, so it stays. [Does the map pay?](#does-the-map-query-pay-for-itself)
 
-**What it costs**
+**What the historical Claude Code runs cost**
 
 - **About 9% (Opus) to 14% (Sonnet) more per bug fix than stock, and about 1.6× per refactor.** Bug by bug, a fix cost 1.09× and 1.14× stock's cost, about what the plain rule costs; a held-out refactor cost 1.64× with each model, against 1.20× and 1.31× for the rule, which got about a third of them wrong. A median fix took 66 seconds with Opus against stock's 41, and 36 against 24 with Sonnet. On a subscription, the extra comes out of your usage limits.
 - **Reviews cost more for no measured gain.** Reviews and questions do not load the skill: on a held-out review, loading it found nothing the always-on rule alone did not (the same score in all 10 pairs), and leaving it out cut a review's cost to 0.75× (95% interval 0.72–0.78). The rule's extra steps remain: a Flask review cost 1.61× stock with Opus and 2.21× with Sonnet, about what the plain rule costs, for the same findings. [Where it doesn't help](#where-it-doesnt-help-reviews)
@@ -145,7 +149,25 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 
 ## Benchmark
 
-Every agent result comes from [bench/](bench/README.md). It runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. The run records stay local because they hold full transcripts; the commands [below](#how-we-measured-and-check-our-numbers) rerun them. All tasks are Python projects, in Claude Code 2.1.316 at default effort.
+The current pilot and larger historical rounds below use different runtimes and models; compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#how-we-measured-and-check-our-numbers) rerun the Claude Code rounds. The tasks are Python projects.
+
+### Latest pilot: Compound 0.16.7
+
+On 2 November 2026, DeepSeek V4.1 Flash through Y Harness completed the refund bug fix and retry-helper refactor once in each mode. Each pair used the same fixture revision, project path, prompt, tools, high reasoning setting, 8,192-token output cap and limits. Order was without/with for the refund and with/without for the refactor. The treatment added Compound's native skill provider and global routing rule; the control had neither. No paid judges, provider retries, title-model calls or subagent sessions ran.
+
+![Task-level pilot costs: refund allowance $0.00721300 without versus $0.00765820 with Compound, 6.2% more; retry-refactor allowance $0.01384963 without versus $0.01127460 with Compound, 18.6% less. All four runs passed.](.github/assets/benchmark-pilot-tasks.svg)
+
+**Matched total:** $0.02106263 without versus $0.01893280 with Compound in provider-reported Go allowance, **10.1% less in this pilot**. API list-price usage was $0.03510438 versus $0.03155470. Both modes had a **$0 cash charge** under the existing subscription: consuming less allowance does not lower the fixed monthly fee. These are saved API response amounts, not token-price estimates; [OpenCode's accounting documentation](https://opencode.ai/v2/docs/console/api/inference#cost) distinguishes the fields.
+
+![Pilot correctness: both modes passed both tasks, hidden checks and original and final suites; no original tests were removed or weakened. Tests caught 4 of 6 frozen wrong changes without Compound and 5 of 6 with it. Model requests increased from 21 to 29; tool calls from 33 to 39.](.github/assets/benchmark-pilot-correctness.svg)
+
+All four valid runs passed the task-specific hidden checks, the original suite on the changed code and the run's final suite; the refactor also removed the duplicate retry loops. Mutation checks measure test strength, not extra successful tasks. These were **previously used development fixtures, one pair each**; provider caches were not reset. The result cannot separate sampling and cache variation from a general effect or establish cheaper behavior on other tasks or over the long run.
+
+One invalid setup attempt did not activate editing tools and stopped at its request cap. Its $0.00686204 allowance is excluded from the matched comparison. **All experiment attempts**, including that failure: 70 model requests, $0.04685747 allowance, $0.07809583 API list-price usage and $0 cash charge. The [saved numeric data](bench/diagram_sources/pilot.json) includes both matched and all-attempt totals and the frozen source pins; private request records and transcripts are not published.
+
+### Historical Claude Code rounds
+
+These used default effort, Claude Code 2.1.316 unless noted, and the versions below. They remain evidence about those versions; the small current pilot does not replace them.
 
 - **0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its 0.16.0 redesign, and that version without its map query ran side by side on 12 real bugs (2 runs per bug, arm and model), 3 held-out refactors (5 runs each) and a Flask review (3 runs). The redesign, which is 0.16.0, ran just after them on the same tasks and is paired with them by task, model and repetition. Stock, the rule and 0.16.0 then ran side by side on a Django question and a plain question (3 runs each).
 - **Second 0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its redesign and 0.16.0 as shipped started together in every group, in Claude Code 2.1.312, on the same 12 real bugs (1 run per bug, arm and model), 3 held-out refactors, the Flask review, the Django question and the plain question (2 runs each). [Second round](#second-round-side-by-side)
@@ -481,3 +503,5 @@ Your project's conventions come first; otherwise subjects follow Conventional Co
 ## Credits
 
 Adapted selectively from Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), which is also one of the benchmark arms, with lineage from earlier Karpathy-inspired guidelines and the Claude-Mem local-service concept. Not affiliated with Every or its Compound Engineering plugin. See [SOURCES.md](SOURCES.md), [third-party notices](THIRD_PARTY_NOTICES.md), the [changelog](CHANGELOG.md) and the [MIT license](LICENSE).
+
+<!-- README SVGs are generated; see bench/diagram_sources/README.md. -->

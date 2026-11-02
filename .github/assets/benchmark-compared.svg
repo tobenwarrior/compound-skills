@@ -1,161 +1,175 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="825" viewBox="0 0 760 825" role="img" aria-labelledby="title desc">
-<title id="title">Compared with other plugins</title>
-<desc id="desc">Compared with other plugins. Every&#x27;s Compound Engineering 3.34.0 and pstack 0.15.36, installed as their READMEs say, on the three bugs and the refactor; Claude Opus 5.5 and Sonnet 5.5 together. With plain prompts, as everyone else ran; then started with the command each one tells you to type. Fixed the bug (hidden tests pass): stock 18 of 18, Every&#x27;s Compound Engineering with plain prompts 18 of 18, pstack with plain prompts 18 of 18, Every&#x27;s Compound Engineering with its commands 12 of 12, pstack with its command 12 of 12, Compound 18 of 18. Planted regressions the tests left behind catch: stock 45 of 66, Every&#x27;s Compound Engineering with plain prompts 38 of 66, pstack with plain prompts 42 of 66, Every&#x27;s Compound Engineering with its commands 30 of 44, pstack with its command 30 of 44, Compound 52 of 66. Refactor kept tax rounding and removed both helpers: stock 3 of 6, Every&#x27;s Compound Engineering with plain prompts 1 of 6, pstack with plain prompts 1 of 6, Every&#x27;s Compound Engineering with its commands 0 of 4, pstack with its command 2 of 4, Compound 6 of 6. Reproduced the bug before changing code: stock 0 of 18, Every&#x27;s Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every&#x27;s Compound Engineering with its commands 12 of 12, pstack with its command 9 of 12, Compound 18 of 18. Showed a new test failing before the fix: stock 0 of 18, Every&#x27;s Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every&#x27;s Compound Engineering with its commands 12 of 12, pstack with its command 9 of 12, Compound 18 of 18. Committed without an AI co-author line: stock 0 of 18, Every&#x27;s Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every&#x27;s Compound Engineering with its commands 0 of 12, pstack with its command 0 of 12, Compound 18 of 18. Median cost of a bug fix, Opus 5.5: stock 10¢, Every&#x27;s Compound Engineering with plain prompts 11¢, pstack with plain prompts 12¢, Every&#x27;s Compound Engineering with its commands 183¢, pstack with its command 32¢, Compound 17¢. Median cost of a bug fix, Sonnet 5.5: stock 3.5¢, Every&#x27;s Compound Engineering with plain prompts 4.4¢, pstack with plain prompts 4.0¢, Every&#x27;s Compound Engineering with its commands 17¢, pstack with its command 9.5¢, Compound 5.6¢. Stock and Compound ran with plain prompts. Plain prompts: 3 runs per task and model. Commands (/ce-debug and /ce-work for Every&#x27;s CE, /poteto-mode for pstack): 2 runs, in a separate run with its own stock and Compound arms, where a bug fix&#x27;s median cost was 10¢ stock and 16¢ with Compound on Opus, 4.2¢ and 6.2¢ on Sonnet. The tasks were written for this benchmark and Compound was partly tuned on them.</desc>
-<style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#14161c;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
-<rect width="760" height="825" rx="12" fill="#fdf8ee"/>
-<text x="24.0" y="38.0" font-size="19" font-weight="600">Compared with other plugins</text>
-<text x="24.0" y="59.0" font-size="13.5" fill="#6b6f78">Every&#x27;s Compound Engineering 3.34.0 and pstack 0.15.36, installed as their READMEs say, on the</text>
-<text x="24.0" y="80.0" font-size="13.5" fill="#6b6f78">three bugs and the refactor; Claude Opus 5.5 and Sonnet 5.5 together. With plain prompts, as</text>
-<text x="24.0" y="101.0" font-size="13.5" fill="#6b6f78">everyone else ran; then started with the command each one tells you to type.</text>
-<rect x="656.0" y="125.0" width="77.0" height="586.0" rx="8" fill="#e5f3e9" fill-opacity="0.55"/>
-<line x1="321.0" y1="129.0" x2="321.0" y2="707.0" stroke="#ece6d8" stroke-width="1"/>
-<line x1="487.0" y1="129.0" x2="487.0" y2="707.0" stroke="#ece6d8" stroke-width="1"/>
-<line x1="653.0" y1="129.0" x2="653.0" y2="707.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="404.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Plain prompts</text>
-<line x1="329.0" y1="147.0" x2="479.0" y2="147.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="570.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Their commands</text>
-<line x1="495.0" y1="147.0" x2="645.0" y2="147.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="279.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Stock</text>
-<text x="362.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Every&#x27;s</text>
-<text x="362.5" y="181.0" font-size="13" font-weight="600" text-anchor="middle">CE</text>
-<text x="445.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">pstack</text>
-<text x="528.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Every&#x27;s</text>
-<text x="528.5" y="181.0" font-size="13" font-weight="600" text-anchor="middle">CE</text>
-<text x="611.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">pstack</text>
-<text x="694.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle" fill="#147a43">Compound</text>
-<text x="24.0" y="225.0" font-size="11.5" font-weight="600" fill="#6b6f78">OUTCOMES</text>
-<line x1="24.0" y1="231.0" x2="736.0" y2="231.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="24.0" y="261.0" font-size="13.5">Fixed the bug (hidden tests</text>
-<text x="24.0" y="279.0" font-size="13.5">pass)</text>
-<rect x="248.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="248.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="279.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
-<rect x="331.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="331.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="362.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
-<rect x="414.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="414.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="445.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
-<rect x="497.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="497.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="528.5" y="260.0" font-size="12.5" text-anchor="middle">12/12</text>
-<rect x="580.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="580.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="611.5" y="260.0" font-size="12.5" text-anchor="middle">12/12</text>
-<rect x="663.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="260.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
-<text x="24.0" y="309.0" font-size="13.5">Planted regressions the</text>
-<text x="24.0" y="327.0" font-size="13.5">tests left behind catch</text>
-<rect x="248.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="248.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="279.5" y="308.0" font-size="12.5" text-anchor="middle">45/66</text>
-<rect x="331.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="331.0" y="314.0" width="36.3" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="362.5" y="308.0" font-size="12.5" text-anchor="middle">38/66</text>
-<rect x="414.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="414.0" y="314.0" width="40.1" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="445.5" y="308.0" font-size="12.5" text-anchor="middle">42/66</text>
-<rect x="497.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="497.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="528.5" y="308.0" font-size="12.5" text-anchor="middle">30/44</text>
-<rect x="580.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="580.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="611.5" y="308.0" font-size="12.5" text-anchor="middle">30/44</text>
-<rect x="663.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="314.0" width="49.6" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="308.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">52/66</text>
-<text x="24.0" y="357.0" font-size="13.5">Refactor kept tax rounding</text>
-<text x="24.0" y="375.0" font-size="13.5">and removed both helpers</text>
-<rect x="248.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="248.0" y="362.0" width="31.5" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="279.5" y="356.0" font-size="12.5" text-anchor="middle">3/6</text>
-<rect x="331.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="331.0" y="362.0" width="10.5" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="362.5" y="356.0" font-size="12.5" text-anchor="middle">1/6</text>
-<rect x="414.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="414.0" y="362.0" width="10.5" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="445.5" y="356.0" font-size="12.5" text-anchor="middle">1/6</text>
-<rect x="497.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="528.5" y="356.0" font-size="12.5" text-anchor="middle">0/4</text>
-<rect x="580.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="580.0" y="362.0" width="31.5" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="611.5" y="356.0" font-size="12.5" text-anchor="middle">2/4</text>
-<rect x="663.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="356.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">6/6</text>
-<text x="24.0" y="409.0" font-size="11.5" font-weight="600" fill="#6b6f78">HABITS COMPOUND ASKS FOR</text>
-<line x1="24.0" y1="415.0" x2="736.0" y2="415.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="24.0" y="445.0" font-size="13.5">Reproduced the bug before</text>
-<text x="24.0" y="463.0" font-size="13.5">changing code</text>
-<rect x="248.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="279.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="331.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="362.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="414.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="445.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="497.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="497.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="528.5" y="444.0" font-size="12.5" text-anchor="middle">12/12</text>
-<rect x="580.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="580.0" y="450.0" width="47.2" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="611.5" y="444.0" font-size="12.5" text-anchor="middle">9/12</text>
-<rect x="663.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="444.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
-<text x="24.0" y="493.0" font-size="13.5">Showed a new test failing</text>
-<text x="24.0" y="511.0" font-size="13.5">before the fix</text>
-<rect x="248.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="279.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="331.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="362.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="414.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="445.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="497.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="497.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="528.5" y="492.0" font-size="12.5" text-anchor="middle">12/12</text>
-<rect x="580.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="580.0" y="498.0" width="47.2" height="10.0" rx="5" fill="#9a9e95"/>
-<text x="611.5" y="492.0" font-size="12.5" text-anchor="middle">9/12</text>
-<rect x="663.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="492.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
-<text x="24.0" y="541.0" font-size="13.5">Committed without an AI</text>
-<text x="24.0" y="559.0" font-size="13.5">co-author line</text>
-<rect x="248.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="279.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="331.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="362.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="414.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="445.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
-<rect x="497.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="528.5" y="540.0" font-size="12.5" text-anchor="middle">0/12</text>
-<rect x="580.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<text x="611.5" y="540.0" font-size="12.5" text-anchor="middle">0/12</text>
-<rect x="663.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2"/>
-<rect x="663.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#147a43"/>
-<text x="694.5" y="540.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
-<text x="24.0" y="593.0" font-size="11.5" font-weight="600" fill="#6b6f78">COST AT API LIST PRICES</text>
-<line x1="24.0" y1="599.0" x2="736.0" y2="599.0" stroke="#ece6d8" stroke-width="1"/>
-<text x="24.0" y="629.0" font-size="13.5">Median cost of a bug fix,</text>
-<text x="24.0" y="647.0" font-size="13.5">Opus 5.5</text>
-<text x="279.5" y="638.0" font-size="14" text-anchor="middle">10¢</text>
-<text x="362.5" y="638.0" font-size="14" text-anchor="middle">11¢</text>
-<text x="445.5" y="638.0" font-size="14" text-anchor="middle">12¢</text>
-<text x="528.5" y="638.0" font-size="14" text-anchor="middle">183¢</text>
-<text x="611.5" y="638.0" font-size="14" text-anchor="middle">32¢</text>
-<text x="694.5" y="638.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">17¢</text>
-<text x="24.0" y="677.0" font-size="13.5">Median cost of a bug fix,</text>
-<text x="24.0" y="695.0" font-size="13.5">Sonnet 5.5</text>
-<text x="279.5" y="686.0" font-size="14" text-anchor="middle">3.5¢</text>
-<text x="362.5" y="686.0" font-size="14" text-anchor="middle">4.4¢</text>
-<text x="445.5" y="686.0" font-size="14" text-anchor="middle">4.0¢</text>
-<text x="528.5" y="686.0" font-size="14" text-anchor="middle">17¢</text>
-<text x="611.5" y="686.0" font-size="14" text-anchor="middle">9.5¢</text>
-<text x="694.5" y="686.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">5.6¢</text>
-<text x="24.0" y="732.0" font-size="12" fill="#6b6f78">Stock and Compound ran with plain prompts. Plain prompts: 3 runs per task and model. Commands (/ce-debug and</text>
-<text x="24.0" y="749.0" font-size="12" fill="#6b6f78">/ce-work for Every&#x27;s CE, /poteto-mode for pstack): 2 runs, in a separate run with its own stock and Compound</text>
-<text x="24.0" y="766.0" font-size="12" fill="#6b6f78">arms, where a bug fix&#x27;s median cost was 10¢ stock and 16¢ with Compound on Opus, 4.2¢ and 6.2¢ on Sonnet. The</text>
-<text x="24.0" y="783.0" font-size="12" fill="#6b6f78">tasks were written for this benchmark and Compound was partly tuned on them.</text>
-<text x="24.0" y="807.0" font-size="11.5" fill="#6b6f78">Claude Code 2.1.316 · headless · default effort · 31 Oct 2026</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1157" viewBox="0 0 1040 1157" role="img" aria-labelledby="title desc">
+  <title id="title">Compared with other plugins</title>
+  <desc id="desc">Compared with other plugins. Every's Compound Engineering 3.34.0 and pstack 0.15.36, installed as their READMEs say, on the three bugs and the refactor; Claude Opus 5.5 and Sonnet 5.5 together. With plain prompts, as everyone else ran; then started with the command each one tells you to type. Fixed the bug (hidden tests pass): stock 18 of 18, Every's Compound Engineering with plain prompts 18 of 18, pstack with plain prompts 18 of 18, Every's Compound Engineering with its commands 12 of 12, pstack with its command 12 of 12, Compound 18 of 18. Planted regressions the tests left behind catch: stock 45 of 66, Every's Compound Engineering with plain prompts 38 of 66, pstack with plain prompts 42 of 66, Every's Compound Engineering with its commands 30 of 44, pstack with its command 30 of 44, Compound 52 of 66. Refactor kept tax rounding and removed both helpers: stock 3 of 6, Every's Compound Engineering with plain prompts 1 of 6, pstack with plain prompts 1 of 6, Every's Compound Engineering with its commands 0 of 4, pstack with its command 2 of 4, Compound 6 of 6. Reproduced the bug before changing code: stock 0 of 18, Every's Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every's Compound Engineering with its commands 12 of 12, pstack with its command 9 of 12, Compound 18 of 18. Showed a new test failing before the fix: stock 0 of 18, Every's Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every's Compound Engineering with its commands 12 of 12, pstack with its command 9 of 12, Compound 18 of 18. Committed without an AI co-author line: stock 0 of 18, Every's Compound Engineering with plain prompts 0 of 18, pstack with plain prompts 0 of 18, Every's Compound Engineering with its commands 0 of 12, pstack with its command 0 of 12, Compound 18 of 18. Median cost of a bug fix, Opus 5.5: stock 10¢, Every's Compound Engineering with plain prompts 11¢, pstack with plain prompts 12¢, Every's Compound Engineering with its commands 183¢, pstack with its command 32¢, Compound 17¢. Median cost of a bug fix, Sonnet 5.5: stock 3.5¢, Every's Compound Engineering with plain prompts 4.4¢, pstack with plain prompts 4.0¢, Every's Compound Engineering with its commands 17¢, pstack with its command 9.5¢, Compound 5.6¢. Stock and Compound ran with plain prompts. Plain prompts: 3 runs per task and model. Commands (/ce-debug and /ce-work for Every's CE, /poteto-mode for pstack): 2 runs, in a separate run with its own stock and Compound arms, where a bug fix's median cost was 10¢ stock and 16¢ with Compound on Opus, 4.2¢ and 6.2¢ on Sonnet. The tasks were written for this benchmark and Compound was partly tuned on them.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="1157" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="157" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  Historical · Compound 0.14.0</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Compared with other plugins</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Every's Compound Engineering 3.34.0 and pstack 0.15.36, installed as their READMEs say, on the three bugs and</text>
+    <text x="52" y="150" font-size="14" font-weight="400" fill="#6b6f78">the refactor; Claude Opus 5.5 and Sonnet 5.5 together. With plain prompts, as everyone else ran; then started</text>
+    <text x="52" y="172" font-size="14" font-weight="400" fill="#6b6f78">with the command each one tells you to type.</text>
+    <rect x="24" y="201" width="992" height="924.3789473684211" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <g transform="translate(48 80.642) scale(1.242105)">
+      <rect x="656.0" y="125.0" width="77.0" height="586.0" rx="8" fill="#e5f3e9" fill-opacity="0.55" />
+      <line x1="321.0" y1="129.0" x2="321.0" y2="707.0" stroke="#ece6d8" stroke-width="1" />
+      <line x1="487.0" y1="129.0" x2="487.0" y2="707.0" stroke="#ece6d8" stroke-width="1" />
+      <line x1="653.0" y1="129.0" x2="653.0" y2="707.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="404.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Plain prompts</text>
+      <line x1="329.0" y1="147.0" x2="479.0" y2="147.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="570.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Their commands</text>
+      <line x1="495.0" y1="147.0" x2="645.0" y2="147.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="279.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Stock</text>
+      <text x="362.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Every's</text>
+      <text x="362.5" y="181.0" font-size="13" font-weight="600" text-anchor="middle">CE</text>
+      <text x="445.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">pstack</text>
+      <text x="528.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Every's</text>
+      <text x="528.5" y="181.0" font-size="13" font-weight="600" text-anchor="middle">CE</text>
+      <text x="611.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle">pstack</text>
+      <text x="694.5" y="165.0" font-size="13" font-weight="600" text-anchor="middle" fill="#147a43">Compound</text>
+      <text x="24.0" y="225.0" font-size="11.5" font-weight="600" fill="#6b6f78">OUTCOMES</text>
+      <line x1="24.0" y1="231.0" x2="736.0" y2="231.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="24.0" y="261.0" font-size="13.5">Fixed the bug (hidden tests</text>
+      <text x="24.0" y="279.0" font-size="13.5">pass)</text>
+      <rect x="248.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="248.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="279.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
+      <rect x="331.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="331.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="362.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
+      <rect x="414.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="414.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="445.5" y="260.0" font-size="12.5" text-anchor="middle">18/18</text>
+      <rect x="497.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="497.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="528.5" y="260.0" font-size="12.5" text-anchor="middle">12/12</text>
+      <rect x="580.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="580.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="611.5" y="260.0" font-size="12.5" text-anchor="middle">12/12</text>
+      <rect x="663.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="266.0" width="63.0" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="260.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
+      <text x="24.0" y="309.0" font-size="13.5">Planted regressions the</text>
+      <text x="24.0" y="327.0" font-size="13.5">tests left behind catch</text>
+      <rect x="248.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="248.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="279.5" y="308.0" font-size="12.5" text-anchor="middle">45/66</text>
+      <rect x="331.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="331.0" y="314.0" width="36.3" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="362.5" y="308.0" font-size="12.5" text-anchor="middle">38/66</text>
+      <rect x="414.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="414.0" y="314.0" width="40.1" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="445.5" y="308.0" font-size="12.5" text-anchor="middle">42/66</text>
+      <rect x="497.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="497.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="528.5" y="308.0" font-size="12.5" text-anchor="middle">30/44</text>
+      <rect x="580.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="580.0" y="314.0" width="43.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="611.5" y="308.0" font-size="12.5" text-anchor="middle">30/44</text>
+      <rect x="663.0" y="314.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="314.0" width="49.6" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="308.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">52/66</text>
+      <text x="24.0" y="357.0" font-size="13.5">Refactor kept tax rounding</text>
+      <text x="24.0" y="375.0" font-size="13.5">and removed both helpers</text>
+      <rect x="248.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="248.0" y="362.0" width="31.5" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="279.5" y="356.0" font-size="12.5" text-anchor="middle">3/6</text>
+      <rect x="331.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="331.0" y="362.0" width="10.5" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="362.5" y="356.0" font-size="12.5" text-anchor="middle">1/6</text>
+      <rect x="414.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="414.0" y="362.0" width="10.5" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="445.5" y="356.0" font-size="12.5" text-anchor="middle">1/6</text>
+      <rect x="497.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="528.5" y="356.0" font-size="12.5" text-anchor="middle">0/4</text>
+      <rect x="580.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="580.0" y="362.0" width="31.5" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="611.5" y="356.0" font-size="12.5" text-anchor="middle">2/4</text>
+      <rect x="663.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="362.0" width="63.0" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="356.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">6/6</text>
+      <text x="24.0" y="409.0" font-size="11.5" font-weight="600" fill="#6b6f78">HABITS COMPOUND ASKS FOR</text>
+      <line x1="24.0" y1="415.0" x2="736.0" y2="415.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="24.0" y="445.0" font-size="13.5">Reproduced the bug before</text>
+      <text x="24.0" y="463.0" font-size="13.5">changing code</text>
+      <rect x="248.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="279.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="331.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="362.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="414.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="445.5" y="444.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="497.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="497.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="528.5" y="444.0" font-size="12.5" text-anchor="middle">12/12</text>
+      <rect x="580.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="580.0" y="450.0" width="47.2" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="611.5" y="444.0" font-size="12.5" text-anchor="middle">9/12</text>
+      <rect x="663.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="450.0" width="63.0" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="444.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
+      <text x="24.0" y="493.0" font-size="13.5">Showed a new test failing</text>
+      <text x="24.0" y="511.0" font-size="13.5">before the fix</text>
+      <rect x="248.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="279.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="331.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="362.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="414.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="445.5" y="492.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="497.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="497.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="528.5" y="492.0" font-size="12.5" text-anchor="middle">12/12</text>
+      <rect x="580.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="580.0" y="498.0" width="47.2" height="10.0" rx="5" fill="#9a9e95" />
+      <text x="611.5" y="492.0" font-size="12.5" text-anchor="middle">9/12</text>
+      <rect x="663.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="498.0" width="63.0" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="492.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
+      <text x="24.0" y="541.0" font-size="13.5">Committed without an AI</text>
+      <text x="24.0" y="559.0" font-size="13.5">co-author line</text>
+      <rect x="248.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="279.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="331.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="362.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="414.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="445.5" y="540.0" font-size="12.5" text-anchor="middle">0/18</text>
+      <rect x="497.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="528.5" y="540.0" font-size="12.5" text-anchor="middle">0/12</text>
+      <rect x="580.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <text x="611.5" y="540.0" font-size="12.5" text-anchor="middle">0/12</text>
+      <rect x="663.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#f7f6f2" />
+      <rect x="663.0" y="546.0" width="63.0" height="10.0" rx="5" fill="#147a43" />
+      <text x="694.5" y="540.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/18</text>
+      <text x="24.0" y="593.0" font-size="11.5" font-weight="600" fill="#6b6f78">COST AT API LIST PRICES</text>
+      <line x1="24.0" y1="599.0" x2="736.0" y2="599.0" stroke="#ece6d8" stroke-width="1" />
+      <text x="24.0" y="629.0" font-size="13.5">Median cost of a bug fix,</text>
+      <text x="24.0" y="647.0" font-size="13.5">Opus 5.5</text>
+      <text x="279.5" y="638.0" font-size="14" text-anchor="middle">10¢</text>
+      <text x="362.5" y="638.0" font-size="14" text-anchor="middle">11¢</text>
+      <text x="445.5" y="638.0" font-size="14" text-anchor="middle">12¢</text>
+      <text x="528.5" y="638.0" font-size="14" text-anchor="middle">183¢</text>
+      <text x="611.5" y="638.0" font-size="14" text-anchor="middle">32¢</text>
+      <text x="694.5" y="638.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">17¢</text>
+      <text x="24.0" y="677.0" font-size="13.5">Median cost of a bug fix,</text>
+      <text x="24.0" y="695.0" font-size="13.5">Sonnet 5.5</text>
+      <text x="279.5" y="686.0" font-size="14" text-anchor="middle">3.5¢</text>
+      <text x="362.5" y="686.0" font-size="14" text-anchor="middle">4.4¢</text>
+      <text x="445.5" y="686.0" font-size="14" text-anchor="middle">4.0¢</text>
+      <text x="528.5" y="686.0" font-size="14" text-anchor="middle">17¢</text>
+      <text x="611.5" y="686.0" font-size="14" text-anchor="middle">9.5¢</text>
+      <text x="694.5" y="686.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">5.6¢</text>
+      <text x="24.0" y="732.0" font-size="12" fill="#6b6f78">Stock and Compound ran with plain prompts. Plain prompts: 3 runs per task and model. Commands (/ce-debug and</text>
+      <text x="24.0" y="749.0" font-size="12" fill="#6b6f78">/ce-work for Every's CE, /poteto-mode for pstack): 2 runs, in a separate run with its own stock and Compound</text>
+      <text x="24.0" y="766.0" font-size="12" fill="#6b6f78">arms, where a bug fix's median cost was 10¢ stock and 16¢ with Compound on Opus, 4.2¢ and 6.2¢ on Sonnet. The</text>
+      <text x="24.0" y="783.0" font-size="12" fill="#6b6f78">tasks were written for this benchmark and Compound was partly tuned on them.</text>
+      <text x="24.0" y="807.0" font-size="11.5" fill="#6b6f78">Claude Code 2.1.316 · headless · default effort · 31 Oct 2026</text>
+    </g>
+  </g>
 </svg>

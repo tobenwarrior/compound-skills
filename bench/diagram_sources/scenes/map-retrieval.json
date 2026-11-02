@@ -1,0 +1,848 @@
+{
+  "title": "Does the map point at the right files?",
+  "label": "Held-out file ranking · 240 commits",
+  "viewBox": "0 0 840 675",
+  "description": "Share of each commit's changed source files that the map put in its top 4, querying with the commit's title. 60 commits per repository, none used to tune the map. All 240 commits: Code map 74%, Map in 0.12.1 48%, Word-count search 51%, Random 4%. Word search that skips common words and lists tests last: 67%. Flask: Code map 60%, Map in 0.12.1 24%, Word-count search 35%, Random 5%. Python · 82 code files. Click: Code map 81%, Map in 0.12.1 49%, Word-count search 73%, Random 6%. Python · 63 code files; gap small enough to be noise. Hono: Code map 75%, Map in 0.12.1 57%, Word-count search 34%, Random 1%. TypeScript · 388 code files. Gin: Code map 81%, Map in 0.12.1 64%, Word-count search 63%, Random 4%. Go · 98 code files; not used for tuning. Word-count search ranks files by how many words of the title they contain; the outlined bar also skips common words and lists tests last. Nothing from the repositories was executed. The ranking was tuned on other, more recent commits of Flask, Click and Hono.",
+  "nodes": [
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "230.0",
+        "y1": "96.0",
+        "x2": "230.0",
+        "y2": "586.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "230.0",
+        "y": "602.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "0%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "360.0",
+        "y1": "96.0",
+        "x2": "360.0",
+        "y2": "586.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "360.0",
+        "y": "602.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "25%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "490.0",
+        "y1": "96.0",
+        "x2": "490.0",
+        "y2": "586.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "490.0",
+        "y": "602.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "50%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "620.0",
+        "y1": "96.0",
+        "x2": "620.0",
+        "y2": "586.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "620.0",
+        "y": "602.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "75%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "750.0",
+        "y1": "96.0",
+        "x2": "750.0",
+        "y2": "586.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "750.0",
+        "y": "602.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "100%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "18.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Share of each commit's changed source files that the map put in its top 4, querying with the commit's title. 60 commits"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "37.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "per repository, none used to tune the map."
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "0.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "20.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Code map"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "107.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "127.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Map in 0.12.1"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "247.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "267.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Word-count search"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "427.1",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "447.1",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Random"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "522.5",
+        "y": "62.0",
+        "width": "12.0",
+        "height": "12.0",
+        "rx": "3",
+        "fill": "none",
+        "stroke": "#6b6f78",
+        "stroke-width": "1.5"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "541.5",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Word search, tests last"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "114.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "All 240 commits"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "133.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Flask, Click, Hono"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "151.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "and Gin"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "102.0",
+        "width": "384.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "620.8",
+        "y": "114.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "74%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "120.0",
+        "width": "249.6",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "485.6",
+        "y": "132.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "48%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "138.0",
+        "width": "265.2",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "501.2",
+        "y": "150.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "51%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "156.0",
+        "width": "20.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "256.8",
+        "y": "168.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "4%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.8",
+        "y": "174.8",
+        "width": "346.9",
+        "height": "12.5",
+        "rx": "2",
+        "fill": "none",
+        "stroke": "#6b6f78",
+        "stroke-width": "1.5"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "584.4",
+        "y": "186.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "67%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "228.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Flask"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "247.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Python · 82 code files"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "216.0",
+        "width": "312.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "548.0",
+        "y": "228.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "60%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "234.0",
+        "width": "124.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "360.8",
+        "y": "246.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "24%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "252.0",
+        "width": "182.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "418.0",
+        "y": "264.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "35%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "270.0",
+        "width": "26.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "262.0",
+        "y": "282.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "5%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "324.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Click"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "343.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Python · 63 code files"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "361.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "gap small enough to be noise"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "312.0",
+        "width": "421.2",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "657.2",
+        "y": "324.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "81%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "330.0",
+        "width": "254.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "490.8",
+        "y": "342.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "49%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "348.0",
+        "width": "379.6",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "615.6",
+        "y": "360.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "73%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "366.0",
+        "width": "31.2",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "267.2",
+        "y": "378.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "6%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "420.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Hono"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "439.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "TypeScript · 388 code files"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "408.0",
+        "width": "390.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "626.0",
+        "y": "420.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "75%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "426.0",
+        "width": "296.4",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "532.4",
+        "y": "438.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "57%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "444.0",
+        "width": "176.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "412.8",
+        "y": "456.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "34%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "462.0",
+        "width": "5.2",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "241.2",
+        "y": "474.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "1%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "516.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Gin"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "535.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Go · 98 code files"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "553.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "not used for tuning"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "504.0",
+        "width": "421.2",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "657.2",
+        "y": "516.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "81%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "522.0",
+        "width": "332.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "568.8",
+        "y": "534.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "64%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "540.0",
+        "width": "327.6",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "563.6",
+        "y": "552.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "63%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "558.0",
+        "width": "20.8",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "256.8",
+        "y": "570.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "4%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "622.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Word-count search ranks files by how many words of the title they contain; the outlined bar also skips common words and"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "641.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "lists tests last. Nothing from the repositories was executed. The ranking was tuned on other, more recent commits of"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "660.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Flask, Click and Hono."
+    }
+  ]
+}

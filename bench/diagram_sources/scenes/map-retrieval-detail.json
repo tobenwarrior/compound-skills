@@ -1,0 +1,930 @@
+{
+  "title": "The map's top 4 and top 12, by repository",
+  "label": "Held-out file ranking · by repository",
+  "viewBox": "0 0 840 576",
+  "description": "Share of each commit's changed source files in the map's top 4 (solid) and top 12 (light), querying with the commit's title; 60 commits per repository. Flask (Python; 2023-03-04 to 2024-10-18; 82 code files to choose from): Code map 60% in the top 4 and 96% in the top 12, Map in 0.12.1 24% in the top 4 and 37% in the top 12, Word-count search 35% in the top 4 and 74% in the top 12, Random 5% in the top 4 and 15% in the top 12. Click (Python; 2025-05-25 to 2026-05-23; 63 code files to choose from): Code map 81% in the top 4 and 95% in the top 12, Map in 0.12.1 49% in the top 4 and 71% in the top 12, Word-count search 73% in the top 4 and 92% in the top 12, Random 6% in the top 4 and 19% in the top 12. Hono (TypeScript; 2026-07-21 to 2026-08-22; 388 code files to choose from): Code map 75% in the top 4 and 90% in the top 12, Map in 0.12.1 57% in the top 4 and 74% in the top 12, Word-count search 34% in the top 4 and 55% in the top 12, Random 1% in the top 4 and 3% in the top 12. Gin (Go; 2025-10-08 to 2026-10-10; 98 code files to choose from; not used for tuning): Code map 81% in the top 4 and 92% in the top 12, Map in 0.12.1 64% in the top 4 and 75% in the top 12, Word-count search 63% in the top 4 and 81% in the top 12, Random 4% in the top 4 and 12% in the top 12. Word-count search ranks files by how many words of the title they contain. Nothing from the repositories was executed.",
+  "nodes": [
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "230.0",
+        "y1": "96.0",
+        "x2": "230.0",
+        "y2": "523.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "230.0",
+        "y": "541.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "0%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "355.0",
+        "y1": "96.0",
+        "x2": "355.0",
+        "y2": "523.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "355.0",
+        "y": "541.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "25%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "480.0",
+        "y1": "96.0",
+        "x2": "480.0",
+        "y2": "523.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "480.0",
+        "y": "541.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "50%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "605.0",
+        "y1": "96.0",
+        "x2": "605.0",
+        "y2": "523.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "605.0",
+        "y": "541.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "75%"
+    },
+    {
+      "tag": "line",
+      "attrs": {
+        "x1": "730.0",
+        "y1": "96.0",
+        "x2": "730.0",
+        "y2": "523.0",
+        "stroke": "#ece6d8",
+        "stroke-width": "1"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "730.0",
+        "y": "541.0",
+        "font-size": "12",
+        "text-anchor": "middle",
+        "fill": "#6b6f78"
+      },
+      "text": "100%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "18.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Share of each commit's changed source files in the map's top 4 (solid) and top 12 (light), querying with the commit's"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "37.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "title; 60 commits per repository."
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "0.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "20.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Code map"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "107.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "127.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Map in 0.12.1"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "247.0",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "267.0",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Word-count search"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "427.1",
+        "y": "61.0",
+        "width": "14.0",
+        "height": "14.0",
+        "rx": "3",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "447.1",
+        "y": "72.0",
+        "font-size": "14",
+        "fill": "#6b6f78"
+      },
+      "text": "Random"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "114.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Flask"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "133.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Python"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "151.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "2023-03-04 to 2024-10-18"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "169.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "82 code files to choose from"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "102.0",
+        "width": "480.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "102.0",
+        "width": "300.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "716.0",
+        "y": "114.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "60% · 96%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "122.0",
+        "width": "185.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "122.0",
+        "width": "120.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "421.0",
+        "y": "134.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "24% · 37%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "142.0",
+        "width": "370.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "142.0",
+        "width": "175.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "606.0",
+        "y": "154.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "35% · 74%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "162.0",
+        "width": "75.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "162.0",
+        "width": "25.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "311.0",
+        "y": "174.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "5% · 15%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "220.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Click"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "239.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Python"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "257.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "2025-05-25 to 2026-05-23"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "275.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "63 code files to choose from"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "208.0",
+        "width": "475.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "208.0",
+        "width": "405.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "711.0",
+        "y": "220.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "81% · 95%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "228.0",
+        "width": "355.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "228.0",
+        "width": "245.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "591.0",
+        "y": "240.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "49% · 71%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "248.0",
+        "width": "460.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "248.0",
+        "width": "365.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "696.0",
+        "y": "260.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "73% · 92%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "268.0",
+        "width": "95.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "268.0",
+        "width": "30.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "331.0",
+        "y": "280.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "6% · 19%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "326.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Hono"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "345.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "TypeScript"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "363.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "2026-07-21 to 2026-08-22"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "381.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "388 code files to choose from"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "314.0",
+        "width": "450.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "314.0",
+        "width": "375.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "686.0",
+        "y": "326.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "75% · 90%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "334.0",
+        "width": "370.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "334.0",
+        "width": "285.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "606.0",
+        "y": "346.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "57% · 74%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "354.0",
+        "width": "275.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "354.0",
+        "width": "170.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "511.0",
+        "y": "366.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "34% · 55%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "374.0",
+        "width": "15.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "374.0",
+        "width": "5.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "251.0",
+        "y": "386.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "1% · 3%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "432.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "Gin"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "451.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Go"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "469.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "2025-10-08 to 2026-10-10"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "487.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "98 code files to choose from"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "505.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "not used for tuning"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "420.0",
+        "width": "460.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "420.0",
+        "width": "405.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#147a43"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "696.0",
+        "y": "432.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "81% · 92%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "440.0",
+        "width": "375.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "440.0",
+        "width": "320.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#83b899"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "611.0",
+        "y": "452.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "64% · 75%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "460.0",
+        "width": "405.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "460.0",
+        "width": "315.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#9a9e95"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "641.0",
+        "y": "472.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "63% · 81%"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "480.0",
+        "width": "60.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6",
+        "fill-opacity": "0.35"
+      }
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "230.0",
+        "y": "480.0",
+        "width": "20.0",
+        "height": "14.0",
+        "rx": "2",
+        "fill": "#b9c1b6"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "296.0",
+        "y": "492.0",
+        "font-size": "14",
+        "font-weight": "600"
+      },
+      "text": "4% · 12%"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "0.0",
+        "y": "561.0",
+        "font-size": "13",
+        "fill": "#6b6f78"
+      },
+      "text": "Word-count search ranks files by how many words of the title they contain. Nothing from the repositories was executed."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "title": "Compound code map · hey.trading theme",
+  "label": "Actual viewer · Flask",
+  "viewBox": "0 0 1328 824",
+  "description": "Actual local viewer on Flask: a focused neighborhood of app.py, source files, and recorded imports.",
+  "nodes": [
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "24",
+        "y": "43",
+        "font-family": "Inter,system-ui,sans-serif",
+        "font-size": "24",
+        "font-weight": "700",
+        "fill": "#14161c"
+      },
+      "text": "Explore the code. Keep the context."
+    },
+    {
+      "tag": "image",
+      "attrs": {
+        "x": "24",
+        "y": "72",
+        "width": "1280",
+        "height": "720",
+        "href": "screenshot:code-map-1.webp.b64"
+      }
+    }
+  ]
+}

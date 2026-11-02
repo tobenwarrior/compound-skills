@@ -1,0 +1,15 @@
+{
+  "background": "#fdf8ee",
+  "background_secondary": "#f7f6f2",
+  "card": "#fffdf8",
+  "ink": "#14161c",
+  "muted": "#6b6f78",
+  "green": "#147a43",
+  "green_secondary": "#2f7a4a",
+  "mint": "#4ade80",
+  "line": "#ece6d8",
+  "soft_green": "#e5f3e9",
+  "warm_wash": "#fbefd6",
+  "negative": "#c2412d",
+  "baseline": "#9a9e95"
+}

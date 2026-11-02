@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="710" viewBox="0 0 1040 710" role="img" aria-labelledby="title desc">
+  <title id="title">Two tasks. 10.1% less plan allowance.</title>
+  <desc id="desc">Two-task pilot: without Compound $0.02106263, with Compound $0.0189328 of Go allowance; 10.1% less in the matched total. Both modes passed 2/2 tasks. Model requests: 21 without, 29 with. API cash charge $0 both on the Go subscription. One refund task cost more with Compound. No long-term savings measured.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="710" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  MEASURED PILOT</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Two tasks. 10.1% less plan allowance.</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">0.16.7 · DeepSeek V4.1 Flash · Y Harness · 2 November 2026</text>
+    <rect x="24" y="158" width="992" height="272" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="197" font-size="19" font-weight="650" fill="#14161c">Go allowance · lower is better</text>
+    <text x="52" y="257" font-size="17" font-weight="600" fill="#14161c">Without Compound</text>
+    <rect x="286" y="235" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="235" width="472.22222222222223" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="259" font-size="23" font-weight="700" fill="#14161c">$0.02106263</text>
+    <text x="52" y="319" font-size="17" font-weight="600" fill="#14161c">With Compound</text>
+    <rect x="286" y="297" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="297" width="424.47163003332867" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="321" font-size="23" font-weight="700" fill="#147a43">$0.01893280</text>
+    <text x="52" y="402" font-size="15" font-weight="400" fill="#6b6f78">Two previously used Python tasks. One run per task and mode; order counterbalanced.</text>
+    <rect x="24" y="450" width="992" height="150" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="501" font-size="31" font-weight="750" fill="#147a43">10.1% less</text>
+    <text x="52" y="540" font-size="15" font-weight="400" fill="#6b6f78">matched Go allowance</text>
+    <text x="380" y="501" font-size="31" font-weight="750" fill="#147a43">2/2 each</text>
+    <text x="380" y="540" font-size="15" font-weight="400" fill="#6b6f78">tasks accepted</text>
+    <text x="708" y="501" font-size="31" font-weight="750" fill="#14161c">21 → 29</text>
+    <text x="708" y="540" font-size="15" font-weight="400" fill="#6b6f78">model requests · without → with</text>
+    <text x="52" y="641" font-size="16" font-weight="600" fill="#14161c">$0 cash charge in both modes under the existing Go subscription.</text>
+    <text x="52" y="672" font-size="15" font-weight="400" fill="#6b6f78">Allowance measures plan capacity consumed. This pilot does not establish long-term savings.</text>
+  </g>
+</svg>

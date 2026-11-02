@@ -1,0 +1,92 @@
+{
+  "scope": "two tasks, one run per arm/task, counterbalanced order, native macOS Y Harness",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "arms": {
+    "without": {
+      "accepted": 2,
+      "runs": 2,
+      "requests": 21,
+      "tool_calls": 33,
+      "allowance_usd": "0.02106263",
+      "list_cost_usd": "0.03510438",
+      "cash_charge_usd": "0",
+      "mutants_caught": 4,
+      "mutants_total": 6
+    },
+    "with": {
+      "accepted": 2,
+      "runs": 2,
+      "requests": 29,
+      "tool_calls": 39,
+      "allowance_usd": "0.0189328",
+      "list_cost_usd": "0.03155470",
+      "cash_charge_usd": "0",
+      "mutants_caught": 5,
+      "mutants_total": 6
+    }
+  },
+  "tasks": [
+    {
+      "task": "bugfix-refund",
+      "without": {
+        "allowance_usd": 0.007213,
+        "list_cost_usd": 0.01202166,
+        "requests": 11,
+        "accepted": true,
+        "own_suite_tests": 44
+      },
+      "with": {
+        "allowance_usd": 0.0076582,
+        "list_cost_usd": 0.01276368,
+        "requests": 13,
+        "accepted": true,
+        "own_suite_tests": 44
+      }
+    },
+    {
+      "task": "refactor-retry",
+      "with": {
+        "allowance_usd": 0.0112746,
+        "list_cost_usd": 0.01879102,
+        "requests": 16,
+        "accepted": true,
+        "own_suite_tests": 19
+      },
+      "without": {
+        "allowance_usd": 0.01384963,
+        "list_cost_usd": 0.02308272,
+        "requests": 10,
+        "accepted": true,
+        "own_suite_tests": 20
+      }
+    }
+  ],
+  "invalid_setup_attempt": {
+    "requests": 20,
+    "allowance_usd": 0.00686204,
+    "list_cost_usd": 0.01143675,
+    "cash_charge_usd": 0,
+    "reason": [
+      "benchmark configuration used a permission preset where a sandbox mode was required"
+    ]
+  },
+  "total_experiment_allowance_usd": "0.04685747",
+  "total_experiment_list_cost_usd": "0.07809583",
+  "total_experiment_requests": 70,
+  "date": "2026-11-02",
+  "compound_version": "0.16.7",
+  "compound_commit": "6d8da8cf7d955e033ffb98b090bce53e86f1d39c",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "reasoning": "high",
+  "output_token_limit": 8192,
+  "repetitions_per_task_arm": 1,
+  "task_order": [
+    "bugfix-refund: without, with",
+    "refactor-retry: with, without"
+  ],
+  "fixtures_previously_used": true,
+  "cache_reset": false,
+  "source": "Saved response usage fields and local hidden-test / original-suite / final-suite grades. Raw transcripts remain private.",
+  "accounting_url": "https://opencode.ai/v2/docs/console/api/inference#cost"
+}

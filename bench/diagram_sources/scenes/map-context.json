@@ -1,0 +1,190 @@
+{
+  "title": "More file context. Same summary budget.",
+  "label": "Offline renderer comparison · 0.16.1",
+  "viewBox": "0 0 840 460",
+  "description": "Offline paired renderers: median complete file entries 3 before and 4 with 0.16.1 inside 2,500 characters. 15 queries, five pinned repositories, identical map metadata. Full outlines: 97,350 vs 76,283 bytes. No model cost measurement.",
+  "nodes": [
+    {
+      "tag": "defs",
+      "attrs": {},
+      "children": [
+        {
+          "tag": "radialGradient",
+          "attrs": {
+            "id": "wash"
+          },
+          "children": [
+            {
+              "tag": "stop",
+              "attrs": {
+                "stop-color": "#e5f3e9"
+              }
+            },
+            {
+              "tag": "stop",
+              "attrs": {
+                "offset": "1",
+                "stop-color": "#fdf8ee"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "g",
+      "attrs": {
+        "font-family": "Inter,system-ui,sans-serif",
+        "fill": "#14161c"
+      },
+      "children": [
+        {
+          "tag": "rect",
+          "attrs": {
+            "x": "24",
+            "y": "24",
+            "width": "792",
+            "height": "108",
+            "rx": "24",
+            "fill": "#fffdf8",
+            "stroke": "#ece6d8"
+          }
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "68",
+            "font-size": "28",
+            "font-weight": "700"
+          },
+          "text": "More file context. Same summary budget."
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "104",
+            "font-size": "15",
+            "fill": "#6b6f78"
+          },
+          "text": "15 offline query pairs · 5 pinned repos · identical map metadata"
+        },
+        {
+          "tag": "rect",
+          "attrs": {
+            "x": "24",
+            "y": "148",
+            "width": "792",
+            "height": "194",
+            "rx": "24",
+            "fill": "#fffdf8",
+            "stroke": "#ece6d8"
+          }
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "182",
+            "font-size": "16",
+            "font-weight": "600"
+          },
+          "text": "Complete file entries · median within 2,500 characters"
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "230",
+            "font-size": "16"
+          },
+          "text": "Compound 0.16.0"
+        },
+        {
+          "tag": "rect",
+          "attrs": {
+            "x": "260",
+            "y": "207",
+            "width": "340",
+            "height": "32",
+            "rx": "16",
+            "fill": "#9a9e95"
+          }
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "730",
+            "y": "232",
+            "font-size": "28",
+            "font-weight": "700"
+          },
+          "text": "3"
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "289",
+            "font-size": "16"
+          },
+          "text": "Compound 0.16.1"
+        },
+        {
+          "tag": "rect",
+          "attrs": {
+            "x": "260",
+            "y": "266",
+            "width": "453",
+            "height": "32",
+            "rx": "16",
+            "fill": "#147a43"
+          }
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "730",
+            "y": "291",
+            "font-size": "28",
+            "font-weight": "700",
+            "fill": "#147a43"
+          },
+          "text": "4"
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "381",
+            "font-size": "18",
+            "font-weight": "700",
+            "fill": "#147a43"
+          },
+          "text": "21.6% smaller full outlines"
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "412",
+            "font-size": "14",
+            "fill": "#6b6f78"
+          },
+          "text": "97,350 → 76,283 UTF-8 bytes before the cap. Ranking unchanged."
+        },
+        {
+          "tag": "text",
+          "attrs": {
+            "x": "48",
+            "y": "437",
+            "font-size": "14",
+            "fill": "#6b6f78"
+          },
+          "text": "Presentation evidence; model bills and task outcomes not remeasured."
+        }
+      ]
+    }
+  ]
+}

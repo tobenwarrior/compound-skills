@@ -1,313 +1,328 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="840" height="715" viewBox="0 0 840 715" role="img" aria-labelledby="title desc">
-<title id="title">Every Opus bug-fix run, step by step</title>
-<desc id="desc">Claude Opus 5.5, the 30 runs on the three bug reports without Compound and with 0.14.0, in recorded order, each row lined up on its first source edit; steps in order, not to time scale. Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked for tests. A failing-test mark right of the line was shown by undoing the fix briefly. Running the unfixed code counts as reproducing the bug only when its output showed the bug. A pytest call is drawn as another run: pytest is not installed for this library, so it ran no test. Bug: refund split, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 2: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 3: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 5: other run, edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, with Compound, run 1: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 2: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 3: edited tests, other run, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 4: edited tests, other run, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: refund split, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: leap-year proration, without Compound, run 1: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 5: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 1: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 2: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 3: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 4: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 1: edited the source, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 4: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 5: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 1: edited tests, other run, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 2: edited tests, other run, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 3: edited tests, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed, other run. Bug: December due date, with Compound, run 4: edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, committed.</desc>
-<style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif;fill:#14161c;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace}</style>
-<rect width="840" height="715" rx="12" fill="#fdf8ee"/>
-<rect x="0.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#a87826"/>
-<path d="M4.0,10.0 L11.0,14.0 L4.0,18.0 Z" fill="#fdf8ee"/>
-<text x="20.0" y="18.0" font-size="14" fill="#6b6f78">Ran the unfixed code</text>
-<rect x="199.2" y="7.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M202.7,10.5 L209.7,17.5 M209.7,10.5 L202.7,17.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="219.2" y="18.0" font-size="14" fill="#6b6f78">A test failed on the unfixed code</text>
-<rect x="493.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<text x="513.0" y="18.0" font-size="14" fill="#6b6f78">Edited the source</text>
-<rect x="0.0" y="31.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<text x="20.0" y="42.0" font-size="14" fill="#6b6f78">Edited tests</text>
-<rect x="141.5" y="31.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M144.5,38.0 L147.5,41.0 L152.5,34.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<text x="161.5" y="42.0" font-size="14" fill="#6b6f78">Tests passed on the final code</text>
-<rect x="415.3" y="31.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<text x="434.6" y="42.0" font-size="14" fill="#6b6f78">Other run</text>
-<circle cx="538.7" cy="38.0" r="6.5" fill="#14161c"/>
-<text x="551.7" y="42.0" font-size="14" fill="#6b6f78">Committed</text>
-<text x="0.0" y="76.0" font-size="14" font-weight="600">Bug: refund split</text>
-<text x="30.0" y="100.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
-<text x="460.0" y="100.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
-<text x="110.0" y="118.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<text x="540.0" y="118.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<line x1="110.0" y1="124.0" x2="110.0" y2="228.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="22.0" y="139.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="116.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,135.0 L179.0,138.0 L184.0,131.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="135.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="159.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="116.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M157.0,155.0 L160.0,158.0 L165.0,151.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="180.0" cy="155.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="179.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="116.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M157.0,175.0 L160.0,178.0 L165.0,171.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="180.0" cy="175.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="199.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="116.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,195.0 L179.0,198.0 L184.0,191.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="195.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="219.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="92.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="116.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M157.0,215.0 L160.0,218.0 L165.0,211.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="180.0" cy="215.0" r="6.5" fill="#14161c"/>
-<line x1="540.0" y1="124.0" x2="540.0" y2="228.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="452.0" y="139.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="503.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,131.5 L532.5,138.5 M532.5,131.5 L525.5,138.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,135.0 L571.0,138.0 L576.0,131.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<circle cx="610.0" cy="135.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="159.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="503.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,151.5 L532.5,158.5 M532.5,151.5 L525.5,158.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,155.0 L571.0,158.0 L576.0,151.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="148.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<circle cx="610.0" cy="155.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="179.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="484.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.8" y="168.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="522.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,171.5 L532.5,178.5 M532.5,171.5 L525.5,178.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,175.0 L571.0,178.0 L576.0,171.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="168.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<circle cx="610.0" cy="175.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="199.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="484.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="522.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,191.5 L532.5,198.5 M532.5,191.5 L525.5,198.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="584.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M606.0,195.0 L609.0,198.0 L614.0,191.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="629.0" cy="195.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="219.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="503.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,211.5 L532.5,218.5 M532.5,211.5 L525.5,218.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,215.0 L571.0,218.0 L576.0,211.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<circle cx="610.0" cy="215.0" r="6.5" fill="#14161c"/>
-<text x="0.0" y="260.0" font-size="14" font-weight="600">Bug: leap-year proration</text>
-<text x="30.0" y="284.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
-<text x="460.0" y="284.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
-<text x="110.0" y="302.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<text x="540.0" y="302.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<line x1="110.0" y1="308.0" x2="110.0" y2="412.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="22.0" y="323.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="116.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="173.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,319.0 L179.0,322.0 L184.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="319.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="343.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="116.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="173.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,339.0 L179.0,342.0 L184.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="339.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="363.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="116.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,359.0 L179.0,362.0 L184.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="192.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="211.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M214.0,359.0 L217.0,362.0 L222.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="237.0" cy="359.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="383.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="116.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="372.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,379.0 L179.0,382.0 L184.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="192.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M195.0,379.0 L198.0,382.0 L203.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="218.0" cy="379.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="403.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="116.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="392.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,399.0 L179.0,402.0 L184.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="192.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M195.0,399.0 L198.0,402.0 L203.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="218.0" cy="399.0" r="6.5" fill="#14161c"/>
-<line x1="540.0" y1="308.0" x2="540.0" y2="412.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="452.0" y="323.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="484.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,315.5 L532.5,322.5 M532.5,315.5 L525.5,322.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,319.0 L571.0,322.0 L576.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M587.0,319.0 L590.0,322.0 L595.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="610.0" cy="319.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="343.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="503.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,335.5 L532.5,342.5 M532.5,335.5 L525.5,342.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,339.0 L571.0,342.0 L576.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M587.0,339.0 L590.0,342.0 L595.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="610.0" cy="339.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="363.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="465.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#a87826"/>
-<path d="M469.0,355.0 L476.0,359.0 L469.0,363.0 Z" fill="#fdf8ee"/>
-<rect x="484.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,355.5 L532.5,362.5 M532.5,355.5 L525.5,362.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,359.0 L571.0,362.0 L576.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M606.0,359.0 L609.0,362.0 L614.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="629.0" cy="359.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="383.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="503.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,375.5 L532.5,382.5 M532.5,375.5 L525.5,382.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,379.0 L571.0,382.0 L576.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M587.0,379.0 L590.0,382.0 L595.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="610.0" cy="379.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="403.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="503.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,395.5 L532.5,402.5 M532.5,395.5 L525.5,402.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,399.0 L571.0,402.0 L576.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="392.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M606.0,399.0 L609.0,402.0 L614.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="629.0" cy="399.0" r="6.5" fill="#14161c"/>
-<text x="0.0" y="444.0" font-size="14" font-weight="600">Bug: December due date</text>
-<text x="30.0" y="468.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
-<text x="460.0" y="468.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
-<text x="110.0" y="486.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<text x="540.0" y="486.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
-<line x1="110.0" y1="492.0" x2="110.0" y2="596.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="22.0" y="507.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="116.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M157.0,503.0 L160.0,506.0 L165.0,499.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="180.0" cy="503.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="527.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="116.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="173.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,523.0 L179.0,526.0 L184.0,519.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="523.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="547.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="116.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,543.0 L179.0,546.0 L184.0,539.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="543.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="567.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="116.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="173.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,563.0 L179.0,566.0 L184.0,559.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="563.0" r="6.5" fill="#14161c"/>
-<text x="22.0" y="587.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="116.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="135.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="154.8" y="576.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="173.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M176.0,583.0 L179.0,586.0 L184.0,579.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="199.0" cy="583.0" r="6.5" fill="#14161c"/>
-<line x1="540.0" y1="492.0" x2="540.0" y2="596.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6"/>
-<text x="452.0" y="507.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
-<rect x="484.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="522.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,499.5 L532.5,506.5 M532.5,499.5 L525.5,506.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="584.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M606.0,503.0 L609.0,506.0 L614.0,499.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="629.0" cy="503.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="527.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
-<rect x="484.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="503.8" y="516.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="522.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,519.5 L532.5,526.5 M532.5,519.5 L525.5,526.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,523.0 L571.0,526.0 L576.0,519.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="584.8" y="516.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<circle cx="610.0" cy="523.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="547.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
-<rect x="503.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,539.5 L532.5,546.5 M532.5,539.5 L525.5,546.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="584.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M606.0,543.0 L609.0,546.0 L614.0,539.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="629.0" cy="543.0" r="6.5" fill="#14161c"/>
-<rect x="641.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<text x="452.0" y="567.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
-<rect x="503.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,559.5 L532.5,566.5 M532.5,559.5 L525.5,566.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="584.8" y="556.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="603.8" y="556.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5"/>
-<rect x="622.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M625.0,563.0 L628.0,566.0 L633.0,559.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="648.0" cy="563.0" r="6.5" fill="#14161c"/>
-<text x="452.0" y="587.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
-<rect x="503.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6"/>
-<rect x="522.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#3e7895"/>
-<path d="M525.5,579.5 L532.5,586.5 M532.5,579.5 L525.5,586.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<rect x="546.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#14161c"/>
-<rect x="565.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#9a9e95"/>
-<path d="M568.0,583.0 L571.0,586.0 L576.0,579.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="591.0" cy="583.0" r="6.5" fill="#14161c"/>
-<text x="0.0" y="620.0" font-size="13" fill="#6b6f78">Claude Opus 5.5, the 30 runs on the three bug reports without Compound and with 0.14.0, in recorded order, each row lined</text>
-<text x="0.0" y="639.0" font-size="13" fill="#6b6f78">up on its first source edit; steps in order, not to time scale. Steps come from a logging wrapper around python in both</text>
-<text x="0.0" y="658.0" font-size="13" fill="#6b6f78">arms and a file watcher; nothing in the prompt asked for tests. A failing-test mark right of the line was shown by</text>
-<text x="0.0" y="677.0" font-size="13" fill="#6b6f78">undoing the fix briefly. Running the unfixed code counts as reproducing the bug only when its output showed the bug. A</text>
-<text x="0.0" y="696.0" font-size="13" fill="#6b6f78">pytest call is drawn as another run: pytest is not installed for this library, so it ran no test.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1011" viewBox="0 0 1040 1011" role="img" aria-labelledby="title desc">
+  <title id="title">Every Opus bug-fix run, step by step</title>
+  <desc id="desc">Claude Opus 5.5, the 30 runs on the three bug reports without Compound and with 0.14.0, in recorded order, each row lined up on its first source edit; steps in order, not to time scale. Steps come from a logging wrapper around python in both arms and a file watcher; nothing in the prompt asked for tests. A failing-test mark right of the line was shown by undoing the fix briefly. Running the unfixed code counts as reproducing the bug only when its output showed the bug. A pytest call is drawn as another run: pytest is not installed for this library, so it ran no test. Bug: refund split, without Compound, run 1: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 2: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 3: edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: refund split, without Compound, run 5: other run, edited the source, edited tests, tests passed on the final code, committed. Bug: refund split, with Compound, run 1: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 2: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 3: edited tests, other run, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: refund split, with Compound, run 4: edited tests, other run, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: refund split, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: leap-year proration, without Compound, run 1: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 4: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, without Compound, run 5: edited the source, edited tests, other run, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 1: edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 2: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 3: ran the unfixed code, edited tests, edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 4: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, tests passed on the final code, committed. Bug: leap-year proration, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 1: edited the source, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 2: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 3: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, without Compound, run 4: edited the source, edited tests, edited tests, tests passed on the final code, committed. Bug: December due date, without Compound, run 5: edited the source, edited tests, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 1: edited tests, other run, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 2: edited tests, other run, a test failed on the unfixed code, edited the source, tests passed on the final code, other run, committed. Bug: December due date, with Compound, run 3: edited tests, a test failed on the unfixed code, edited the source, other run, other run, tests passed on the final code, committed, other run. Bug: December due date, with Compound, run 4: edited tests, a test failed on the unfixed code, edited the source, edited the source, other run, other run, tests passed on the final code, committed. Bug: December due date, with Compound, run 5: edited tests, a test failed on the unfixed code, edited the source, tests passed on the final code, committed.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="1011" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="91" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  Historical · Compound 0.14.0</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Every Opus bug-fix run, step by step</text>
+    <rect x="24" y="135" width="992" height="843.5238095238095" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <g transform="translate(48 155.000) scale(1.123810)">
+      <rect x="0.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#a87826" />
+      <path d="M4.0,10.0 L11.0,14.0 L4.0,18.0 Z" fill="#fdf8ee" />
+      <text x="20.0" y="18.0" font-size="14" fill="#6b6f78">Ran the unfixed code</text>
+      <rect x="199.2" y="7.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M202.7,10.5 L209.7,17.5 M209.7,10.5 L202.7,17.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <text x="219.2" y="18.0" font-size="14" fill="#6b6f78">A test failed on the unfixed code</text>
+      <rect x="493.0" y="7.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <text x="513.0" y="18.0" font-size="14" fill="#6b6f78">Edited the source</text>
+      <rect x="0.0" y="31.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <text x="20.0" y="42.0" font-size="14" fill="#6b6f78">Edited tests</text>
+      <rect x="141.5" y="31.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M144.5,38.0 L147.5,41.0 L152.5,34.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <text x="161.5" y="42.0" font-size="14" fill="#6b6f78">Tests passed on the final code</text>
+      <rect x="415.3" y="31.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <text x="434.6" y="42.0" font-size="14" fill="#6b6f78">Other run</text>
+      <circle cx="538.7" cy="38.0" r="6.5" fill="#14161c" />
+      <text x="551.7" y="42.0" font-size="14" fill="#6b6f78">Committed</text>
+      <text x="0.0" y="76.0" font-size="14" font-weight="600">Bug: refund split</text>
+      <text x="30.0" y="100.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
+      <text x="460.0" y="100.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+      <text x="110.0" y="118.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <text x="540.0" y="118.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <line x1="110.0" y1="124.0" x2="110.0" y2="228.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="22.0" y="139.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="116.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,135.0 L179.0,138.0 L184.0,131.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="135.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="159.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="116.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M157.0,155.0 L160.0,158.0 L165.0,151.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="180.0" cy="155.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="179.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="116.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M157.0,175.0 L160.0,178.0 L165.0,171.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="180.0" cy="175.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="199.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="116.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,195.0 L179.0,198.0 L184.0,191.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="195.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="219.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="92.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="116.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M157.0,215.0 L160.0,218.0 L165.0,211.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="180.0" cy="215.0" r="6.5" fill="#14161c" />
+      <line x1="540.0" y1="124.0" x2="540.0" y2="228.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="452.0" y="139.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="503.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,131.5 L532.5,138.5 M532.5,131.5 L525.5,138.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="128.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,135.0 L571.0,138.0 L576.0,131.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="128.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <circle cx="610.0" cy="135.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="159.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="503.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,151.5 L532.5,158.5 M532.5,151.5 L525.5,158.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="148.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,155.0 L571.0,158.0 L576.0,151.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="148.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <circle cx="610.0" cy="155.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="179.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="484.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.8" y="168.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="522.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,171.5 L532.5,178.5 M532.5,171.5 L525.5,178.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="168.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,175.0 L571.0,178.0 L576.0,171.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="168.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <circle cx="610.0" cy="175.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="199.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="484.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="522.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,191.5 L532.5,198.5 M532.5,191.5 L525.5,198.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="584.8" y="188.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.0" y="188.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M606.0,195.0 L609.0,198.0 L614.0,191.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="629.0" cy="195.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="219.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="503.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,211.5 L532.5,218.5 M532.5,211.5 L525.5,218.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="208.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,215.0 L571.0,218.0 L576.0,211.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="208.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <circle cx="610.0" cy="215.0" r="6.5" fill="#14161c" />
+      <text x="0.0" y="260.0" font-size="14" font-weight="600">Bug: leap-year proration</text>
+      <text x="30.0" y="284.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
+      <text x="460.0" y="284.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+      <text x="110.0" y="302.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <text x="540.0" y="302.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <line x1="110.0" y1="308.0" x2="110.0" y2="412.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="22.0" y="323.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="116.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="173.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,319.0 L179.0,322.0 L184.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="319.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="343.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="116.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="173.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,339.0 L179.0,342.0 L184.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="339.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="363.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="116.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,359.0 L179.0,362.0 L184.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="192.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="211.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M214.0,359.0 L217.0,362.0 L222.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="237.0" cy="359.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="383.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="116.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="372.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,379.0 L179.0,382.0 L184.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="192.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M195.0,379.0 L198.0,382.0 L203.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="218.0" cy="379.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="403.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="116.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="392.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,399.0 L179.0,402.0 L184.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="192.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M195.0,399.0 L198.0,402.0 L203.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="218.0" cy="399.0" r="6.5" fill="#14161c" />
+      <line x1="540.0" y1="308.0" x2="540.0" y2="412.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="452.0" y="323.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="484.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,315.5 L532.5,322.5 M532.5,315.5 L525.5,322.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,319.0 L571.0,322.0 L576.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.0" y="312.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M587.0,319.0 L590.0,322.0 L595.0,315.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="610.0" cy="319.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="343.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="503.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,335.5 L532.5,342.5 M532.5,335.5 L525.5,342.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,339.0 L571.0,342.0 L576.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.0" y="332.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M587.0,339.0 L590.0,342.0 L595.0,335.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="610.0" cy="339.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="363.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="465.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#a87826" />
+      <path d="M469.0,355.0 L476.0,359.0 L469.0,363.0 Z" fill="#fdf8ee" />
+      <rect x="484.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,355.5 L532.5,362.5 M532.5,355.5 L525.5,362.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,359.0 L571.0,362.0 L576.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="352.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.0" y="352.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M606.0,359.0 L609.0,362.0 L614.0,355.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="629.0" cy="359.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="383.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="503.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,375.5 L532.5,382.5 M532.5,375.5 L525.5,382.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,379.0 L571.0,382.0 L576.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.0" y="372.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M587.0,379.0 L590.0,382.0 L595.0,375.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="610.0" cy="379.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="403.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="503.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,395.5 L532.5,402.5 M532.5,395.5 L525.5,402.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,399.0 L571.0,402.0 L576.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="392.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.0" y="392.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M606.0,399.0 L609.0,402.0 L614.0,395.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="629.0" cy="399.0" r="6.5" fill="#14161c" />
+      <text x="0.0" y="444.0" font-size="14" font-weight="600">Bug: December due date</text>
+      <text x="30.0" y="468.0" font-size="13" font-weight="600" fill="#6b6f78">Without Compound</text>
+      <text x="460.0" y="468.0" font-size="13" font-weight="600" fill="#147a43">With Compound</text>
+      <text x="110.0" y="486.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <text x="540.0" y="486.0" font-size="12" text-anchor="middle" fill="#6b6f78">first source edit</text>
+      <line x1="110.0" y1="492.0" x2="110.0" y2="596.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="22.0" y="507.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="116.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M157.0,503.0 L160.0,506.0 L165.0,499.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="180.0" cy="503.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="527.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="116.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="173.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,523.0 L179.0,526.0 L184.0,519.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="523.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="547.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="116.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,543.0 L179.0,546.0 L184.0,539.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="543.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="567.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="116.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="173.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,563.0 L179.0,566.0 L184.0,559.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="563.0" r="6.5" fill="#14161c" />
+      <text x="22.0" y="587.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="116.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="135.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="154.8" y="576.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="173.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M176.0,583.0 L179.0,586.0 L184.0,579.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="199.0" cy="583.0" r="6.5" fill="#14161c" />
+      <line x1="540.0" y1="492.0" x2="540.0" y2="596.0" stroke="#6b6f78" stroke-width="1" stroke-opacity="0.6" />
+      <text x="452.0" y="507.0" font-size="12" text-anchor="end" fill="#6b6f78">1</text>
+      <rect x="484.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="522.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,499.5 L532.5,506.5 M532.5,499.5 L525.5,506.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="584.8" y="496.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.0" y="496.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M606.0,503.0 L609.0,506.0 L614.0,499.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="629.0" cy="503.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="527.0" font-size="12" text-anchor="end" fill="#6b6f78">2</text>
+      <rect x="484.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="503.8" y="516.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="522.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,519.5 L532.5,526.5 M532.5,519.5 L525.5,526.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="516.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,523.0 L571.0,526.0 L576.0,519.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="584.8" y="516.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <circle cx="610.0" cy="523.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="547.0" font-size="12" text-anchor="end" fill="#6b6f78">3</text>
+      <rect x="503.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,539.5 L532.5,546.5 M532.5,539.5 L525.5,546.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="584.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.0" y="536.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M606.0,543.0 L609.0,546.0 L614.0,539.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="629.0" cy="543.0" r="6.5" fill="#14161c" />
+      <rect x="641.8" y="536.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <text x="452.0" y="567.0" font-size="12" text-anchor="end" fill="#6b6f78">4</text>
+      <rect x="503.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,559.5 L532.5,566.5 M532.5,559.5 L525.5,566.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="584.8" y="556.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="603.8" y="556.8" width="12.5" height="12.5" rx="3" fill="none" stroke="#6b6f78" stroke-width="1.5" />
+      <rect x="622.0" y="556.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M625.0,563.0 L628.0,566.0 L633.0,559.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="648.0" cy="563.0" r="6.5" fill="#14161c" />
+      <text x="452.0" y="587.0" font-size="12" text-anchor="end" fill="#6b6f78">5</text>
+      <rect x="503.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#b9c1b6" />
+      <rect x="522.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#3e7895" />
+      <path d="M525.5,579.5 L532.5,586.5 M532.5,579.5 L525.5,586.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <rect x="546.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#14161c" />
+      <rect x="565.0" y="576.0" width="14.0" height="14.0" rx="3" fill="#9a9e95" />
+      <path d="M568.0,583.0 L571.0,586.0 L576.0,579.5" fill="none" stroke="#fdf8ee" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      <circle cx="591.0" cy="583.0" r="6.5" fill="#14161c" />
+      <text x="0.0" y="620.0" font-size="13" fill="#6b6f78">Claude Opus 5.5, the 30 runs on the three bug reports without Compound and with 0.14.0, in recorded order, each row lined</text>
+      <text x="0.0" y="639.0" font-size="13" fill="#6b6f78">up on its first source edit; steps in order, not to time scale. Steps come from a logging wrapper around python in both</text>
+      <text x="0.0" y="658.0" font-size="13" fill="#6b6f78">arms and a file watcher; nothing in the prompt asked for tests. A failing-test mark right of the line was shown by</text>
+      <text x="0.0" y="677.0" font-size="13" fill="#6b6f78">undoing the fix briefly. Running the unfixed code counts as reproducing the bug only when its output showed the bug. A</text>
+      <text x="0.0" y="696.0" font-size="13" fill="#6b6f78">pytest call is drawn as another run: pytest is not installed for this library, so it ran no test.</text>
+    </g>
+  </g>
 </svg>

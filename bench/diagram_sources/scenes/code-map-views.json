@@ -1,0 +1,96 @@
+{
+  "title": "Four views of the live Compound map",
+  "label": "Actual viewer · Flask",
+  "viewBox": "0 0 2640 1672",
+  "description": "Actual Flask viewer: folder, neighborhood, impact, and source preview.",
+  "nodes": [
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "24",
+        "y": "56",
+        "font-family": "Inter,system-ui,sans-serif",
+        "font-size": "28",
+        "font-weight": "700",
+        "fill": "#147a43"
+      },
+      "text": "01  Browse a folder"
+    },
+    {
+      "tag": "image",
+      "attrs": {
+        "x": "24",
+        "y": "88",
+        "width": "1280",
+        "height": "720",
+        "href": "screenshot:code-map-views-1.webp.b64"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "1336",
+        "y": "56",
+        "font-family": "Inter,system-ui,sans-serif",
+        "font-size": "28",
+        "font-weight": "700",
+        "fill": "#147a43"
+      },
+      "text": "02  Follow a neighborhood"
+    },
+    {
+      "tag": "image",
+      "attrs": {
+        "x": "1336",
+        "y": "88",
+        "width": "1280",
+        "height": "720",
+        "href": "screenshot:code-map-views-2.webp.b64"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "24",
+        "y": "880",
+        "font-family": "Inter,system-ui,sans-serif",
+        "font-size": "28",
+        "font-weight": "700",
+        "fill": "#147a43"
+      },
+      "text": "03  Inspect potential impact"
+    },
+    {
+      "tag": "image",
+      "attrs": {
+        "x": "24",
+        "y": "912",
+        "width": "1280",
+        "height": "720",
+        "href": "screenshot:code-map-views-3.webp.b64"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "1336",
+        "y": "880",
+        "font-family": "Inter,system-ui,sans-serif",
+        "font-size": "28",
+        "font-weight": "700",
+        "fill": "#147a43"
+      },
+      "text": "04  Preview source"
+    },
+    {
+      "tag": "image",
+      "attrs": {
+        "x": "1336",
+        "y": "912",
+        "width": "1280",
+        "height": "720",
+        "href": "screenshot:code-map-views-4.webp.b64"
+      }
+    }
+  ]
+}
