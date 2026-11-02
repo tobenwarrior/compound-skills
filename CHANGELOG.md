@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.6 (2026-11-02)
+
+- Reproduce bug fixes through the failing regression test before source edits, using a separate probe only for unresolved uncertainty. The generated project/global rule and Cursor rule deliver this without loading the full skill; debugging and chat activation follow the same sequence. Keep the final full suite. The always-on rule is 731 UTF-8 bytes and 100 words (up from 697 bytes); the additional setup check targets avoided tool rounds, not a smaller prompt.
+- Resolve documented test commands and environments before refactor baselines; inspect setup errors before retrying. Preserve check exit status and useful failure output, inspect captured logs rather than rerunning for verbosity, and select tools from project requirements and the changed surface.
+- Saved `v016b` Compound refactors contain seven missing-pytest outputs and four missing-shopkit import outputs across 12 runs; the fixture README already supplied a dependency-free test command. Offline execution of that command runs all 13 original fixture tests. These are setup-waste targets, not measured savings from the revised prompts; no new model runs establish lower total cost.
+
 ## 0.16.5 (2026-11-02)
 
 - Put source-first review routing in the always-on rule, which the saved reviews actually loaded. The rule grows from 633 to 697 UTF-8 bytes without loading another guide for ordinary reviews. Scope reproduction and regression-test steps to bug fixes. Execute during reviews only for unresolved findings when permitted, and stop after execution/probe setup is denied instead of writing alternate scripts or changing runners.

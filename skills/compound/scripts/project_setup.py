@@ -51,13 +51,14 @@ BLOCK_LINES = (
     "## Compound Skills default routing",
     "",
     'Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; '
-    'after denial, stop repro work and continue from source. Bug fixes: run code to reproduce; add a '
-    'regression test and show it failing before editing source; run the full test suite after the '
-    'final change. Refactors: test current behavior first; compare afterwards. Omit AI '
+    'after denial, stop repro work and continue from source. Bug fixes: reproduce the defect with a '
+    'failing regression test before source edits; run the full test suite after the final change. '
+    'Refactors: test current behavior first; compare afterwards. Use documented test commands; '
+    'inspect setup errors before retrying. Omit AI '
     'co-author/generated-by commit lines. Read narrowly. For refactors, new features, performance '
-    'work and PR authoring, load installed Compound Skills `compound` with the host skill tool when '
-    'available; read only its needed references. Follow project instructions and user scope. Report '
-    'checks and limits; report Compound load failures.',
+    'work and PR authoring, load installed Compound Skills `compound` with host skill tools when '
+    'available; read needed references. Follow project instructions and user scope. Report '
+    'checks, limits and Compound load failures.',
     END_MARKER,
 )
 

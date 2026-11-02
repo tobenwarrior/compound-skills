@@ -2,11 +2,11 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.5 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.6 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect and show a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
+Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
 We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
@@ -472,7 +472,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author/generated-by commit lines. Read narrowly. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. Follow project instructions and user scope. Report checks and limits; report Compound load failures.
+> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: reproduce the defect with a failing regression test before source edits; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Use documented test commands; inspect setup errors before retrying. Omit AI co-author/generated-by commit lines. Read narrowly. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` with host skill tools when available; read needed references. Follow project instructions and user scope. Report checks, limits and Compound load failures.
 
 ### Commits
 
