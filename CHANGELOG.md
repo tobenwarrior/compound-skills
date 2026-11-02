@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.7 (2026-11-02)
+
+- Finish refactors once caller comparisons and required project checks pass. Additional mutation or helper experiments need a concrete unresolved coverage question or an explicit user/project requirement; do not temporarily introduce known-bad production code merely to reconfirm behavior already covered by caller assertions. The core completion rule uses the same stopping condition.
+- Apply related imports, helper removal and caller migration as a cohesive patch when supported, preserving dependent check order. Reuse caller tests for before/after comparisons; add helper tests only for behavior they do not cover. Keep baseline, compatibility and scope requirements. Discovery and the always-on rule are unchanged.
+- In saved `v016b` run `b891376b`, the agent introduced a known-bad retry policy, inspected it, then restored it after the new caller checks had already passed. Those three tool-bearing model messages motivate the stopping rule. No new model runs establish future call counts or lower billed cost.
+
 ## 0.16.6 (2026-11-02)
 
 - Reproduce bug fixes through the failing regression test before source edits, using a separate probe only for unresolved uncertainty. The generated project/global rule and Cursor rule deliver this without loading the full skill; debugging and chat activation follow the same sequence. Keep the final full suite. The always-on rule is 731 UTF-8 bytes and 100 words (up from 697 bytes); the additional setup check targets avoided tool rounds, not a smaller prompt.

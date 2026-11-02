@@ -53,4 +53,4 @@ Use the host's available tools and models. Delegate independent work when useful
 
 At the commit/PR stage, reopen [Git and pull requests](references/git.md); never add AI coauthors or generated-by credits.
 
-Finish with the outcome, checks and limits; omit repeated plans and edit-by-edit narration unless requested. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.
+Finish when the requested scope is covered and selected checks pass; add experiments only for a concrete unresolved question or project requirement. Report the outcome, checks and limits; omit repeated plans and edit-by-edit narration unless requested. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.

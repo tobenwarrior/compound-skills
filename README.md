@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.6 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.7 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 

@@ -1,9 +1,11 @@
 # Refactor
 
-Name the behavior that must remain stable and the structural problem the change removes. Inspect existing tests; add cases only for uncovered caller differences, reusing fixtures. Establish one passing baseline including those cases before source edits, using the project's documented command and environment; resolve these before the baseline instead of trying runners. Reuse current evidence with unchanged inputs.
+Name the behavior to preserve and structure to simplify. Inspect existing tests; add cases only for uncovered caller differences, reusing fixtures. Establish one passing baseline including those cases before source edits with the documented command and environment. Resolve setup first; reuse evidence while inputs are unchanged.
 
-Choose a target with clearer ownership, fewer hidden state assumptions, or fewer layers to trace. Keep a cohesive file when splitting it would scatter one responsibility. Inspect configuration, generated references, dynamic entry points, and external consumers before removing apparent dead code.
+Before removing apparently dead code, inspect configuration, generated references, dynamic entry points and external consumers.
 
-Move one verifiable unit at a time. For internal API changes, migrate callers and remove the obsolete implementation together when practical. An externally consumed API needs its compatibility contract respected.
+Apply each cohesive unit in one patch when supported, including imports, helper removal and caller migration; keep dependent checks ordered. Migrate internal API callers and remove obsolete implementations together; respect external compatibility.
 
-Compare behavior against the baseline, including error and boundary cases. A passing type check is not equivalence evidence. If the requested structure would change observable behavior, keep the behavior and still finish the change, for example by parameterizing the shared code, and report the difference; ask first only when no behavior-preserving path exists. If the task uncovers a bug or requires new behavior, identify that scope change explicitly rather than concealing it as cleanup.
+Compare behavior against the baseline, including error and boundary cases. Reuse caller tests; add helper tests only for otherwise uncovered behavior. Type checks alone do not establish equivalence. Preserve differing caller behavior through parameters when needed; ask only if no behavior-preserving path exists. Report bugs or new behavior as a scope change.
+
+Once caller comparisons and required project checks pass, finish. Do not temporarily introduce a known-bad implementation or add duplicate helper tests just to reconfirm covered behavior. Additional experiments need a specific unresolved coverage question or an explicit user/project requirement.
