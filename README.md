@@ -2,11 +2,11 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.4 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.5 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets an always-on rule: reproduce a reported bug, show a new test failing on the unfixed code before you edit the source, run the full test suite after your last change, pin behavior before a refactor, commit without AI co-author lines, and list what you ran and did not verify. For refactors, new features, performance work and pull requests, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
+Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect and show a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
 We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
@@ -463,16 +463,16 @@ Compound has one short guide for each kind of work and tells the agent to read t
 ### What loads when
 
 - **Every request:** the always-on rule and the plugin's skill list. The benchmarked rule added about 510 tokens; the shorter rule below has not been remeasured in a host.
-- **Refactors, new features, performance work and pull requests:** the `compound` skill ([SKILL.md](skills/compound/SKILL.md), about 660 words), once, then the map query.
+- **Refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
 - **When a task needs it:** one guide, such as the refactor guide for a refactor.
-- **Bug fixes, reviews and questions:** only the always-on rule. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
+- **Bug fixes, reviews and questions:** only the always-on rule. Reviews inspect source first, execute only necessary permitted checks, and stop execution after denial; review findings do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
 - **One chat only:** typing `compound` alone applies the always-on rule's habits to every task in that chat and the skill to the same kinds of work, as a saved setup does.
 
-SKILL.md also holds a few rules for every task it loads for: run the map query even when the agent already knows where to look, unless the task names its files or supplies the code; delegate independent work to subagents when useful; and in frontend work keep every tooltip to at most two visible lines. Read it before you turn Compound on.
+SKILL.md also holds engineering guidance: use supplied code and known files first, query the map only for unknown files or dependencies, delegate independent work when useful, and keep frontend tooltips to at most two visible lines. Explicit review-only requests go directly to the review guide. Read it before you turn Compound on.
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author/generated-by commit lines. Read narrow ranges; expand when needed. For refactors, new features, performance work and pull requests, load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. Report checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
+> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author/generated-by commit lines. Read narrowly. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. Follow project instructions and user scope. Report checks and limits; report Compound load failures.
 
 ### Commits
 

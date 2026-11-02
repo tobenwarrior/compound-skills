@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.5 (2026-11-02)
+
+- Put source-first review routing in the always-on rule, which the saved reviews actually loaded. The rule grows from 633 to 697 UTF-8 bytes without loading another guide for ordinary reviews. Scope reproduction and regression-test steps to bug fixes. Execute during reviews only for unresolved findings when permitted, and stop after execution/probe setup is denied instead of writing alternate scripts or changing runners.
+- Clarify PR authoring versus read-only PR reviews in discovery and routing. Explicit Compound reviews go directly to the review guide, skipping engineering startup; session activation uses the same review boundary.
+- Saved `v016b` Compound reviews contain 14 blocked reproduction/setup attempts, five scratch writes/edits and one other tool error across 28 tool calls. The full skill was not loaded in any of the four reviews, so changing its review guide alone would not address this path. These observations motivate the prompt fix; no new model runs establish its future call count or billed savings.
+
 ## 0.16.4 (2026-11-02)
 
 - Query summaries stop expanding unrelated symbol outlines. They retain ranked paths, query-matching declarations, import hints and coverage; unqueried overviews, JSON and the viewer retain full outlines. Offline replay of seven saved queries emits 12,200 bytes versus 15,741 with 0.16.3, with all twelve ranked paths still visible in every reply. No model runs or billed savings are claimed.

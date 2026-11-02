@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for refactors, new features, performance work and pull requests, or to enable Compound guidance for a session, project, or all projects."
+description: "Use for refactors, new features, performance work and PR authoring, or to enable Compound guidance for a session, project, or all projects."
 license: MIT
 ---
 
@@ -9,6 +9,8 @@ license: MIT
 Turn the requested outcome into the smallest justified change and verify what its users observe. Scale effort to uncertainty and impact.
 
 For visual map requests, including `compound map`, follow the [map utility](../map/SKILL.md) and skip engineering startup.
+
+For a review-only Compound request, follow [Review](references/review.md) directly and skip engineering startup.
 
 For a bare invocation, or Compound `session`, `setup`, `status`, and `disable` requests, read [activation](references/activation.md) first.
 
