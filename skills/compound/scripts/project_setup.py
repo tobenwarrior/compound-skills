@@ -52,9 +52,9 @@ BLOCK_LINES = (
     "",
     "Reported bugs: run code to reproduce; add a regression test and show it failing before editing "
     "source; run the full test suite after the final change. Refactors: test current behavior first; "
-    "compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new "
-    "features, performance work and pull requests, first load installed Compound Skills `compound` with "
-    "the host skill tool when available; read only its needed references. In your final message, list "
+    "compare afterwards. Omit AI co-author/generated-by commit lines. Read narrow ranges; expand when "
+    "needed. For refactors, new features, performance work and pull requests, load installed Compound "
+    "Skills `compound` with the host skill tool when available; read only its needed references. Report "
     "checks run and anything unverified. Follow project instructions and user scope; if Compound is "
     "unavailable, report it and follow project conventions.",
     END_MARKER,

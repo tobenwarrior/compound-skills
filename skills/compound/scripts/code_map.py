@@ -1405,20 +1405,21 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     partial = bool(coverage.get("truncated")) or bool(coverage.get("skipped")) or any(
         "import links are heuristic" not in note for note in notes if isinstance(note, str)
     )
+    terms = _query_terms(query)[0]
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",
         f"Coverage: {coverage.get('indexed', 0)}/{coverage.get('inventory', 0)} files indexed; "
         f"{coverage.get('excluded', 0)} excluded; {coverage.get('skipped', 0)} skipped; "
         f"{'partial' if partial else 'complete'}",
-        "Source confirmation: metadata only; inspect listed files before changing behavior.",
+        ("Source confirmation: metadata only; matching symbols; inspect source before edits."
+         if terms else "Source confirmation: metadata only; inspect listed files before changing behavior."),
     ]
     excluded_reasons = coverage.get("excluded_reasons", {})
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
     lines.append("Focus:")
-    terms = _query_terms(query)[0]
     by_path = {file["path"]: file for file in model["files"]}
     for path in model["focus"]:
         file = by_path.get(path)
@@ -1430,13 +1431,11 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 signature = _name_terms(symbol.get("signature", ""))
                 return sum(2 * (term in name) + (term in signature) for term in terms)
             ranked_symbols = sorted(file["symbols"], key=relevance, reverse=True)
-            matching = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
-            background = [symbol for symbol in ranked_symbols if relevance(symbol) == 0]
-            symbol_values = matching + background[:max(0, 2 - len(matching))]
+            symbol_values = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
         else:
             symbol_values = file["symbols"][:8]
         symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)
-        if len(file["symbols"]) > len(symbol_values):
+        if symbols and len(file["symbols"]) > len(symbol_values):
             symbols += f" (+{len(file['symbols']) - len(symbol_values)} more symbols)"
         dependency_values = file["dependencies"][:12]
         dependencies = ", ".join(json.dumps(dep, ensure_ascii=True) for dep in dependency_values)

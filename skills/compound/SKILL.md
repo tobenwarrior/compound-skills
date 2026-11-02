@@ -21,15 +21,11 @@ Read the project's instructions. Use supplied code, named files and current cont
 - **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>"`. This starts or reuses the local service and incremental cache.
 - **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.
 
-For symbol definitions or references, prefer host-native navigation. If unavailable, [code maps](references/map.md) offers bounded lexical lookup and an opt-in adapter for a user-authorized, trusted language server; lexical occurrences are not semantic references.
-
-For denied local cache or network access, use the host's normal approval flow and retry the cached command once. Keep security settings unchanged; report the local fallback if still unavailable.
-
 See [code maps](references/map.md) for coverage and limits. Read relevant source and name the outcome, constraints, and evidence for success. Explanations and reviews stay read-only. Ask about missing product choices; investigate observable facts with available tools.
 
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
-Read the matching reference below when needed; reuse guidance already in context unless it changed.
+Batch independent source lookups in one tool round when supported; keep edits and dependent checks ordered. Read the matching reference below when needed; reuse guidance already in context unless it changed.
 
 | Task | Reference |
 | --- | --- |

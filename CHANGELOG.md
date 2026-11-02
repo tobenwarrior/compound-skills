@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.4 (2026-11-02)
+
+- Query summaries stop expanding unrelated symbol outlines. They retain ranked paths, query-matching declarations, import hints and coverage; unqueried overviews, JSON and the viewer retain full outlines. Offline replay of seven saved queries emits 12,200 bytes versus 15,741 with 0.16.3, with all twelve ranked paths still visible in every reply. No model runs or billed savings are claimed.
+- Refactors establish one baseline after adding needed characterization cases, using existing test fixtures and the project command. Batch independent source lookups; start source reads narrowly and expand when needed. Keep the always-on rule at 633 bytes and defer optional navigation procedures out of the core, reducing it from 4,929 to 4,575 bytes.
+- Add a saved-query replay tool that never executes recorded shell commands or fixture code and checks path, matching-declaration and metadata preservation. Original README benchmark comparisons and graphics remain intact.
+
 ## 0.16.3 (2026-11-02)
 
 - Restore the README before the speculative cost section. Retain its original benchmark comparisons, measured costs and theme; remove the three added cost graphics and hypothetical repair-cost projections.

@@ -159,3 +159,15 @@ python3 -B bench/bench.py cost-audit --label v016b --baseline without --candidat
 This reads saved results only. `without` is stock and `final` is the recorded 0.16.0 Compound arm. The comparison requires the same tasks, repetitions, pair IDs, fixture revisions, prompt hashes, permission settings and served models, and includes recorded unsuccessful, invalid and superseded spend. Missing usage or ungraded outcomes remain unknown. Judge spend is excluded.
 
 `saved_batch_cost_target_met` is true only when the candidate costs strictly less per task with no fewer accepted results in the matched saved cohort. It is unknown when costs or graded outcomes are incomplete. This is an observed batch check, not a statement about future work or lifetime cost. Changes to prompts do not change historical records.
+
+## Replay saved navigation queries
+
+```bash
+python3 -B bench/replay_map_queries.py --results bench/results/v016b --fixtures bench/work/fixtures --baseline-ref e2e3ae3
+```
+
+This parses the saved arm's map commands as data, checks that each existing fixture is clean at its recorded revision, and renders the same map metadata with the trusted local baseline and current renderer. It never executes a saved shell command, runs project code, fetches sources or calls a model. It rejects loss of a ranked path, a previously visible matching declaration, or complete file entries, and checks that rendering leaves metadata unchanged.
+
+For the seven saved 0.16.0 `final` map calls on the frozen shopkit fixture, the 0.16.3 renderer emits 15,741 UTF-8 bytes and the query-only renderer emits 12,200 (22.5% fewer). All twelve ranked paths remain visible in every replay; imports, coverage and matching declarations are retained. Only unrelated symbol outlines are left unexpanded. The full JSON and viewer retain all outlines. This measures actual renderer output on saved queries, not a new agent run or a billed-cost reduction.
+
+The same traces contain refactor baselines before characterization cases followed by another baseline after adding them, test-command retries, and longer source reads. The guides now put needed cases before one baseline, reuse fixtures and current passing evidence, batch independent lookups, and start with narrow source ranges. Their effect on later model actions has not been measured. The discovery descriptions are unchanged; the core entrypoint shrinks from 4,929 to 4,575 bytes by deferring optional navigation details, and the always-on rule stays at 633 bytes.

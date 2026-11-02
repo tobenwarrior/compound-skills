@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.3 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.4 · benchmarked in Claude Code 2.1.316 and 2.1.312 on 31 October and 1 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -472,7 +472,7 @@ SKILL.md also holds a few rules for every task it loads for: run the map query e
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author trailers and generated-by commit lines. For refactors, new features, performance work and pull requests, first load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. In your final message, list checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
+> Reported bugs: run code to reproduce; add a regression test and show it failing before editing source; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Omit AI co-author/generated-by commit lines. Read narrow ranges; expand when needed. For refactors, new features, performance work and pull requests, load installed Compound Skills `compound` with the host skill tool when available; read only its needed references. Report checks run and anything unverified. Follow project instructions and user scope; if Compound is unavailable, report it and follow project conventions.
 
 ### Commits
 
