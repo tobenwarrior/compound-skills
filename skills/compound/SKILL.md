@@ -27,7 +27,7 @@ For named-file tasks, read those files and their relevant callers/tests directly
 
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
-Batch independent required reads; satisfy tool read/edit prerequisites and combine same-file edits. Once the evidence supports a sufficient change, make it rather than reopening the same design choice. Keep dependent checks ordered. Read only the matching reference below; reuse unchanged guidance and current evidence.
+Batch independent required reads and same-file edits. Respect the host's read-before-edit rules: if reads expire each turn, batch fresh file-tool reads of edit targets before constructing the patch. Implement only options needed by actual callers or an explicitly requested API. Keep dependent checks ordered. Read only the matching reference below; reuse unchanged guidance and current evidence.
 
 | Task | Reference |
 | --- | --- |
@@ -43,7 +43,6 @@ Batch independent required reads; satisfy tool read/edit prerequisites and combi
 ## Engineering judgment
 
 - Model states and ownership explicitly; derive redundant state and define repeat effects for retries or shared mutable state.
-- Choose the simplest interface serving actual callers; avoid unneeded layers and speculative options.
 - For frontend work, keep every tooltip to at most two visible lines at supported viewport sizes and zoom levels. Move longer explanations to optional details and verify rendered text without clipping or hiding.
 - Keep cleanup within the request. File length alone does not justify splitting; comments explain non-obvious intent. Trace fixes to demonstrated causes and verify through callers.
 

@@ -1,10 +1,10 @@
 # Refactor
 
-Preserve each public caller's outputs, errors and accepted inputs unless changes are explicit.
+An extraction shares code while preserving each caller's accepted inputs, outputs, errors and defaults. A common helper name does not authorize a common policy.
 
-1. Read affected code/callers and identify observable differences once. Choose the first simple parameterization preserving them, keeping existing algorithms. Stop comparing signatures or guessing evaluator requirements once actual callers are covered.
-2. Before source edits, reuse assertions/fixtures and add only missing caller cases for those differences; run one passing baseline with the documented command and environment. Probe only a specific expectation source/tests cannot settle; retain baseline evidence.
-3. Next, migrate the shared helper, imports and callers together. Preserve differing behaviors in the first patch. Check uncertain dynamic/external references before deleting code; preserve external compatibility.
-4. Compare error and boundary cases with the baseline, review the diff and run required checks. Unexplained mismatches are regressions; never narrow inputs to pass. Type checks do not establish equivalence. Ask only when behavior cannot be preserved; report changes as a scope change.
+1. Read the affected callers/tests and identify their differences once. Keep existing algorithms and pass only policies actual callers need; do not design defaults or signatures for imagined consumers.
+2. Add only missing characterization cases through existing caller APIs, using original observed results. Do not import the proposed helper before it exists. Run one passing baseline after these additions, before source edits. A failing baseline must be resolved first; it is not a bug-fix red test. Keep those assertions and expected values unchanged through the refactor.
+3. Move the helper, imports and callers together, preserving every characterized difference in the first patch. Check uncertain dynamic/external references before deleting code; preserve external compatibility.
+4. Run the same caller assertions and required checks. Review the diff and new files once; reuse unchanged content already inspected. Unexplained mismatches are regressions. Correct the implementation, not the baseline expectations; report any authorized behavior change as a scope change.
 
-Then finish. Reopen design/tests only for new evidence of a concrete defect, an uncovered caller behavior or a project requirement. Avoid late cosmetic edits, overlapping compile/import checks and repeated status/review rounds; required checks still apply. Reuse unchanged passing assertions. Do not introduce known-bad code to reconfirm covered cases or recreate old implementations after editing.
+Then report the result, checks and limits. Reopen only for a concrete defect or requirement. Extra helper tests or standalone probes need caller behavior the existing assertions cannot establish. Reuse fixtures rather than duplicating them in print scripts. Do not add unused options/defaults, polish, or known-bad experiments after checks pass.

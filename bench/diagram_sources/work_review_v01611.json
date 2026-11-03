@@ -1,0 +1,368 @@
+{
+  "schema": 1,
+  "source_comparison": "comparison_v01611.json",
+  "source_comparison_sha256": "81a8210d6c4e55380bd37763f2564d2a27183366e21d25fe93ea9fe89e51c7ef",
+  "source_version": "0.16.11",
+  "candidate_version": "0.16.12",
+  "scope": "Offline review of saved 0.16.11 Y Harness / DeepSeek V4.1 Flash attempts. Every original charge, failed implementation and repair remains in the comparison. Annotated step costs are recorded past usage, not removable dollars or predicted savings.",
+  "arms": {
+    "with": {
+      "requests": 38,
+      "tool_calls": 97,
+      "edit_precondition_rejections": 4
+    },
+    "without": {
+      "requests": 29,
+      "tool_calls": 63,
+      "edit_precondition_rejections": 3
+    }
+  },
+  "observed_tokens": {
+    "completion_tokens": {
+      "without": 22680,
+      "with": 38928
+    },
+    "reasoning_tokens": {
+      "without": 12300,
+      "with": 23481
+    }
+  },
+  "task_differences": [
+    {
+      "task": "refactor-slugs",
+      "without_requests": 17,
+      "with_requests": 22,
+      "extra_requests": 5,
+      "extra_tool_calls": 16,
+      "allowance_difference_usd": "0.00966390"
+    },
+    {
+      "task": "refactor-retry",
+      "without_requests": 6,
+      "with_requests": 6,
+      "extra_requests": 0,
+      "extra_tool_calls": 6,
+      "allowance_difference_usd": "0.00330461"
+    },
+    {
+      "task": "refactor-money",
+      "without_requests": 6,
+      "with_requests": 10,
+      "extra_requests": 4,
+      "extra_tool_calls": 12,
+      "allowance_difference_usd": "0.00659771"
+    }
+  ],
+  "issues": [
+    {
+      "issue": "Characterization imported an unimplemented helper and changed expectations",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 4,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00142061",
+          "completion_tokens": 1699,
+          "reasoning_tokens": 1410
+        },
+        {
+          "request": 5,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00255172",
+          "completion_tokens": 2906,
+          "reasoning_tokens": 2828
+        },
+        {
+          "request": 6,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00078557",
+          "completion_tokens": 285,
+          "reasoning_tokens": 43
+        },
+        {
+          "request": 7,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00047559",
+          "completion_tokens": 494,
+          "reasoning_tokens": 349
+        },
+        {
+          "request": 8,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00024539",
+          "completion_tokens": 103,
+          "reasoning_tokens": 5
+        },
+        {
+          "request": 10,
+          "tools": [
+            "write",
+            "edit",
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00088252",
+          "completion_tokens": 934,
+          "reasoning_tokens": 58
+        },
+        {
+          "request": 11,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00049828",
+          "completion_tokens": 304,
+          "reasoning_tokens": 14
+        },
+        {
+          "request": 12,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00048803",
+          "completion_tokens": 294,
+          "reasoning_tokens": 149
+        },
+        {
+          "request": 14,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00155492",
+          "completion_tokens": 1647,
+          "reasoning_tokens": 966
+        }
+      ],
+      "events_sha256": "1dc1d90b1258a8d90178bf60b6ae11318cfd47ed8182ea09087d48f14e06c2ca",
+      "evidence": "The original suite and caller probe ran before new assertions. The added tests then imported the proposed helper before its module existed, producing a module-not-found baseline failure. A guessed helper expectation failed after implementation and was changed to match the rewrite. Caller behavior was standardized despite the recorded difference, requiring the later independent-check repair.",
+      "fix": "Generated project/global routing, Cursor and activation state that a shared-helper request preserves each caller. Refactor characterization calls existing APIs, passes on unchanged source, retains original expected values and treats unexplained differences as implementation defects.",
+      "classification": "Mixed baseline, design, test-repair and implementation work. Required behavior coverage and the eventual functional correction are retained."
+    },
+    {
+      "issue": "Repair generated edits before obtaining current-turn read grants",
+      "run": "01-refactor-slugs-with-1",
+      "steps": [
+        {
+          "request": 1,
+          "tools": [
+            "edit",
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00313705",
+          "completion_tokens": 3940,
+          "reasoning_tokens": 3034
+        },
+        {
+          "request": 2,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "allowance_usd": "0.0010127",
+          "completion_tokens": 235,
+          "reasoning_tokens": 17
+        },
+        {
+          "request": 3,
+          "tools": [
+            "edit",
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00106327",
+          "completion_tokens": 909,
+          "reasoning_tokens": 3
+        }
+      ],
+      "events_sha256": "b9eff11bc146e61f7a5289a5d449453b4fd1ca5812e7a1640efc7ff2c66329e4",
+      "evidence": "All four edit calls in the repair first response were refused because the files had not been read in that turn, despite reads in the preceding turn. Fresh reads followed in the next response, then the edits were retried.",
+      "fix": "The core requires fresh file-tool reads before constructing edits when the host expires read grants each turn. The generated rule names current-turn read/edit prerequisites; this does not require redundant reads on hosts without that constraint.",
+      "classification": "Four observed rejected edits and a subsequent read/retry sequence. The recorded first response also contains reasoning; its charge is not subtracted as guaranteed savings."
+    },
+    {
+      "issue": "Unused helper default added after successful caller verification",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 5,
+          "tools": [
+            "bash",
+            "read",
+            "read",
+            "read",
+            "read",
+            "bash"
+          ],
+          "allowance_usd": "0.00175716",
+          "completion_tokens": 1653,
+          "reasoning_tokens": 1271
+        },
+        {
+          "request": 6,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00229309",
+          "completion_tokens": 1999,
+          "reasoning_tokens": 1359
+        },
+        {
+          "request": 7,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00082233",
+          "completion_tokens": 293,
+          "reasoning_tokens": 81
+        },
+        {
+          "request": 8,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00050355",
+          "completion_tokens": 268,
+          "reasoning_tokens": 13
+        },
+        {
+          "request": 9,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00057251",
+          "completion_tokens": 98,
+          "reasoning_tokens": 31
+        }
+      ],
+      "events_sha256": "0c9dad15f4eba0ffac30f47b40619183e29c3fe58eb45a9b9c71940664f61775",
+      "evidence": "After caller tests and the retained differential probe passed, the helper gained an alternate rounding default for a direct-call combination no existing caller used. A new direct-helper assertion, another full suite/probe and another status round followed. Existing caller arguments already selected their required policies.",
+      "fix": "Implement only options required by actual callers or an explicitly requested API. New helper names do not authorize speculative default behavior. Finish after the diff/new-file review and required caller checks unless a concrete defect remains.",
+      "classification": "Observed unrequested follow-up; test reruns were necessary after those edits. No step cost is treated as measured avoided spend."
+    },
+    {
+      "issue": "Parallel print probes and repeated full-file review",
+      "run": "02-refactor-retry-with-0",
+      "steps": [
+        {
+          "request": 1,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "allowance_usd": "0.00053722",
+          "completion_tokens": 372,
+          "reasoning_tokens": 99
+        },
+        {
+          "request": 2,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00130553",
+          "completion_tokens": 1051,
+          "reasoning_tokens": 538
+        },
+        {
+          "request": 3,
+          "tools": [
+            "write",
+            "edit",
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00427842",
+          "completion_tokens": 5308,
+          "reasoning_tokens": 3360
+        },
+        {
+          "request": 4,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00153077",
+          "completion_tokens": 519,
+          "reasoning_tokens": 8
+        },
+        {
+          "request": 5,
+          "tools": [
+            "bash",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "allowance_usd": "0.0009888",
+          "completion_tokens": 779,
+          "reasoning_tokens": 495
+        },
+        {
+          "request": 6,
+          "tools": [],
+          "allowance_usd": "0.00142047",
+          "completion_tokens": 1002,
+          "reasoning_tokens": 835
+        }
+      ],
+      "events_sha256": "afe904aad06875d3d3b4b0f84f3afd9ea95098a40be21e04f3323befbd2093b8",
+      "evidence": "The retry task used the same six model requests as control but more generated/reasoning tokens. It read an unrelated earlier helper, built separate print-script fakes alongside caller fixtures, added tests after the baseline, repeated the print script, then reread changed files. Some assertions cover useful caller behavior; they are not all unnecessary.",
+      "fix": "Put missing cases into existing caller fixtures before one baseline. Use separate probes only for expectations assertions cannot establish, and reuse unchanged inspected content instead of reopening whole files.",
+      "classification": "Mixed required implementation/coverage and overlapping verification. Six-versus-six requests does not establish equal cost."
+    }
+  ],
+  "offline_fixture_witness": {
+    "scope": "Offline fixture checks only; no models and no claim about future prompt compliance or cost.",
+    "future_helper_import_baseline": "fails before any source change: proposed module is absent",
+    "existing_caller_baseline": "passes on original fixture",
+    "unchanged_caller_assertions_against_naive_extraction": "reject changed facet behavior",
+    "new_model_requests": 0
+  },
+  "new_model_runs": 0,
+  "new_cost_savings_claim": false,
+  "limits": "The changed prompts and routing have not been tested with new model runs. Offline checks establish rule delivery, saved accounting and fixture behavior, not future compliance, fewer calls or lower total cost. Extra assertions can provide useful coverage; mixed steps are not classified as wholly removable.",
+  "candidate_context_delta": {
+    "skills/compound/SKILL.md": {
+      "before_bytes": 5124,
+      "after_bytes": 5098,
+      "before_words": 687,
+      "after_words": 685
+    },
+    "skills/compound/references/refactor.md": {
+      "before_bytes": 1525,
+      "after_bytes": 1598,
+      "before_words": 207,
+      "after_words": 229
+    },
+    ".cursor-plugin/rules/compound-default.mdc": {
+      "before_bytes": 852,
+      "after_bytes": 885,
+      "before_words": 111,
+      "after_words": 111
+    }
+  }
+}

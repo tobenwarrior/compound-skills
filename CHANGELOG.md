@@ -2,6 +2,13 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.12 (2026-11-03)
+
+- Shared-helper requests preserve each caller's behavior; extraction alone does not authorize standardizing their outputs or defaults. Project/global setup, Cursor and chat activation deliver the same clarification. Saved rules from earlier versions are flagged for refresh with `setup` or `setup-global`.
+- Refactor characterization uses existing caller APIs and original observed results, passes before source edits, and retains its expected values. A test importing a proposed helper is not a valid pre-refactor baseline. Fix implementation mismatches rather than changing the baseline to agree with the rewrite.
+- Obtain host-required current-turn read receipts before constructing edits. Reuse caller fixtures and inspected content; exclude unused helper defaults and duplicate print/probe verification once required checks pass.
+- The saved 0.16.11 trial used 38 versus 29 requests, with one repair and 3/3 accepted tasks per mode, at 75.5% more Go allowance with Compound. Its trace review motivates these changes; no new model runs establish fewer future calls or lower total cost. README benchmark claims and graphics are unchanged.
+
 ## 0.16.11 (2026-11-03)
 
 - Refactors preserve observed caller differences in the first patch. Choose one sufficient interface from source evidence, characterize missing caller behavior before the baseline, and proceed to implementation instead of comparing hypothetical APIs or evaluator expectations.
