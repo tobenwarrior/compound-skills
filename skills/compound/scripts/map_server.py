@@ -762,14 +762,19 @@ class Project:
 def _project_model(model: dict[str, Any], query: str, max_files: int, root: Path | None = None) -> dict[str, Any]:
     """Bound a response without shrinking the daemon's shared index."""
     records = list(model.get("files", []))
+    query_matches: set[str] = set()
     try:
-        ranked = engine._rank(records, query[:MAX_QUERY], root)
+        ranked = engine._rank(records, query[:MAX_QUERY], root, query_matches=query_matches)
     except (AttributeError, TypeError):
         ranked = records
     selected = sorted(ranked[:max_files], key=lambda record: record.get("path", ""))
     result = dict(model)
     result["files"] = selected
     result["focus"] = [record["path"] for record in ranked[:min(12, max_files)]]
+    if engine._query_terms(query[:MAX_QUERY])[0]:
+        result["query_matches"] = [path for path in result["focus"] if path in query_matches]
+    else:
+        result.pop("query_matches", None)
     coverage = dict(model.get("coverage", {}))
     response_skipped = max(0, len(ranked) - len(selected))
     coverage["available"] = len(ranked)

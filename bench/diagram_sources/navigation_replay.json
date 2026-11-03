@@ -1,0 +1,32 @@
+{
+  "scope": "Offline replay of saved Y Harness query inputs; unchanged full JSON index and ranking. No agent actions, model calls or cost savings measured.",
+  "baseline": "f1a916f4f3e8131474fe8bac946daf76ad77d8a9",
+  "fixture_head": "cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4",
+  "events_sha256": "56e7d91c689ec1df1033533ee69b85aaf790357a493dd59dd8ef8a3a941d5c73",
+  "queries": [
+    {
+      "query": "slug product facet key URL",
+      "before_candidates": 12,
+      "after_candidates": 6,
+      "retained": [
+        "src/shopkit/catalog.py",
+        "src/shopkit/search.py",
+        "tests/test_catalog_and_search.py",
+        "src/shopkit/payments.py",
+        "src/shopkit/webhooks.py",
+        "tests/test_payments_and_webhooks.py"
+      ],
+      "omitted_unmatched": [
+        "src/shopkit/api.py",
+        "src/shopkit/importing.py",
+        "src/shopkit/errors.py",
+        "src/shopkit/__init__.py",
+        "pyproject.toml",
+        "tests/test_importing_and_api.py"
+      ],
+      "full_index_sha256": "67d6f313d2b2d0f7dbf738cd39fb753a6b69063247e364d41f370e1300799163",
+      "before_summary_bytes": 1944,
+      "after_summary_bytes": 1723
+    }
+  ]
+}

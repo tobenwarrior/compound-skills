@@ -212,3 +212,21 @@ python3 -B bench/profile_map_query.py --repo /path/to/flask --query "how are req
 ```
 
 The profiler separates index construction and three warmups from the timed ranking loop, reports median/minimum/p95 wall time and median process CPU time, counts opens separately from timing, and hashes all ranked paths. Different hashes invalidate a behavior-preserving speed comparison. It reads source text without executing repository code. Raw source and private traces remain outside the published data.
+
+## Saved model-work audit
+
+The [saved call audit](diagram_sources/work_audit.json) reads the completed Y Harness / DeepSeek V4.1 Flash sequence as data: 72 model requests and 116 tools with Compound, 61 and 92 without. Slugs account for eight of the eleven extra requests. Three treatment edits and one control edit were rejected by read prerequisites. Both modes' initial Git identity failures remain counted; they are an environment limitation, not evidence of a Compound prompt defect. The annotations identify the relevant saved steps and resulting prompt/code changes without deducting hypothetical future savings.
+
+```sh
+python3 -B bench/trace_work_audit.py --runs bench/results/deepseek-sequence-20261102/clean/runs
+```
+
+The auditor checks event counts against each record, includes failed implementations, repairs and transport recovery, and emits hashes and counts without command bodies or private paths. It never runs a recorded command, invokes Y Harness, contacts a provider or substitutes a model. Raw saved events are local and ignored; the sanitized audit is public.
+
+The [navigation replay](diagram_sources/navigation_replay.json) feeds the saved slug map query to the previous and current local implementations on the exact clean `shopkit` revision. Complete `files` metadata and ranked `focus` paths must match. The current text lists only candidates with path, symbol/declaration or scanned-content evidence; content-only matches survive, and an empty result directs the agent to native search rather than arbitrary files. JSON and the viewer retain the full index. Lexical evidence is not a semantic dependency: the retained payment/webhook hits still need task relevance before reading.
+
+```sh
+python3 -B bench/replay_navigation_scope.py --events bench/results/deepseek-sequence-20261102/clean/runs/06-refactor-slugs-with-0/events.jsonl --fixture bench/work/fixtures/shopkit --fixture-head cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4 --baseline-ref f1a916f
+```
+
+This replay rebuilds metadata without a cache or service; it is not the original agent execution. It verifies presentation behavior and preserved index data, not future calls, repairs, billed costs or prompt compliance. No new DeepSeek requests were made. Correctness checks remain required; a check is redundant only when an existing passing assertion covers the same behavior. The new guide asks for a named coverage gap before extra probes, rather than treating every old probe as deletable.

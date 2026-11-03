@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.8 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–3 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.9 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–3 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -174,6 +174,12 @@ The historical review task showed **no finding advantage**: both modes found all
 
 The DeepSeek bug sequence and earlier pilot show scoped allowance savings; the completed six-change workflow does not establish overall savings. Neither the historical correctness gains nor smaller map summaries establish that Compound is always cheaper. We include failed implementations and repairs when comparing cost.
 
+### Removing extra model work
+
+The saved Y Harness / DeepSeek V4.1 Flash workflow used **72 requests with Compound versus 61 without**. The largest gap was the slug refactor, 24 versus 16, including repairs. The [call audit](bench/diagram_sources/work_audit.json) links those steps to known-file navigation, unrelated reads, behavior changes, rejected edits and overlapping verification.
+
+0.16.9 makes focused map text omit candidates without query evidence, keeps full ranking and metadata in JSON/the viewer, and tightens prompts around caller baselines, edit prerequisites and extra probes. Replaying the saved slug query produces **6 navigation suggestions instead of 12**, with identical full ranked metadata; two of the four unrelated modules read in the trace are no longer suggested. The regression remains the bug reproduction, and the final suite is still required. These are code/output checks and saved failure evidence, **not a new measurement of model calls or total savings**. [Replay and limits](bench/README.md#saved-model-work-audit).
+
 ### Reproduce and inspect
 
 The main graphics use exactly two modes: **without Compound** (the runtime's ordinary tools and defaults) and **with Compound** (the same setup plus Compound's routing and skill). A map ranking chart compares ordinary word search with Compound's map; it does not measure an agent completing a task. Compare within an experiment, since models, versions and workloads differ.
@@ -264,7 +270,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: reproduce the defect with a failing regression test before source edits; run the full test suite after the final change. Refactors: test current behavior first; compare afterwards. Use documented test commands; inspect setup errors before retrying. Omit AI co-author/generated-by commit lines. Read narrowly. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` with host skill tools when available; read needed references. Follow project instructions and user scope. Report checks, limits and Compound load failures.
+> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: one defect-specific failing regression is the reproduction before source edits; run the final full suite. Refactors: test current behavior first; compare afterwards. Use documented test commands; inspect setup errors before retrying. Omit AI co-author/generated-by commit lines. Read narrowly; honor read/edit prerequisites. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` with host skill tools when available; read needed references. Follow project instructions and user scope. Report checks, limits and Compound load failures.
 
 ### Commits
 

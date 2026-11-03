@@ -1059,12 +1059,16 @@ def _rank_unfocused(records: list[dict[str, Any]], by_path: dict[str, dict[str, 
     return sorted(records, key=lambda record: (-scores[record["path"]], not _entry_config(record["path"]), record["path"]))
 
 
-def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -> list[dict[str, Any]]:
+def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *, query_matches: set[str] | None = None) -> list[dict[str, Any]]:
     """Order files by query words in paths, symbols and, given ``root``, the text of the leading candidates.
 
     Rarer words weigh more. Larger code files, widely imported ones, current changes and recent co-changes of
     matches rank higher; tests rank lower unless the query is about tests.
+    A supplied query_matches set receives paths with path, symbol or scanned-content
+    evidence for this query; records and ranking remain unchanged.
     """
+    if query_matches is not None:
+        query_matches.clear()
     by_path = {record["path"]: record for record in records}
     reverse: dict[str, set[str]] = {path: set() for path in by_path}
     for record in records:
@@ -1081,6 +1085,8 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -
         for term in terms
     }
     matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
+    if query_matches is not None:
+        query_matches.update(path for path, value in matched.items() if value > 0)
     bonus = dict.fromkeys(by_path, 0.0)
     for path, record in by_path.items():
         bonus[path] += IMPORTER_WEIGHT * math.log1p(len(reverse[path])) + (record.get("changed") in {"added", "modified", "untracked", "renamed"})
@@ -1099,6 +1105,10 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -
 
     first = {path: score(path, matched[path]) for path in by_path}
     order = sorted(records, key=lambda record: (-first[record["path"]], not _entry_config(record["path"]), record["path"]))
+    if query_matches is not None:
+        query_matches.update(record["path"] for record in order[:CONTENT_RANK_FILES]
+                             if any(term in _name_terms(symbol.get("signature") or "")
+                                    for symbol in record["symbols"] for term in terms))
     if root is None or not terms:
         return order
     # Folding only removes endings or turns a final y into i, so a word that folds to a term contains the term
@@ -1115,6 +1125,8 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -
         for record in head:
             found, used = _content_terms(root, record["path"], min(MAX_FILE_BYTES, budget), finder, wanted, opener) if budget > 0 else (set(), 0)
             budget -= used
+            if found and query_matches is not None:
+                query_matches.add(record["path"])
             content = sum(weight for term, weight in weights.items() if term in found)
             rescored[record["path"]] = score(record["path"], matched[record["path"]] + CONTENT_WEIGHT * content)
     head.sort(key=lambda record: (-rescored[record["path"]], not _entry_config(record["path"]), record["path"]))
@@ -1371,7 +1383,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     records = [_record(path, entry, known, aliases, changes, cochanges, modules, packages, native_index) for path, entry in entries.items()]
     if any("local import links capped" in record.get("outline_note", "") for record in records):
         _note(notes, "local import link cap reached; some importers may be missing")
-    ranked = _rank(records, query, root)
+    query_matches: set[str] = set()
+    ranked = _rank(records, query, root, query_matches=query_matches)
     file_cap = len(ranked) > max_files
     truncated = file_cap or budget_hit
     if file_cap:
@@ -1395,6 +1408,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         "files": selected,
         "focus": [record["path"] for record in ranked[:min(12, max_files)]],
     }
+    if _query_terms(query)[0]:
+        model["query_matches"] = [path for path in model["focus"] if path in query_matches]
     if branch:
         model["branch"] = branch
     if use_cache and write_cache:
@@ -1427,9 +1442,13 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
-    lines.append("Focus:")
+    focused_query = bool(terms) and "query_matches" in model
+    lines.append("Focus (query matches; follow only task-relevant links):" if focused_query else "Focus:")
+    focus = model["query_matches"] if focused_query else model["focus"]
+    if focused_query and not focus:
+        lines.append("No query matches in scanned candidates; use native search or refine the query.")
     by_path = {file["path"]: file for file in model["files"]}
-    for path in model["focus"]:
+    for path in focus:
         file = by_path.get(path)
         if not file:
             continue

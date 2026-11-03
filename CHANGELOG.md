@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.9 (2026-11-03)
+
+- Ground agent map suggestions in query evidence while preserving the full ranked JSON/viewer index. No-match queries recommend native search instead of unrelated files.
+- Address extra work in saved Y Harness / DeepSeek traces: reuse caller assertions, preserve observed differences, honor edit prerequisites, avoid known-file map queries and require uncovered behavior for extra probes. The failing regression supplies bug reproduction; final-suite verification remains required.
+- Add keyless saved-call auditing and navigation replay. No new model runs or total-cost savings claims.
+
 ## 0.16.8 (2026-11-03)
 
 - Reuse one pinned repository directory for map-query candidate reads; preserve fresh content, no-follow checks and ranking. Add a keyless local profiler.

@@ -1,0 +1,436 @@
+{
+  "scope": "Saved Y Harness event counts only; no new model calls, projected call savings or cost subtraction.",
+  "arms": {
+    "with": {
+      "requests": 72,
+      "tool_calls": 116,
+      "edit_precondition_rejections": 3
+    },
+    "without": {
+      "requests": 61,
+      "tool_calls": 92,
+      "edit_precondition_rejections": 1
+    }
+  },
+  "tasks": {
+    "bugfix-december": {
+      "with": {
+        "requests": 9,
+        "tool_calls": 10,
+        "edit_precondition_rejections": 0
+      },
+      "without": {
+        "requests": 7,
+        "tool_calls": 9,
+        "edit_precondition_rejections": 0
+      }
+    },
+    "bugfix-leap": {
+      "with": {
+        "requests": 11,
+        "tool_calls": 11,
+        "edit_precondition_rejections": 1
+      },
+      "without": {
+        "requests": 10,
+        "tool_calls": 12,
+        "edit_precondition_rejections": 1
+      }
+    },
+    "bugfix-refund": {
+      "with": {
+        "requests": 12,
+        "tool_calls": 20,
+        "edit_precondition_rejections": 0
+      },
+      "without": {
+        "requests": 14,
+        "tool_calls": 18,
+        "edit_precondition_rejections": 0
+      }
+    },
+    "refactor-money": {
+      "with": {
+        "requests": 7,
+        "tool_calls": 14,
+        "edit_precondition_rejections": 0
+      },
+      "without": {
+        "requests": 5,
+        "tool_calls": 10,
+        "edit_precondition_rejections": 0
+      }
+    },
+    "refactor-retry": {
+      "with": {
+        "requests": 9,
+        "tool_calls": 16,
+        "edit_precondition_rejections": 0
+      },
+      "without": {
+        "requests": 9,
+        "tool_calls": 14,
+        "edit_precondition_rejections": 0
+      }
+    },
+    "refactor-slugs": {
+      "with": {
+        "requests": 24,
+        "tool_calls": 45,
+        "edit_precondition_rejections": 2
+      },
+      "without": {
+        "requests": 16,
+        "tool_calls": 29,
+        "edit_precondition_rejections": 0
+      }
+    }
+  },
+  "runs": [
+    {
+      "run": "00-bugfix-refund-without-0",
+      "task": "bugfix-refund",
+      "arm": "without",
+      "attempt_kind": "unlabeled",
+      "requests": 14,
+      "tool_calls": 18,
+      "tools": {
+        "bash": 14,
+        "edit": 2,
+        "read": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "fb5840b690a81da1e593686be52ebc28c4ce37520864b9969c1dae2763dfba0d",
+      "events_sha256": "9263225d3e4edaaef89ba564b857c0d554a63c588342aeec64dd83585406818f"
+    },
+    {
+      "run": "01-bugfix-refund-with-0",
+      "task": "bugfix-refund",
+      "arm": "with",
+      "attempt_kind": "unlabeled",
+      "requests": 12,
+      "tool_calls": 20,
+      "tools": {
+        "bash": 9,
+        "edit": 2,
+        "glob": 1,
+        "grep": 1,
+        "read": 7
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "5a63482858ab82bb700fa95256b909a046a198935bb3af3ac4b332e5cdba4495",
+      "events_sha256": "ab8fb80940c8406f6beffe2c02127d37578bd4f5245fe16c8409c17294d2bc41"
+    },
+    {
+      "run": "02-bugfix-leap-with-0",
+      "task": "bugfix-leap",
+      "arm": "with",
+      "attempt_kind": "unlabeled",
+      "requests": 11,
+      "tool_calls": 11,
+      "tools": {
+        "bash": 6,
+        "edit": 3,
+        "read": 2
+      },
+      "edit_precondition_rejections": [
+        {
+          "step": 2,
+          "call_id": "call_e92d6d993ff548929de911fb",
+          "reason": "file has not been read"
+        }
+      ],
+      "record_sha256": "ef5b947aed24c49921486324216fce310d7d17550c368325163b4482b450a77e",
+      "events_sha256": "910f9132c75f198be3d5128649fd6acf93d7f9aafce3cbb4de50e143fcfb5896"
+    },
+    {
+      "run": "03-bugfix-leap-without-0",
+      "task": "bugfix-leap",
+      "arm": "without",
+      "attempt_kind": "unlabeled",
+      "requests": 10,
+      "tool_calls": 12,
+      "tools": {
+        "bash": 5,
+        "edit": 4,
+        "read": 3
+      },
+      "edit_precondition_rejections": [
+        {
+          "step": 3,
+          "call_id": "call_00_fvgzz8ytqn3px2hbl7uisb5g",
+          "reason": "file changed since it was read"
+        }
+      ],
+      "record_sha256": "b1ea4cae45e164f5d38adf587e971148391403537cd6eb658a4eca477baafbe5",
+      "events_sha256": "73232d486f7df2bbfa126299475fa8ba5b96975bfc019d149a46bb82ef73b85e"
+    },
+    {
+      "run": "04-bugfix-december-without-0",
+      "task": "bugfix-december",
+      "arm": "without",
+      "attempt_kind": "unlabeled",
+      "requests": 7,
+      "tool_calls": 9,
+      "tools": {
+        "bash": 5,
+        "edit": 2,
+        "read": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "3880abe583b853f80b362f62ee7007a5b8b93409c01404c582e96c874dba1148",
+      "events_sha256": "02e8f0a1c9a5ab4954974d07c4275eae12d4e9770a1db7649922fcb991301a22"
+    },
+    {
+      "run": "05-bugfix-december-with-0",
+      "task": "bugfix-december",
+      "arm": "with",
+      "attempt_kind": "unlabeled",
+      "requests": 9,
+      "tool_calls": 10,
+      "tools": {
+        "bash": 6,
+        "edit": 2,
+        "read": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "6545bda903ea1c49f51d28e32b73260958f4a4b409063eceedb1a51c16490e90",
+      "events_sha256": "96021e39be73b7217aba0976f14835e3d4f456ca3d086f4b41300c1b0ba2d700"
+    },
+    {
+      "run": "06-refactor-slugs-with-0",
+      "task": "refactor-slugs",
+      "arm": "with",
+      "attempt_kind": "unlabeled",
+      "requests": 14,
+      "tool_calls": 31,
+      "tools": {
+        "bash": 11,
+        "edit": 4,
+        "grep": 2,
+        "read": 11,
+        "skill": 1,
+        "write": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "a658fdc236d7ef0365f76c0f15939c05c67914674dcf494edb8fa5c1dee4f2b6",
+      "events_sha256": "56e7d91c689ec1df1033533ee69b85aaf790357a493dd59dd8ef8a3a941d5c73"
+    },
+    {
+      "run": "06-refactor-slugs-with-1",
+      "task": "refactor-slugs",
+      "arm": "with",
+      "attempt_kind": "unlabeled",
+      "requests": 10,
+      "tool_calls": 14,
+      "tools": {
+        "bash": 4,
+        "edit": 6,
+        "read": 4
+      },
+      "edit_precondition_rejections": [
+        {
+          "step": 2,
+          "call_id": "call_01_rwpb9chpo9hit9p6qm62f3i5",
+          "reason": "file has not been read"
+        },
+        {
+          "step": 6,
+          "call_id": "call_00_cekewwtdi6anx5pr35mly3jt",
+          "reason": "file changed since it was read"
+        }
+      ],
+      "record_sha256": "555a75897945cf82df837660329d7ad57ea4b1adca6519a2f21b368317e0d1c1",
+      "events_sha256": "fba63fe995f3f5db154046dcbe805d12a6a3da82959c9ff4cb814c80ddf92ab5"
+    },
+    {
+      "run": "07-refactor-slugs-without-0",
+      "task": "refactor-slugs",
+      "arm": "without",
+      "attempt_kind": "unlabeled",
+      "requests": 3,
+      "tool_calls": 5,
+      "tools": {
+        "bash": 1,
+        "glob": 1,
+        "read": 3
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "9258718fc00d460acda5553c8d11e5d56659aa9bf6ee6e578bc5903db6f6e4b6",
+      "events_sha256": "e16ff7c419947de77e7a15a37e66e1f94c85c1caa093736bb3adc15d580f386a"
+    },
+    {
+      "run": "07-refactor-slugs-without-2",
+      "task": "refactor-slugs",
+      "arm": "without",
+      "attempt_kind": "transport_resume",
+      "requests": 8,
+      "tool_calls": 15,
+      "tools": {
+        "bash": 5,
+        "read": 5,
+        "write": 5
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "cf2b0f9d2ab1e2fc87014b550c70b87acca13d3420ab2bfa925297c8395e48fb",
+      "events_sha256": "90d86c091579b0dc0c80413b5667ed299041903ad3198ef58eac92d8f4df16a5"
+    },
+    {
+      "run": "07-refactor-slugs-without-3",
+      "task": "refactor-slugs",
+      "arm": "without",
+      "attempt_kind": "semantic_repair",
+      "requests": 5,
+      "tool_calls": 9,
+      "tools": {
+        "bash": 3,
+        "edit": 2,
+        "read": 3,
+        "write": 1
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "d0b1fac00d92c0cad22cf5adfba40eedb179cfab83cc7bede7a540c91affd520",
+      "events_sha256": "6681cda6937b4b0679d69a3220c2ebddd66bad6d8a89dd9fe714f42e205c129e"
+    },
+    {
+      "run": "08-refactor-retry-without-0",
+      "task": "refactor-retry",
+      "arm": "without",
+      "attempt_kind": "initial",
+      "requests": 9,
+      "tool_calls": 14,
+      "tools": {
+        "bash": 6,
+        "read": 5,
+        "write": 3
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "2aad35780c34b1650b1611b3f806a4b53f747a8899a7e2c3c9620d2b0cd27ce8",
+      "events_sha256": "a6eb5e9fc8689fd800a93e51866ff57719a0ce14336c3dc1f34f1a5d5b365238"
+    },
+    {
+      "run": "09-refactor-retry-with-0",
+      "task": "refactor-retry",
+      "arm": "with",
+      "attempt_kind": "initial",
+      "requests": 3,
+      "tool_calls": 5,
+      "tools": {
+        "bash": 2,
+        "read": 3
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "4bddd552a6fd77fc0dfff28a9a20513aecb18fd8fe83097a1a50bb34fe7dc056",
+      "events_sha256": "35faa5dfc19b1854c8d7fd96ccbefe97b43b7ca9871e1cbc7bcbdbb3cb46a20a"
+    },
+    {
+      "run": "09-refactor-retry-with-1",
+      "task": "refactor-retry",
+      "arm": "with",
+      "attempt_kind": "transport_resume",
+      "requests": 6,
+      "tool_calls": 11,
+      "tools": {
+        "bash": 4,
+        "edit": 2,
+        "grep": 1,
+        "read": 2,
+        "write": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "6b5cfbd72173d70ba63dbab0e592dd5f126bf4891166efd89347798116c33ee4",
+      "events_sha256": "7d3e9fc17d23ea6e10b7e39f98398f05c983c17d4136bb73ea4f61e5a4c8318c"
+    },
+    {
+      "run": "10-refactor-money-with-0",
+      "task": "refactor-money",
+      "arm": "with",
+      "attempt_kind": "initial",
+      "requests": 7,
+      "tool_calls": 14,
+      "tools": {
+        "bash": 7,
+        "edit": 2,
+        "read": 3,
+        "write": 2
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "d6d98d52e1b87beb20d50d5df15768c8bbe37d08d9f631638dfd98b7fa3da2c0",
+      "events_sha256": "babb31e7173c740824bf246d58774728c4ae6b613da8a537c9b5f6dd259c152f"
+    },
+    {
+      "run": "11-refactor-money-without-0",
+      "task": "refactor-money",
+      "arm": "without",
+      "attempt_kind": "initial",
+      "requests": 5,
+      "tool_calls": 10,
+      "tools": {
+        "bash": 4,
+        "read": 3,
+        "write": 3
+      },
+      "edit_precondition_rejections": [],
+      "record_sha256": "298df85b0a0e80d5c9f0b9d37831e7e2c80b0a4e9b3dd98a2671e34e5d34ba03",
+      "events_sha256": "2d021a56e5d5476a5e6918ca041a5d88a540bb6fa1a190de401d32a993bd7a6c"
+    }
+  ],
+  "runtime": "Y Harness",
+  "model": "DeepSeek V4.1 Flash",
+  "measured_compound_version": "0.16.7",
+  "observations": [
+    {
+      "issue": "known-file navigation and scope expansion",
+      "run": "06-refactor-slugs-with-0",
+      "steps": [
+        5,
+        6
+      ],
+      "evidence": "A map query followed reads of both named caller modules and their tests; then four modules outside the slug caller chain were read.",
+      "fix": "Skip known-file queries; label map hits as candidates, omit unmatched text suggestions, and follow task-relevant links only."
+    },
+    {
+      "issue": "behavior unification caused a repair",
+      "run": "06-refactor-slugs-with-0",
+      "steps": [
+        7,
+        12,
+        13
+      ],
+      "evidence": "The agent observed differing caller outputs, changed facet semantics, then narrowed differential inputs. Both modes required a semantic repair: 10 recorded requests with Compound, 5 without.",
+      "fix": "Pin observed caller differences before editing; caller-specific parameters preserve requirements. Do not narrow failing comparisons."
+    },
+    {
+      "issue": "verification overlap",
+      "run": "10-refactor-money-with-0",
+      "steps": [
+        1,
+        2,
+        4,
+        5,
+        6
+      ],
+      "evidence": "Baseline suite and standalone probe, helper tests, final suite, repeated probe and randomized comparison all ran. Coverage equivalence was not scored, so none is automatically deducted as waste.",
+      "fix": "Use the same public-caller assertions before and after; require a named coverage gap for extra probes or helper tests."
+    },
+    {
+      "issue": "rejected edits",
+      "evidence": "Three Compound edit attempts and one control edit were refused for missing or stale read receipts. These are tool rejections, not proven removable model requests.",
+      "fix": "Satisfy host read/edit prerequisites and consolidate same-file edits."
+    },
+    {
+      "issue": "environment setup, excluded from prompt attribution",
+      "evidence": "Both modes attempted an initial commit without configured author identity. The subsequent identity setup remains included in recorded work.",
+      "fix": "Do not invent an author or claim these requests are caused by Compound. Keep this setup limitation in the audit."
+    }
+  ],
+  "limits": "Saved events establish past work, not the behavior or total cost of the new prompts. The full workflow still has missing provider costs. No bill or model-request total has been reduced by subtracting flagged events.",
+  "prompt_context": {
+    "routing_before_bytes": 731,
+    "routing_after_bytes": 747,
+    "routing_before_words": 100,
+    "routing_after_words": 98,
+    "discovery_descriptions_changed": false,
+    "scope": "Prompt size only; not tokenized in a host and not a cost-savings claim."
+  }
+}

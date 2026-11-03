@@ -122,7 +122,8 @@ VARIANTS = {
          "\"<task terms>\" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; "
          "missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.\n",
          "Read the project's instructions.\n", "optional"),
-        ("skills/compound/SKILL.md", "See [code maps](references/map.md) for coverage and limits. ", ""),
+        ("skills/compound/SKILL.md", "See [code maps](references/map.md) for coverage and limits. ", "", "optional"),
+        ("skills/compound/SKILL.md", "Map results are navigation candidates, not a reading checklist. Follow only task-relevant links; use [code maps](references/map.md) for limits. ", "", "optional"),
         ("skills/compound/SKILL.md",
          "Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, "
          "so one permission rule can allow it; read references with your file-reading tool, not the shell. ",
