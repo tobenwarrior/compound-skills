@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1106" viewBox="0 0 1040 1106" role="img" aria-labelledby="title desc">
-  <title id="title">12 real bugs: stock, a plain rule and Compound</title>
-  <desc id="desc">12 real bugs: stock, a plain rule and Compound. Flask, click, attrs, packaging and marshmallow at the commit before each upstream fix, with the fix's own tests hidden; the report describes only the symptom. 2 runs per bug, arm and model; Compound Skills 0.16.0 ran just after stock and the rule, on the same tasks. Fixed the bug (upstream's tests pass): Opus stock 20 of 24, Opus plain rule 20 of 24, Opus Compound 20 of 24, Sonnet stock 19 of 24, Sonnet plain rule 18 of 24, Sonnet Compound 18 of 24. Left a test that fails on the buggy code: Opus stock 23 of 24, Opus plain rule 22 of 24, Opus Compound 23 of 24, Sonnet stock 22 of 24, Sonnet plain rule 21 of 24, Sonnet Compound 24 of 24. Reproduced the bug before changing code: Opus stock 2 of 24, Opus plain rule 24 of 24, Opus Compound 24 of 24, Sonnet stock 0 of 24, Sonnet plain rule 21 of 24, Sonnet Compound 24 of 24. Showed a new test failing before the fix: Opus stock 1 of 24, Opus plain rule 24 of 24, Opus Compound 24 of 24, Sonnet stock 0 of 24, Sonnet plain rule 18 of 24, Sonnet Compound 24 of 24. Ran the whole suite on the final code: Opus stock 18 of 24, Opus plain rule 23 of 24, Opus Compound 22 of 24, Sonnet stock 10 of 24, Sonnet plain rule 24 of 24, Sonnet Compound 24 of 24. Committed without an AI co-author line: Opus stock 0 of 24, Opus plain rule 0 of 24, Opus Compound 24 of 24, Sonnet stock 0 of 24, Sonnet plain rule 0 of 24, Sonnet Compound 24 of 24. Median cost of a fix: Opus stock 21¢, Opus plain rule 25¢, Opus Compound 20¢, Sonnet stock 7.0¢, Sonnet plain rule 7.8¢, Sonnet Compound 7.7¢. Cost against stock, bug by bug: Opus stock 1×, Opus plain rule 1.23×, Opus Compound 1.09×, Sonnet stock 1×, Sonnet plain rule 1.09×, Sonnet Compound 1.14×. The plain rule is a five-sentence user rule asking for the habits scored here. Stock and the rule kept Claude Code's default co-author line; its attribution setting can remove it without a plugin. The multiples compare each bug's runs with stock's, with the bugs weighted equally, so they can differ from the medians.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="1012" viewBox="0 0 1040 1012" role="img" aria-labelledby="title desc">
+  <title id="title">Bug fixes: evidence before source edits</title>
+  <desc id="desc">Compound 0.16.0 · 12 upstream bugs · 24 runs per mode and model · Claude Code. Hidden upstream fix tests pass · higher is better: Claude Opus 5.5 without 20, with 20/24; Claude Sonnet 5.5 without 19, with 18/24. New test shown failing before fix · higher is better: Claude Opus 5.5 without 1, with 24/24; Claude Sonnet 5.5 without 0, with 24/24. Whole suite run on final code · higher is better: Claude Opus 5.5 without 18, with 22/24; Claude Sonnet 5.5 without 10, with 24/24. Task-weighted API cost · lower is better: Claude Opus 5.5 without 1, with 1.09×; Claude Sonnet 5.5 without 1, with 1.14×. Cost ratios compare matched tasks with tasks weighted equally. Without Compound = 1×. Verification improved much more than fix success. Later prompt changes are not measured here.</desc>
   <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
   <defs>
     <linearGradient id="theme-wash" x2="1" y2="1">
@@ -9,169 +9,93 @@
       <stop offset="1" stop-color="#e5f3e9" />
     </linearGradient>
   </defs>
-  <rect x="0" y="0" width="1040" height="1106" rx="28" fill="url(#theme-wash)" />
+  <rect x="0" y="0" width="1040" height="1012" rx="28" fill="url(#theme-wash)" />
   <g fill="#14161c">
-    <rect x="24" y="24" width="992" height="157" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
-    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  Historical · Compound 0.16.0</text>
-    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">12 real bugs: stock, a plain rule and Compound</text>
-    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Flask, click, attrs, packaging and marshmallow at the commit before each upstream fix, with the fix's own tests</text>
-    <text x="52" y="150" font-size="14" font-weight="400" fill="#6b6f78">hidden; the report describes only the symptom. 2 runs per bug, arm and model; Compound Skills 0.16.0 ran just</text>
-    <text x="52" y="172" font-size="14" font-weight="400" fill="#6b6f78">after stock and the rule, on the same tasks.</text>
-    <rect x="24" y="201" width="992" height="873.4526315789474" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
-    <g transform="translate(48 80.642) scale(1.242105)">
-      <rect x="419.0" y="125.0" width="74.0" height="562.0" rx="8" fill="#e5f3e9" fill-opacity="0.55" />
-      <rect x="659.0" y="125.0" width="74.0" height="562.0" rx="8" fill="#e5f3e9" fill-opacity="0.55" />
-      <line x1="496.0" y1="129.0" x2="496.0" y2="683.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="376.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Claude Opus 5.5</text>
-      <line x1="264.0" y1="147.0" x2="488.0" y2="147.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="616.0" y="139.0" font-size="13.5" font-weight="600" text-anchor="middle">Claude Sonnet 5.5</text>
-      <line x1="504.0" y1="147.0" x2="728.0" y2="147.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="296.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Stock</text>
-      <text x="376.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Plain</text>
-      <text x="376.0" y="181.0" font-size="13" font-weight="600" text-anchor="middle">rule</text>
-      <text x="456.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle" fill="#147a43">Compound</text>
-      <text x="536.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Stock</text>
-      <text x="616.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle">Plain</text>
-      <text x="616.0" y="181.0" font-size="13" font-weight="600" text-anchor="middle">rule</text>
-      <text x="696.0" y="165.0" font-size="13" font-weight="600" text-anchor="middle" fill="#147a43">Compound</text>
-      <text x="24.0" y="225.0" font-size="11.5" font-weight="600" fill="#6b6f78">OUTCOMES</text>
-      <line x1="24.0" y1="231.0" x2="736.0" y2="231.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="24.0" y="261.0" font-size="13.5">Fixed the bug (upstream's</text>
-      <text x="24.0" y="279.0" font-size="13.5">tests pass)</text>
-      <rect x="266.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="266.0" y="266.0" width="50.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="296.0" y="260.0" font-size="12.5" text-anchor="middle">20/24</text>
-      <rect x="346.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="346.0" y="266.0" width="50.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="376.0" y="260.0" font-size="12.5" text-anchor="middle">20/24</text>
-      <rect x="426.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="266.0" width="50.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="260.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">20/24</text>
-      <rect x="506.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="506.0" y="266.0" width="47.5" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="536.0" y="260.0" font-size="12.5" text-anchor="middle">19/24</text>
-      <rect x="586.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="586.0" y="266.0" width="45.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="616.0" y="260.0" font-size="12.5" text-anchor="middle">18/24</text>
-      <rect x="666.0" y="266.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="266.0" width="45.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="260.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">18/24</text>
-      <text x="24.0" y="309.0" font-size="13.5">Left a test that fails on the</text>
-      <text x="24.0" y="327.0" font-size="13.5">buggy code</text>
-      <rect x="266.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="266.0" y="314.0" width="57.5" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="296.0" y="308.0" font-size="12.5" text-anchor="middle">23/24</text>
-      <rect x="346.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="346.0" y="314.0" width="55.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="376.0" y="308.0" font-size="12.5" text-anchor="middle">22/24</text>
-      <rect x="426.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="314.0" width="57.5" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="308.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">23/24</text>
-      <rect x="506.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="506.0" y="314.0" width="55.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="536.0" y="308.0" font-size="12.5" text-anchor="middle">22/24</text>
-      <rect x="586.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="586.0" y="314.0" width="52.5" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="616.0" y="308.0" font-size="12.5" text-anchor="middle">21/24</text>
-      <rect x="666.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="314.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="308.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <text x="24.0" y="361.0" font-size="11.5" font-weight="600" fill="#6b6f78">HABITS</text>
-      <line x1="24.0" y1="367.0" x2="736.0" y2="367.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="24.0" y="397.0" font-size="13.5">Reproduced the bug before</text>
-      <text x="24.0" y="415.0" font-size="13.5">changing code</text>
-      <rect x="266.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="266.0" y="402.0" width="10.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="296.0" y="396.0" font-size="12.5" text-anchor="middle">2/24</text>
-      <rect x="346.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="346.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="376.0" y="396.0" font-size="12.5" text-anchor="middle">24/24</text>
-      <rect x="426.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="396.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <rect x="506.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="536.0" y="396.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="586.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="586.0" y="402.0" width="52.5" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="616.0" y="396.0" font-size="12.5" text-anchor="middle">21/24</text>
-      <rect x="666.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="402.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="396.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <text x="24.0" y="445.0" font-size="13.5">Showed a new test failing</text>
-      <text x="24.0" y="463.0" font-size="13.5">before the fix</text>
-      <rect x="266.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="266.0" y="450.0" width="10.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="296.0" y="444.0" font-size="12.5" text-anchor="middle">1/24</text>
-      <rect x="346.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="346.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="376.0" y="444.0" font-size="12.5" text-anchor="middle">24/24</text>
-      <rect x="426.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="444.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <rect x="506.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="536.0" y="444.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="586.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="586.0" y="450.0" width="45.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="616.0" y="444.0" font-size="12.5" text-anchor="middle">18/24</text>
-      <rect x="666.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="450.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="444.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <text x="24.0" y="493.0" font-size="13.5">Ran the whole suite on the</text>
-      <text x="24.0" y="511.0" font-size="13.5">final code</text>
-      <rect x="266.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="266.0" y="498.0" width="45.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="296.0" y="492.0" font-size="12.5" text-anchor="middle">18/24</text>
-      <rect x="346.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="346.0" y="498.0" width="57.5" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="376.0" y="492.0" font-size="12.5" text-anchor="middle">23/24</text>
-      <rect x="426.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="498.0" width="55.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="492.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">22/24</text>
-      <rect x="506.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="506.0" y="498.0" width="25.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="536.0" y="492.0" font-size="12.5" text-anchor="middle">10/24</text>
-      <rect x="586.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="586.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#9a9e95" />
-      <text x="616.0" y="492.0" font-size="12.5" text-anchor="middle">24/24</text>
-      <rect x="666.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="498.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="492.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <text x="24.0" y="541.0" font-size="13.5">Committed without an AI</text>
-      <text x="24.0" y="559.0" font-size="13.5">co-author line</text>
-      <rect x="266.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="296.0" y="540.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="346.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="376.0" y="540.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="426.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="426.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="456.0" y="540.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <rect x="506.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="536.0" y="540.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="586.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <text x="616.0" y="540.0" font-size="12.5" text-anchor="middle">0/24</text>
-      <rect x="666.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#f7f6f2" />
-      <rect x="666.0" y="546.0" width="60.0" height="10.0" rx="5" fill="#147a43" />
-      <text x="696.0" y="540.0" font-size="12.5" font-weight="600" text-anchor="middle" fill="#147a43">24/24</text>
-      <text x="24.0" y="593.0" font-size="11.5" font-weight="600" fill="#6b6f78">COST AT API LIST PRICES</text>
-      <line x1="24.0" y1="599.0" x2="736.0" y2="599.0" stroke="#ece6d8" stroke-width="1" />
-      <text x="24.0" y="632.0" font-size="13.5">Median cost of a fix</text>
-      <text x="296.0" y="632.0" font-size="14" text-anchor="middle">21¢</text>
-      <text x="376.0" y="632.0" font-size="14" text-anchor="middle">25¢</text>
-      <text x="456.0" y="632.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">20¢</text>
-      <text x="536.0" y="632.0" font-size="14" text-anchor="middle">7.0¢</text>
-      <text x="616.0" y="632.0" font-size="14" text-anchor="middle">7.8¢</text>
-      <text x="696.0" y="632.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">7.7¢</text>
-      <text x="24.0" y="668.0" font-size="13.5">Cost against stock, bug by bug</text>
-      <text x="296.0" y="668.0" font-size="14" text-anchor="middle">1×</text>
-      <text x="376.0" y="668.0" font-size="14" text-anchor="middle">1.23×</text>
-      <text x="456.0" y="668.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">1.09×</text>
-      <text x="536.0" y="668.0" font-size="14" text-anchor="middle">1×</text>
-      <text x="616.0" y="668.0" font-size="14" text-anchor="middle">1.09×</text>
-      <text x="696.0" y="668.0" font-size="14" font-weight="600" text-anchor="middle" fill="#147a43">1.14×</text>
-      <text x="24.0" y="708.0" font-size="12" fill="#6b6f78">The plain rule is a five-sentence user rule asking for the habits scored here. Stock and the rule kept Claude</text>
-      <text x="24.0" y="725.0" font-size="12" fill="#6b6f78">Code's default co-author line; its attribution setting can remove it without a plugin. The multiples compare</text>
-      <text x="24.0" y="742.0" font-size="12" fill="#6b6f78">each bug's runs with stock's, with the bugs weighted equally, so they can differ from the medians.</text>
-      <text x="24.0" y="766.0" font-size="11.5" fill="#6b6f78">Claude Code 2.1.316 · headless · default effort · 1 Nov 2026</text>
-    </g>
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  WITHOUT / WITH</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Bug fixes: evidence before source edits</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Compound 0.16.0 · 12 upstream bugs · 24 runs per mode and model · Claude Code</text>
+    <rect x="24" y="158" width="992" height="168" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="192" font-size="18" font-weight="700" fill="#14161c">Hidden upstream fix tests pass · higher is better</text>
+    <text x="52" y="222" font-size="14" font-weight="600" fill="#6b6f78">Claude Opus 5.5</text>
+    <text x="52" y="259" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="205" y="241" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="241" width="170.83333333333334" height="24" rx="12" fill="#9a9e95" />
+    <text x="426" y="260" font-size="18" font-weight="700" fill="#14161c">20/24</text>
+    <text x="52" y="297" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="205" y="279" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="279" width="170.83333333333334" height="24" rx="12" fill="#147a43" />
+    <text x="426" y="298" font-size="18" font-weight="700" fill="#147a43">20/24</text>
+    <text x="550" y="222" font-size="14" font-weight="600" fill="#6b6f78">Claude Sonnet 5.5</text>
+    <text x="550" y="259" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="703" y="241" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="241" width="162.29166666666666" height="24" rx="12" fill="#9a9e95" />
+    <text x="924" y="260" font-size="18" font-weight="700" fill="#14161c">19/24</text>
+    <text x="550" y="297" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="703" y="279" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="279" width="153.75" height="24" rx="12" fill="#147a43" />
+    <text x="924" y="298" font-size="18" font-weight="700" fill="#147a43">18/24</text>
+    <rect x="24" y="344" width="992" height="168" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="378" font-size="18" font-weight="700" fill="#14161c">New test shown failing before fix · higher is better</text>
+    <text x="52" y="408" font-size="14" font-weight="600" fill="#6b6f78">Claude Opus 5.5</text>
+    <text x="52" y="445" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="205" y="427" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="427" width="8.541666666666666" height="24" rx="12" fill="#9a9e95" />
+    <text x="426" y="446" font-size="18" font-weight="700" fill="#14161c">1/24</text>
+    <text x="52" y="483" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="205" y="465" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="465" width="205.0" height="24" rx="12" fill="#147a43" />
+    <text x="426" y="484" font-size="18" font-weight="700" fill="#147a43">24/24</text>
+    <text x="550" y="408" font-size="14" font-weight="600" fill="#6b6f78">Claude Sonnet 5.5</text>
+    <text x="550" y="445" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="703" y="427" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="427" width="0.0" height="24" rx="12" fill="#9a9e95" />
+    <text x="924" y="446" font-size="18" font-weight="700" fill="#14161c">0/24</text>
+    <text x="550" y="483" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="703" y="465" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="465" width="205.0" height="24" rx="12" fill="#147a43" />
+    <text x="924" y="484" font-size="18" font-weight="700" fill="#147a43">24/24</text>
+    <rect x="24" y="530" width="992" height="168" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="564" font-size="18" font-weight="700" fill="#14161c">Whole suite run on final code · higher is better</text>
+    <text x="52" y="594" font-size="14" font-weight="600" fill="#6b6f78">Claude Opus 5.5</text>
+    <text x="52" y="631" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="205" y="613" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="613" width="153.75" height="24" rx="12" fill="#9a9e95" />
+    <text x="426" y="632" font-size="18" font-weight="700" fill="#14161c">18/24</text>
+    <text x="52" y="669" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="205" y="651" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="651" width="187.91666666666666" height="24" rx="12" fill="#147a43" />
+    <text x="426" y="670" font-size="18" font-weight="700" fill="#147a43">22/24</text>
+    <text x="550" y="594" font-size="14" font-weight="600" fill="#6b6f78">Claude Sonnet 5.5</text>
+    <text x="550" y="631" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="703" y="613" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="613" width="85.41666666666667" height="24" rx="12" fill="#9a9e95" />
+    <text x="924" y="632" font-size="18" font-weight="700" fill="#14161c">10/24</text>
+    <text x="550" y="669" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="703" y="651" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="651" width="205.0" height="24" rx="12" fill="#147a43" />
+    <text x="924" y="670" font-size="18" font-weight="700" fill="#147a43">24/24</text>
+    <rect x="24" y="716" width="992" height="168" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="750" font-size="18" font-weight="700" fill="#14161c">Task-weighted API cost · lower is better</text>
+    <text x="52" y="780" font-size="14" font-weight="600" fill="#6b6f78">Claude Opus 5.5</text>
+    <text x="52" y="817" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="205" y="799" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="799" width="164.0" height="24" rx="12" fill="#9a9e95" />
+    <text x="426" y="818" font-size="18" font-weight="700" fill="#14161c">1×</text>
+    <text x="52" y="855" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="205" y="837" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="205" y="837" width="178.76000000000002" height="24" rx="12" fill="#147a43" />
+    <text x="426" y="856" font-size="18" font-weight="700" fill="#147a43">1.09×</text>
+    <text x="550" y="780" font-size="14" font-weight="600" fill="#6b6f78">Claude Sonnet 5.5</text>
+    <text x="550" y="817" font-size="13" font-weight="550" fill="#14161c">Without Compound</text>
+    <rect x="703" y="799" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="799" width="164.0" height="24" rx="12" fill="#9a9e95" />
+    <text x="924" y="818" font-size="18" font-weight="700" fill="#14161c">1×</text>
+    <text x="550" y="855" font-size="13" font-weight="550" fill="#14161c">With Compound</text>
+    <rect x="703" y="837" width="205" height="24" rx="12" fill="#f7f6f2" />
+    <rect x="703" y="837" width="186.95999999999998" height="24" rx="12" fill="#147a43" />
+    <text x="924" y="856" font-size="18" font-weight="700" fill="#147a43">1.14×</text>
+    <text x="52" y="926" font-size="14" font-weight="400" fill="#6b6f78">Cost ratios compare matched tasks with tasks weighted equally. Without Compound = 1×.</text>
+    <text x="52" y="955" font-size="14" font-weight="400" fill="#6b6f78">Verification improved much more than fix success. Later prompt changes are not measured here.</text>
   </g>
 </svg>

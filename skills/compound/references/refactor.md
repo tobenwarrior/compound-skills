@@ -6,6 +6,6 @@ Before removing apparently dead code, inspect configuration, generated reference
 
 Apply each cohesive unit in one patch when supported, including imports, helper removal and caller migration; keep dependent checks ordered. Migrate internal API callers and remove obsolete implementations together; respect external compatibility.
 
-Compare behavior against the baseline, including error and boundary cases. Reuse caller tests; add helper tests only for otherwise uncovered behavior. Type checks alone do not establish equivalence. Preserve differing caller behavior through parameters when needed; ask only if no behavior-preserving path exists. Report bugs or new behavior as a scope change.
+Compare caller behavior with the baseline, including errors and boundary cases. Treat unexplained differential mismatches as regressions; never narrow inputs to make equivalence pass. Reuse caller tests; add helper tests only for uncovered behavior. Type checks do not establish equivalence. Parameterize differing callers when needed; ask only if behavior cannot be preserved. Report behavior changes as scope changes.
 
-Once caller comparisons and required project checks pass, finish. Do not temporarily introduce a known-bad implementation or add duplicate helper tests just to reconfirm covered behavior. Additional experiments need a specific unresolved coverage question or an explicit user/project requirement.
+Do not introduce a known-bad implementation or duplicate helper tests just to reconfirm covered behavior. Stop when caller comparisons and required project checks pass.

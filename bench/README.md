@@ -195,3 +195,20 @@ yharness --profile <isolated-profile> --session-id <session-id> --json "<next ta
 Verify the actual model-facing read, search, write, edit and shell tools without a model first. Both modes must see their fixture and required tools while host benchmark plans, graders and opposite-mode states stay unavailable. After each attempt, independently check all tasks completed so far, the original suite on the changed source, the final suite, test removal/weakening and the refactor duplicate-removal requirement. A failing check supplies the same kind of feedback and repair opportunity to either mode. Retain every implementation, repair and provider-recovery attempt.
 
 The [public numeric source](diagram_sources/workflow.json) includes the completed sequence's pins, prompt hashes, attempt grades, request counts, known usage and missing-usage flags. Exact cost fields remain `null` when usage is unreported; recorded amounts are lower bounds. The renderer verifies attempt, stage and sequence totals before drawing. The 3 November continuation follows the original task list and preserves the interrupted conversations; it is recorded separately from the initial plan. Raw transcripts and private runner configuration remain local under ignored `results/`.
+
+## Profile local map queries
+
+The 0.16.8 query implementation reuses one safely opened repository directory for the candidate content reads. The [saved offline profile](diagram_sources/map_query_profile.json) compares 15 identical query/repository pairs over five pinned Python repositories: **9,403 → 2,083 file-open calls**, including **747 → 15 walks from the filesystem root**. All 15 complete ranked-path hashes match. Candidate budgets and content freshness remain unchanged; no source bytes are cached by this optimization.
+
+This removes 480–490 repeated directory opens per query in these source locations, about 78% of open calls in total. Ancestor depth affects the saving. Wall-time medians improved in 9/15 pairs and worsened in 6/15 on the shared macOS host; timings are retained, and no latency multiplier or model-cost saving is claimed. This is an implementation profile, separate from the README's without/with task and retrieval comparisons.
+
+To reproduce without model calls, export the pre-change scripts and run the same profiler against both directories. Use the pinned source revisions in the JSON, the same query strings, and an idle host if interpreting latency:
+
+```sh
+mkdir -p bench/work/query-before
+git archive 97865fbdcd22498d39f8746121154b1b07859879 skills/compound/scripts | tar -x -C bench/work/query-before
+python3 -B bench/profile_map_query.py --repo /path/to/flask --scripts bench/work/query-before/skills/compound/scripts --query "how are requests routed to handlers" --query "configuration load defaults" --query "error handling exceptions"
+python3 -B bench/profile_map_query.py --repo /path/to/flask --query "how are requests routed to handlers" --query "configuration load defaults" --query "error handling exceptions"
+```
+
+The profiler separates index construction and three warmups from the timed ranking loop, reports median/minimum/p95 wall time and median process CPU time, counts opens separately from timing, and hashes all ranked paths. Different hashes invalidate a behavior-preserving speed comparison. It reads source text without executing repository code. Raw source and private traces remain outside the published data.

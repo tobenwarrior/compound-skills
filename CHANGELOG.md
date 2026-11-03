@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.8 (2026-11-03)
+
+- Reuse one pinned repository directory for map-query candidate reads; preserve fresh content, no-follow checks and ranking. Add a keyless local profiler.
+- Clarify refactor guidance for unexplained differential mismatches found in a saved workflow trace. No new model runs were made to validate this guidance.
+- Present the main README comparisons as without/with Compound; retain plain-rule controls, historical versions and internal map measurements in the benchmark methodology.
+
 ## 0.16.7 (2026-11-02)
 
 - Finish refactors once caller comparisons and required project checks pass. Additional mutation or helper experiments need a concrete unresolved coverage question or an explicit user/project requirement; do not temporarily introduce known-bad production code merely to reconfirm behavior already covered by caller assertions. The core completion rule uses the same stopping condition.

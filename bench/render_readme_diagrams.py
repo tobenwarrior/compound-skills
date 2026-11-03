@@ -8,6 +8,7 @@ frame and typography are generated here. Pilot bars are computed from usage data
 from __future__ import annotations
 
 import argparse
+import hashlib
 from decimal import Decimal
 import json
 from pathlib import Path
@@ -355,6 +356,55 @@ def workflows():
     yield 'benchmark-workflow-complete.svg', chart.svg()
 
 
+def comparisons():
+    """Two-arm summaries of saved measurements; retain all historical controls."""
+    data = json.loads((SOURCES / 'comparisons.json').read_text())
+    for item in data['charts']:
+        source = json.loads((SOURCES / 'scenes' / (item['scene'] + '.json')).read_text())
+        observed = hashlib.sha256(source['description'].encode()).hexdigest()
+        if observed != item['source_description_sha256']:
+            raise ValueError('Historical source changed; recheck the two-arm transcription')
+        if 'values' in item:
+            without, with_compound = item['values']
+            desc = (f'Without Compound {without}%, with Compound {with_compound}% of changed source files '
+                    'found in the top four. Same 240 held-out commits. ' + ' '.join(item['notes']))
+            chart = Canvas(560, item['title'], 'WITHOUT / WITH', desc, item['subtitle'])
+            chart.card(24, 158, 992, 245)
+            chart.pair(202, [money(without), money(with_compound)],
+                       [f'{without}%', f'{with_compound}%'], money(100),
+                       label='Changed source files in top 4 · higher is better')
+            for j, line in enumerate(item['notes']):
+                chart.text(52, 442 + j * 31, line, 14, 'muted')
+        else:
+            rows = item['rows']
+            desc = item['subtitle'] + '. '
+            for row in rows:
+                desc += row['label'] + ': ' + '; '.join(
+                    f"{m['name']} without {m['without']}, with {m['with_compound']}{row['unit']}"
+                    for m in row['models']) + '. '
+            desc += ' '.join(item['notes'])
+            chart = Canvas(158 + 186 * len(rows) + 110, item['title'], 'WITHOUT / WITH', desc, item['subtitle'])
+            for i, row in enumerate(rows):
+                y = 158 + i * 186
+                chart.card(24, y, 992, 168)
+                chart.text(52, y + 34, row['label'], 18, weight=700)
+                for x, model in zip([52, 550], row['models']):
+                    chart.text(x, y + 64, model['name'], 14, 'muted', 600)
+                    for j, (key, label, color) in enumerate([
+                            ('without', 'Without Compound', 'baseline'),
+                            ('with_compound', 'With Compound', 'green')]):
+                        ry = y + 83 + j * 38
+                        chart.text(x, ry + 18, label, 13, weight=550)
+                        chart.rect(x + 153, ry, 205, 24, 'background_secondary', 12)
+                        value = model[key]
+                        chart.rect(x + 153, ry, 205 * value / row['maximum'], 24, color, 12)
+                        chart.text(x + 374, ry + 19, f"{value:g}{row['unit']}", 18,
+                                   'ink' if j == 0 else 'green', 700)
+            for j, line in enumerate(item['notes']):
+                chart.text(52, 158 + 186 * len(rows) + 24 + j * 29, line, 14, 'muted')
+        yield item['asset'], chart.svg()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Fail if checked-in SVGs differ from their sources')
@@ -363,6 +413,9 @@ def main():
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
     outputs.update(workflows())
+    outputs.update(comparisons())
+    for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
+        outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
     stale = []
     for name, svg in outputs.items():
         ET.fromstring(svg)

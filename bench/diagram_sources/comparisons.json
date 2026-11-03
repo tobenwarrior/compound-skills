@@ -1,0 +1,183 @@
+{
+  "scope": "Saved historical measurements only. Stock is labeled Without Compound; with is the shipped Compound arm. Plain-rule and other controls remain in the historical methodology. No new model runs.",
+  "charts": [
+    {
+      "asset": "benchmark-heldout.svg",
+      "scene": "benchmark-heldout",
+      "title": "Refactors: preserve every caller",
+      "subtitle": "Compound 0.16.0 \u00b7 3 held-out tasks \u00b7 15 runs per mode and model \u00b7 Claude Code",
+      "rows": [
+        {
+          "label": "Completed correctly \u00b7 higher is better",
+          "unit": "/15",
+          "maximum": 15,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 10,
+              "with_compound": 15
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 10,
+              "with_compound": 15
+            }
+          ]
+        },
+        {
+          "label": "Tests catch the naive merge \u00b7 higher is better",
+          "unit": "/15",
+          "maximum": 15,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 3,
+              "with_compound": 15
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 0,
+              "with_compound": 13
+            }
+          ]
+        },
+        {
+          "label": "Planted wrong refactors caught \u00b7 higher is better",
+          "unit": "/45",
+          "maximum": 45,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 6,
+              "with_compound": 45
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 0,
+              "with_compound": 45
+            }
+          ]
+        },
+        {
+          "label": "Median API cost \u00b7 lower is better",
+          "unit": "\u00a2",
+          "maximum": 28,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 15,
+              "with_compound": 25
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 6.2,
+              "with_compound": 11
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "Task-weighted API cost: 1.64\u00d7 without Compound\u2019s cost, with each model.",
+        "All control failures came from one task. Earlier model/version; no universal savings claim."
+      ],
+      "source_description_sha256": "06a263068e8d58f4f74b46acef02d834192cc7c7a4ca80a2cbc812ae7e004757"
+    },
+    {
+      "asset": "benchmark-real16.svg",
+      "scene": "benchmark-real16",
+      "title": "Bug fixes: evidence before source edits",
+      "subtitle": "Compound 0.16.0 \u00b7 12 upstream bugs \u00b7 24 runs per mode and model \u00b7 Claude Code",
+      "rows": [
+        {
+          "label": "Hidden upstream fix tests pass \u00b7 higher is better",
+          "unit": "/24",
+          "maximum": 24,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 20,
+              "with_compound": 20
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 19,
+              "with_compound": 18
+            }
+          ]
+        },
+        {
+          "label": "New test shown failing before fix \u00b7 higher is better",
+          "unit": "/24",
+          "maximum": 24,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 1,
+              "with_compound": 24
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 0,
+              "with_compound": 24
+            }
+          ]
+        },
+        {
+          "label": "Whole suite run on final code \u00b7 higher is better",
+          "unit": "/24",
+          "maximum": 24,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 18,
+              "with_compound": 22
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 10,
+              "with_compound": 24
+            }
+          ]
+        },
+        {
+          "label": "Task-weighted API cost \u00b7 lower is better",
+          "unit": "\u00d7",
+          "maximum": 1.25,
+          "models": [
+            {
+              "name": "Claude Opus 5.5",
+              "without": 1,
+              "with_compound": 1.09
+            },
+            {
+              "name": "Claude Sonnet 5.5",
+              "without": 1,
+              "with_compound": 1.14
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "Cost ratios compare matched tasks with tasks weighted equally. Without Compound = 1\u00d7.",
+        "Verification improved much more than fix success. Later prompt changes are not measured here."
+      ],
+      "source_description_sha256": "dc5d25dac71fdb516d50a1112383a1a40a13c2d3b8f568c0f9c5a39976f332c6"
+    },
+    {
+      "asset": "map-retrieval.svg",
+      "scene": "map-retrieval",
+      "title": "Find relevant source files",
+      "subtitle": "240 held-out commits \u00b7 Flask, Click, Hono and Gin \u00b7 same title and parent snapshot",
+      "values": [
+        67,
+        74
+      ],
+      "notes": [
+        "Without: word search skips common words and lists tests last. With: Compound map ranking.",
+        "Top-four changed-source-file recall \u00b7 7 percentage points higher \u00b7 not task speed or model cost.",
+        "Compound 0.13.0 ranking \u00b7 no history/co-change signal \u00b7 modest gains on Click and Gin."
+      ],
+      "source_description_sha256": "ba4522e63c4e3237ef5dd78545f921d90a1d14afee5927274f6683769cf03146"
+    }
+  ]
+}

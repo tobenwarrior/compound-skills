@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import ast
 import datetime as dt
 import functools
@@ -21,18 +22,18 @@ import tempfile
 import time
 import urllib.parse
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Callable
 try:
     from .onboarding import _reject_symlink, _state_paths
     from .workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from .language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
-    from .safe_open import open_regular_nofollow
+    from .safe_open import open_regular_nofollow, open_regular_files_nofollow
     from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink, _state_paths
     from workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
     from language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
-    from safe_open import open_regular_nofollow
+    from safe_open import open_regular_nofollow, open_regular_files_nofollow
     from language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 
 DEFAULT_MAX_CHARS = 2500
@@ -1023,13 +1024,13 @@ def _is_test(path: str) -> bool:
     return any(part in TEST_DIRS or part.endswith(("-tests", "_tests")) for part in parts[:-1]) or bool(TEST_FILE.search(parts[-1]))
 
 
-def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str], terms: set[str]) -> tuple[set[str], int]:
+def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str], terms: set[str], opener: Callable[[str], int] | None = None) -> tuple[set[str], int]:
     """Return which ``terms`` occur in the first ``limit`` bytes of an indexed file, and the bytes read.
 
     ``finder`` keeps the identifiers that can fold to a term, so other words are never split or folded.
     """
     try:
-        with os.fdopen(_open_source(root, relative), "rb") as source:
+        with os.fdopen(opener(relative) if opener else _open_source(root, relative), "rb") as source:
             if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
                 return set(), 0
             data = source.read(limit)
@@ -1104,11 +1105,18 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None) -
     # without its final i's.
     finder = re.compile("|".join(sorted({re.escape(term.rstrip("i") or term) for term in terms})), re.IGNORECASE)
     head, budget, wanted, rescored = order[:CONTENT_RANK_FILES], CONTENT_RANK_BYTES, set(terms), {}
-    for record in head:
-        found, used = _content_terms(root, record["path"], min(MAX_FILE_BYTES, budget), finder, wanted) if budget > 0 else (set(), 0)
-        budget -= used
-        content = sum(weight for term, weight in weights.items() if term in found)
-        rescored[record["path"]] = score(record["path"], matched[record["path"]] + CONTENT_WEIGHT * content)
+    with contextlib.ExitStack() as stack:
+        opener = None
+        if os.name == "posix" and hasattr(os, "O_NOFOLLOW") and os.open in getattr(os, "supports_dir_fd", ()):
+            try:
+                opener = stack.enter_context(open_regular_files_nofollow(root))
+            except OSError:
+                return order
+        for record in head:
+            found, used = _content_terms(root, record["path"], min(MAX_FILE_BYTES, budget), finder, wanted, opener) if budget > 0 else (set(), 0)
+            budget -= used
+            content = sum(weight for term, weight in weights.items() if term in found)
+            rescored[record["path"]] = score(record["path"], matched[record["path"]] + CONTENT_WEIGHT * content)
     head.sort(key=lambda record: (-rescored[record["path"]], not _entry_config(record["path"]), record["path"]))
     return head + order[CONTENT_RANK_FILES:]
 def _note(notes: list[str], value: str) -> None:

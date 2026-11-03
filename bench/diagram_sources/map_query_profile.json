@@ -1,0 +1,437 @@
+{
+  "scope": "Keyless local in-process ranking only; same source snapshots and query strings before/after. No models, source execution or cache writes. This is not a without/with agent-cost benchmark.",
+  "environment": "macOS arm64, Python 3.14.5, shared host; 31 measured iterations after 3 warmups per query. Timing is noisy and mixed: 9 of 15 median wall times decrease; no latency speedup claimed.",
+  "before_revision": "97865fbdcd22498d39f8746121154b1b07859879",
+  "comparison": [
+    {
+      "before": {
+        "repository": "flask",
+        "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+        "files": 125,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "b18aa59176542fd46da8e3643a28c8d4d56750f1c1278b69742acc511973a7c9",
+          "safe_open.py": "ed4dedf6b1f2c838a6f17a78450d7f142bf7940a8685699ece40ccf5ebc2688d"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 57.41458298871294,
+            "min_ms": 33.80616701906547,
+            "p95_ms": 175.91829202137887,
+            "result_sha256": "fd4df335eb8383e23248ba9f8d71c0ea2790c9f864dac593d5a19ede38f23591",
+            "open_calls": 650,
+            "root_walks": 50
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 61.13320804433897,
+            "min_ms": 35.43320903554559,
+            "p95_ms": 184.45649999193847,
+            "result_sha256": "8e604e06bb991540d0508d7a1f59ea0eceb638d4a86010586df4e206f4f6ae69",
+            "open_calls": 651,
+            "root_walks": 50
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 71.04158401489258,
+            "min_ms": 29.622208967339247,
+            "p95_ms": 327.75745796971023,
+            "result_sha256": "9d418073bc7d62645e99666952005a9aadedeb41eab5171d8cc91e8e676d49bd",
+            "open_calls": 648,
+            "root_walks": 50
+          }
+        ]
+      },
+      "after": {
+        "repository": "flask",
+        "revision": "49943b5a94413a530761350f04e896f76e8d620e",
+        "files": 125,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "da464442aa0ff0acfff51e4bc1356a2de9c743c386579cddcd9c3eff66dc705f",
+          "safe_open.py": "e6b801de54c91656d561ae18b40eb4e8be42e1583cf531629709039e53f82977"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 40.60120804933831,
+            "min_ms": 21.236083994153887,
+            "p95_ms": 194.3547079572454,
+            "result_sha256": "fd4df335eb8383e23248ba9f8d71c0ea2790c9f864dac593d5a19ede38f23591",
+            "open_calls": 160,
+            "root_walks": 1
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 37.161750020459294,
+            "min_ms": 25.906625029165298,
+            "p95_ms": 59.91674994584173,
+            "result_sha256": "8e604e06bb991540d0508d7a1f59ea0eceb638d4a86010586df4e206f4f6ae69",
+            "open_calls": 161,
+            "root_walks": 1
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 40.13104195473716,
+            "min_ms": 25.460834032855928,
+            "p95_ms": 185.70858403109014,
+            "result_sha256": "9d418073bc7d62645e99666952005a9aadedeb41eab5171d8cc91e8e676d49bd",
+            "open_calls": 158,
+            "root_walks": 1
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "repository": "click",
+        "revision": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+        "files": 114,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "b18aa59176542fd46da8e3643a28c8d4d56750f1c1278b69742acc511973a7c9",
+          "safe_open.py": "ed4dedf6b1f2c838a6f17a78450d7f142bf7940a8685699ece40ccf5ebc2688d"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 112.38012503599748,
+            "min_ms": 49.48995797894895,
+            "p95_ms": 968.2187500293367,
+            "result_sha256": "07483d61dff1367f62dcdabab7e0fd99d675ccacbb9971dcb0e2a92d0fd0af24",
+            "open_calls": 638,
+            "root_walks": 50
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 183.2240839721635,
+            "min_ms": 46.445832995232195,
+            "p95_ms": 887.6584999961779,
+            "result_sha256": "61ce23c82e9000479cab4ae749604fa66532101c5b7c8d619b478de13af7c0e3",
+            "open_calls": 635,
+            "root_walks": 50
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 448.8009170163423,
+            "min_ms": 81.25479205045849,
+            "p95_ms": 1007.2569170151837,
+            "result_sha256": "77d40d436bd70f479ec0e65d4f346564150b4fc2da81050b5f83ad9b4204af95",
+            "open_calls": 636,
+            "root_walks": 50
+          }
+        ]
+      },
+      "after": {
+        "repository": "click",
+        "revision": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+        "files": 114,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "da464442aa0ff0acfff51e4bc1356a2de9c743c386579cddcd9c3eff66dc705f",
+          "safe_open.py": "e6b801de54c91656d561ae18b40eb4e8be42e1583cf531629709039e53f82977"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 286.37404198525473,
+            "min_ms": 50.43041700264439,
+            "p95_ms": 624.8618339886889,
+            "result_sha256": "07483d61dff1367f62dcdabab7e0fd99d675ccacbb9971dcb0e2a92d0fd0af24",
+            "open_calls": 148,
+            "root_walks": 1
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 226.02412500418723,
+            "min_ms": 45.30075000366196,
+            "p95_ms": 609.6792499884032,
+            "result_sha256": "61ce23c82e9000479cab4ae749604fa66532101c5b7c8d619b478de13af7c0e3",
+            "open_calls": 145,
+            "root_walks": 1
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 91.19312500115484,
+            "min_ms": 41.115749976597726,
+            "p95_ms": 482.0062920334749,
+            "result_sha256": "77d40d436bd70f479ec0e65d4f346564150b4fc2da81050b5f83ad9b4204af95",
+            "open_calls": 146,
+            "root_walks": 1
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "repository": "attrs",
+        "revision": "c8bb9bfaa2843e7844b5bb13bed4370b51feec4f",
+        "files": 72,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "b18aa59176542fd46da8e3643a28c8d4d56750f1c1278b69742acc511973a7c9",
+          "safe_open.py": "ed4dedf6b1f2c838a6f17a78450d7f142bf7940a8685699ece40ccf5ebc2688d"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 78.33849999587983,
+            "min_ms": 46.401457977481186,
+            "p95_ms": 613.5918749496341,
+            "result_sha256": "d4db9be26c1733458990ac6774a09f1b507661bf9da3d7891c5dc5534a10e673",
+            "open_calls": 619,
+            "root_walks": 50
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 77.98150001326576,
+            "min_ms": 38.785334036219865,
+            "p95_ms": 291.59708303632215,
+            "result_sha256": "0971fe14902b0f0ae1ffed85906b9f4b18d606f950799774bc77ce84e082f86d",
+            "open_calls": 617,
+            "root_walks": 50
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 113.35841700201854,
+            "min_ms": 48.424042004626244,
+            "p95_ms": 417.58458298863843,
+            "result_sha256": "caef866bad4bf2421b6f7cbb9a1a466ef6b1292880c7339fb5e141bfb5c58a48",
+            "open_calls": 617,
+            "root_walks": 50
+          }
+        ]
+      },
+      "after": {
+        "repository": "attrs",
+        "revision": "c8bb9bfaa2843e7844b5bb13bed4370b51feec4f",
+        "files": 72,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "da464442aa0ff0acfff51e4bc1356a2de9c743c386579cddcd9c3eff66dc705f",
+          "safe_open.py": "e6b801de54c91656d561ae18b40eb4e8be42e1583cf531629709039e53f82977"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 37.919500027783215,
+            "min_ms": 23.323083005379885,
+            "p95_ms": 88.29587500076741,
+            "result_sha256": "d4db9be26c1733458990ac6774a09f1b507661bf9da3d7891c5dc5534a10e673",
+            "open_calls": 129,
+            "root_walks": 1
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 89.21466598985717,
+            "min_ms": 22.335958026815206,
+            "p95_ms": 527.4780000327155,
+            "result_sha256": "0971fe14902b0f0ae1ffed85906b9f4b18d606f950799774bc77ce84e082f86d",
+            "open_calls": 127,
+            "root_walks": 1
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 38.290125026833266,
+            "min_ms": 26.425000047311187,
+            "p95_ms": 213.06249999906868,
+            "result_sha256": "caef866bad4bf2421b6f7cbb9a1a466ef6b1292880c7339fb5e141bfb5c58a48",
+            "open_calls": 127,
+            "root_walks": 1
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "repository": "packaging",
+        "revision": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+        "files": 92,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "b18aa59176542fd46da8e3643a28c8d4d56750f1c1278b69742acc511973a7c9",
+          "safe_open.py": "ed4dedf6b1f2c838a6f17a78450d7f142bf7940a8685699ece40ccf5ebc2688d"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 241.43287498736754,
+            "min_ms": 73.30450002336875,
+            "p95_ms": 502.71770800463855,
+            "result_sha256": "2aa861a7789e6a69140cae21feb66aec634786974dea66224b974e8e9bc03c89",
+            "open_calls": 629,
+            "root_walks": 50
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 286.23500000685453,
+            "min_ms": 66.62170897470787,
+            "p95_ms": 703.2154579646885,
+            "result_sha256": "03df0fdc42055967100822c81329425499cfa6a9cf8552bcae992e150a154282",
+            "open_calls": 627,
+            "root_walks": 50
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 145.72316699195653,
+            "min_ms": 64.27179195452482,
+            "p95_ms": 373.2205830165185,
+            "result_sha256": "3c9e2c06a51d22e20923a6cada6781b7e53fc19ee6ee26108ac41c3e2b30e2d1",
+            "open_calls": 624,
+            "root_walks": 50
+          }
+        ]
+      },
+      "after": {
+        "repository": "packaging",
+        "revision": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+        "files": 92,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "da464442aa0ff0acfff51e4bc1356a2de9c743c386579cddcd9c3eff66dc705f",
+          "safe_open.py": "e6b801de54c91656d561ae18b40eb4e8be42e1583cf531629709039e53f82977"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 105.87270901305601,
+            "min_ms": 55.927707988303155,
+            "p95_ms": 370.1020000153221,
+            "result_sha256": "2aa861a7789e6a69140cae21feb66aec634786974dea66224b974e8e9bc03c89",
+            "open_calls": 139,
+            "root_walks": 1
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 206.28020801814273,
+            "min_ms": 47.69616696285084,
+            "p95_ms": 549.1110000293702,
+            "result_sha256": "03df0fdc42055967100822c81329425499cfa6a9cf8552bcae992e150a154282",
+            "open_calls": 137,
+            "root_walks": 1
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 169.65608298778534,
+            "min_ms": 47.56995796924457,
+            "p95_ms": 690.5737080378458,
+            "result_sha256": "3c9e2c06a51d22e20923a6cada6781b7e53fc19ee6ee26108ac41c3e2b30e2d1",
+            "open_calls": 134,
+            "root_walks": 1
+          }
+        ]
+      }
+    },
+    {
+      "before": {
+        "repository": "marshmallow",
+        "revision": "b762ea2d59ca52fe5df76b90de14bed7e5ec5607",
+        "files": 49,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "b18aa59176542fd46da8e3643a28c8d4d56750f1c1278b69742acc511973a7c9",
+          "safe_open.py": "ed4dedf6b1f2c838a6f17a78450d7f142bf7940a8685699ece40ccf5ebc2688d"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 57.4690829962492,
+            "min_ms": 29.49279098538682,
+            "p95_ms": 164.33820797828957,
+            "result_sha256": "453534479b22c060070bab88c28ef7fc6f12eeff1ed29400b61c779806e6097e",
+            "open_calls": 604,
+            "root_walks": 49
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 61.973583011422306,
+            "min_ms": 34.573416982311755,
+            "p95_ms": 182.19866702565923,
+            "result_sha256": "edb6eedce07b4c7b2ac6c927983e4cb3fe2d6444884fb6f1db689025998eed9d",
+            "open_calls": 604,
+            "root_walks": 49
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 86.53450000565499,
+            "min_ms": 35.58666602475569,
+            "p95_ms": 410.6033749994822,
+            "result_sha256": "15d61c08aaacf347a223f0c2bee3d8207bb3457f1bb13c38bdb226af6b6ff8a6",
+            "open_calls": 604,
+            "root_walks": 49
+          }
+        ]
+      },
+      "after": {
+        "repository": "marshmallow",
+        "revision": "b762ea2d59ca52fe5df76b90de14bed7e5ec5607",
+        "files": 49,
+        "platform": "Darwin arm64",
+        "python": "3.14.5",
+        "repetitions": 31,
+        "warmups": 3,
+        "source_sha256": {
+          "code_map.py": "da464442aa0ff0acfff51e4bc1356a2de9c743c386579cddcd9c3eff66dc705f",
+          "safe_open.py": "e6b801de54c91656d561ae18b40eb4e8be42e1583cf531629709039e53f82977"
+        },
+        "results": [
+          {
+            "query": "how are requests routed to handlers",
+            "median_ms": 127.76066595688462,
+            "min_ms": 22.721082961652428,
+            "p95_ms": 382.38012499641627,
+            "result_sha256": "453534479b22c060070bab88c28ef7fc6f12eeff1ed29400b61c779806e6097e",
+            "open_calls": 124,
+            "root_walks": 1
+          },
+          {
+            "query": "configuration load defaults",
+            "median_ms": 49.85000001033768,
+            "min_ms": 25.51004203269258,
+            "p95_ms": 234.42666698247194,
+            "result_sha256": "edb6eedce07b4c7b2ac6c927983e4cb3fe2d6444884fb6f1db689025998eed9d",
+            "open_calls": 124,
+            "root_walks": 1
+          },
+          {
+            "query": "error handling exceptions",
+            "median_ms": 104.10883300937712,
+            "min_ms": 28.531874995678663,
+            "p95_ms": 376.8719579675235,
+            "result_sha256": "15d61c08aaacf347a223f0c2bee3d8207bb3457f1bb13c38bdb226af6b6ff8a6",
+            "open_calls": 124,
+            "root_walks": 1
+          }
+        ]
+      }
+    }
+  ]
+}
