@@ -1,0 +1,607 @@
+{
+  "scope": "Three consecutive published shopkit refactors, one fresh persistent session per mode; previously used development fixture, not held out.",
+  "compound_commit": "aecb9ebe6fb886ddc4c2bc5b2f2109b432422e1a",
+  "compound_version": "0.16.12",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "reasoning": "high",
+  "output_cap": 8192,
+  "plan_sha256": "35f8edc143138b3e97bffd8ee8b2cada80946b0afcc604b4dbe890dc7335a4e3",
+  "arms": {
+    "without": {
+      "requests": 19,
+      "tool_calls": 28,
+      "attempts": 2,
+      "repairs": 1,
+      "known_costs": {
+        "allowance": "0.01466778",
+        "list_cost": "0.02444634",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.01466778",
+        "list_cost": "0.02444634",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 0,
+      "planned": 3,
+      "source_graded_successes": 1,
+      "unrun_tasks": [
+        "refactor-retry",
+        "refactor-money"
+      ]
+    },
+    "with": {
+      "requests": 23,
+      "tool_calls": 47,
+      "attempts": 3,
+      "repairs": 0,
+      "known_costs": {
+        "allowance": "0.03355838",
+        "list_cost": "0.05593063",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.03355838",
+        "list_cost": "0.05593063",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 2,
+      "planned": 3,
+      "source_graded_successes": 2,
+      "unrun_tasks": []
+    }
+  },
+  "all_attempts": {
+    "requests": 42,
+    "tool_calls": 75,
+    "attempts": 5,
+    "repairs": 1,
+    "known_costs": {
+      "allowance": "0.04822616",
+      "list_cost": "0.08037697",
+      "cost": "0"
+    },
+    "costs": {
+      "allowance": "0.04822616",
+      "list_cost": "0.08037697",
+      "cost": "0"
+    },
+    "complete_usage": true
+  },
+  "equivalent_completed_work": false,
+  "compound_cheaper": false,
+  "allowance_reduction_pct": null,
+  "schema": 1,
+  "date": "2026-11-03",
+  "fixture": "shopkit",
+  "fixture_head": "cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4",
+  "repetitions_per_mode": 1,
+  "billing": "Response-reported OpenCode Go allowance, API list-price usage and cash charges. Every initial, failed and repair attempt is included. Cash charge was zero on the existing subscription; allowance is consumed capacity, not a reduction in subscription price.",
+  "budgets": {
+    "total_max_requests": 80,
+    "per_arm_max_requests": 40,
+    "total_max_allowance_usd": "0.12",
+    "per_arm_max_allowance_usd": "0.06",
+    "max_requests_per_run": 16,
+    "max_requests_per_repair": 8,
+    "max_repairs_per_stage": 1,
+    "max_wall_seconds_per_run": 420,
+    "max_allowance_per_run_usd": "0.04"
+  },
+  "schedule": [
+    {
+      "task": "refactor-slugs",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-slugs",
+      "arm": "with"
+    },
+    {
+      "task": "refactor-retry",
+      "arm": "with"
+    },
+    {
+      "task": "refactor-retry",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-money",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-money",
+      "arm": "with"
+    }
+  ],
+  "limits": [
+    "Previously used development fixture; not held out from prompt development.",
+    "One three-change sequence per mode; no statistical claim about general or long-term cost.",
+    "Provider caches not reset; mode order alternates by task.",
+    "Same source, prompts, workspace path, tools, high reasoning and output cap; separate fresh Linux workspaces and native conversations.",
+    "One identical repair opportunity per task; code and conversation persist. No provider retries, subagents, paid judges or title-model requests.",
+    "Prompt changes were developed using saved traces from this fixture. This is one new sequence per mode, not an independent held-out or long-term test.",
+    "The control source passed its first task after repair, but the final response was blocked by the local eight-request repair cap. The frozen runner stopped that mode and skipped its later tasks. Source-grade successes and native completion are reported separately; no full-workflow savings percentage is calculated.",
+    "Compound completed two tasks and hit the common 8,192-token output cap while reasoning on the third, returning no implementation. The frozen runner does not offer a semantic repair after nonzero exit."
+  ],
+  "correctness": "Cumulative hidden behavior checks, duplicate-helper removal, original suite on changed source, final own suite and original-test preservation. Grading ran in isolated, network-disabled Linux containers.",
+  "session_audit": [
+    {
+      "arm": "without",
+      "rule_present": false,
+      "skills": [],
+      "refactor_guide_loaded": false,
+      "current_guide_content_confirmed": false,
+      "turns": 2,
+      "events": 139
+    },
+    {
+      "arm": "with",
+      "rule_present": true,
+      "skills": [
+        "compound"
+      ],
+      "refactor_guide_loaded": true,
+      "current_guide_content_confirmed": true,
+      "turns": 3,
+      "events": 193
+    }
+  ],
+  "preflights": {
+    "without": {
+      "passed": true,
+      "checks": [
+        "read",
+        "glob",
+        "grep",
+        "write",
+        "read",
+        "edit",
+        "bash"
+      ],
+      "hostControlsAbsent": true,
+      "provider": "SshFileSystem",
+      "subprocess": "SshSubprocessRuntime",
+      "mode": "workspace-write"
+    },
+    "with": {
+      "passed": true,
+      "checks": [
+        "skill",
+        "read",
+        "read",
+        "glob",
+        "grep",
+        "write",
+        "read",
+        "edit",
+        "bash"
+      ],
+      "hostControlsAbsent": true,
+      "provider": "SshFileSystem",
+      "subprocess": "SshSubprocessRuntime",
+      "mode": "workspace-write"
+    }
+  },
+  "source_hashes": {
+    "runner_sha256": "391bb242489d68e78323cff0490f71dc5df303c580c98738eed1ad58c8198dc0",
+    "meter_sha256": "8c1bc1c93f9ca9f2f4f28959105085dec4973588b47ddc5d6f4c1c59cbbad299",
+    "grader_driver_sha256": "2e50c94e4220b14351060fdb81897f81d11367f2bb1f009e6960458d1ed294f1",
+    "preflight_sha256": "3482e2f1cd42281b62a3670be3d59a9dea555139ce33a3596881d82bb6859d80",
+    "profile_hashes": {
+      "without": "70544074d0dd79c1c2e6afc41b9d229f31dd88bd01e97a0ed0c6d6a83ec5ecbe",
+      "with": "89dc7082d4e0d3718db91f31d4c9e8c8495f0a140026824b4ed8e925406e3c41"
+    },
+    "fixture_fingerprints": {
+      "shopkit": "fedad5240cfbdfa4836fc64bec4d3732889eb0a207cbd65be9c2c8db8c8448e4"
+    },
+    "docker_image_id": "sha256:b529c5f2f2f4d903d256b495313ab527256743fd2d2861bf006609eeda95d57b",
+    "instruction_hashes": {
+      "without": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "with": "8c60d9f3b92e1a90cbc33bf2330d47841078f050a520045c52c10624373cb0d3"
+    }
+  },
+  "unknown_usage_requests": 0,
+  "readme_savings_claims_updated": false,
+  "tasks": [
+    {
+      "task": "refactor-slugs",
+      "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+      "without": {
+        "requests": 19,
+        "tool_calls": 28,
+        "attempts": 2,
+        "repairs": 1,
+        "costs": {
+          "allowance": "0.01466778",
+          "list_cost": "0.02444634",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": false,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 11,
+            "tool_calls": 17,
+            "costs": {
+              "allowance": "0.00826734",
+              "list_cost": "0.01377892",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": false,
+            "resumed": false,
+            "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+            "correctness": {
+              "success": false,
+              "checks": {
+                "refactor-slugs": false,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 17
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "2400d4635c31578bec1437a0351ae88581c695f3e1cef2bab5bdb7624f41cbe8",
+              "events.jsonl": "4a00c56886d4e7f6017cac48fda9414db0814846947c9fd57177e8263229bfe2",
+              "requests.jsonl": "c4bc7c2f20ca76320b92c6302bcd9da64384cec038fd6dfb8998858a8ef418df"
+            },
+            "terminal_reasons": [
+              "completed"
+            ],
+            "reasoning_tokens": 4410,
+            "completion_tokens": 7006
+          },
+          {
+            "attempt": 1,
+            "attempt_kind": "semantic_repair",
+            "requests": 8,
+            "tool_calls": 11,
+            "costs": {
+              "allowance": "0.00640044",
+              "list_cost": "0.01066742",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 1,
+            "timed_out": false,
+            "budget_stopped": true,
+            "accepted": false,
+            "resumed": true,
+            "prompt_sha256": "9f24a90ba6f07e4f12f17aa637ebefa7259959c076a1ff12e96c0b7ea44e276e",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 20
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "69658c3481582079e2cfeb4c922af38cbc1436a716013a22371de92dd9b5c338",
+              "events.jsonl": "621f38a75690e451b87408885e828a956879048d447484d496becc7f1515282c",
+              "requests.jsonl": "bd5ef28523c90ce321cdc46f5acaf5e8059efe3eef66c12ac85971de17eee923"
+            },
+            "terminal_reasons": [
+              "error"
+            ],
+            "reasoning_tokens": 4012,
+            "completion_tokens": 5835
+          }
+        ],
+        "status": "not_accepted"
+      },
+      "with": {
+        "requests": 12,
+        "tool_calls": 27,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01353848",
+          "list_cost": "0.02256412",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 12,
+            "tool_calls": 27,
+            "costs": {
+              "allowance": "0.01353848",
+              "list_cost": "0.02256412",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": false,
+            "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 17
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "009f5ee49867ac4f6a1715d82c28552e51d636c9976da9e9c7c6e293d09a95c5",
+              "events.jsonl": "f9764211dcfe5f64b84b6990af6edd39795393ca2e62874d5231c0588ec2ccbc",
+              "requests.jsonl": "62bfa6c7419f0018dc97fe32e6021b2943a73fbac98676e08a85c824338c087c"
+            },
+            "terminal_reasons": [
+              "completed"
+            ],
+            "reasoning_tokens": 8170,
+            "completion_tokens": 11812
+          }
+        ],
+        "status": "accepted"
+      }
+    },
+    {
+      "task": "refactor-retry",
+      "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+      "without": {
+        "requests": 0,
+        "tool_calls": 0,
+        "attempts": 0,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0",
+          "list_cost": "0",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": false,
+        "attempts_detail": [],
+        "status": "skipped_previous_incomplete"
+      },
+      "with": {
+        "requests": 9,
+        "tool_calls": 16,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01326879",
+          "list_cost": "0.02211466",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 9,
+            "tool_calls": 16,
+            "costs": {
+              "allowance": "0.01326879",
+              "list_cost": "0.02211466",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 21
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "c1c4bd5219611a5d142575b1b9368ccdbccaea505b779a45442082deed61b1ff",
+              "events.jsonl": "0bec83f613ccdfbe6c9dcd30f8eedaade384434426c6a3a4ca73c6ecbe206cca",
+              "requests.jsonl": "8b55e604c362c32aeef3bf94fd2d5ee76edb353b6107807707d7376f0140e682"
+            },
+            "terminal_reasons": [
+              "completed"
+            ],
+            "reasoning_tokens": 8625,
+            "completion_tokens": 12287
+          }
+        ],
+        "status": "accepted"
+      }
+    },
+    {
+      "task": "refactor-money",
+      "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+      "without": {
+        "requests": 0,
+        "tool_calls": 0,
+        "attempts": 0,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0",
+          "list_cost": "0",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": false,
+        "attempts_detail": [],
+        "status": "skipped_previous_incomplete"
+      },
+      "with": {
+        "requests": 2,
+        "tool_calls": 4,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.00675111",
+          "list_cost": "0.01125185",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": false,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 2,
+            "tool_calls": 4,
+            "costs": {
+              "allowance": "0.00675111",
+              "list_cost": "0.01125185",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 1,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": false,
+            "resumed": true,
+            "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+            "correctness": {
+              "success": false,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true,
+                "refactor-money": true,
+                "refactor-money-duplicates-removed": false
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 21
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "72d83e157c5fdb7a3a1d21eaaab875bf45c458c1dad579c6baa421a0c06a19c2",
+              "events.jsonl": "b54962e605bba53e8f5d036338b95895e34eca6e79f696f6c74bbb374a54c5df",
+              "requests.jsonl": "7fc43c831851a67afdeb82639848c1d395c710104873f229d9790af154707218"
+            },
+            "terminal_reasons": [
+              "max-tokens"
+            ],
+            "reasoning_tokens": 8248,
+            "completion_tokens": 8489
+          }
+        ],
+        "status": "not_accepted"
+      }
+    }
+  ],
+  "observed_work": {
+    "completion_tokens": {
+      "without": 12841,
+      "with": 32588
+    },
+    "edit_precondition_refusals": {
+      "with": 0,
+      "without": 1
+    },
+    "scope": "Observed counts, not a causal cost decomposition or projected savings.",
+    "reasoning_tokens": {
+      "without": 8422,
+      "with": 25043
+    }
+  },
+  "outcome": "incomplete_sequence",
+  "billing_guard_policy": "Complete response-reported Go allowance, API list-price usage and cash charges, including every initial/failed/repair attempt. Usage guards are checked before dispatch; an in-flight final response may cross a dollar guard. No exact comparison with missing usage.",
+  "stopping_policy": "A nonzero task exit ends that mode; semantic repair is offered only after exit 0 and a failed grade. Later tasks in a stopped mode are skipped. The rule is unchanged from the previous comparison.",
+  "skipped_task_accounting": "Skipped tasks dispatch zero requests. Their zero spend is not an estimate of the cost to complete them; complete usage refers only to dispatched requests.",
+  "accounting_scope": "Requests counts provider dispatches. Native steps also include one final request blocked locally before dispatch; it has no provider charge and is not missing billed usage.",
+  "native_steps": {
+    "without": 20,
+    "with": 23
+  },
+  "blocked_before_dispatch": {
+    "without": 1,
+    "with": 0
+  },
+  "local_budget_stop": {
+    "arm": "without",
+    "task": "refactor-slugs",
+    "attempt": 1,
+    "max_requests": 8,
+    "dispatched_requests": 8,
+    "blocked_next_request_before_dispatch": true,
+    "source_grade_passed": true,
+    "native_completion_accepted": false,
+    "exit_code": 1,
+    "displayed_error_code": "TRANSPORT",
+    "cause": "Local frozen request guard, not a provider outage. The repaired source passed but the invocation did not finish; later control tasks were skipped."
+  },
+  "compound_output_limit_stop": {
+    "arm": "with",
+    "task": "refactor-money",
+    "attempt": 0,
+    "request_in_task": 2,
+    "native_reason": "max-tokens",
+    "output_tokens": 8192,
+    "reasoning_tokens": 8192,
+    "allowance": "0.00630899",
+    "list_cost": "0.01051498",
+    "cash_cost": "0",
+    "implementation_returned": false,
+    "source_grade_passed": false,
+    "exit_code": 1,
+    "budget_stopped": false,
+    "timed_out": false
+  }
+}
