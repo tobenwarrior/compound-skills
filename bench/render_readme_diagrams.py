@@ -234,6 +234,127 @@ def pilots():
     yield 'benchmark-pilot-correctness.svg', chart.svg()
 
 
+def load_workflow():
+    data = json.loads((SOURCES / 'workflow.json').read_text())
+    if len(data['sequences']) != 2 or any(len(sequence['stages']) != 3 for sequence in data['sequences']):
+        raise ValueError('Workflow requires two three-change sequences')
+    fields = ['requests', 'tool_calls', 'semantic_repairs', 'transport_resumes', 'unknown_usage_requests']
+    for sequence in data['sequences']:
+        for stage in sequence['stages']:
+            for arm in ['without', 'with']:
+                for field in fields:
+                    if sum(attempt[field] for attempt in stage[arm]['attempts']) != stage[arm][field]:
+                        raise ValueError('Workflow must retain all initial, failed and recovery attempts')
+                if sum(money(attempt['known_allowance_usd']) for attempt in stage[arm]['attempts']) != money(stage[arm]['known_allowance_usd']):
+                    raise ValueError('Workflow attempt costs differ from stage total')
+        for arm in ['without', 'with']:
+            total = sequence['arms'][arm]
+            stages = [stage[arm] for stage in sequence['stages']]
+            for field in fields:
+                if sum(stage[field] for stage in stages) != total[field]:
+                    raise ValueError(f'Workflow {sequence["fixture"]} {arm}: {field} differs')
+            if sum(money(stage['known_allowance_usd']) for stage in stages) != money(total['known_allowance_usd']):
+                raise ValueError('Workflow stage cost totals differ')
+            if not all(stage['accepted'] for stage in stages):
+                raise ValueError('Workflow diagram requires all planned changes accepted')
+    for arm in ['without', 'with']:
+        total = data['arms'][arm]
+        sequences = [sequence['arms'][arm] for sequence in data['sequences']]
+        for field in fields:
+            if sum(sequence[field] for sequence in sequences) != total[field]:
+                raise ValueError(f'Workflow {arm}: {field} differs')
+        if sum(money(sequence['known_allowance_usd']) for sequence in sequences) != money(total['known_allowance_usd']):
+            raise ValueError('Workflow sequence cost totals differ')
+        for item in [total, *sequences]:
+            if (item['allowance_usd'] is None) != (item['unknown_usage_requests'] > 0):
+                raise ValueError('Unknown provider usage must not become a zero or exact total')
+            if item['allowance_usd'] is not None and money(item['allowance_usd']) != money(item['known_allowance_usd']):
+                raise ValueError('Exact and known workflow cost differ')
+        if total['accepted'] != 6:
+            raise ValueError('Workflow requires six accepted changes per mode')
+    if any(arm['unknown_usage_requests'] for arm in data['arms'].values()) and data['overall_savings_claim'] is not None:
+        raise ValueError('Incomplete billing cannot support an exact overall savings claim')
+    return data
+
+
+def workflows():
+    data = load_workflow()
+    bugs = data['sequences'][0]
+    values = [money(bugs['arms'][arm]['allowance_usd']) for arm in ['without', 'with']]
+    saving = (1 - values[1] / values[0]) * 100
+    meta = 'Compound 0.16.7 · DeepSeek V4.1 Flash · Y Harness · 2–3 November 2026'
+    description = (f'Three consecutive fixes on invoicekit, preserving code and conversation history. '
+                   f'Without Compound ${values[0]}, with Compound ${values[1]} Go allowance, '
+                   f'{saving:.1f}% less. Both modes accepted 3/3 changes without repair. '
+                   'One sequence per mode on a previously used synthetic Python fixture; no long-term savings claim.')
+    chart = Canvas(966, f'Three fixes. {saving:.1f}% less allowance.', 'COMPLETED WORKFLOW', description, meta.replace('2–3 November', '2 November'))
+    chart.card(24, 158, 992, 252)
+    chart.pair(197, values, [f'${value:.8f}' for value in values], max(values) * Decimal('1.08'))
+    chart.text(52, 390, 'Refund allocation → leap-year proration → December invoice dates', 16, 'muted')
+    chart.card(24, 430, 992, 318)
+    chart.text(52, 470, 'Cumulative allowance', 22, weight=700)
+    for x, color, label in [(555, 'baseline', 'Without Compound'), (795, 'green', 'With Compound')]:
+        chart.rect(x, 457, 10, 10, color, 5)
+        chart.text(x + 18, 468, label, 15)
+    upper = (max(values) * Decimal('1.15') / Decimal('.001')).to_integral_value(rounding='ROUND_CEILING') * Decimal('.001')
+    for fraction in [Decimal(0), Decimal('.5'), Decimal(1)]:
+        y = 690 - float(fraction) * 170
+        element('line', chart.group, x1=225, x2=930, y1=y, y2=y, stroke=THEME['line'])
+        chart.text(151, y + 5, f'${upper * fraction:.3f}', 14, 'muted')
+    xs = [225, 455, 685, 915]
+    for arm, color in [('without', 'baseline'), ('with', 'green')]:
+        cumulative = [Decimal(0)]
+        for stage in bugs['stages']:
+            cumulative.append(cumulative[-1] + money(stage[arm]['known_allowance_usd']))
+        points = [(x, 690 - float(value / upper) * 170) for x, value in zip(xs, cumulative)]
+        element('polyline', chart.group, points=' '.join(f'{x},{y:.3f}' for x, y in points),
+                fill='none', stroke=THEME[color], stroke_width=3)
+        for x, y in points:
+            element('circle', chart.group, cx=x, cy=f'{y:.3f}', r=5, fill=THEME[color])
+    for x, label in zip([207, 431, 653, 873], ['Start', 'Refund', 'Leap year', 'December']):
+        chart.text(x, 722, label, 14, 'muted')
+    chart.card(24, 768, 992, 130)
+    requests = ' / '.join(str(bugs['arms'][arm]['requests']) for arm in ['without', 'with'])
+    for x, value, label in [(52, '3/3 each', 'changes accepted'), (390, requests, 'model requests · without / with'), (750, '0 / 0', 'repair turns · without / with')]:
+        chart.text(x, 819, value, 30, 'green' if x == 52 else 'ink', 750)
+        chart.text(x, 858, label, 14, 'muted')
+    chart.text(52, 934, 'One sequence per mode · previously used synthetic fixture · provider caches not reset.', 15, 'muted')
+    yield 'benchmark-workflow-bugs.svg', chart.svg()
+
+    arms = [data['arms'][arm] for arm in ['without', 'with']]
+    desc = ('Six changes per mode across two persistent three-change workflows. All final cumulative '
+            'hidden checks and original/final suites pass. Failed attempts, repairs and provider recovery '
+            'requests are included. Some provider responses have unreported usage; no exact overall savings claim.')
+    chart = Canvas(880, 'Six changes completed, including repairs', 'COMPLETED WORKFLOW', desc, meta)
+    chart.card(24, 158, 992, 262)
+    chart.text(52, 200, 'Recorded Go allowance', 22, weight=700)
+    for x, arm, label, color in zip([52, 550], arms, ['Without Compound', 'With Compound'], ['ink', 'green']):
+        chart.text(x, 246, label, 18, weight=600)
+        prefix = '≥ ' if arm['unknown_usage_requests'] else ''
+        chart.text(x, 300, prefix + f"${money(arm['known_allowance_usd']):.8f}", 33, color, 750)
+        caption = f"{arm['unknown_usage_requests']} response with unreported cost" if arm['unknown_usage_requests'] else 'Complete provider usage received'
+        chart.text(x, 338, caption, 15, 'muted')
+    chart.text(52, 386, 'Amounts with ≥ are known minimums. Unreported usage prevents an exact overall cost ratio.', 15, 'muted')
+    chart.card(24, 440, 992, 324)
+    chart.text(52, 483, 'Outcome after all attempts', 21, weight=700)
+    chart.text(615, 482, 'Without Compound', 16, 'muted', 600)
+    chart.text(825, 482, 'With Compound', 16, 'green', 600)
+    rows = [('Changes accepted', '6/6', '6/6'),
+            ('Final hidden checks + original/final suites', 'All pass', 'All pass'),
+            ('Original tests removed or weakened', '0', '0'),
+            ('Semantic repair turns', *(arm['semantic_repairs'] for arm in arms)),
+            ('Provider recovery turns', *(arm['transport_resumes'] for arm in arms)),
+            ('Model requests, including failed attempts', *(arm['requests'] for arm in arms))]
+    for i, (label, before, after) in enumerate(rows):
+        y = 529 + i * 38
+        chart.text(52, y, label, 17)
+        chart.text(650, y, before, 20, weight=650)
+        chart.text(870, y, after, 20, 'green', 650)
+    chart.text(52, 804, 'Two repositories · one sequence per mode/repository · code and conversation persist.', 15, 'muted')
+    chart.text(52, 836, 'Resumed after a provider outage. These runs do not establish universal or long-term savings.', 15, 'muted')
+    yield 'benchmark-workflow-complete.svg', chart.svg()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Fail if checked-in SVGs differ from their sources')
@@ -241,6 +362,7 @@ def main():
     args = parser.parse_args()
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
+    outputs.update(workflows())
     stale = []
     for name, svg in outputs.items():
         ET.fromstring(svg)

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="966" viewBox="0 0 1040 966" role="img" aria-labelledby="title desc">
+  <title id="title">Three fixes. 15.5% less allowance.</title>
+  <desc id="desc">Three consecutive fixes on invoicekit, preserving code and conversation history. Without Compound $0.00810803, with Compound $0.00685117 Go allowance, 15.5% less. Both modes accepted 3/3 changes without repair. One sequence per mode on a previously used synthetic Python fixture; no long-term savings claim.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="966" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  COMPLETED WORKFLOW</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Three fixes. 15.5% less allowance.</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Compound 0.16.7 · DeepSeek V4.1 Flash · Y Harness · 2 November 2026</text>
+    <rect x="24" y="158" width="992" height="252" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="197" font-size="19" font-weight="650" fill="#14161c">Go allowance · lower is better</text>
+    <text x="52" y="257" font-size="17" font-weight="600" fill="#14161c">Without Compound</text>
+    <rect x="286" y="235" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="235" width="472.22222222222223" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="259" font-size="23" font-weight="700" fill="#14161c">$0.00810803</text>
+    <text x="52" y="319" font-size="17" font-weight="600" fill="#14161c">With Compound</text>
+    <rect x="286" y="297" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="297" width="399.0210596436153" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="321" font-size="23" font-weight="700" fill="#147a43">$0.00685117</text>
+    <text x="52" y="390" font-size="16" font-weight="400" fill="#6b6f78">Refund allocation → leap-year proration → December invoice dates</text>
+    <rect x="24" y="430" width="992" height="318" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="470" font-size="22" font-weight="700" fill="#14161c">Cumulative allowance</text>
+    <rect x="555" y="457" width="10" height="10" rx="5" fill="#9a9e95" />
+    <text x="573" y="468" font-size="15" font-weight="400" fill="#14161c">Without Compound</text>
+    <rect x="795" y="457" width="10" height="10" rx="5" fill="#147a43" />
+    <text x="813" y="468" font-size="15" font-weight="400" fill="#14161c">With Compound</text>
+    <line x1="225" x2="930" y1="690.0" y2="690.0" stroke="#ece6d8" />
+    <text x="151" y="695.0" font-size="14" font-weight="400" fill="#6b6f78">$0.000</text>
+    <line x1="225" x2="930" y1="605.0" y2="605.0" stroke="#ece6d8" />
+    <text x="151" y="610.0" font-size="14" font-weight="400" fill="#6b6f78">$0.005</text>
+    <line x1="225" x2="930" y1="520.0" y2="520.0" stroke="#ece6d8" />
+    <text x="151" y="525.0" font-size="14" font-weight="400" fill="#6b6f78">$0.010</text>
+    <polyline points="225,690.000 455,614.804 685,584.702 915,552.163" fill="none" stroke="#9a9e95" stroke-width="3" />
+    <circle cx="225" cy="690.000" r="5" fill="#9a9e95" />
+    <circle cx="455" cy="614.804" r="5" fill="#9a9e95" />
+    <circle cx="685" cy="584.702" r="5" fill="#9a9e95" />
+    <circle cx="915" cy="552.163" r="5" fill="#9a9e95" />
+    <polyline points="225,690.000 455,641.231 685,604.768 915,573.530" fill="none" stroke="#147a43" stroke-width="3" />
+    <circle cx="225" cy="690.000" r="5" fill="#147a43" />
+    <circle cx="455" cy="641.231" r="5" fill="#147a43" />
+    <circle cx="685" cy="604.768" r="5" fill="#147a43" />
+    <circle cx="915" cy="573.530" r="5" fill="#147a43" />
+    <text x="207" y="722" font-size="14" font-weight="400" fill="#6b6f78">Start</text>
+    <text x="431" y="722" font-size="14" font-weight="400" fill="#6b6f78">Refund</text>
+    <text x="653" y="722" font-size="14" font-weight="400" fill="#6b6f78">Leap year</text>
+    <text x="873" y="722" font-size="14" font-weight="400" fill="#6b6f78">December</text>
+    <rect x="24" y="768" width="992" height="130" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="819" font-size="30" font-weight="750" fill="#147a43">3/3 each</text>
+    <text x="52" y="858" font-size="14" font-weight="400" fill="#6b6f78">changes accepted</text>
+    <text x="390" y="819" font-size="30" font-weight="750" fill="#14161c">31 / 32</text>
+    <text x="390" y="858" font-size="14" font-weight="400" fill="#6b6f78">model requests · without / with</text>
+    <text x="750" y="819" font-size="30" font-weight="750" fill="#14161c">0 / 0</text>
+    <text x="750" y="858" font-size="14" font-weight="400" fill="#6b6f78">repair turns · without / with</text>
+    <text x="52" y="934" font-size="15" font-weight="400" fill="#6b6f78">One sequence per mode · previously used synthetic fixture · provider caches not reset.</text>
+  </g>
+</svg>

@@ -1,0 +1,773 @@
+{
+  "schema": 1,
+  "compound_version": "0.16.7",
+  "compound_commit": "a467e56e6075d1951a4ad80bb5b77bcda46cfc1d",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "helper_sha256": "17a1354333c4e3e3074d5d81829c1c4fec5a6a31520afb9e999d6089e1bb118e",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "reasoning": "high",
+  "output_cap": 8192,
+  "dates": [
+    "2026-11-02",
+    "2026-11-03"
+  ],
+  "plan_sha256": "bde5965a1da5d863a9287a8da683f5aadc12466f5b37c3b58e9e5a421b760ef1",
+  "continuation_plan_sha256": "ec74431a969c0b3af64c440f1480cb28f52c0a274ea6d37c9ab2ad6c2d354350",
+  "scope": "Two three-change workflows on previously used synthetic Python fixtures; one sequence per mode/repository; code and native conversation persist; provider caches not reset.",
+  "billing_policy": "Exact totals are null when any provider response has unreported usage. Known amounts include every complete response from initial, failed, repair and transport-recovery attempts. Missing usage is never zero.",
+  "arms": {
+    "without": {
+      "requests": 61,
+      "tool_calls": 92,
+      "semantic_repairs": 1,
+      "transport_resumes": 1,
+      "unknown_usage_requests": 1,
+      "known_allowance_usd": "0.03457468",
+      "allowance_usd": null,
+      "known_list_cost_usd": "0.05762451",
+      "list_cost_usd": null,
+      "known_cash_charge_usd": "0",
+      "cash_charge_usd": null,
+      "accepted": 6,
+      "planned": 6
+    },
+    "with": {
+      "requests": 72,
+      "tool_calls": 116,
+      "semantic_repairs": 1,
+      "transport_resumes": 1,
+      "unknown_usage_requests": 1,
+      "known_allowance_usd": "0.05793600",
+      "allowance_usd": null,
+      "known_list_cost_usd": "0.09655989",
+      "list_cost_usd": null,
+      "known_cash_charge_usd": "0",
+      "cash_charge_usd": null,
+      "accepted": 6,
+      "planned": 6
+    }
+  },
+  "sequences": [
+    {
+      "fixture": "invoicekit",
+      "fixture_head": "48b657495ba0d2b4408d8a306eac00224c50939a",
+      "arms": {
+        "without": {
+          "requests": 31,
+          "tool_calls": 39,
+          "semantic_repairs": 0,
+          "transport_resumes": 0,
+          "unknown_usage_requests": 0,
+          "known_allowance_usd": "0.00810803",
+          "allowance_usd": "0.00810803",
+          "known_list_cost_usd": "0.01351339",
+          "list_cost_usd": "0.01351339",
+          "known_cash_charge_usd": "0",
+          "cash_charge_usd": "0",
+          "accepted": 3,
+          "planned": 3
+        },
+        "with": {
+          "requests": 32,
+          "tool_calls": 41,
+          "semantic_repairs": 0,
+          "transport_resumes": 0,
+          "unknown_usage_requests": 0,
+          "known_allowance_usd": "0.00685117",
+          "allowance_usd": "0.00685117",
+          "known_list_cost_usd": "0.01141854",
+          "list_cost_usd": "0.01141854",
+          "known_cash_charge_usd": "0",
+          "cash_charge_usd": "0",
+          "accepted": 3,
+          "planned": 3
+        }
+      },
+      "stages": [
+        {
+          "task": "bugfix-refund",
+          "prompt_sha256": "2a6ec1b2d3c237c48713970117555d41efa40b929d9bde708af7eb5cf8c3026f",
+          "without": {
+            "requests": 14,
+            "tool_calls": 18,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00442329",
+            "allowance_usd": "0.00442329",
+            "known_list_cost_usd": "0.00737217",
+            "list_cost_usd": "0.00737217",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 44,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 14,
+                "tool_calls": 18,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "fb5840b690a81da1e593686be52ebc28c4ce37520864b9969c1dae2763dfba0d",
+                "known_allowance_usd": "0.00442329",
+                "allowance_usd": "0.00442329",
+                "known_list_cost_usd": "0.00737217",
+                "list_cost_usd": "0.00737217",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 12,
+            "tool_calls": 20,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00286875",
+            "allowance_usd": "0.00286875",
+            "known_list_cost_usd": "0.00478121",
+            "list_cost_usd": "0.00478121",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 44,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 12,
+                "tool_calls": 20,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "5a63482858ab82bb700fa95256b909a046a198935bb3af3ac4b332e5cdba4495",
+                "known_allowance_usd": "0.00286875",
+                "allowance_usd": "0.00286875",
+                "known_list_cost_usd": "0.00478121",
+                "list_cost_usd": "0.00478121",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        },
+        {
+          "task": "bugfix-leap",
+          "prompt_sha256": "8b77844c683f9c698a5d00a156d2d48d3d1825a09afd105d109125a73e027bcc",
+          "without": {
+            "requests": 10,
+            "tool_calls": 12,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00177070",
+            "allowance_usd": "0.00177070",
+            "known_list_cost_usd": "0.00295116",
+            "list_cost_usd": "0.00295116",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true,
+              "bugfix-leap": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 45,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 10,
+                "tool_calls": 12,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "b1ea4cae45e164f5d38adf587e971148391403537cd6eb658a4eca477baafbe5",
+                "known_allowance_usd": "0.00177070",
+                "allowance_usd": "0.00177070",
+                "known_list_cost_usd": "0.00295116",
+                "list_cost_usd": "0.00295116",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 11,
+            "tool_calls": 11,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00214491",
+            "allowance_usd": "0.00214491",
+            "known_list_cost_usd": "0.00357482",
+            "list_cost_usd": "0.00357482",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true,
+              "bugfix-leap": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 45,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 11,
+                "tool_calls": 11,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "ef5b947aed24c49921486324216fce310d7d17550c368325163b4482b450a77e",
+                "known_allowance_usd": "0.00214491",
+                "allowance_usd": "0.00214491",
+                "known_list_cost_usd": "0.00357482",
+                "list_cost_usd": "0.00357482",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        },
+        {
+          "task": "bugfix-december",
+          "prompt_sha256": "9b4aa2adc005e32fa245bfc11ed81b001f0b9c71bdbbcacfdf32c831cddadc46",
+          "without": {
+            "requests": 7,
+            "tool_calls": 9,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00191404",
+            "allowance_usd": "0.00191404",
+            "known_list_cost_usd": "0.00319006",
+            "list_cost_usd": "0.00319006",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true,
+              "bugfix-leap": true,
+              "bugfix-december": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 45,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 7,
+                "tool_calls": 9,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "3880abe583b853f80b362f62ee7007a5b8b93409c01404c582e96c874dba1148",
+                "known_allowance_usd": "0.00191404",
+                "allowance_usd": "0.00191404",
+                "known_list_cost_usd": "0.00319006",
+                "list_cost_usd": "0.00319006",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 9,
+            "tool_calls": 10,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00183751",
+            "allowance_usd": "0.00183751",
+            "known_list_cost_usd": "0.00306251",
+            "list_cost_usd": "0.00306251",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "bugfix-refund": true,
+              "bugfix-leap": true,
+              "bugfix-december": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 45,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 9,
+                "tool_calls": 10,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "6545bda903ea1c49f51d28e32b73260958f4a4b409063eceedb1a51c16490e90",
+                "known_allowance_usd": "0.00183751",
+                "allowance_usd": "0.00183751",
+                "known_list_cost_usd": "0.00306251",
+                "list_cost_usd": "0.00306251",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "shopkit",
+      "fixture_head": "cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4",
+      "arms": {
+        "without": {
+          "requests": 30,
+          "tool_calls": 53,
+          "semantic_repairs": 1,
+          "transport_resumes": 1,
+          "unknown_usage_requests": 1,
+          "known_allowance_usd": "0.02646665",
+          "allowance_usd": null,
+          "known_list_cost_usd": "0.04411112",
+          "list_cost_usd": null,
+          "known_cash_charge_usd": "0",
+          "cash_charge_usd": null,
+          "accepted": 3,
+          "planned": 3
+        },
+        "with": {
+          "requests": 40,
+          "tool_calls": 75,
+          "semantic_repairs": 1,
+          "transport_resumes": 1,
+          "unknown_usage_requests": 1,
+          "known_allowance_usd": "0.05108483",
+          "allowance_usd": null,
+          "known_list_cost_usd": "0.08514135",
+          "list_cost_usd": null,
+          "known_cash_charge_usd": "0",
+          "cash_charge_usd": null,
+          "accepted": 3,
+          "planned": 3
+        }
+      },
+      "stages": [
+        {
+          "task": "refactor-slugs",
+          "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+          "without": {
+            "requests": 16,
+            "tool_calls": 29,
+            "semantic_repairs": 1,
+            "transport_resumes": 1,
+            "unknown_usage_requests": 1,
+            "known_allowance_usd": "0.01058330",
+            "allowance_usd": null,
+            "known_list_cost_usd": "0.01763885",
+            "list_cost_usd": null,
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": null,
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 13,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 3,
+                "tool_calls": 5,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 1,
+                "accepted": false,
+                "checks_pass": false,
+                "record_sha256": "9258718fc00d460acda5553c8d11e5d56659aa9bf6ee6e578bc5903db6f6e4b6",
+                "known_allowance_usd": "0.00033832",
+                "allowance_usd": null,
+                "known_list_cost_usd": "0.00056386",
+                "list_cost_usd": null,
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": null
+              },
+              {
+                "kind": "transport_resume",
+                "requests": 8,
+                "tool_calls": 15,
+                "semantic_repairs": 0,
+                "transport_resumes": 1,
+                "unknown_usage_requests": 0,
+                "accepted": false,
+                "checks_pass": false,
+                "record_sha256": "cf2b0f9d2ab1e2fc87014b550c70b87acca13d3420ab2bfa925297c8395e48fb",
+                "known_allowance_usd": "0.00477078",
+                "allowance_usd": "0.00477078",
+                "known_list_cost_usd": "0.00795131",
+                "list_cost_usd": "0.00795131",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              },
+              {
+                "kind": "semantic_repair",
+                "requests": 5,
+                "tool_calls": 9,
+                "semantic_repairs": 1,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "d0b1fac00d92c0cad22cf5adfba40eedb179cfab83cc7bede7a540c91affd520",
+                "known_allowance_usd": "0.00547420",
+                "allowance_usd": "0.00547420",
+                "known_list_cost_usd": "0.00912368",
+                "list_cost_usd": "0.00912368",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 24,
+            "tool_calls": 45,
+            "semantic_repairs": 1,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.01458022",
+            "allowance_usd": "0.01458022",
+            "known_list_cost_usd": "0.02430035",
+            "list_cost_usd": "0.02430035",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 17,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 14,
+                "tool_calls": 31,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": false,
+                "checks_pass": false,
+                "record_sha256": "a658fdc236d7ef0365f76c0f15939c05c67914674dcf494edb8fa5c1dee4f2b6",
+                "known_allowance_usd": "0.00707206",
+                "allowance_usd": "0.00707206",
+                "known_list_cost_usd": "0.01178676",
+                "list_cost_usd": "0.01178676",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              },
+              {
+                "kind": "semantic_repair",
+                "requests": 10,
+                "tool_calls": 14,
+                "semantic_repairs": 1,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "555a75897945cf82df837660329d7ad57ea4b1adca6519a2f21b368317e0d1c1",
+                "known_allowance_usd": "0.00750816",
+                "allowance_usd": "0.00750816",
+                "known_list_cost_usd": "0.01251359",
+                "list_cost_usd": "0.01251359",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        },
+        {
+          "task": "refactor-retry",
+          "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+          "without": {
+            "requests": 9,
+            "tool_calls": 14,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00789772",
+            "allowance_usd": "0.00789772",
+            "known_list_cost_usd": "0.01316287",
+            "list_cost_usd": "0.01316287",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true,
+              "refactor-retry": true,
+              "refactor-retry-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 13,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 9,
+                "tool_calls": 14,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "2aad35780c34b1650b1611b3f806a4b53f747a8899a7e2c3c9620d2b0cd27ce8",
+                "known_allowance_usd": "0.00789772",
+                "allowance_usd": "0.00789772",
+                "known_list_cost_usd": "0.01316287",
+                "list_cost_usd": "0.01316287",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 9,
+            "tool_calls": 16,
+            "semantic_repairs": 0,
+            "transport_resumes": 1,
+            "unknown_usage_requests": 1,
+            "known_allowance_usd": "0.01949808",
+            "allowance_usd": null,
+            "known_list_cost_usd": "0.03249681",
+            "list_cost_usd": null,
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": null,
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true,
+              "refactor-retry": true,
+              "refactor-retry-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 23,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 3,
+                "tool_calls": 5,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 1,
+                "accepted": false,
+                "checks_pass": false,
+                "record_sha256": "4bddd552a6fd77fc0dfff28a9a20513aecb18fd8fe83097a1a50bb34fe7dc056",
+                "known_allowance_usd": "0.01046121",
+                "allowance_usd": null,
+                "known_list_cost_usd": "0.01743535",
+                "list_cost_usd": null,
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": null
+              },
+              {
+                "kind": "transport_resume",
+                "requests": 6,
+                "tool_calls": 11,
+                "semantic_repairs": 0,
+                "transport_resumes": 1,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "6b5cfbd72173d70ba63dbab0e592dd5f126bf4891166efd89347798116c33ee4",
+                "known_allowance_usd": "0.00903687",
+                "allowance_usd": "0.00903687",
+                "known_list_cost_usd": "0.01506146",
+                "list_cost_usd": "0.01506146",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        },
+        {
+          "task": "refactor-money",
+          "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+          "without": {
+            "requests": 5,
+            "tool_calls": 10,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.00798563",
+            "allowance_usd": "0.00798563",
+            "known_list_cost_usd": "0.01330940",
+            "list_cost_usd": "0.01330940",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true,
+              "refactor-retry": true,
+              "refactor-retry-duplicates-removed": true,
+              "refactor-money": true,
+              "refactor-money-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 13,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 5,
+                "tool_calls": 10,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "298df85b0a0e80d5c9f0b9d37831e7e2c80b0a4e9b3dd98a2671e34e5d34ba03",
+                "known_allowance_usd": "0.00798563",
+                "allowance_usd": "0.00798563",
+                "known_list_cost_usd": "0.01330940",
+                "list_cost_usd": "0.01330940",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          },
+          "with": {
+            "requests": 7,
+            "tool_calls": 14,
+            "semantic_repairs": 0,
+            "transport_resumes": 0,
+            "unknown_usage_requests": 0,
+            "known_allowance_usd": "0.01700653",
+            "allowance_usd": "0.01700653",
+            "known_list_cost_usd": "0.02834419",
+            "list_cost_usd": "0.02834419",
+            "known_cash_charge_usd": "0",
+            "cash_charge_usd": "0",
+            "accepted": true,
+            "final_checks": {
+              "refactor-slugs": true,
+              "refactor-slugs-duplicates-removed": true,
+              "refactor-retry": true,
+              "refactor-retry-duplicates-removed": true,
+              "refactor-money": true,
+              "refactor-money-duplicates-removed": true
+            },
+            "original_suite_pass": true,
+            "final_suite_pass": true,
+            "final_suite_tests": 28,
+            "original_tests_removed": 0,
+            "original_tests_weakened": 0,
+            "attempts": [
+              {
+                "kind": "initial",
+                "requests": 7,
+                "tool_calls": 14,
+                "semantic_repairs": 0,
+                "transport_resumes": 0,
+                "unknown_usage_requests": 0,
+                "accepted": true,
+                "checks_pass": true,
+                "record_sha256": "d6d98d52e1b87beb20d50d5df15768c8bbe37d08d9f631638dfd98b7fa3da2c0",
+                "known_allowance_usd": "0.01700653",
+                "allowance_usd": "0.01700653",
+                "known_list_cost_usd": "0.02834419",
+                "list_cost_usd": "0.02834419",
+                "known_cash_charge_usd": "0",
+                "cash_charge_usd": "0"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "correctness_complete": true,
+  "exact_cost_comparison_complete": false,
+  "overall_savings_claim": null,
+  "experiment_audit": {
+    "trials": [
+      {
+        "status": "invalid_setup",
+        "requests": 88,
+        "unknown_usage_requests": 1,
+        "known_allowance_usd": "0.07240806",
+        "known_list_cost_usd": "0.12068017",
+        "known_cash_charge_usd": "0"
+      },
+      {
+        "status": "invalid_setup",
+        "requests": 15,
+        "unknown_usage_requests": 1,
+        "known_allowance_usd": "0.00885484",
+        "known_list_cost_usd": "0.01475807",
+        "known_cash_charge_usd": "0"
+      },
+      {
+        "status": "completed_workflow",
+        "requests": 133,
+        "unknown_usage_requests": 2,
+        "known_allowance_usd": "0.09251068",
+        "known_list_cost_usd": "0.15418440",
+        "known_cash_charge_usd": "0"
+      }
+    ],
+    "requests": 236,
+    "unknown_usage_requests": 4,
+    "known_allowance_usd": "0.17377358",
+    "known_list_cost_usd": "0.28962264",
+    "known_cash_charge_usd": "0"
+  }
+}

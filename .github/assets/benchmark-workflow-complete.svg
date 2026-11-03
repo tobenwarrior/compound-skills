@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="880" viewBox="0 0 1040 880" role="img" aria-labelledby="title desc">
+  <title id="title">Six changes completed, including repairs</title>
+  <desc id="desc">Six changes per mode across two persistent three-change workflows. All final cumulative hidden checks and original/final suites pass. Failed attempts, repairs and provider recovery requests are included. Some provider responses have unreported usage; no exact overall savings claim.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="880" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  COMPLETED WORKFLOW</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Six changes completed, including repairs</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Compound 0.16.7 · DeepSeek V4.1 Flash · Y Harness · 2–3 November 2026</text>
+    <rect x="24" y="158" width="992" height="262" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="200" font-size="22" font-weight="700" fill="#14161c">Recorded Go allowance</text>
+    <text x="52" y="246" font-size="18" font-weight="600" fill="#14161c">Without Compound</text>
+    <text x="52" y="300" font-size="33" font-weight="750" fill="#14161c">≥ $0.03457468</text>
+    <text x="52" y="338" font-size="15" font-weight="400" fill="#6b6f78">1 response with unreported cost</text>
+    <text x="550" y="246" font-size="18" font-weight="600" fill="#14161c">With Compound</text>
+    <text x="550" y="300" font-size="33" font-weight="750" fill="#147a43">≥ $0.05793600</text>
+    <text x="550" y="338" font-size="15" font-weight="400" fill="#6b6f78">1 response with unreported cost</text>
+    <text x="52" y="386" font-size="15" font-weight="400" fill="#6b6f78">Amounts with ≥ are known minimums. Unreported usage prevents an exact overall cost ratio.</text>
+    <rect x="24" y="440" width="992" height="324" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="483" font-size="21" font-weight="700" fill="#14161c">Outcome after all attempts</text>
+    <text x="615" y="482" font-size="16" font-weight="600" fill="#6b6f78">Without Compound</text>
+    <text x="825" y="482" font-size="16" font-weight="600" fill="#147a43">With Compound</text>
+    <text x="52" y="529" font-size="17" font-weight="400" fill="#14161c">Changes accepted</text>
+    <text x="650" y="529" font-size="20" font-weight="650" fill="#14161c">6/6</text>
+    <text x="870" y="529" font-size="20" font-weight="650" fill="#147a43">6/6</text>
+    <text x="52" y="567" font-size="17" font-weight="400" fill="#14161c">Final hidden checks + original/final suites</text>
+    <text x="650" y="567" font-size="20" font-weight="650" fill="#14161c">All pass</text>
+    <text x="870" y="567" font-size="20" font-weight="650" fill="#147a43">All pass</text>
+    <text x="52" y="605" font-size="17" font-weight="400" fill="#14161c">Original tests removed or weakened</text>
+    <text x="650" y="605" font-size="20" font-weight="650" fill="#14161c">0</text>
+    <text x="870" y="605" font-size="20" font-weight="650" fill="#147a43">0</text>
+    <text x="52" y="643" font-size="17" font-weight="400" fill="#14161c">Semantic repair turns</text>
+    <text x="650" y="643" font-size="20" font-weight="650" fill="#14161c">1</text>
+    <text x="870" y="643" font-size="20" font-weight="650" fill="#147a43">1</text>
+    <text x="52" y="681" font-size="17" font-weight="400" fill="#14161c">Provider recovery turns</text>
+    <text x="650" y="681" font-size="20" font-weight="650" fill="#14161c">1</text>
+    <text x="870" y="681" font-size="20" font-weight="650" fill="#147a43">1</text>
+    <text x="52" y="719" font-size="17" font-weight="400" fill="#14161c">Model requests, including failed attempts</text>
+    <text x="650" y="719" font-size="20" font-weight="650" fill="#14161c">61</text>
+    <text x="870" y="719" font-size="20" font-weight="650" fill="#147a43">72</text>
+    <text x="52" y="804" font-size="15" font-weight="400" fill="#6b6f78">Two repositories · one sequence per mode/repository · code and conversation persist.</text>
+    <text x="52" y="836" font-size="15" font-weight="400" fill="#6b6f78">Resumed after a provider outage. These runs do not establish universal or long-term savings.</text>
+  </g>
+</svg>

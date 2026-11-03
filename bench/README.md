@@ -182,3 +182,16 @@ python3 -B bench/render_readme_diagrams.py --check
 ```
 
 The historical scenes preserve their original numbers and measurement scope. The current pilot uses exact saved provider usage fields; it does not reprice historical Claude Code runs or establish long-term savings.
+
+## Cumulative Y Harness workflow
+
+The [completed six-change comparison](../README.md#completed-workflow-six-changes-with-repairs) uses the existing `bugfix-refund`, `bugfix-leap`, `bugfix-december`, `refactor-slugs`, `refactor-retry` and `refactor-money` prompts and fixtures in `tasks.py`. Each mode keeps its repository state and native conversation across each three-task group. A reproduction uses an isolated Y Harness headless profile configured for the same provider/model, reasoning, output cap and instructions:
+
+```sh
+yharness --profile <isolated-profile> --json "<first task prompt>"
+yharness --profile <isolated-profile> --session-id <session-id> --json "<next task prompt>"
+```
+
+Verify the actual model-facing read, search, write, edit and shell tools without a model first. Both modes must see their fixture and required tools while host benchmark plans, graders and opposite-mode states stay unavailable. After each attempt, independently check all tasks completed so far, the original suite on the changed source, the final suite, test removal/weakening and the refactor duplicate-removal requirement. A failing check supplies the same kind of feedback and repair opportunity to either mode. Retain every implementation, repair and provider-recovery attempt.
+
+The [public numeric source](diagram_sources/workflow.json) includes the completed sequence's pins, prompt hashes, attempt grades, request counts, known usage and missing-usage flags. Exact cost fields remain `null` when usage is unreported; recorded amounts are lower bounds. The renderer verifies attempt, stage and sequence totals before drawing. The 3 November continuation follows the original task list and preserves the interrupted conversations; it is recorded separately from the initial plan. Raw transcripts and private runner configuration remain local under ignored `results/`.

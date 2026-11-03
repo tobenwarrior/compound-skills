@@ -2,15 +2,15 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.7 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek pilot: 2 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.7 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–3 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
 Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
-**Latest cost check — Compound 0.16.7:** a small [DeepSeek V4.1 Flash pilot](#latest-pilot-compound-0167) consumed **10.1% less OpenCode Go allowance** across two tasks, with **2/2 accepted in both modes**. The refund fix cost more; the retry refactor cost less. This is a measured two-task result, not evidence of long-term savings.
+**Latest workflow check — Compound 0.16.7:** a sequence of three bug fixes on the invoicekit fixture consumed **15.5% less OpenCode Go allowance**, with **3/3 changes correct in both modes**. The full six-change workflow is now completed in both modes, including repairs; two unreported provider costs prevent an exact overall savings claim. [Results and scope](#completed-workflow-six-changes-with-repairs).
 
-![Two-task DeepSeek pilot: Go allowance $0.02106263 without Compound and $0.01893280 with Compound, both 2/2 tasks accepted, 21 versus 29 model requests. Cash charges were zero under the existing Go subscription.](.github/assets/benchmark-pilot-cost.svg)
+![Three consecutive invoicekit fixes: without Compound $0.00810803 Go allowance, with Compound $0.00685117, 15.5% less; both modes passed all three changes without repair. One sequence per mode on a previously used synthetic fixture.](.github/assets/benchmark-workflow-bugs.svg)
 
 The larger historical benchmarks below measured Compound 0.16.0, before the later prompt and routing changes. We measured it against stock Claude Code and against a plain five-sentence rule asking for the same debugging habits, on the same tasks, with Claude Opus 5.5 and Claude Sonnet 5.5:
 
@@ -29,7 +29,7 @@ The larger historical benchmarks below measured Compound 0.16.0, before the late
 
 **The strongest larger-sample evidence is for refactor correctness; cost depends on the task and model.** In the historical 0.16.0 Claude Code runs, Compound got every held-out refactor right where stock Claude Code and a plain rule got about a third of theirs wrong, and it makes bug fixes come with evidence first, a reproduction and a test shown failing on the unfixed code, as the plain rule does and for about the rule's cost. In money, that is 1.09× to 1.14× stock's cost per bug fix and about 1.6× per refactor; questions cost about the same as stock, and reviews cost more for no measured gain. If you only want the bug-fix habits, [the plain rule](#isnt-this-just-a-rule-in-claudemd) gives you most of them.
 
-The larger historical numbers come from runs of [bench/](bench/README.md) in headless Claude Code at default effort, on Python projects. The [latest pilot](#latest-pilot-compound-0167) uses DeepSeek through Y Harness and is reported separately. The 0.16.0 numbers below are from 1 November 2026, in Claude Code 2.1.316; a [smaller second round](#second-round-side-by-side) in 2.1.312 ran every arm side by side and agrees with them; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
+The larger historical numbers come from runs of [bench/](bench/README.md) in headless Claude Code at default effort, on Python projects. The [completed workflow](#completed-workflow-six-changes-with-repairs) and [earlier pilot](#earlier-two-task-pilot-compound-0167) use DeepSeek through Y Harness and are reported separately. The 0.16.0 numbers below are from 1 November 2026, in Claude Code 2.1.316; a [smaller second round](#second-round-side-by-side) in 2.1.312 ran every arm side by side and agrees with them; [earlier rounds](#earlier-rounds-with-0140) measured 0.14.0.
 
 | Stock / plain rule / Compound 0.16.0 | Claude Opus 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- |
@@ -149,9 +149,32 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 
 ## Benchmark
 
-The current pilot and larger historical rounds below use different runtimes and models; compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#how-we-measured-and-check-our-numbers) rerun the Claude Code rounds. The tasks are Python projects.
+The DeepSeek workflows and larger historical rounds below use different runtimes and models; compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#how-we-measured-and-check-our-numbers) rerun the Claude Code rounds. The tasks are Python projects.
 
-### Latest pilot: Compound 0.16.7
+### Completed workflow: six changes with repairs
+
+On 2–3 November 2026, DeepSeek V4.1 Flash through Y Harness completed all three invoicekit bug fixes and all three shopkit refactors in both modes. Each repository kept its code changes and native conversation across three tasks. **Both modes finished 6/6 changes correctly**, passing cumulative hidden checks, the original suite and their final suites; no original test was removed or weakened. Each mode needed one semantic repair on the slug refactor after changing a facet key from `café` to `cafe`.
+
+![Completed six-change workflow: both modes accepted all six changes, including one semantic repair and one provider recovery turn each. Known Go allowance is at least $0.03457468 without Compound and at least $0.05793600 with Compound; one response in each mode has unreported cost. Model requests total 61 without and 72 with.](.github/assets/benchmark-workflow-complete.svg)
+
+**The bug-fix sequence used 15.5% less allowance with Compound:** $0.00685117 versus $0.00810803, with all three changes accepted in each mode and no repairs. Across the complete six-change workload, recorded minimums were **$0.03457468 without / $0.05793600 with Compound**. One provider response in each mode did not report final usage. These are lower bounds, not exact totals; the result **does not establish cheaper overall performance**. All completed responses reported a $0 cash charge under the existing Go subscription; missing charges remain unknown. [Numeric data, including every attempt](bench/diagram_sources/workflow.json).
+
+<details>
+<summary>Workflow setup, continuation and all experiment usage</summary>
+
+The task groups and order were fixed before running: refund, leap-year and December-date fixes; then slug, retry and money-parser refactors. Mode order was counterbalanced within each task. Each mode started from the same frozen fixture revision and used the same prompts, tools, high reasoning setting, 8,192-token output cap and per-invocation limits. The treatment added only Compound's native skill provider and routing rule. The frozen Compound commit was `a467e56`; Y Harness was `71e8e99`. Tools ran through its SSH filesystem and subprocess providers in isolated Linux containers. Keyless checks exercised the actual read, search, write, edit and confined Bash tools and verified that host plans, graders and opposite-mode states were unavailable. No paid judge, title-model request or subagent tool ran.
+
+A control provider timeout paused the comparison on 2 November. On 3 November, the owner authorized completion from the saved states under a bounded continuation plan; no successful task was rerun or failed attempt discarded. A treatment transport failure also required recovery. Both modes retained the original model, source, prompts and settings, with identical repair opportunities. All implementation, failed, repair and transport-recovery requests remain counted. The completed workflow used **133 model requests**, 61 without and 72 with Compound. Two responses have unreported costs.
+
+Two earlier setup trials were invalid and excluded from performance comparisons: the first exposed benchmark-control files; the second had an incomplete shell/search integration and non-original initial states. They remain in the experiment audit. **All workflow experiment trials together:** 236 observed model requests; known usage of **$0.17377358 Go allowance / $0.28962264 API list-price usage / $0 recorded cash charge**, with **four responses of unknown final cost**. These amounts are not a complete bill. Preparation, preflights, grading and diagram rendering used no models.
+
+This is one sequence per mode and repository on previously used synthetic Python fixtures. Provider caches were not reset, and the comparison resumed the next day after an outage. It measures these completed changes and actual repairs; it does not establish universal or months-long savings. Raw session records stay private; the public data retains source pins, prompt hashes, per-attempt grades, recorded usage and explicit unknowns. The earlier two-task pilot below is a separate experiment.
+
+</details>
+
+### Earlier two-task pilot: Compound 0.16.7
+
+![Earlier two-task pilot: 10.1% less Go allowance with Compound, both modes accepted 2/2 tasks; this is separate from the six-change workflow.](.github/assets/benchmark-pilot-cost.svg)
 
 On 2 November 2026, DeepSeek V4.1 Flash through Y Harness completed the refund bug fix and retry-helper refactor once in each mode. Each pair used the same fixture revision, project path, prompt, tools, high reasoning setting, 8,192-token output cap and limits. Order was without/with for the refund and with/without for the refactor. The treatment added Compound's native skill provider and global routing rule; the control had neither. No paid judges, provider retries, title-model calls or subagent sessions ran.
 
@@ -167,7 +190,7 @@ One invalid setup attempt did not activate editing tools and stopped at its requ
 
 ### Historical Claude Code rounds
 
-These used default effort, Claude Code 2.1.316 unless noted, and the versions below. They remain evidence about those versions; the small current pilot does not replace them.
+These used default effort, Claude Code 2.1.316 unless noted, and the versions below. They remain evidence about those versions; the small DeepSeek workflows do not replace them.
 
 - **0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its 0.16.0 redesign, and that version without its map query ran side by side on 12 real bugs (2 runs per bug, arm and model), 3 held-out refactors (5 runs each) and a Flask review (3 runs). The redesign, which is 0.16.0, ran just after them on the same tasks and is paired with them by task, model and repetition. Stock, the rule and 0.16.0 then ran side by side on a Django question and a plain question (3 runs each).
 - **Second 0.16.0 round, 1 November 2026:** stock, the plain rule, Compound before its redesign and 0.16.0 as shipped started together in every group, in Claude Code 2.1.312, on the same 12 real bugs (1 run per bug, arm and model), 3 held-out refactors, the Flask review, the Django question and the plain question (2 runs each). [Second round](#second-round-side-by-side)
