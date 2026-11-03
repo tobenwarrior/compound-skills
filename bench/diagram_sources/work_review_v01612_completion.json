@@ -1,0 +1,229 @@
+{
+  "schema": 1,
+  "source_comparison": "comparison_v01612_completion.json",
+  "source_comparison_sha256": "0b4b9d1ba95027e1d8785b93a4db6528bf12e868074aff610525683f09685e34",
+  "source_version": "0.16.12",
+  "candidate_version": "0.16.13",
+  "scope": "Offline review of the completed matched Y Harness / DeepSeek V4.1 Flash sequence. Every recorded charge remains unchanged. Observed reasoning/call counts identify work to target, not verified future savings.",
+  "observed_money_task": {
+    "without": {
+      "requests": 6,
+      "tool_calls": 12,
+      "completion_tokens": 9440,
+      "reasoning_tokens": 6708
+    },
+    "with": {
+      "requests": 9,
+      "tool_calls": 14,
+      "completion_tokens": 15512,
+      "reasoning_tokens": 12483
+    },
+    "allowance_without": "0.00515203",
+    "allowance_with": "0.00811833",
+    "allowance_gap": "0.00296630"
+  },
+  "matched_sequence": {
+    "without": {
+      "requests": 28,
+      "tool_calls": 61,
+      "attempts": 4,
+      "repairs": 1,
+      "semantic_repairs": 1,
+      "interruption_recoveries": 0,
+      "known_costs": {
+        "allowance": "0.01720120",
+        "list_cost": "0.02866867",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.01720120",
+        "list_cost": "0.02866867",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 3,
+      "planned": 3
+    },
+    "with": {
+      "requests": 33,
+      "tool_calls": 55,
+      "attempts": 3,
+      "repairs": 0,
+      "semantic_repairs": 0,
+      "interruption_recoveries": 0,
+      "known_costs": {
+        "allowance": "0.01876629",
+        "list_cost": "0.03127710",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.01876629",
+        "list_cost": "0.03127710",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 3,
+      "planned": 3
+    },
+    "allowance_reduction_pct": "-9.098725670302071948468711500",
+    "compound_cheaper": false
+  },
+  "issues": [
+    {
+      "issue": "Interface and default selection expanded before characterization",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 2,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00349307",
+          "completion_tokens": 9177,
+          "reasoning_tokens": 8801
+        }
+      ],
+      "events_sha256": "6009cb7fcf9e500dbd13fba6b5f6cc204707546490338b60c5cdbf9c00917fe2",
+      "evidence": "The second response used 8,801 reasoning tokens before one test-file edit. Saved response inspection shows repeated alternatives for helper policy/defaults and validation/error ownership, plus conjectured direct-call requirements. The edit itself adds useful caller characterization.",
+      "fix": "The core derives requirements from the request, project instructions and actual callers/tests. The refactor guide chooses the shared operation once, keeps nonshared validation/public errors with their owners and makes differing caller policies required arguments unless an actual API contract specifies defaults.",
+      "classification": "Mixed useful characterization and open-ended interface reasoning. Entire response cost is retained."
+    },
+    {
+      "issue": "Two additions to the same test file consumed separate model rounds",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 2,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00349307",
+          "completion_tokens": 9177,
+          "reasoning_tokens": 8801
+        },
+        {
+          "request": 3,
+          "tools": [
+            "edit"
+          ],
+          "allowance_usd": "0.00101183",
+          "completion_tokens": 293,
+          "reasoning_tokens": 0
+        },
+        {
+          "request": 4,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00015047",
+          "completion_tokens": 74,
+          "reasoning_tokens": 0
+        }
+      ],
+      "events_sha256": "6009cb7fcf9e500dbd13fba6b5f6cc204707546490338b60c5cdbf9c00917fe2",
+      "evidence": "Two caller cases were added to the same test file in separate responses, followed by the passing pre-edit baseline. The baseline and missing assertions are required evidence; they are not all avoidable extra work.",
+      "fix": "Select missing caller cases once and apply the additions together per file before the baseline, using existing fixtures.",
+      "classification": "One potentially consolidatable edit round alongside required characterization/baseline work; not a prediction that all three extra requests disappear."
+    },
+    {
+      "issue": "Helper API was reconsidered after the baseline",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 5,
+          "tools": [
+            "write"
+          ],
+          "allowance_usd": "0.00088151",
+          "completion_tokens": 1941,
+          "reasoning_tokens": 1544
+        }
+      ],
+      "events_sha256": "6009cb7fcf9e500dbd13fba6b5f6cc204707546490338b60c5cdbf9c00917fe2",
+      "evidence": "After the caller baseline passed, another 1,544 reasoning tokens reconsidered helper signatures/defaults and new exception translation before writing the helper. Actual callers already defined the differing acceptance, error and rounding policies.",
+      "fix": "Use the selected interface throughout. Extract the common computation and retain nonshared caller policy rather than broadening a helper to absorb it. The offline witness keeps public exception classes and validation in their original modules.",
+      "classification": "Necessary implementation mixed with repeated design; no removal of the implementation charge is claimed."
+    },
+    {
+      "issue": "Unasserted sample printing accompanied successful verification",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 7,
+          "tools": [
+            "bash",
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.0003753",
+          "completion_tokens": 577,
+          "reasoning_tokens": 38
+        }
+      ],
+      "events_sha256": "6009cb7fcf9e500dbd13fba6b5f6cc204707546490338b60c5cdbf9c00917fe2",
+      "evidence": "The response ran the full suite and helper-removal search, plus a print script covering direct helper and caller samples without baseline assertions. The suite and reference search remain useful; sample outputs alone do not establish preservation.",
+      "fix": "Extra probes need a named caller coverage gap and assertions against retained evidence. Reuse existing fixtures and caller assertions instead of adding unasserted sample printouts.",
+      "classification": "Mixed required verification and discretionary sample output; whole-response cost is not classified as avoidable."
+    },
+    {
+      "issue": "Final-answer reasoning reopened already checked choices",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 8,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00056109",
+          "completion_tokens": 792,
+          "reasoning_tokens": 676
+        },
+        {
+          "request": 9,
+          "tools": [],
+          "allowance_usd": "0.00087978",
+          "completion_tokens": 1626,
+          "reasoning_tokens": 1373
+        }
+      ],
+      "events_sha256": "6009cb7fcf9e500dbd13fba6b5f6cc204707546490338b60c5cdbf9c00917fe2",
+      "evidence": "After the suite and diff/new-file review passed, the final response used another 1,373 reasoning tokens reconsidering helper defaults and imagined direct-call signatures. It added no tool action or implementation change. The final answer itself remains required.",
+      "fix": "Report the outcome and recorded checks directly after final review. Reopen a settled interface only for a failed check or a real caller requirement, rather than reevaluating unspecified defaults while composing the final answer.",
+      "classification": "Required final communication mixed with renewed API speculation; no fixed future cost saving is assigned."
+    }
+  ],
+  "offline_feasibility": {
+    "scope": "Offline feasibility witness only; no model calls, no future compliance or cost claim.",
+    "observations": 13,
+    "baseline_suite": "13 original tests pass",
+    "naive_extraction": "rejected by retained caller observations",
+    "explicit_policy_common_core": "all retained values, exception types and arguments match; original 13 tests pass; old helpers removed",
+    "helper_default_policy": "rounding required at each call site; caller validation and public exceptions stay in their original modules",
+    "new_model_requests": 0,
+    "baseline_sha256": "fdf806fdc81dc8fee34691581581995544c2175c697424da6c2461dc995ea24b"
+  },
+  "new_model_runs": 0,
+  "new_cost_savings_claim": false,
+  "limits": "No new model runs test the revised guidance. The fixture witness establishes that a caller-owned-policy/common-core extraction can preserve the selected behavior; it does not establish future model compliance or lower total cost. Characterization and baseline checks remain required. Mixed responses are not treated as wholly removable, and no annotated dollar amount is subtracted from the original bill.",
+  "candidate_context_delta": {
+    "skills/compound/SKILL.md": {
+      "before_bytes": 5098,
+      "after_bytes": 5106,
+      "before_words": 685,
+      "after_words": 683
+    },
+    "skills/compound/references/refactor.md": {
+      "before_bytes": 1598,
+      "after_bytes": 1846,
+      "before_words": 229,
+      "after_words": 256
+    },
+    ".cursor-plugin/rules/compound-default.mdc": {
+      "before_bytes": 885,
+      "after_bytes": 888,
+      "before_words": 111,
+      "after_words": 111
+    }
+  },
+  "always_on_rule_words": 100
+}

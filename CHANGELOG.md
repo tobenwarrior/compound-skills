@@ -2,6 +2,13 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.13 (2026-11-03)
+
+- Extract the shared operation while leaving nonshared validation, public exceptions and I/O with their existing owners. Differing caller policies become required arguments unless an actual API contract specifies defaults, removing the need to invent a canonical helper default.
+- Select missing caller cases once and apply additions together per file before the passing baseline. After the retained assertions and required review pass, report the recorded evidence without revisiting defaults or hypothetical direct-call signatures. Extra probes require caller assertions rather than sample printouts.
+- Deliver the explicit-policy cue through project/global setup, Cursor and chat activation while keeping the routing rule at 100 words. Refresh saved rules with `setup` or `setup-global` after updating; no user configuration is changed by this release commit.
+- The saved 0.16.12 completion trial remains 9.1% more Go allowance overall with both modes 3/3 correct. Its money task used 9 versus 6 requests and 12,483 versus 6,708 reasoning tokens. Offline caller checks validate the common-core extraction pattern; no new model runs establish fewer future calls or lower total cost. README benchmark claims and graphics are unchanged.
+
 ## 0.16.12 (2026-11-03)
 
 - Shared-helper requests preserve each caller's behavior; extraction alone does not authorize standardizing their outputs or defaults. Project/global setup, Cursor and chat activation deliver the same clarification. Saved rules from earlier versions are flagged for refresh with `setup` or `setup-global`.
