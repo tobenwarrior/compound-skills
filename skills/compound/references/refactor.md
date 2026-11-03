@@ -1,11 +1,10 @@
 # Refactor
 
-Consolidation preserves public caller outputs, errors and accepted inputs unless changes are explicit. Choose the smallest interface serving actual callers; resolve differences once through parameters. Hypothetical tests or alternate signatures do not define requirements.
+Preserve each public caller's outputs, errors and accepted inputs unless changes are explicit.
 
-Reuse assertions/fixtures; add only missing caller cases before one passing baseline with the documented command and environment. Skip probes when source/tests settle expectations; otherwise observe the unresolved case and reuse it before and after. Preserve necessary differential baselines; do not recreate old implementations after editing.
+1. Read affected code/callers and identify observable differences once. Choose the first simple parameterization preserving them, keeping existing algorithms. Stop comparing signatures or guessing evaluator requirements once actual callers are covered.
+2. Before source edits, reuse assertions/fixtures and add only missing caller cases for those differences; run one passing baseline with the documented command and environment. Probe only a specific expectation source/tests cannot settle; retain baseline evidence.
+3. Next, migrate the shared helper, imports and callers together. Preserve differing behaviors in the first patch. Check uncertain dynamic/external references before deleting code; preserve external compatibility.
+4. Compare error and boundary cases with the baseline, review the diff and run required checks. Unexplained mismatches are regressions; never narrow inputs to pass. Type checks do not establish equivalence. Ask only when behavior cannot be preserved; report changes as a scope change.
 
-Migrate helper, imports and callers together. Expand only for concrete caller/configuration/compatibility dependencies. Check dynamic/external references before deleting code with an uncertain role; preserve external compatibility.
-
-Compare error and boundary cases. Unexplained mismatches are regressions; never narrow inputs to pass. Type checks do not establish equivalence. Ask only if behavior cannot be preserved; report behavior changes as a scope change.
-
-Review behavior/scope and run required checks. Fix concrete defects; otherwise finish. Extra probes/helper tests need an uncovered case or project requirement. Do not introduce known-bad code to reconfirm covered cases. Exclude speculative APIs and unrequested cosmetic follow-ups after checks pass.
+Then finish. Reopen design/tests only for new evidence of a concrete defect, an uncovered caller behavior or a project requirement. Avoid late cosmetic edits, overlapping compile/import checks and repeated status/review rounds; required checks still apply. Reuse unchanged passing assertions. Do not introduce known-bad code to reconfirm covered cases or recreate old implementations after editing.

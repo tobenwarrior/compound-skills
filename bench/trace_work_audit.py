@@ -18,6 +18,7 @@ def audit_run(folder: Path, include_steps: bool = False) -> dict:
     event_bytes = (folder / 'events.jsonl').read_bytes()
     record = json.loads(record_bytes)
     requests = 0
+    terminal_reasons = []
     calls = {}
     tools = Counter()
     rejected = []
@@ -26,6 +27,8 @@ def audit_run(folder: Path, include_steps: bool = False) -> dict:
         event = json.loads(line)
         if event['type'] == 'status' and event.get('phase') == 'step_start':
             requests += 1
+        elif event['type'] == 'status' and event.get('phase') == 'turn_end':
+            terminal_reasons.append(event['reason']['kind'])
         elif event['type'] == 'tool_call':
             call_id = event['callId']
             if call_id in calls:
@@ -51,6 +54,7 @@ def audit_run(folder: Path, include_steps: bool = False) -> dict:
                 record_sha256=hashlib.sha256(record_bytes).hexdigest(),
                 events_sha256=hashlib.sha256(event_bytes).hexdigest())
     if include_steps:
+        result['terminal_reasons'] = terminal_reasons
         meter = {}
         for line in (folder / 'requests.jsonl').read_bytes().splitlines():
             response = json.loads(line)
@@ -67,9 +71,16 @@ def audit_run(folder: Path, include_steps: bool = False) -> dict:
             allowance = usage.get('allowance')
             if allowance is not None and (type(allowance) not in (int, float) or not math.isfinite(allowance) or allowance < 0):
                 raise ValueError('invalid meter usage allowance')
+            completion = usage.get('completion_tokens')
+            reasoning = usage.get('completion_tokens_details', {}).get('reasoning_tokens')
+            for name, count in [('completion', completion), ('reasoning', reasoning)]:
+                if count is not None and (type(count) is not int or count < 0):
+                    raise ValueError(f'invalid meter {name} token count')
+            if reasoning is not None and completion is not None and reasoning > completion:
+                raise ValueError('reasoning token count exceeds completion tokens')
             result['steps'].append(dict(request=number, tools=step_tools[number],
                                         allowance_usd=str(allowance) if allowance is not None else None,
-                                        completion_tokens=usage.get('completion_tokens')))
+                                        completion_tokens=completion, reasoning_tokens=reasoning))
     return result
 
 
@@ -93,7 +104,7 @@ def audit(runs: Path, include_steps: bool = False) -> dict:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--runs', type=Path, required=True)
-    parser.add_argument('--steps', action='store_true', help='Include per-request tool names and recorded usage; requires saved request meters')
+    parser.add_argument('--steps', action='store_true', help='Include tool names, recorded usage, reasoning tokens and stop reasons; requires saved request meters')
     args = parser.parse_args()
     print(json.dumps(audit(args.runs, args.steps), indent=2))
 

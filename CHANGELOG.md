@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.11 (2026-11-03)
+
+- Refactors preserve observed caller differences in the first patch. Choose one sufficient interface from source evidence, characterize missing caller behavior before the baseline, and proceed to implementation instead of comparing hypothetical APIs or evaluator expectations.
+- Named-file work skips unrelated inventories/history. Passing caller assertions remain evidence; required checks remain, while cosmetic edits and overlapping check/review rounds need a concrete reason.
+- Saved-step auditing reports reasoning tokens and native stop reasons, including billed responses that produce no tools. The saved 0.16.10 trial stopped at the shared response cap on its second Compound task; its completed first task also consumed more allowance than control, including control's repair. No new model runs validate these prompt changes or lower total cost; README benchmark claims and graphics are unchanged.
+
 ## 0.16.10 (2026-11-03)
 
 - Bound instruction discovery and refactor decisions to supplied context, actual callers and concrete dependencies; exclude hidden-evaluation and parent-workspace searches.

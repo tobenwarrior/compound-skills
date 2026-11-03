@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "source_comparison": "comparison_v01610.json",
+  "source_comparison_sha256": "5dc2ad64dffd8d1f0f8a645266b2634bd872c4440ef7d63e371903ab089d9cae",
+  "scope": "Offline inspection of saved 0.16.10 Y Harness / DeepSeek V4.1 Flash work. All original attempt costs remain counted. Step costs are recorded past usage, never a savings subtraction or forecast.",
+  "arms": {
+    "with": {
+      "requests": 17,
+      "tool_calls": 43,
+      "edit_precondition_rejections": 0
+    },
+    "without": {
+      "requests": 30,
+      "tool_calls": 59,
+      "edit_precondition_rejections": 1
+    }
+  },
+  "observed_tokens": {
+    "without": {
+      "completion_tokens": 28501,
+      "reasoning_tokens": 18639
+    },
+    "with": {
+      "completion_tokens": 31137,
+      "reasoning_tokens": 26086
+    }
+  },
+  "issues": [
+    {
+      "issue": "Unbounded interface selection before implementation",
+      "run": "02-refactor-retry-with-0",
+      "steps": [
+        {
+          "request": 3,
+          "tools": [],
+          "allowance_usd": "0.00620889",
+          "completion_tokens": 8192,
+          "reasoning_tokens": 8192
+        }
+      ],
+      "terminal_reasons": [
+        "max-tokens"
+      ],
+      "events_sha256": "3f03f1ca7a93ec9079b2fc202a2ce67b4180a8ceeb89ac5198b732b67088af74",
+      "classification": "Reasoning-only response; its entire recorded bill remains counted.",
+      "evidence": "After reading both retry implementations and recording their observed behavior, the third response returned 8,192 completion tokens, all reported as reasoning, with no tools or implementation and native stop reason max-tokens. Inspection of the saved response shows repeated interface alternatives and speculation about evaluator signatures.",
+      "fix": "The refactor sequence chooses one simple policy parameterization from actual callers, retains existing algorithms and proceeds from the baseline to the preserving patch. Further design comparison needs unresolved caller behavior."
+    },
+    {
+      "issue": "Speculative design and reads outside the named change",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 1,
+          "tools": [
+            "skill",
+            "bash"
+          ],
+          "allowance_usd": "0.00080748",
+          "completion_tokens": 136,
+          "reasoning_tokens": 19
+        },
+        {
+          "request": 3,
+          "tools": [
+            "bash",
+            "grep",
+            "bash"
+          ],
+          "allowance_usd": "0.00094548",
+          "completion_tokens": 756,
+          "reasoning_tokens": 536
+        },
+        {
+          "request": 4,
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "allowance_usd": "0.00280901",
+          "completion_tokens": 3495,
+          "reasoning_tokens": 3326
+        },
+        {
+          "request": 5,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00430232",
+          "completion_tokens": 4854,
+          "reasoning_tokens": 4662
+        }
+      ],
+      "terminal_reasons": [
+        "completed"
+      ],
+      "events_sha256": "0e0f0d97c138df7d595a3983fff760dfe11e2961b5d923b5d47f0dfad89b0b33",
+      "classification": "Mixed required and discretionary work; baseline and reference search are not classified as wholly removable.",
+      "evidence": "The first task combined required skill/caller/test work with a repository inventory, recent-history lookup and reads of unrelated money-parsing modules. It spent two long responses considering expected signatures and evaluator intent before the first patch.",
+      "fix": "Core named-file routing reads affected code and relevant callers/tests directly. Refactor requirements come from observed behavior; stop signature comparison after a sufficient interface is available."
+    },
+    {
+      "issue": "Semantic normalization before a necessary preservation correction",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 6,
+          "tools": [
+            "write",
+            "edit",
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.0016213",
+          "completion_tokens": 882,
+          "reasoning_tokens": 3
+        },
+        {
+          "request": 7,
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00062274",
+          "completion_tokens": 478,
+          "reasoning_tokens": 37
+        },
+        {
+          "request": 8,
+          "tools": [
+            "write",
+            "edit"
+          ],
+          "allowance_usd": "0.00589314",
+          "completion_tokens": 7614,
+          "reasoning_tokens": 7205
+        },
+        {
+          "request": 9,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00194337",
+          "completion_tokens": 641,
+          "reasoning_tokens": 152
+        }
+      ],
+      "terminal_reasons": [
+        "completed"
+      ],
+      "events_sha256": "0e0f0d97c138df7d595a3983fff760dfe11e2961b5d923b5d47f0dfad89b0b33",
+      "classification": "Initial implementation, necessary correction and verification; no blanket cost removal.",
+      "evidence": "The first patch routed both callers through product-style normalization despite previously observed differences. A subsequent check exposed changed facet behavior. The shared helper and facet caller were then corrected with policy parameters and rechecked.",
+      "fix": "Characterize observed differences before one baseline, then preserve both caller behaviors in the first cohesive helper/import/caller patch. Never remove the demonstrated functional correction as cosmetic work."
+    },
+    {
+      "issue": "Late characterization and cosmetic work after passing checks",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 10,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00084188",
+          "completion_tokens": 715,
+          "reasoning_tokens": 634
+        },
+        {
+          "request": 11,
+          "tools": [
+            "edit",
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00143049",
+          "completion_tokens": 1476,
+          "reasoning_tokens": 890
+        },
+        {
+          "request": 12,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00051792",
+          "completion_tokens": 155,
+          "reasoning_tokens": 15
+        },
+        {
+          "request": 13,
+          "tools": [
+            "read",
+            "bash"
+          ],
+          "allowance_usd": "0.00040105",
+          "completion_tokens": 189,
+          "reasoning_tokens": 71
+        }
+      ],
+      "terminal_reasons": [
+        "completed"
+      ],
+      "events_sha256": "0e0f0d97c138df7d595a3983fff760dfe11e2961b5d923b5d47f0dfad89b0b33",
+      "classification": "Mixed coverage, cosmetic and verification work. Added tests are not automatically unnecessary; rerunning after edits remains required.",
+      "evidence": "After the preserving patch, passing full suite and differential caller check, the trace reviewed the diff, added a comment and three tests, reran the suite, ran compileall, reread tests and requested another status summary. The caller assertions strengthen coverage but were scheduled after implementation rather than before the baseline.",
+      "fix": "Add identified caller gaps before the baseline. Finish after the diff review and required checks. New evidence can justify reopening tests; cosmetic edits, overlapping compile/import checks and repeated status rounds do not."
+    }
+  ],
+  "new_model_runs": 0,
+  "new_cost_savings_claim": false,
+  "limits": "The saved trial has unequal completed work. The prompt changes in 0.16.11 have not been behaviorally re-evaluated; fewer future requests, lower total cost and prevention of output-cap failures remain unverified. These observations identify work to avoid, not a causal experiment on prompt wording.",
+  "completed_first_task": {
+    "without": {
+      "requests": 17,
+      "tool_calls": 31,
+      "completion_tokens": 11986,
+      "reasoning_tokens": 7683
+    },
+    "with": {
+      "requests": 14,
+      "tool_calls": 37,
+      "completion_tokens": 21988,
+      "reasoning_tokens": 17639
+    }
+  }
+}
