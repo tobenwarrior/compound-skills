@@ -1,11 +1,11 @@
 # Refactor
 
-Name the behavior to preserve and structure to simplify. Pin observed outputs, errors and input differences at each public caller in existing tests; add only missing cases. Run one passing baseline with those cases before source edits, using the documented command and environment. Reuse the same assertions afterwards; resolve setup before retrying.
+Consolidation preserves public caller outputs, errors and accepted inputs unless changes are explicit. Choose the smallest interface serving actual callers; resolve differences once through parameters. Hypothetical tests or alternate signatures do not define requirements.
 
-Before removing apparently dead code, inspect configuration, generated references, dynamic entry points and external consumers.
+Reuse assertions/fixtures; add only missing caller cases before one passing baseline with the documented command and environment. Skip probes when source/tests settle expectations; otherwise observe the unresolved case and reuse it before and after. Preserve necessary differential baselines; do not recreate old implementations after editing.
 
-Apply each cohesive unit in one patch when supported, including imports, helper removal and caller migration; keep dependent checks ordered. Migrate internal API callers and remove obsolete implementations together; respect external compatibility.
+Migrate helper, imports and callers together. Expand only for concrete caller/configuration/compatibility dependencies. Check dynamic/external references before deleting code with an uncertain role; preserve external compatibility.
 
-Compare caller behavior with the baseline, including errors and boundary cases. Treat unexplained differential mismatches as regressions; never narrow inputs to make equivalence pass. Type checks do not establish equivalence. Caller-specific parameters encode observed requirements; preserve those differences even when one common algorithm seems cleaner. Ask only if behavior cannot be preserved. Report behavior changes as scope changes.
+Compare error and boundary cases. Unexplained mismatches are regressions; never narrow inputs to pass. Type checks do not establish equivalence. Ask only if behavior cannot be preserved; report behavior changes as a scope change.
 
-A standalone probe, randomized comparison or helper test needs a named behavior not covered by caller tests. Reuse baseline cases instead of rebuilding a second oracle. Do not introduce known-bad code to reconfirm covered behavior. Finish when caller comparisons and required checks pass.
+Review behavior/scope and run required checks. Fix concrete defects; otherwise finish. Extra probes/helper tests need an uncovered case or project requirement. Do not introduce known-bad code to reconfirm covered cases. Exclude speculative APIs and unrequested cosmetic follow-ups after checks pass.

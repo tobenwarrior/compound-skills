@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.10 (2026-11-03)
+
+- Bound instruction discovery and refactor decisions to supplied context, actual callers and concrete dependencies; exclude hidden-evaluation and parent-workspace searches.
+- Put missing caller cases before one baseline. Reuse preserved baseline evidence, retain real behavior corrections, and stop unrequested polish after passing checks.
+- Add an optional per-request saved-trace ledger with no-tool responses, unknown costs and duplicate/invalid meter validation. Record the 0.16.9 work review without new model runs or a savings claim.
+
 ## 0.16.9 (2026-11-03)
 
 - Ground agent map suggestions in query evidence while preserving the full ranked JSON/viewer index. No-match queries recommend native search instead of unrelated files.

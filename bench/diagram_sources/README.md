@@ -22,3 +22,5 @@ The generator uses only Python's standard library. It writes every README SVG in
 `map_query_profile.json` retains the keyless, same-input ranking profile for the directory-open optimization: source hashes, pinned repository revisions, result hashes, open counts and all timing summaries. Timing was mixed on the shared host; only the reduction in opens and ranking equivalence are established. It is not a model-cost result and is not rendered as a without/with task chart.
 
 `work_audit.json` counts saved Y Harness / DeepSeek V4.1 Flash events and records source hashes, edit prerequisite refusals and annotated extra-work causes. `navigation_replay.json` checks the changed map presentation on the saved query and pinned fixture, preserving the entire ranked index. Neither artifact projects new model behavior or subtracts hypothetical costs.
+
+`work_review_v0169.json` annotates exact saved request steps and their recorded usage from `comparison_v0169.json`. It keeps useful mixed-step work and functional corrections distinct from optional exploration/polish. Costs are retained unchanged; the annotations do not establish future savings.

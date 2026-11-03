@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "source_comparison": "comparison_v0169.json",
+  "source_comparison_sha256": "c94b7cf6edf4abfbe89384113e6957aa46073ad40561e431804c154f0185e541",
+  "scope": "Offline inspection of saved 0.16.9 Y Harness / DeepSeek V4.1 Flash events. All original costs remain counted. Annotated step costs are past usage, not a forecast or savings subtraction.",
+  "arms": {
+    "with": {
+      "requests": 35,
+      "tool_calls": 62,
+      "edit_precondition_rejections": 0
+    },
+    "without": {
+      "requests": 29,
+      "tool_calls": 47,
+      "edit_precondition_rejections": 2
+    }
+  },
+  "observed_completion_tokens": {
+    "without": 28304,
+    "with": 38625
+  },
+  "issues": [
+    {
+      "issue": "speculative scope and evaluation hunt",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 5,
+          "tools": [
+            "bash",
+            "read",
+            "read"
+          ],
+          "allowance_usd": "0.00172487",
+          "completion_tokens": 1968
+        },
+        {
+          "request": 6,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00315978",
+          "completion_tokens": 3554
+        },
+        {
+          "request": 7,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00079556",
+          "completion_tokens": 94
+        }
+      ],
+      "events_sha256": "1690236f0b15d2e1eb14b5601693c01eb7117d3d155fcb2e1baf19f71c46a7c7",
+      "evidence": "The agent searched branches/tags, unrelated modules, parent workspace and instruction folders while inferring hidden evaluation intent.",
+      "fix": "Use supplied instructions, known repo instruction files and actual caller/dependency evidence. Do not seek evaluation metadata to infer requirements."
+    },
+    {
+      "issue": "baseline scheduled before uncovered cases",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 4,
+          "tools": [
+            "bash",
+            "bash"
+          ],
+          "allowance_usd": "0.00052146",
+          "completion_tokens": 360
+        },
+        {
+          "request": 9,
+          "tools": [
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.0010432",
+          "completion_tokens": 795
+        },
+        {
+          "request": 10,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00029809",
+          "completion_tokens": 74
+        }
+      ],
+      "events_sha256": "1690236f0b15d2e1eb14b5601693c01eb7117d3d155fcb2e1baf19f71c46a7c7",
+      "evidence": "The full suite ran before caller cases were added, then ran again as the actual characterization baseline. Step 4 also includes a useful reference search; it is not classified as wholly removable.",
+      "fix": "Select and add only missing cases before the single passing baseline."
+    },
+    {
+      "issue": "cosmetic edit and rerun after passing checks",
+      "run": "02-refactor-retry-with-0",
+      "steps": [
+        {
+          "request": 8,
+          "tools": [
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00143892",
+          "completion_tokens": 930
+        },
+        {
+          "request": 9,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00044542",
+          "completion_tokens": 113
+        }
+      ],
+      "events_sha256": "80955d9fe0d75f98ea6493459825b1061bdfac82f74f458290dbfd68029fa702",
+      "evidence": "After tests and diff review, the agent changed already-correct retry call sites from positional arguments to keywords and reran the full suite.",
+      "fix": "Finish after behavior/scope review and required checks; exclude unrequested polish."
+    },
+    {
+      "issue": "reconstructed verification oracle",
+      "run": "01-refactor-slugs-with-0",
+      "steps": [
+        {
+          "request": 13,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00094888",
+          "completion_tokens": 755
+        }
+      ],
+      "events_sha256": "1690236f0b15d2e1eb14b5601693c01eb7117d3d155fcb2e1baf19f71c46a7c7",
+      "evidence": "After caller tests passed, a new script reimplemented old helper logic for a thirty-input comparison. Additional input coverage was not independently graded, so this entire check is not credited as avoidable.",
+      "fix": "Choose needed differential cases before editing and preserve that baseline; keep genuinely uncovered cases."
+    },
+    {
+      "issue": "mixed functional correction and doc polish",
+      "run": "05-refactor-money-with-0",
+      "steps": [
+        {
+          "request": 7,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.0013477",
+          "completion_tokens": 1168
+        },
+        {
+          "request": 8,
+          "tools": [
+            "edit",
+            "edit"
+          ],
+          "allowance_usd": "0.00132533",
+          "completion_tokens": 822
+        },
+        {
+          "request": 9,
+          "tools": [
+            "bash"
+          ],
+          "allowance_usd": "0.00049685",
+          "completion_tokens": 136
+        }
+      ],
+      "events_sha256": "29eccd553f9924676369f3a9fbd6a7559d362325feda3e82d87f028836e15ff3",
+      "evidence": "A late edit combined preserving one string conversion with a docstring wording change. The conversion difference is concrete and must not be removed as mere polish.",
+      "fix": "Retain actual behavior corrections; keep cosmetic changes outside the completed refactor."
+    }
+  ],
+  "new_model_runs": 0,
+  "new_cost_savings_claim": false,
+  "limits": "The revised prompts are not behaviorally re-evaluated. Metadata hunts, repeated hypothesis generation and late cosmetic work are observed; their future removal and total billed-cost effect remain unverified."
+}

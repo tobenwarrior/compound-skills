@@ -230,3 +230,13 @@ python3 -B bench/replay_navigation_scope.py --events bench/results/deepseek-sequ
 ```
 
 This replay rebuilds metadata without a cache or service; it is not the original agent execution. It verifies presentation behavior and preserved index data, not future calls, repairs, billed costs or prompt compliance. No new DeepSeek requests were made. Correctness checks remain required; a check is redundant only when an existing passing assertion covers the same behavior. The new guide asks for a named coverage gap before extra probes, rather than treating every old probe as deletable.
+
+## Inspect saved request steps
+
+```sh
+python3 -B bench/trace_work_audit.py --runs bench/results/deepseek-v0169-small-20261103/runs --steps
+```
+
+`--steps` reads the saved request meter alongside native events. Each request retains tool names, recorded allowance and completion tokens, including final responses without tools. Missing usage stays unknown; duplicate/out-of-range responses and invalid allowance values fail validation. Commands and model text are not emitted or executed. Output without `--steps` is unchanged.
+
+The [0.16.9 work review](diagram_sources/work_review_v0169.json) links observed scope hunts, duplicated baseline work and post-check cosmetic edits to the 0.16.10 guidance changes. It distinguishes mixed steps and necessary functional corrections from optional work. The [original comparison](diagram_sources/comparison_v0169.json) remains unchanged: 42.1% more allowance with Compound, both modes correct after repairs. Annotated step spend is not subtracted from the bill or treated as forecast savings. No new model runs were made; whether the revised guidance reduces requests or total cost remains unmeasured.
