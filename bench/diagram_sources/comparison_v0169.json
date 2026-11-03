@@ -1,0 +1,608 @@
+{
+  "scope": "Three consecutive published shopkit refactors, one fresh persistent session per mode; previously used development fixture, not held out.",
+  "compound_commit": "e73b2cc28faa327c72007e54e25eaac404f8ffdc",
+  "compound_version": "0.16.9",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "reasoning": "high",
+  "output_cap": 8192,
+  "plan_sha256": "e76d27cd6260e5c70863566a966707036705f2d4a325fc41a2ffe49d69564365",
+  "arms": {
+    "without": {
+      "requests": 29,
+      "tool_calls": 47,
+      "attempts": 4,
+      "repairs": 1,
+      "known_costs": {
+        "allowance": "0.03077810",
+        "list_cost": "0.05129679",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.03077810",
+        "list_cost": "0.05129679",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 3,
+      "planned": 3
+    },
+    "with": {
+      "requests": 35,
+      "tool_calls": 62,
+      "attempts": 3,
+      "repairs": 0,
+      "known_costs": {
+        "allowance": "0.04372832",
+        "list_cost": "0.07288055",
+        "cost": "0"
+      },
+      "costs": {
+        "allowance": "0.04372832",
+        "list_cost": "0.07288055",
+        "cost": "0"
+      },
+      "complete_usage": true,
+      "accepted": 3,
+      "planned": 3
+    }
+  },
+  "all_attempts": {
+    "requests": 64,
+    "tool_calls": 109,
+    "attempts": 7,
+    "repairs": 1,
+    "known_costs": {
+      "allowance": "0.07450642",
+      "list_cost": "0.12417734",
+      "cost": "0"
+    },
+    "costs": {
+      "allowance": "0.07450642",
+      "list_cost": "0.12417734",
+      "cost": "0"
+    },
+    "complete_usage": true
+  },
+  "equivalent_completed_work": true,
+  "compound_cheaper": false,
+  "allowance_reduction_pct": "-42.07608656804676052127974110",
+  "schema": 1,
+  "date": "2026-11-03",
+  "fixture": "shopkit",
+  "fixture_head": "cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4",
+  "repetitions_per_mode": 1,
+  "billing": "Response-reported OpenCode Go allowance, API list-price usage and cash charges. Every initial, failed and repair attempt is included. Cash charge was zero on the existing subscription; allowance is consumed capacity, not a reduction in subscription price.",
+  "budgets": {
+    "total_max_requests": 80,
+    "per_arm_max_requests": 40,
+    "total_max_allowance_usd": "0.12",
+    "per_arm_max_allowance_usd": "0.06",
+    "max_requests_per_run": 16,
+    "max_requests_per_repair": 8,
+    "max_repairs_per_stage": 1,
+    "max_wall_seconds_per_run": 420
+  },
+  "schedule": [
+    {
+      "task": "refactor-slugs",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-slugs",
+      "arm": "with"
+    },
+    {
+      "task": "refactor-retry",
+      "arm": "with"
+    },
+    {
+      "task": "refactor-retry",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-money",
+      "arm": "without"
+    },
+    {
+      "task": "refactor-money",
+      "arm": "with"
+    }
+  ],
+  "limits": [
+    "Previously used development fixture; not held out from prompt development.",
+    "One three-change sequence per mode; no statistical claim about general or long-term cost.",
+    "Provider caches not reset; mode order alternates by task.",
+    "Same source, prompts, workspace path, tools, high reasoning and output cap; separate fresh Linux workspaces and native conversations.",
+    "One identical repair opportunity per task; code and conversation persist. No provider retries, subagents, paid judges or title-model requests."
+  ],
+  "correctness": "Cumulative hidden behavior checks, duplicate-helper removal, original suite on changed source, final own suite and original-test preservation. Grading ran in isolated, network-disabled Linux containers.",
+  "session_audit": [
+    {
+      "arm": "without",
+      "rule_present": false,
+      "skills": [],
+      "refactor_guide_loaded": false,
+      "current_guide_content_confirmed": false,
+      "turns": 4,
+      "events": 218
+    },
+    {
+      "arm": "with",
+      "rule_present": true,
+      "skills": [
+        "compound"
+      ],
+      "refactor_guide_loaded": true,
+      "current_guide_content_confirmed": true,
+      "turns": 3,
+      "events": 259
+    }
+  ],
+  "preflights": {
+    "without": {
+      "passed": true,
+      "checks": [
+        "read",
+        "glob",
+        "grep",
+        "write",
+        "read",
+        "edit",
+        "bash"
+      ],
+      "hostControlsAbsent": true,
+      "provider": "SshFileSystem",
+      "subprocess": "SshSubprocessRuntime",
+      "mode": "workspace-write"
+    },
+    "with": {
+      "passed": true,
+      "checks": [
+        "skill",
+        "read",
+        "read",
+        "glob",
+        "grep",
+        "write",
+        "read",
+        "edit",
+        "bash"
+      ],
+      "hostControlsAbsent": true,
+      "provider": "SshFileSystem",
+      "subprocess": "SshSubprocessRuntime",
+      "mode": "workspace-write"
+    }
+  },
+  "source_hashes": {
+    "runner_sha256": "391bb242489d68e78323cff0490f71dc5df303c580c98738eed1ad58c8198dc0",
+    "meter_sha256": "8c1bc1c93f9ca9f2f4f28959105085dec4973588b47ddc5d6f4c1c59cbbad299",
+    "grader_driver_sha256": "2e50c94e4220b14351060fdb81897f81d11367f2bb1f009e6960458d1ed294f1",
+    "preflight_sha256": "bc1d7f18a80f8147e1abdf4491b20f936d4a48f9c44b0c66b74fd404d7599953",
+    "profile_hashes": {
+      "without": "01470f83b641a9510fdb4b362f47e414218d15a391c7bbf1b33d70f6343f762a",
+      "with": "ff2b738bbf28f61e50d2302e39b14c5b70caa8d22e40aeabcfd47a5e6b7714fe"
+    },
+    "fixture_fingerprints": {
+      "shopkit": "fedad5240cfbdfa4836fc64bec4d3732889eb0a207cbd65be9c2c8db8c8448e4"
+    }
+  },
+  "unknown_usage_requests": 0,
+  "readme_savings_claims_updated": false,
+  "tasks": [
+    {
+      "task": "refactor-slugs",
+      "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+      "without": {
+        "requests": 17,
+        "tool_calls": 27,
+        "attempts": 2,
+        "repairs": 1,
+        "costs": {
+          "allowance": "0.01166664",
+          "list_cost": "0.01944437",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 11,
+            "tool_calls": 18,
+            "costs": {
+              "allowance": "0.00669381",
+              "list_cost": "0.01115632",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": false,
+            "resumed": false,
+            "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+            "correctness": {
+              "success": false,
+              "checks": {
+                "refactor-slugs": false,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "5e82462b431d6082dc171dae78d83fc2b63358acc8dd2cf4279c66677ee23b1f",
+              "events.jsonl": "58a7ce79680d5709d96fdaac7faf11b86c79f7ade0c637c80d53be0ef1037942",
+              "requests.jsonl": "c98ad552cf6fe526fa8ffc2ac25040a5331fcb13fa71b9637e4772963354ebec"
+            },
+            "completion_tokens": 5367
+          },
+          {
+            "attempt": 1,
+            "attempt_kind": "semantic_repair",
+            "requests": 6,
+            "tool_calls": 9,
+            "costs": {
+              "allowance": "0.00497283",
+              "list_cost": "0.00828805",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "68082ee3d179912d58c47ea100f19daf239c1d4ed4f2ffc1a60513d25e659929",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "aebdfac8c89255a11fb1ab4cad0629d74e31c3bb04a28ae6ad06c05af65699ff",
+              "events.jsonl": "462c8e34cfe3d4570669c6dc0ad82281c736bece0179a41efe08287fe7c19a25",
+              "requests.jsonl": "1d9cd84701d222331798d5b61f2fa1c62e0aa5d5bd78ab72c0f33e631ad56ed7"
+            },
+            "completion_tokens": 4551
+          }
+        ]
+      },
+      "with": {
+        "requests": 15,
+        "tool_calls": 27,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01651836",
+          "list_cost": "0.02753063",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 15,
+            "tool_calls": 27,
+            "costs": {
+              "allowance": "0.01651836",
+              "list_cost": "0.02753063",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": false,
+            "prompt_sha256": "fd0a4f55cabc27774e4193f089f09f2baafea1b6a9bb36528013f3cd2283aaf1",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 17
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "6a4d4cfb56a25e01f08693396e95a63b2b478760f80331b7ac8fe80d44746035",
+              "events.jsonl": "1690236f0b15d2e1eb14b5601693c01eb7117d3d155fcb2e1baf19f71c46a7c7",
+              "requests.jsonl": "e6a0f3b4ae84f17304aaa57ce52988677f1e84f0b1ffcbdb3aa1b458d1a4490f"
+            },
+            "completion_tokens": 14935
+          }
+        ]
+      }
+    },
+    {
+      "task": "refactor-retry",
+      "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+      "without": {
+        "requests": 6,
+        "tool_calls": 10,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.00777574",
+          "list_cost": "0.01295957",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 6,
+            "tool_calls": 10,
+            "costs": {
+              "allowance": "0.00777574",
+              "list_cost": "0.01295957",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "0b1233f3fbb90b722b8a6d9ee2ece3e695178f7fc603e9a4cd6da077e8a1b201",
+              "events.jsonl": "c53e2c13a36daece037a8a5d7793791203b3dbf15d64baf80c7a82bcdcca66ee",
+              "requests.jsonl": "92151e9f56dd649f6ff309454af409b274867ce6133044b9ce89cf5518663609"
+            },
+            "completion_tokens": 7321
+          }
+        ]
+      },
+      "with": {
+        "requests": 10,
+        "tool_calls": 17,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01362836",
+          "list_cost": "0.02271392",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 10,
+            "tool_calls": 17,
+            "costs": {
+              "allowance": "0.01362836",
+              "list_cost": "0.02271392",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "d0fae1713fcca596e01a7d1590d39292d106f069b59154d7d1d56109c142ffc5",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 21
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "7dd16c1065a50a721d61ef88a1ff8b5f65114784225652cf0b418b3b73d0ab32",
+              "events.jsonl": "80955d9fe0d75f98ea6493459825b1061bdfac82f74f458290dbfd68029fa702",
+              "requests.jsonl": "548f8d133505318edbe8b924c5f738113336aed8808a303acb1bdedbe49a646f"
+            },
+            "completion_tokens": 12095
+          }
+        ]
+      }
+    },
+    {
+      "task": "refactor-money",
+      "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+      "without": {
+        "requests": 6,
+        "tool_calls": 10,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01133572",
+          "list_cost": "0.01889285",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 6,
+            "tool_calls": 10,
+            "costs": {
+              "allowance": "0.01133572",
+              "list_cost": "0.01889285",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true,
+                "refactor-money": true,
+                "refactor-money-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "bcf950c5350b1c052362945969bfe9184c943a4e1b1e1bd94d0b34061a17b834",
+              "events.jsonl": "7ad8e5bd1a65015984b001832cc49f0766f2ea60f9e8cd0c2e55510175892fbb",
+              "requests.jsonl": "557739dcb5c4d0526375ea583db5181dfa779dc700f89f50ec62e5aa2ed44ef8"
+            },
+            "completion_tokens": 11065
+          }
+        ]
+      },
+      "with": {
+        "requests": 10,
+        "tool_calls": 18,
+        "attempts": 1,
+        "repairs": 0,
+        "costs": {
+          "allowance": "0.01358160",
+          "list_cost": "0.02263600",
+          "cost": "0"
+        },
+        "complete_usage": true,
+        "accepted": true,
+        "attempts_detail": [
+          {
+            "attempt": 0,
+            "attempt_kind": "initial",
+            "requests": 10,
+            "tool_calls": 18,
+            "costs": {
+              "allowance": "0.01358160",
+              "list_cost": "0.02263600",
+              "cost": "0"
+            },
+            "valid_usage": true,
+            "exit_code": 0,
+            "timed_out": false,
+            "budget_stopped": false,
+            "accepted": true,
+            "resumed": true,
+            "prompt_sha256": "e72b15e489c1e7568544575ef63ffcc5b6e2dd4846c02ed1ffd626c5403bbe14",
+            "correctness": {
+              "success": true,
+              "checks": {
+                "refactor-slugs": true,
+                "refactor-slugs-duplicates-removed": true,
+                "refactor-retry": true,
+                "refactor-retry-duplicates-removed": true,
+                "refactor-money": true,
+                "refactor-money-duplicates-removed": true
+              },
+              "original_suite": {
+                "ok": true,
+                "tests": 13
+              },
+              "own_suite": {
+                "ok": true,
+                "tests": 25
+              },
+              "original_tests_removed": 0,
+              "original_tests_weakened": 0
+            },
+            "source_hashes": {
+              "record.json": "4f9fd8b4d893a1d462fc7244297fa77416a25489652bf0c424a251b10400fd37",
+              "events.jsonl": "29eccd553f9924676369f3a9fbd6a7559d362325feda3e82d87f028836e15ff3",
+              "requests.jsonl": "b1c89f86e3d23189a8d18a52b9feffbd0091a6b4be700879686406e3e2cec460"
+            },
+            "completion_tokens": 11595
+          }
+        ]
+      }
+    }
+  ],
+  "observed_work": {
+    "completion_tokens": {
+      "without": 28304,
+      "with": 38625
+    },
+    "edit_precondition_refusals": {
+      "with": 0,
+      "without": 2
+    },
+    "scope": "Observed counts, not a causal cost decomposition or projected savings."
+  }
+}
