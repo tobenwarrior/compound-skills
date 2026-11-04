@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.72 (2026-11-05)
+
+- Start known bug fixes by writing and running the nearest regression before opening dependency internals, history or alternative implementations. [Saved Flask traces](bench/README.md#consecutive-upstream-flask-fixes)
+
 ## 0.16.71 (2026-11-05)
 
 - Skip map focus ranking during exact symbol lookup when the selected inventory fits, avoiding an extra content scan before lexical occurrence search.

@@ -96,6 +96,8 @@ In both 0.16.54 Compound attempts, a focused post-fix regression run and the ful
 
 The saved 0.16.45, 0.16.54 and 0.16.60 Flask runs contain six rejected edits after the target had been viewed through the shell. Four occurred without Compound and two with Compound. The request containing the 0.16.60 Compound rejection used $0.00028602 of Go allowance. The 0.16.70 rule makes the native read prerequisite apply to each edit target when the host requires it. The saved usage records include those requests. No model run measured adherence or savings under the revised rule.
 
+The 0.16.60 Compound test-client trace spent five requests inspecting Werkzeug, running standalone probes and searching history after it had opened the relevant source and test. The development-server trace spent one request searching adjacent CLI code after finding the matching `app.run` test. These six requests used $0.00199995 of Go allowance and included 1,428 reasoning tokens. The 0.16.72 routing rule tells agents to write and run the regression first, and the debug guide names the nearest test as the starting point. The offline replay checks the saved fixes and their regressions against the original sources. Adherence and total model cost under the revised rule remain unmeasured.
+
 ## Compare a change with main
 
 ```bash
