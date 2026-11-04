@@ -503,6 +503,9 @@ def lookup_symbols(
             continue
         scanned_files += 1
         assert text is not None
+        # An exact occurrence needs the literal text before identifier boundaries matter.
+        if name not in text and time.monotonic() < deadline:
+            continue
         pattern = patterns[sigils]
         for line_number, line in enumerate(split_lines(text), 1):
             if time.monotonic() >= deadline:
