@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.55 (2026-11-04)
+
+- Use the failing regression as the bug-fix baseline and the full suite as confirmation in the default rule. This covers the same regression without a separate passing run when the full suite includes it. [Saved Flask verification](bench/README.md#consecutive-upstream-flask-fixes)
+
 ## 0.16.54 (2026-11-04)
 
 - Recognize `ctx` in paths as a match for context and give implementation files a little more weight when a query does not ask for tests. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)
