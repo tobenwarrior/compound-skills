@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.51 (2026-11-04)
+
+- Show the indexed definition of a bare, unambiguous symbol directly in CLI summaries. [Pinned replay](bench/README.md#exact-symbol-agent-summaries)
+
 ## 0.16.50 (2026-11-04)
 
 - Prioritize exact structured symbol definitions in code-map results and summaries, while preserving explicit test searches. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)

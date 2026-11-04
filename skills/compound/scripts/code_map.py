@@ -1438,9 +1438,27 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
                 temporary.unlink()
             except OSError:
                 pass
-def _exact_record(records: list[dict[str, Any]], query: str) -> dict[str, Any] | None:
+def _summary_target(
+    records: list[dict[str, Any]], query: str, *, allow_symbol: bool,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Select a named file or one indexed defining file for a bare symbol."""
     target = query.removeprefix("./")
-    return next((record for record in records if record["path"] == target), None) if target else None
+    if target:
+        exact = next((record for record in records if record["path"] == target), None)
+        if exact is not None:
+            return exact, None
+
+    token = query.strip()
+    if not allow_symbol or not token.isidentifier() or not _literal_query_names(token):
+        return None, None
+    name = token.casefold()
+    defining_file = None
+    for record in records:
+        if any(symbol["name"].casefold() == name for symbol in record["symbols"]):
+            if defining_file is not None:
+                return None, None
+            defining_file = record
+    return defining_file, name if defining_file is not None else None
 
 
 def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False) -> dict[str, Any]:
@@ -1536,7 +1554,9 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     if any("local import links capped" in record.get("outline_note", "") for record in records):
         _note(notes, "local import link cap reached; some importers may be missing")
     query_matches: set[str] = set()
-    exact = _exact_record(records, query) if exact_summary else None
+    exact, exact_symbol = (
+        _summary_target(records, query, allow_symbol=not budget_hit) if exact_summary else (None, None)
+    )
     if exact is None:
         ranked = _rank(records, query, root, query_matches=query_matches)
         selected = sorted(ranked[:max_files], key=lambda record: record["path"])
@@ -1545,7 +1565,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         selected = [exact]
         focus = [exact["path"]]
         query_matches.add(exact["path"])
-    # Coverage counts indexed files even when the exact-path summary displays one row.
+    # Coverage counts indexed files even when an exact summary displays one row.
     indexed = min(len(records), max_files)
     file_cap = len(records) > max_files
     truncated = file_cap or budget_hit
@@ -1571,6 +1591,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     }
     if _query_terms(query)[0] or _literal_query_names(query):
         model["query_matches"] = [path for path in model["focus"] if path in query_matches]
+    if exact_symbol is not None:
+        model["exact_symbol"] = exact_symbol
     if branch:
         model["branch"] = branch
     if use_cache and write_cache and not inventory_incomplete:
@@ -1607,7 +1629,11 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         lines.insert(3, "Excluded: " + summary)
     by_path = {file["path"]: file for file in model["files"]}
     focused_query = bool(terms or literal_names) and "query_matches" in model
-    if exact_path in by_path:
+    exact_symbol = model.get("exact_symbol")
+    if exact_symbol is not None:
+        lines.append("Focus (exact indexed symbol):")
+        focus = model["focus"]
+    elif exact_path in by_path:
         literal_names = frozenset()
         lines.append("Focus (exact indexed path):")
         focus = [exact_path]
@@ -1623,7 +1649,9 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         file = by_path.get(path)
         if not file:
             continue
-        if terms or literal_names:
+        if exact_symbol is not None:
+            symbol_values = [symbol for symbol in file["symbols"] if symbol["name"].casefold() == exact_symbol][:8]
+        elif terms or literal_names:
             def relevance(symbol: dict[str, Any]) -> int:
                 if literal_names and symbol["name"].casefold() in literal_names:
                     return 3 * len(terms) + 1

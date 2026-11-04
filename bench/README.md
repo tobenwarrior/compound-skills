@@ -233,6 +233,16 @@ On the parent of Flask commit `2a8a38b051fc248865730bf3511bf2e2ea325e81`, the qu
 
 The replay used one unchanged index per commit parent, the cleaned commit title, and the default 2,500-character summary. This was the only changed file ranking or visible path list in 24 development queries from Flask and Click. A separate 72-query check used the first 24 qualifying non-merge commits in attrs at `c8bb9bf`, Packaging at `78d8673`, and marshmallow at `b762ea2d`, using the selection rules in [map_retrieval.py](map_retrieval.py) and each project's source directory. All 72 kept their first 12 paths and visible path lists. No model calls were needed for the replay.
 
+## Exact-symbol agent summaries
+
+Compare bare structured symbol names on one unchanged index per pinned Flask and Django checkout:
+
+```sh
+python3 -B bench/map_exact_path.py --baseline-ref 0d62a9d --symbols
+```
+
+The replay selects 12 evenly spaced names with one indexed defining file per repository, then adds `stream_with_context` on Flask and `select_for_update` on Django. Across all 26 queries, source probes during ranking fell from 1,300 to zero, avoiding 27,070,622 source bytes. Emitted context fell from 59,931 to 21,790 bytes (63.6% less). Every response shows its target declaration and keeps the previously visible matching declarations. The 8 ordinary, multiword, ambiguous and missing-name controls returned identical summaries and read counts. Indexing was outside this measurement, and model usage remains unmeasured.
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:
