@@ -1436,8 +1436,10 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
                 skipped += 1
                 _note(notes, reason or "inventory entry skipped")
     terms, about_tests = _query_terms(query)
+    exact_path = query.removeprefix("./")
     order = sorted(candidates, key=lambda path: (
-        -sum(term in _name_terms(path) for term in terms), not _entry_config(path), not about_tests and _is_test(path), path,
+        path != exact_path, -sum(term in _name_terms(path) for term in terms),
+        not _entry_config(path), not about_tests and _is_test(path), path,
     ))
     inventory_capped = len(order) > MAX_FILES
     if inventory_capped:

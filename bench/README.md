@@ -209,6 +209,8 @@ Ranking probes fell from 2,500 to zero, avoiding 53,672,632 source bytes in the 
 
 A direct CLI replay against `b9db91b` queried `./src/flask/wrappers.py` and `./django/urls/base.py` at the same repository pins with `--max-files 3 --max-chars 500`. Each path ran with `--no-cache`, `--cache-read-only` after priming, and a simulated unavailable service after priming. Across the six commands, query ranking went from 300 source probes and 5,564,763 bytes read to zero. All six responses were byte-identical, indexing parse counts matched, and read-only and no-cache state stayed unchanged. The replay used local files and no model requests.
 
+A local regression replay gave the in-process map two files with the same name and reduced either the inventory cap or the source budget to one file. Before 0.16.47, the inventory cap returned the archived copy and the source budget left the requested file without symbols. With 0.16.47, both cases return the requested file and its symbol, with and without a leading `./`. Coverage remains partial in all four cases. The same failures and fixes reproduced at the shipped limits with 20,000 archive files plus the target for inventory and 64 one-MiB archive files plus the target for source reads. Six exact-path and topic comparisons on the pinned Flask and Django checkouts returned the same results, excluding JSON generation timestamps.
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:

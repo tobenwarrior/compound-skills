@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.47 (2026-11-04)
+
+- Give the exact requested file first use of the inventory and source read budgets in an in-process code map. [Local regression replay](bench/README.md#exact-path-agent-summaries)
+
 ## 0.16.46 (2026-11-04)
 
 - Use the editor's required native Read before edits. Keep the failing regression and final suite, and reserve extra checks for project requirements or gaps in evidence. [Saved Flask traces](bench/README.md#consecutive-upstream-flask-fixes)
