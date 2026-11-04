@@ -187,6 +187,8 @@ In 0.16.54, the map shows the response implementation in the Django disconnect s
 
 In 0.16.59, the complete visible summaries show 8 of 9 rubric files across the three pinned queries, up from 7 of 9. The Django disconnect summary now lists `django/db/__init__.py` as a ranked result with `close_old_connections` at line 57. The first four paths and the 2,500-character cap stayed the same. The renderer prioritizes whole paths over some signatures and import details when space is limited.
 
+In 0.16.60, the row-lock query treats `TestCase` as a named class and keeps production matches competitive. The complete summary now includes `django/db/models/sql/compiler.py` alongside the queryset and test case definitions. All 9 rubric files are visible across the three summaries. The first-four score stays at 7 of 9. An explicit search for tests still puts a test file first.
+
 These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
 
 The [0.16.57 matched navigation comparison](diagram_sources/comparison_navigation_v01657.json) records all six metered attempts. Both modes passed all ten source citations. The two arms matched on every field of the initial provider request outside the task message.

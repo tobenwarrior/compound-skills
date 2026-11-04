@@ -1067,9 +1067,11 @@ def _path_terms(path: str) -> frozenset[str]:
 
 def _query_terms(query: str) -> tuple[list[str], bool]:
     """Return the distinct folded query words that can name a file, and whether the query is about tests."""
-    words = list(_identifier_words(_identifier_tokens(query)))
+    tokens = _identifier_tokens(query)
+    words = list(_identifier_words(tokens))
     terms = [_stem(word) for word in words if (len(word) > 1 or not word.isascii()) and word not in QUERY_STOP_WORDS]
-    return list(dict.fromkeys(terms)), any(word in QUERY_TEST_WORDS for word in words)
+    about_tests = any(part in QUERY_TEST_WORDS for token in tokens for part in token.casefold().split("_"))
+    return list(dict.fromkeys(terms)), about_tests
 
 
 @functools.lru_cache(maxsize=256)
