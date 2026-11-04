@@ -174,7 +174,7 @@ def map_retrieval(args) -> int:
         if not (SOURCES / name).is_dir():
             raise SystemExit(f"{name} is not fetched: run `python3 bench/bench.py setup --map`")
     arm, scripts = plugin_scripts(args.plugin)
-    result = retrieval.run(scripts / "code_map.py", args.per_repo)
+    result = retrieval.run(scripts / "code_map.py", args.per_repo, retain_history=args.retain_history)
     result["plugin"] = {k: v for k, v in arm.items() if k != "plugin"}
     result["python"] = platform.python_version()
     target = output_path("map-retrieval", args.label)
@@ -249,6 +249,7 @@ def main() -> int:
     p = sub.add_parser("map-retrieval", help="does the map find the files real commits touched")
     p.add_argument("--plugin", default="worktree", help="worktree, ref:<revision> or dir:<path>")
     p.add_argument("--per-repo", type=int, default=60)
+    p.add_argument("--retain-history", action="store_true", help="query the real parent with its original Git history")
     p.add_argument("--label")
     p.set_defaults(func=map_retrieval)
     args = parser.parse_args()

@@ -386,7 +386,7 @@ python3 bench/bench.py map-retrieval --plugin ref:main
 ```
 
 - `map-speed` times builds and agent queries on Django, Vue core, Gin and ripgrep at pinned commits: cold, unchanged, after a one-file edit, and through the local service.
-- `map-retrieval` checks whether the map ranks the files that real Flask, click and Hono commits touched, against a word-count search and chance.
+- `map-retrieval` checks whether the map ranks the files that real Flask, click and Hono commits touched, against a word-count search and chance. Use `--retain-history` to measure ranking with the real parent and its Git ancestry. The report records the fixture mode and the real parent revision for each history-enabled query. The default uses one-commit snapshots for comparison with prior runs.
 
 Neither benchmark runs an agent or executes repository code. For a quick offline check that needs no setup, `python3 scripts/benchmark_code_map.py` builds a small synthetic repository in every supported language. It checks that the map and symbol lookup find each planted definition, and times them.
 

@@ -1,7 +1,8 @@
 """Does the code map point at the files a real change touched? No agents involved.
 
 For the most recent qualifying commits of each repository (non-merge, touching 1-3 non-test source files), the tree
-at the commit's parent is extracted into a fresh git repository and queried with the commit subject:
+at the commit's parent is queried with the commit subject. By default this uses a one-commit snapshot;
+the history option checks out the real parent so the map can use its preceding co-change history:
 
 - map: `code_map.py --query <subject> --no-cache --format json`, ranked focus list (the agent-facing text shows about
   the first 4 entries within its 2,500-character budget; the JSON lists up to 12).
@@ -14,6 +15,7 @@ repositories is executed.
 from __future__ import annotations
 
 import json
+import os
 import re
 import statistics
 import subprocess
@@ -64,7 +66,16 @@ def select(repo: Path, source: str, tests: str, limit: int) -> list[dict]:
     return chosen
 
 
-def extract(repo: Path, sha: str, dest: Path) -> None:
+def extract(repo: Path, sha: str, dest: Path, *, retain_history: bool = False) -> None:
+    if retain_history:
+        # Skip checkout hooks and user-configured filters in disposable upstream checkouts.
+        env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
+        command = ["git", "-c", f"core.hooksPath={os.devnull}"]
+        subprocess.run([*command, "clone", "-q", "--shared", "--no-checkout", str(repo), str(dest)],
+                       check=True, capture_output=True, env=env)
+        subprocess.run([*command, "-C", str(dest), "checkout", "-q", "--detach", f"{sha}^"],
+                       check=True, capture_output=True, env=env)
+        return
     archive = subprocess.run(["git", "-C", str(repo), "archive", f"{sha}^"], capture_output=True, check=True).stdout
     subprocess.run(["tar", "-x", "-C", str(dest)], input=archive, check=True)
     for args in (["init", "-q"], ["add", "-A"], ["-c", "user.name=bench", "-c", "user.email=bench@example.invalid", "commit", "-qm", "parent"]):
@@ -110,8 +121,8 @@ def recall(ranked: list[str], touched: list[str], k: int) -> float:
     return sum(1 for f in touched if f in ranked[:k]) / len(touched)
 
 
-def run(code_map: Path, per_repo: int) -> dict:
-    report = {"commits": [], "summary": {}}
+def run(code_map: Path, per_repo: int, *, retain_history: bool = False) -> dict:
+    report = {"commits": [], "summary": {}, "fixture_history": "upstream-parent" if retain_history else "snapshot"}
     for name, (source, tests) in REPOS.items():
         repo = SOURCES / name
         commits = select(repo, source, tests, per_repo)
@@ -121,7 +132,7 @@ def run(code_map: Path, per_repo: int) -> dict:
                 tree, state = Path(folder) / name, Path(folder) / "state"
                 tree.mkdir()
                 state.mkdir()
-                extract(repo, commit["sha"], tree)
+                extract(repo, commit["sha"], tree, retain_history=retain_history)
                 candidates = [f for f in git(tree, "ls-files").splitlines() if CODE_EXT.search(f)]
                 touched = [f for f in commit["touched"] if f in candidates]
                 if not touched:
@@ -130,6 +141,8 @@ def run(code_map: Path, per_repo: int) -> dict:
                 ranked_rg = rg_rank(tree, commit["query"], candidates)
                 row = {**commit, "repo": name, "touched": touched, "candidates": len(candidates), "map_seconds": round(seconds, 3),
                        "map_text_entries": shown, "map_top": ranked_map[:12], "rg_top": ranked_rg[:12]}
+                if retain_history:
+                    row["fixture_head"] = git(tree, "rev-parse", "HEAD", check=True).strip()
                 for k in (1, 4, 12):
                     row[f"map@{k}"] = recall(ranked_map, touched, k)
                     row[f"rg@{k}"] = recall(ranked_rg, touched, k)
