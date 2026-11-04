@@ -1,0 +1,278 @@
+{
+  "scope": "Evenly spaced Python paths from each sorted index plus the reported example, deduplicated. Both rankers use the same indexed metadata and read the same checkout. Zero model calls.",
+  "baseline_ref": "efe0a7af263e13733b709fe7fad3d02c15a6502d",
+  "baseline_source_sha256": "7313b6b0d27836dab583e694a1cdd52d043ae8cac594106c090229d88ab7aae7",
+  "candidate_source_sha256": "6c51b79a420cad89c24d4306d73f1a5806ca29f704251c1550884f354be6dbee",
+  "repositories": [
+    {
+      "repository": "flask",
+      "head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "indexed_python_files": 83,
+      "example": "src/flask/__init__.py",
+      "topic_control": "route handlers",
+      "topic_order_unchanged": true,
+      "queries": [
+        {
+          "path": "docs/conf.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "examples/celery/src/task_app/tasks.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "examples/javascript/js_example/views.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "examples/tutorial/flaskr/auth.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "examples/tutorial/tests/conftest.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "examples/tutorial/tests/test_factory.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/app.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/logging.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/sansio/scaffold.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/testing.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_apps/blueprintapp/__init__.py",
+          "before_rank": 7,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/__init__.py",
+          "before_rank": 23,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/importerrorapp.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/multiapp.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_apps/subdomaintestmodule/__init__.py",
+          "before_rank": 8,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_cli.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_helpers.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_logging.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_request.py",
+          "before_rank": 15,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_templating.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/test_views.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "src/flask/__init__.py",
+          "before_rank": 19,
+          "after_rank": 1
+        }
+      ]
+    },
+    {
+      "repository": "django",
+      "head": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "indexed_python_files": 2937,
+      "example": "django/urls/base.py",
+      "topic_control": "model query annotations",
+      "topic_order_unchanged": true,
+      "queries": [
+        {
+          "path": "django/__init__.py",
+          "before_rank": 193,
+          "after_rank": 1
+        },
+        {
+          "path": "django/conf/locale/mn/__init__.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "django/contrib/auth/migrations/0010_alter_group_name_max_length.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "django/contrib/gis/gdal/srs.py",
+          "before_rank": 6,
+          "after_rank": 1
+        },
+        {
+          "path": "django/contrib/sites/admin.py",
+          "before_rank": 2,
+          "after_rank": 1
+        },
+        {
+          "path": "django/core/management/commands/startproject.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "django/db/models/functions/text.py",
+          "before_rank": 4,
+          "after_rank": 1
+        },
+        {
+          "path": "django/utils/encoding.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/admin_scripts/another_app_waiting_migration/models.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/async/models.py",
+          "before_rank": 19,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/check_framework/__init__.py",
+          "before_rank": 40,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/dates/__init__.py",
+          "before_rank": 121,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/empty/models.py",
+          "before_rank": 19,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/forms_tests/models.py",
+          "before_rank": 17,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/gis_tests/geos_tests/test_geos_limit.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/logging_tests/tests.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/migrations/migrations_test_apps/lookuperror_a/migrations/__init__.py",
+          "before_rank": 29,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/migrations/test_migrations_order/__init__.py",
+          "before_rank": 69,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/model_fields/test_foreignkey.py",
+          "before_rank": 5,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/postgres_tests/test_functions.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/settings_tests/__init__.py",
+          "before_rank": 94,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/template_tests/filter_tests/test_escapeseq.py",
+          "before_rank": 1,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/template_tests/views.py",
+          "before_rank": 4,
+          "after_rank": 1
+        },
+        {
+          "path": "tests/urlpatterns_reverse/views.py",
+          "before_rank": 3,
+          "after_rank": 1
+        },
+        {
+          "path": "django/urls/base.py",
+          "before_rank": 3,
+          "after_rank": 1
+        }
+      ]
+    }
+  ]
+}

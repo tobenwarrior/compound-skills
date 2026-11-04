@@ -97,6 +97,16 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Exact-path queries
+
+Compare exact-path ranking on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.24 checkpoint:
+
+```sh
+python3 -B bench/map_exact_path.py --baseline-ref efe0a7a
+```
+
+Both rankers use the same map metadata and source checkout. The replay selects 24 evenly spaced paths from each sorted Python file list and adds the two paths that exposed the issue. The requested file ranked first for 19 of 50 queries before the fix and 50 of 50 afterward. The full ranking for one topic query per repository stayed the same. [Paths, ranks and pins](diagram_sources/map_exact_path_v01624.json).
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:

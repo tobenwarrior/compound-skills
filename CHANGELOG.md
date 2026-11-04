@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.24 (2026-11-04)
+
+- Put exact repository-relative path queries first, including paths written with `./`. The requested file remains visible under a one-file response cap.
+- In a replay on pinned Flask and Django checkouts, all 50 exact-path queries ranked their file first. The two topic controls kept the same ranking. [Replay](bench/README.md#exact-path-queries).
+
 ## 0.16.23 (2026-11-04)
 
 - Reuse passing checks when inputs and environment are unchanged. Count the final bug suite as confirmation when it includes the regression, and rerun only unresolved parts of a combined refactor probe.

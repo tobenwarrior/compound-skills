@@ -1087,6 +1087,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     if not IDENTIFIER.search(query):
         return _rank_unfocused(records, by_path, reverse)
     terms, about_tests = _query_terms(query)
+    exact_path = query.removeprefix("./")
     path_terms = {path: _name_terms(path) for path in by_path}
     symbol_terms = {path: frozenset().union(*(_name_terms(symbol["name"]) for symbol in record["symbols"])) for path, record in by_path.items()}
     weights = {
@@ -1094,7 +1095,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         for term in terms
     }
     matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
-    matching_paths = {path for path, value in matched.items() if value > 0}
+    matching_paths = {path for path, value in matched.items() if value > 0 or path == exact_path}
     if query_matches is not None:
         query_matches.update(matching_paths)
     bonus = dict.fromkeys(by_path, 0.0)
@@ -1110,6 +1111,8 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         bonus[path] += 1
 
     def score(path: str, word_score: float) -> float:
+        if path == exact_path:
+            return math.inf
         value = word_score + bonus[path]
         return value * TEST_FACTOR if not about_tests and _is_test(path) else value
 
