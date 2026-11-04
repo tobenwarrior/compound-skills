@@ -86,14 +86,14 @@ def validate_artifact_record(folder, record):
     task = PLAN['sequences'][0]['tasks'][stage]['name']
     if ((record.get('stage'), record.get('arm'), record.get('task')) != (stage, arm, task)
             or folder != attempt_folder(index, task, arm, attempt)
-            or record.get('accepted') is not record['grade']['success']
+            or record.get('accepted') is not (record['grade']['success'] and record['valid_usage'])
             or not record.get('session_id')):
         raise RuntimeError(f'Invalid snapshot record: {folder.name}')
     if record.get('artifact_sha256') != artifact_digest(folder / 'final.tgz'):
         raise RuntimeError(f'Attempt snapshot digest mismatch: {folder.name}')
 
 def rows(path):return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
-def records():
+def records(*, for_summary=False):
     root = BASE / 'runs'
     if not root.exists():
         return []
@@ -105,21 +105,29 @@ def records():
         record = json.loads(record_path.read_text())
         if record.get('plan_sha256') != PLAN_SHA256:
             raise RuntimeError(f'Invalid prior attempt {folder.name}: benchmark plan hash mismatch')
+        grade_result = record.get('grade', {})
+        if type(grade_result.get('success')) is not bool:
+            raise RuntimeError(f'Incomplete attempt folder: {folder.name} has no final grade')
+        ungraded = grade_result.get('infrastructure_error') is True
+        if ungraded and not for_summary:
+            raise RuntimeError(f'Incomplete attempt folder: {folder.name} has no final grade')
         requests = request_rows(folder)
+        valid_usage = valid_usage_rows(requests)
+        known = known_costs(requests)
+        if ungraded:
+            record.update(requests=len(requests), valid_usage=valid_usage, known_costs=known)
         if record.get('requests') != len(requests):
             raise RuntimeError(f'Invalid prior attempt {folder.name}: request count mismatch')
-        if record.get('valid_usage') is not True or not valid_usage_rows(requests):
+        if record.get('valid_usage') is not valid_usage or (not valid_usage and not for_summary):
             raise RuntimeError(f'Invalid prior attempt {folder.name}: incomplete or invalid usage')
-        if record.get('known_costs') != known_costs(requests):
+        if record.get('known_costs') != known:
             raise RuntimeError(f'Invalid prior attempt {folder.name}: recorded costs disagree with meter')
-        if not isinstance(record.get('grade', {}).get('success'), bool):
-            raise RuntimeError(f'Incomplete attempt folder: {folder.name} has no final grade')
-        if GRADER == 'flask-sequence':
+        if GRADER == 'flask-sequence' and not ungraded:
             validate_artifact_record(folder, record)
         result.append(record)
     if GRADER == 'flask-sequence':
         for record in result:
-            if record['stage'] == 0:
+            if record['stage'] == 0 or record['grade'].get('infrastructure_error') is True:
                 continue
             prior = accepted_predecessor(result, record['stage'], record['arm'])
             if (prior is None or record.get('previous_artifact_sha256') != prior['artifact_sha256']
@@ -211,6 +219,12 @@ def known_costs(requests):
     return result
 
 
+def write_record(folder, record):
+    pending = folder / 'record.json.tmp'
+    pending.write_text(json.dumps(record, indent=2) + '\n')
+    pending.replace(folder / 'record.json')
+
+
 def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=None):
  task=PLAN['sequences'][0]['tasks'][stage]['name'];out=attempt_folder(index,task,arm,attempt)
  if GRADER == 'flask-sequence':
@@ -229,21 +243,36 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  if session:command+=['--session-id',session]
  out.mkdir()
  command.append(prompt);(out/'prompt.txt').write_text(prompt)
+ record = {
+     'schema': 'compound-live-attempt-1', 'index': index, 'stage': stage, 'task': task,
+     'arm': arm, 'attempt': attempt,
+     'attempt_kind': attempt_kind or ('semantic_repair' if attempt else 'initial'),
+     'prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(), 'plan_sha256': PLAN_SHA256,
+     'grade': {'success': False, 'infrastructure_error': True}, 'accepted': False,
+ }
+ # Register the attempt before dispatch so an interrupted launcher leaves a reportable ledger.
+ write_record(out, record)
  print('START',index+1,task,arm,'attempt',attempt,'max_requests',cap,flush=True)
  started=time.monotonic();timed_out=False
  with (out/'events.jsonl').open('w') as stdout,(out/'stderr.log').open('w') as stderr:
   child=subprocess.Popen(command,cwd=BASE/'workspace',env=env,stdout=stdout,stderr=stderr,start_new_session=True)
   try:code=child.wait(timeout=PLAN['max_wall_seconds_per_run'])
-  except subprocess.TimeoutExpired:
-   timed_out=True;os.killpg(child.pid,signal.SIGINT)
+  except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+   timed_out=isinstance(error,subprocess.TimeoutExpired);os.killpg(child.pid,signal.SIGINT)
    try:code=child.wait(timeout=15)
    except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);code=child.wait()
+   if not timed_out:raise
  req=request_rows(out);events=rows(out/'events.jsonl');meter=rows(out/'requests.jsonl')
  valid=valid_usage_rows(req)
  known=known_costs(req)
  sessions=[e for e in events if e.get('type')=='session'];finals=[e for e in events if e.get('type')=='final']
- record={'schema':'compound-live-attempt-1','index':index,'stage':stage,'task':task,'arm':arm,'attempt':attempt,'attempt_kind':attempt_kind or ('initial' if not attempt else 'semantic_repair'),'requests':len(req),'tool_calls':sum(e.get('type')=='tool_call' for e in events),'known_costs':known,'costs':known if valid else {k:None for k in known},'valid_usage':valid,'exit_code':code,'timed_out':timed_out,'budget_stopped':any(r.get('event')=='budget_stop' for r in meter),'session_id':sessions[0]['sessionId'] if sessions else session,'resumed':bool(session),'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),'plan_sha256':PLAN_SHA256,'wall_seconds':time.monotonic()-started}
- (out/'record.json').write_text(json.dumps(record,indent=2)+'\n')
+ record.update(
+     requests=len(req), tool_calls=sum(e.get('type')=='tool_call' for e in events),
+     known_costs=known, costs=known if valid else dict.fromkeys(known), valid_usage=valid,
+     exit_code=code, timed_out=timed_out, budget_stopped=any(r.get('event')=='budget_stop' for r in meter),
+     session_id=sessions[0]['sessionId'] if sessions else session, resumed=bool(session),
+     wall_seconds=time.monotonic()-started,
+ )
  project=BASE/'active'/arm
  archive=out/'final.tgz'
  archive_attempt(project,archive)
@@ -258,7 +287,7 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  else:
   result=grade(project,stage)
  record.update(grade=result,accepted=result['success'] and valid,native_exit_success=code==0,final_message_present=bool(finals),final=finals[-1] if finals else None)
- (out/'record.json').write_text(json.dumps(record,indent=2)+'\n')
+ write_record(out, record)
  print(json.dumps({k:record[k] for k in ['task','arm','attempt','requests','tool_calls','costs','accepted','valid_usage','exit_code']}),flush=True)
  if code:print('DIAGNOSTIC', (out/'stderr.log').read_text()[-1200:],flush=True)
  if not valid:raise RuntimeError('Stop comparison: missing usage, routing/model/tool activation error or provider failure; all attempts retained')
@@ -311,7 +340,11 @@ def run_stage(index,stage,arm,session,previous=None):
 if __name__ == '__main__':
     if sys.argv[1:] == ['--summary']:
         from yharness_verdict import evaluate
-        print(json.dumps(evaluate(PLAN, records()), indent=2))
+        saved = records(for_summary=True)
+        report = evaluate(PLAN, saved)
+        for arm, totals in report['arms'].items():
+            totals['requests'] = sum(row['requests'] for row in saved if row['arm'] == arm)
+        print(json.dumps(report, indent=2))
     else:
         with (BASE / 'plan.sha256').open() as lock:
             try:

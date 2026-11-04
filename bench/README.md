@@ -34,7 +34,7 @@ python3 -B bench/yharness_dispatch.py --validate bench/data/dispatchkit
 
 The preflight requires the original bug, an unfixed refactor, a behavior-changing extraction and a lost earlier fix to fail. It requires the independently written fixes to pass. Any live run uses the same settings and one repair or recovery opportunity per task in both modes. The verdict uses every recorded attempt and requires both modes to finish both tasks before comparing allowance, list-price usage and cash charges.
 
-In a prepared run directory, copy `yharness_verdict.py` beside the runner and use `python3 -B run.py --summary` to evaluate saved usage and grades. It does not dispatch requests. The fixture preflight needs neither a run directory nor a provider key.
+In a prepared run directory, copy `yharness_verdict.py` beside the runner and use `python3 -B run.py --summary` to evaluate saved usage and grades. It counts metered requests from failed attempts and labels totals as lower bounds when usage is unverified. Interrupted grading stops the comparison and preserves its recorded charges. The fixture preflight needs neither a run directory nor a provider key.
 
 [The 0.16.31 Dispatchkit comparison](diagram_sources/comparison_dispatch_v01631.json) uses the same tasks and reverses the mode order from the [0.16.15 run](diagram_sources/comparison_dispatch_v01615.json). Its ledger includes all four first-pass attempts, both task grades and the provider-reported cache and usage totals.
 

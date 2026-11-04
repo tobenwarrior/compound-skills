@@ -1,8 +1,7 @@
 """Offline completion comparison verdicts for a frozen Y Harness run.
 
-The evaluator consumes a frozen plan and records that have already passed the
-runner's raw-meter validation.  It still validates the experiment ledger before
-making a cost claim, so an incomplete or mixed schedule can never look cheap.
+The evaluator consumes a frozen plan and records reconciled to the raw meter.
+Unverified usage remains in the known totals and prevents a cost claim.
 """
 
 from __future__ import annotations
@@ -102,6 +101,7 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
     expected = _expected_schedule(plan)
     plan_hash = plan.get("plan_sha256")
     by_index: dict[int, list[dict[str, Any]]] = defaultdict(list)
+    errors = []
     for ordinal, record in enumerate(records):
         location = f"record {ordinal}"
         if not isinstance(record, dict):
@@ -123,6 +123,10 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
         if kind not in _ATTEMPT_KINDS or (attempt == 0 and kind != "initial") or (attempt == 1 and kind == "initial"):
             raise VerdictError(f"{location}: invalid attempt kind")
         accepted = _record_acceptance(record, location)
+        if not record["valid_usage"]:
+            errors.append(f"schedule index {index}, attempt {attempt}: usage is unverified, so totals are lower bounds")
+        if record["grade"].get("infrastructure_error") is True:
+            errors.append(f"schedule index {index}, attempt {attempt}: independent grading did not finish")
         costs = _record_costs(record, location)
         by_index[index].append({"record": record, "accepted": accepted, "costs": costs})
 
@@ -134,7 +138,7 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
         if len(attempts) == 2 and attempts[0]["accepted"]:
             raise VerdictError(f"schedule index {index}: follow-up follows an accepted artifact")
 
-    errors = [f"schedule index {index}: missing scheduled task" for index in sorted(set(expected) - set(by_index))]
+    errors.extend(f"schedule index {index}: missing scheduled task" for index in sorted(set(expected) - set(by_index)))
 
     arms: dict[str, dict[str, Any]] = {}
     for arm in ("without", "with"):
@@ -164,12 +168,13 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
         arm: sorted(stage for stage, scheduled_arm in expected.values() if scheduled_arm == arm)
         for arm in ("without", "with")
     }
-    complete = not errors and all(
+    accepted_all = all(
         arms[arm]["accepted_stages"] == expected_by_arm[arm] and arms[arm]["stages"] == expected_by_arm[arm]
         for arm in ("without", "with")
     )
-    if not complete:
+    if not accepted_all:
         errors.append("both arms must accept every scheduled stage")
+    complete = not errors
 
     cheaper = False
     if complete:
