@@ -44,6 +44,28 @@ In the [0.16.31 Dispatchkit comparison](diagram_sources/comparison_dispatch_v016
 
 An offline replay reversed the three saved signature-related edits in a copy of the final artifact. The same network-disabled grader accepted both states. Both preserved the earlier routing fix, passed the hidden refactor checks, kept the original tests and passed all six final tests. The 0.16.32 saved rule routes this kind of scoped extraction directly and gives it a finish point after the required checks and diff review. The replay measures the saved work and checks the two artifacts. The new routing has no live cost measurement.
 
+#### Consecutive upstream Flask fixes
+
+This sequence starts both modes at Flask commit `514fc6b`. Fix the IPv6 test-client session bug first and the IPv6 development-server parsing bug second. The existing real-bug benchmark used the individual tasks separately. This sequence keeps the same checkout and conversation within each mode, then checks that the second change preserves the first.
+
+After building the frozen Flask fixtures and test dependencies, validate the sequence offline:
+
+```sh
+python3 -B bench/bench.py setup --real flask-ipv6-session,flask-ipv6-run
+python3 -B bench/yharness_flask_sequence.py preflight
+```
+
+Setup fetches pinned inputs if needed. Preflight uses local copies and prints the starting revision, fixture hash, prompts and grades. The starting repository has one branch, no remotes and neither upstream fix. Keep the preflight report, upstream repository and grading files outside the agent workspaces. Both modes receive the same prompt for each stage. Reverse the order of the modes between stages.
+
+Grade each candidate in a disposable, network-disabled runner with read-only inputs and the matching Python environment. Mount the fixture and reference tests there with the benchmark work layout. Save the accepted first-stage snapshot outside the agent workspace before the next task.
+
+```sh
+python3 -B bench/yharness_flask_sequence.py grade 1 /input/project
+python3 -B bench/yharness_flask_sequence.py grade 2 /input/project --previous /input/accepted-stage-1
+```
+
+The grader runs the cumulative hidden checks and the original, previous and final test suites where applicable. At each stage it requires an added or changed regression to fail on the preceding source and pass on the current source. In preflight, the full reference passes 493 tests. The grader rejects a missing fix, a second fix that drops the first, a missing second regression and removal of the first regression. These are offline correctness checks. Usage and cost require a separate metered comparison.
+
 ## Compare a change with main
 
 ```bash
