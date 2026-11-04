@@ -177,7 +177,9 @@ python3 -B bench/map_navigation.py
 
 The local preflight checks that each witness occurs within its named symbol at the source pin. For each case, it runs the same fixed lookup query in both tools. Without Compound, it uses literal `git grep` counts, ranks Python files by distinct terms in their path or source, and lists top-level tests last. With Compound, it takes the first four complete file paths from the normal 2,500-character summary. Counts use distinct rubric files. Import hints are available to the reader and excluded from the first-four score.
 
-At 0.16.49, without and with Compound found 1/3 and 1/3 on disconnect cleanup, 1/3 and 0/3 on row locks, and 3/3 and 2/3 on streaming. These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
+At 0.16.49, without and with Compound found 1/3 and 1/3 on disconnect cleanup, 1/3 and 0/3 on row locks, and 3/3 and 2/3 on streaming. In 0.16.50, the map puts the exact `TestCase` and `select_for_update` definitions first for the row-lock query, raising its first-four count from 0/3 to 2/3. Both modes now surface 5 of 9 rubric files across the three cases. The map also puts `stream_with_context` first on the Flask query, with the same first-four count. The explicit `tests for select_for_update` control keeps the test file first. Recall at ranks 1, 4 and 12 and recall in the visible summary stayed the same on each of the 96 saved commit-title queries used for the lowercase-symbol replay.
+
+These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
 
 For a metered map comparison, use identical read-only source checkouts, prompts, model settings and native navigation tools. Keep the rubric and benchmark code outside both checkouts. The treatment adds the map as an initial orientation tool and records its invocation. Judge every hop against the frozen source and account for all requests, incomplete attempts and repairs in both modes. This preflight makes no model calls.
 

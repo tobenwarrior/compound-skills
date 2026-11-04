@@ -1066,6 +1066,19 @@ def _query_terms(query: str) -> tuple[list[str], bool]:
     return list(dict.fromkeys(terms)), any(word in QUERY_TEST_WORDS for word in words)
 
 
+@functools.lru_cache(maxsize=256)
+def _literal_query_names(query: str) -> frozenset[str]:
+    """Recognize written code identifiers without boosting production files in explicit test searches."""
+    tokens = _identifier_tokens(query)
+    if any(token.casefold() in QUERY_TEST_WORDS for token in tokens):
+        return frozenset()
+    return frozenset(
+        token.casefold() for token in tokens
+        if token.isascii() and token.isidentifier()
+        and ("_" in token.strip("_") or len(WORD_PART.findall(token)) > 1)
+    )
+
+
 def _is_test(path: str) -> bool:
     parts = path.lower().split("/")
     return any(part in TEST_DIRS or part.endswith(("-tests", "_tests")) for part in parts[:-1]) or bool(TEST_FILE.search(parts[-1]))
@@ -1143,7 +1156,12 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     }
     weights = {term: math.log(1 + len(records) / (1 + count)) for term, count in occurrences.items()}
     matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
-    matching_paths = {path for path, value in matched.items() if value > 0 or path == exact_path}
+    literal_names = _literal_query_names(query) if exact_path not in by_path else frozenset()
+    literal_paths = {
+        path for path, record in by_path.items()
+        if any(symbol["name"].casefold() in literal_names for symbol in record["symbols"])
+    } if literal_names else set()
+    matching_paths = literal_paths | {path for path, value in matched.items() if value > 0 or path == exact_path}
     if query_matches is not None:
         query_matches.update(matching_paths)
     bonus = dict.fromkeys(by_path, 0.0)
@@ -1165,7 +1183,12 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         return value * TEST_FACTOR if not about_tests and _is_test(path) else value
 
     first = {path: score(path, matched[path]) for path in by_path}
-    order = sorted(records, key=lambda record: (-first[record["path"]], not _entry_config(record["path"]), record["path"]))
+
+    def rank_key(record: dict[str, Any], scores: dict[str, float]) -> tuple[bool, float, bool, str]:
+        path = record["path"]
+        return path not in literal_paths, -scores[path], not _entry_config(path), path
+
+    order = sorted(records, key=lambda record: rank_key(record, first))
     signature_matches = {
         record["path"] for record in order[:CONTENT_RANK_FILES]
         if any(term in _name_terms(symbol.get("signature") or "")
@@ -1234,16 +1257,15 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
                     rescored[path] = score(path, CONTENT_WEIGHT * content)
                     rescued.append(record)
 
-    def rank_key(record: dict[str, Any]) -> tuple[float, bool, str]:
-        path = record["path"]
-        return -rescored[path], not _entry_config(path), path
+    def content_rank(record: dict[str, Any]) -> tuple[bool, float, bool, str]:
+        return rank_key(record, rescored)
 
-    head.sort(key=rank_key)
+    head.sort(key=content_rank)
     if not rescued:
         return head + order[CONTENT_RANK_FILES:]
     rescued_paths = {record["path"] for record in rescued}
     # Keep the leading results while giving the missing keyword one visible path.
-    leading = head[:3] + rescued + head[3:] if missing else sorted(rescued, key=rank_key) + head
+    leading = head[:3] + rescued + head[3:] if missing else sorted(rescued, key=content_rank) + head
     return leading + [record for record in order[CONTENT_RANK_FILES:] if record["path"] not in rescued_paths]
 def _note(notes: list[str], value: str) -> None:
     if value and value not in notes:
@@ -1547,7 +1569,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         "files": selected,
         "focus": focus,
     }
-    if _query_terms(query)[0]:
+    if _query_terms(query)[0] or _literal_query_names(query):
         model["query_matches"] = [path for path in model["focus"] if path in query_matches]
     if branch:
         model["branch"] = branch
@@ -1568,6 +1590,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         "import links are heuristic" not in note for note in notes if isinstance(note, str)
     )
     terms = _query_terms(query)[0]
+    exact_path = query.removeprefix("./")
+    literal_names = _literal_query_names(query)
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",
@@ -1575,16 +1599,16 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         f"{coverage.get('excluded', 0)} excluded; {coverage.get('skipped', 0)} skipped; "
         f"{'partial' if partial else 'complete'}",
         ("Source confirmation: metadata only; matching symbols; inspect source before edits."
-         if terms else "Source confirmation: metadata only; inspect listed files before changing behavior."),
+         if terms or literal_names else "Source confirmation: metadata only; inspect listed files before changing behavior."),
     ]
     excluded_reasons = coverage.get("excluded_reasons", {})
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
     by_path = {file["path"]: file for file in model["files"]}
-    exact_path = query.removeprefix("./")
-    focused_query = bool(terms) and "query_matches" in model
+    focused_query = bool(terms or literal_names) and "query_matches" in model
     if exact_path in by_path:
+        literal_names = frozenset()
         lines.append("Focus (exact indexed path):")
         focus = [exact_path]
     else:
@@ -1599,8 +1623,10 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         file = by_path.get(path)
         if not file:
             continue
-        if terms:
+        if terms or literal_names:
             def relevance(symbol: dict[str, Any]) -> int:
+                if literal_names and symbol["name"].casefold() in literal_names:
+                    return 3 * len(terms) + 1
                 name = _name_terms(symbol["name"])
                 signature = _name_terms(symbol.get("signature", ""))
                 return sum(2 * (term in name) + (term in signature) for term in terms)

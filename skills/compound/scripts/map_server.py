@@ -771,12 +771,14 @@ class Project:
 def _rank_model(model: dict[str, Any], query: str, root: Path | None) -> tuple[list[dict[str, Any]], set[str] | None]:
     """Rank the index once for a response, retaining matches for focused queries."""
     records = list(model.get("files", []))
+    query = query[:MAX_QUERY]
     query_matches: set[str] = set()
     try:
-        ranked = engine._rank(records, query[:MAX_QUERY], root, query_matches=query_matches)
+        ranked = engine._rank(records, query, root, query_matches=query_matches)
     except (AttributeError, TypeError):
         ranked = records
-    return ranked, query_matches if engine._query_terms(query[:MAX_QUERY])[0] else None
+    focused = engine._query_terms(query)[0] or engine._literal_query_names(query)
+    return ranked, query_matches if focused else None
 
 
 def _project_ranked_model(

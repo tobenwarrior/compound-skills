@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.50 (2026-11-04)
+
+- Prioritize exact structured symbol definitions in code-map results and summaries, while preserving explicit test searches. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)
+
 ## 0.16.49 (2026-11-04)
 
 - Check Claude Code's saved map allow entries on request. Report missing entries for the current install separately from routing status, and leave user settings untouched.
