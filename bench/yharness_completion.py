@@ -30,9 +30,34 @@ def flask_input_hashes():
             'grader_sha256': tree_digest(BASE / 'grader')}
 
 
-if __name__ == '__main__' and sys.argv[1:] == ['--flask-input-hashes']:
-    print(json.dumps(flask_input_hashes(), indent=2))
-    sys.exit(0)
+def launch_input_hashes():
+    """Fingerprint the fixed files used by the two benchmark arms."""
+    def digest(path):
+        with path.open('rb') as handle:
+            return hashlib.file_digest(handle, 'sha256').hexdigest()
+
+    plugin = BASE / 'plugin'
+    if plugin.is_symlink() or any(path.is_symlink() for path in plugin.rglob('*')):
+        raise RuntimeError('Frozen launch input plugin must contain local files only')
+    arms = ('without', 'with')
+    return {
+        'runner_sha256': digest(Path(__file__)),
+        'meter_sha256': digest(BASE / 'meter.mjs'),
+        'verdict_sha256': digest(BASE / 'yharness_verdict.py'),
+        'profile_hashes': {arm: digest(BASE / f'{arm}.yml') for arm in arms},
+        'instruction_hashes': {arm: digest(BASE / 'instructions' / arm / 'AGENTS.md') for arm in arms},
+        'plugin_sha256': tree_digest(plugin),
+    }
+
+
+if __name__ == '__main__':
+    hash_commands = {
+        '--flask-input-hashes': flask_input_hashes,
+        '--launch-input-hashes': launch_input_hashes,
+    }
+    if len(sys.argv) == 2 and sys.argv[1] in hash_commands:
+        print(json.dumps(hash_commands[sys.argv[1]](), indent=2))
+        sys.exit(0)
 
 
 PLAN_BYTES = (BASE / 'plan.json').read_bytes()
@@ -225,12 +250,20 @@ def write_record(folder, record):
     pending.replace(folder / 'record.json')
 
 
+def verify_launch_inputs():
+    for field, observed in launch_input_hashes().items():
+        if PLAN.get(field) != observed:
+            raise RuntimeError(f'Frozen launch input mismatch: {field}')
+    if GRADER == 'flask-sequence' and (
+        PLAN['sequences'][0]['fixture'] != FLASK_FIXTURE
+        or PLAN.get('flask_input_hashes') != flask_input_hashes()
+    ):
+        raise RuntimeError('Frozen Flask fixture or grader digest mismatch')
+
+
 def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=None):
+ verify_launch_inputs()
  task=PLAN['sequences'][0]['tasks'][stage]['name'];out=attempt_folder(index,task,arm,attempt)
- if GRADER == 'flask-sequence':
-  if (PLAN['sequences'][0]['fixture'] != FLASK_FIXTURE
-      or PLAN.get('flask_input_hashes') != flask_input_hashes()):
-   raise RuntimeError('Frozen Flask fixture or grader digest mismatch')
  prior=records();all_used=totals(prior);arm_used=totals([r for r in prior if r['arm']==arm])
  remaining=min(PLAN['total_max_requests']-all_used['requests'],PLAN['per_arm_max_requests']-arm_used['requests'])
  money=min(Decimal(PLAN['total_max_allowance_usd'])-all_used['allowance'],Decimal(PLAN['per_arm_max_allowance_usd'])-arm_used['allowance'])
@@ -337,6 +370,36 @@ def run_stage(index,stage,arm,session,previous=None):
   record=invoke(index,stage,arm,1,feedback,record['session_id'],attempt_kind=kind,previous=previous)
  print('STAGE_DONE',index,arm,record['accepted'],flush=True)
 
+def next_dispatch_index():
+    """Require the recorded attempts and skips to cover a prefix of the schedule."""
+    from yharness_verdict import evaluate
+
+    prior = records()
+    evaluate(PLAN, prior)
+    visited = {record['index'] for record in prior}
+    schedule = PLAN['schedule']
+    for skip_record in rows(BASE / 'skips.jsonl'):
+        index = skip_record.get('index')
+        if (type(index) is not int or not 0 <= index < len(schedule)
+                or [skip_record.get('stage'), skip_record.get('arm')] != schedule[index][1:]):
+            raise RuntimeError('Recorded skip does not match the frozen schedule')
+        visited.add(index)
+    if visited != set(range(len(visited))):
+        raise RuntimeError('Recorded stages do not form a prefix of the frozen schedule')
+    return len(visited)
+
+
+def dispatch_indices(args, start):
+    try:
+        indices = [int(arg) for arg in args]
+    except ValueError as exc:
+        raise RuntimeError('Expected numeric indices from the frozen schedule') from exc
+    if (not indices or indices[-1] >= len(PLAN['schedule'])
+            or indices != list(range(start, start + len(indices)))):
+        raise RuntimeError(f'Expected the next contiguous entries of the frozen schedule starting at {start}')
+    return indices
+
+
 if __name__ == '__main__':
     if sys.argv[1:] == ['--summary']:
         from yharness_verdict import evaluate
@@ -351,5 +414,11 @@ if __name__ == '__main__':
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise RuntimeError('Benchmark already has an active launcher for this run directory') from None
-            for index in map(int, sys.argv[1:]):
-                run(index)
+            verify_launch_inputs()
+            start = next_dispatch_index()
+            if sys.argv[1:] == ['--preflight']:
+                print(json.dumps({'plan_sha256': PLAN_SHA256, 'next_index': start,
+                                  'schedule_entries': len(PLAN['schedule'])}, indent=2))
+            else:
+                for index in dispatch_indices(sys.argv[1:], start):
+                    run(index)
