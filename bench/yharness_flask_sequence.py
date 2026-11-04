@@ -8,7 +8,7 @@ import shutil
 from tempfile import TemporaryDirectory
 
 from common import FIXTURES, REFS, SOURCES, git, tree_hash
-from fixtures import REAL_BUGS, compose, pytest_probe, pytest_suite
+from fixtures import PINS, REAL_BUGS, compose, pytest_probe, pytest_suite
 from tasks import REAL_PROMPTS, _pytest_changes
 
 TASK_NAMES = ("flask-ipv6-session", "flask-ipv6-run")
@@ -17,11 +17,11 @@ REFERENCES = REFS / "real"
 PYENV = "flask"
 
 
-def grade(project: Path, stage: int, previous: Path | None = None) -> dict:
+def grade(project: Path, stage: int, previous: Path | None = None, *, fixture: Path = FIXTURE) -> dict:
     """Grade stage 1 or 2 against frozen tests and the preceding accepted artifact."""
     if stage not in (1, 2) or (stage == 2) != (previous is not None):
         raise ValueError("Stage 2 requires the accepted stage 1 artifact. Stage 1 uses the frozen fixture.")
-    baseline = FIXTURE if previous is None else previous
+    baseline = fixture if previous is None else previous
     if not all((tree / part).is_dir() for tree in (project, baseline) for part in ("src", "tests")):
         return {"success": False, "error": "The current and preceding trees need src and tests."}
 
@@ -36,29 +36,29 @@ def grade(project: Path, stage: int, previous: Path | None = None) -> dict:
         scratch = Path(folder)
         # The later upstream reference includes the earlier test. The candidate supplies only source.
         reference = REFERENCES / TASK_NAMES[stage - 1] / "fix"
-        hidden = compose(FIXTURE, project, reference, scratch / "hidden")
+        hidden = compose(fixture, project, reference, scratch / "hidden")
         statuses = pytest_probe(hidden, PYENV, "run", *frozen.values())
         checks = {name: statuses.get(case, "error") for name, case in frozen.items()}
         result = {"success": False, "checks": checks}
         if any(status != "pass" for status in checks.values()):
             return result
 
-        final = compose(FIXTURE, project, project, scratch / "final")
-        before = compose(FIXTURE, baseline, baseline, scratch / "baseline")
+        final = compose(fixture, project, project, scratch / "final")
+        before = compose(fixture, baseline, baseline, scratch / "baseline")
         before_info = pytest_probe(before, PYENV, "list")
         final_info = pytest_probe(final, PYENV, "list")
         if not before_info.get("ids") or not final_info.get("ids"):
             return {**result, "error": "Could not collect tests in both stage snapshots."}
         targets, removed, weakened = _pytest_changes(before_info, final_info)
 
-        original_tests = compose(FIXTURE, project, FIXTURE, scratch / "original-tests")
+        original_tests = compose(fixture, project, fixture, scratch / "original-tests")
         suites = {"original": pytest_suite(original_tests, PYENV), "final": pytest_suite(final, PYENV)}
         if previous is not None:
-            prior_tests = compose(FIXTURE, project, previous, scratch / "prior-tests")
+            prior_tests = compose(fixture, project, previous, scratch / "prior-tests")
             suites["previous"] = pytest_suite(prior_tests, PYENV)
         regressions = []
         if targets:
-            buggy = compose(FIXTURE, baseline, project, scratch / "without-stage-fix")
+            buggy = compose(fixture, baseline, project, scratch / "without-stage-fix")
             unfixed = pytest_probe(buggy, PYENV, "run", *targets)
             fixed = pytest_probe(final, PYENV, "run", *targets)
             regressions = [test for test in targets if unfixed.get(test) == "fail" and fixed.get(test) == "pass"]
@@ -72,7 +72,11 @@ def grade(project: Path, stage: int, previous: Path | None = None) -> dict:
 def preflight() -> dict:
     """Check the source pins, clean fixture, cumulative grader and negative controls."""
     upstream = SOURCES / PYENV
+    pinned = PINS[PYENV][1]
+    if git(upstream, "rev-parse", "HEAD", check=True).strip() != pinned:
+        raise RuntimeError("The Flask source checkout must match the benchmark pin")
     first, second = (REAL_BUGS[name][1] for name in TASK_NAMES)
+    git(upstream, "merge-base", "--is-ancestor", second, pinned, check=True)
     head = git(upstream, "rev-parse", first + "^", check=True).strip()
     if git(upstream, "rev-parse", second + "^", check=True).strip() != first:
         raise RuntimeError("The two Flask fixes must be adjacent upstream commits")
@@ -128,6 +132,7 @@ def main() -> None:
     scoring = commands.add_parser("grade", help="grade a candidate from inside a disposable runner")
     scoring.add_argument("stage", type=int, choices=(1, 2))
     scoring.add_argument("project", type=Path)
+    scoring.add_argument("--fixture", type=Path, default=FIXTURE, help="the frozen first-stage checkout")
     scoring.add_argument("--previous", type=Path, help="the accepted stage 1 snapshot for stage 2")
     args = parser.parse_args()
     if args.command == "preflight":
@@ -135,7 +140,7 @@ def main() -> None:
     else:
         if (args.stage == 2) != (args.previous is not None):
             scoring.error("--previous is required for stage 2 and only accepted for that stage")
-        result = grade(args.project, args.stage, args.previous)
+        result = grade(args.project, args.stage, args.previous, fixture=args.fixture.resolve())
     print(json.dumps(result, indent=2))
 
 

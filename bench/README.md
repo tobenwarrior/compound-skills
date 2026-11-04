@@ -64,6 +64,10 @@ python3 -B bench/yharness_flask_sequence.py grade 1 /input/project
 python3 -B bench/yharness_flask_sequence.py grade 2 /input/project --previous /input/accepted-stage-1
 ```
 
+To use the existing Y Harness completion runner, set `grader` to `flask-sequence` in the frozen plan. Use the preflight fixture and task list for the sequence. Copy `yharness_flask_sequence.py`, `common.py`, `fixtures.py`, `tasks.py` and `probe_pytest.py` into the prepared run's `grader/`. Place the two `refs/real/flask-ipv6-*` directories and the pinned `pyenv/flask` under `grader/work/`. The scrubbed fixture belongs in `fixtures/flask-ipv6-session`. Run `python3 -B run.py --flask-input-hashes` in the prepared directory and save its JSON as `flask_input_hashes` in the plan before hashing the plan. Use Python 3.11 with current security updates or newer on the runner host.
+
+The runner checks these inputs before each attempt and checks the two starting copies against the frozen fixture. It grades each archived source and test snapshot in the separate container. Before task two, it verifies the accepted snapshot from the same mode, checks that the live source and tests still match it, and resumes that mode's session. Both task-two attempts use the same read-only baseline. Repair prompts give feedback without private grader output. Keep the grader bundle and run records off the model's mounts.
+
 The grader runs the cumulative hidden checks and the original, previous and final test suites where applicable. At each stage it requires an added or changed regression to fail on the preceding source and pass on the current source. In preflight, the full reference passes 493 tests. The grader rejects a missing fix, a second fix that drops the first, a missing second regression and removal of the first regression. These are offline correctness checks. Usage and cost require a separate metered comparison.
 
 ## Compare a change with main
