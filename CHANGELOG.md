@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.68 (2026-11-05)
+
+- Refresh an open code map after the local service restarts, even when the first index revision matches the last displayed revision.
+
 ## 0.16.67 (2026-11-05)
 
 - Reuse safe path validation for repeated references to the same URI within a language-server response.

@@ -27,7 +27,7 @@ const params = new URLSearchParams(location.search);
 const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
   query: params.get("query") || "", selected: params.get("file") || null, folder: "", view: "all", browse: "folders", detail: "connections", page: 0,
-  history: [], historyIndex: -1, revision: null, error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
+  history: [], historyIndex: -1, revision: null, instance: "", error: "", status: null, dismissed: "", timer: null, epoch: 0, mapBusy: "", statusBusy: "", queryTimer: null,
   trace: [], impact: { paths: new Set(), limited: false }, graphStats: null, graphEdges: 0, toastTimer: null, sourceRequest: null, sourceReturn: null, used: "",
 };
 const graph = createGraph(refs.graph, {
@@ -386,7 +386,7 @@ async function loadMap() {
       return;
     }
     const hadModel = Boolean(state.model); state.model = normalizeModel(payload); indexModel(state.model);
-    state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision);
+    state.name = str(payload.project?.name, state.model.root); state.revision = num(payload.revision); state.instance = str(payload.instance);
     const current = state.projects.find(value => value.id === project); if (current) current.name = state.name;
     if (!state.lookup.has(state.selected)) {
       resetTrace();
@@ -416,14 +416,14 @@ async function poll(force = false) {
     const payload = await fetchJson(API.status + "?project=" + encodeURIComponent(project));
     if (state.epoch !== epoch) return;
     state.status = payload; state.error = str(payload.error); renderStatus();
-    if (force || !state.model || num(payload.revision) !== state.revision) await loadMap();
+    if (force || !state.model || num(payload.revision) !== state.revision || str(payload.instance) !== state.instance) await loadMap();
   } catch (error) { if (state.epoch === epoch) { state.error = error.message; state.revision = null; renderStatus(); if (!state.model) setOverlay("error", "", state.error); } }
   finally { if (state.statusBusy === key) state.statusBusy = ""; }
 }
 function startPolling() { clearInterval(state.timer); if (state.project && document.visibilityState === "visible") state.timer = setInterval(() => poll(), POLL_MS); }
 async function activateProject(id) {
   if (!id) return; state.epoch += 1; state.project = id; state.name = state.projects.find(project => project.id === id)?.name || "";
-  state.model = null; state.revision = null; state.status = null; state.error = ""; state.dismissed = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
+  state.model = null; state.revision = null; state.instance = ""; state.status = null; state.error = ""; state.dismissed = ""; state.folder = ""; state.page = 0; state.view = "all"; state.history = []; state.historyIndex = -1; state.trace = []; clearTimeout(state.queryTimer);
   state.lookup = new Map(); state.reverse = new Map(); state.edges = []; closeSource(); renderAll(); updateUrl();
   await poll(true); startPolling();
 }

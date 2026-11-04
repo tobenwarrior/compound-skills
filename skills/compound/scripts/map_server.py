@@ -834,6 +834,7 @@ def _mark_response_cap(model: dict[str, Any]) -> dict[str, Any]:
 class MapService:
     def __init__(self, token: str, port: int, assets: dict[str, bytes]):
         self.token = token
+        self.instance = secrets.token_hex(8)
         self.port = port
         self.assets = assets
         self.projects: dict[str, Project] = {}
@@ -1069,7 +1070,7 @@ class MapService:
         with project.lock:
             if wait:
                 project.lock.wait_for(lambda: not project.indexing, timeout=INDEX_STATUS_WAIT)
-            return {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "indexing": project.indexing, "error": project.error, "updated_at": project.updated_at}
+            return {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "instance": self.instance, "indexing": project.indexing, "error": project.error, "updated_at": project.updated_at}
 
     def _index_snapshot(
         self, project: Project, query: str | None,
@@ -1128,7 +1129,7 @@ class MapService:
             model = _project_ranked_model(current, ranked, matches, cap)
             if response_capped:
                 model = _mark_response_cap(model)
-            payload = {"project": project_info, "revision": revision, "model": model}
+            payload = {"project": project_info, "revision": revision, "instance": self.instance, "model": model}
             body = _json(payload)
             if len(body) <= MAX_RESPONSE:
                 return model, body

@@ -20,7 +20,7 @@ When native navigation is unavailable and the user authorizes a trusted installe
 
 The viewer uses the hey.trading cream-and-green theme independently of the host app’s appearance. After a plugin update, reopen the map to refresh its service assets, then reload existing browser tabs.
 
-Use the [map utility](../../map/SKILL.md) for a visual request. It starts or reuses one loopback service at `http://127.0.0.1:43127/` and opens the registered project. `COMPOUND_MAP_PORT` can select another port. Opening again reuses the index; saved project links restore on demand after restart. It creates no HTML snapshot. Cold indexing runs in the background; the page stays responsive and retains its last map during incremental updates. It does not restructure source code.
+Use the [map utility](../../map/SKILL.md) for a visual request. It starts or reuses one loopback service at `http://127.0.0.1:43127/` and opens the registered project. `COMPOUND_MAP_PORT` can select another port. Opening again reuses the index. Saved project links restore on demand after a restart, and an open viewer reloads when it sees the new service instance. It creates no HTML snapshot. Cold indexing runs in the background; the page stays responsive and retains its last map during incremental updates. It does not restructure source code.
 
 Map viewing authorizes local cache and service startup only, without repository edits or onboarding cleanup. The helper's `status` and `stop` subcommands inspect or stop this shared service. It runs until stopped or the machine session ends; the next coding or map request starts it again. It scans only repositories registered by those requests, not every project at login.
 
