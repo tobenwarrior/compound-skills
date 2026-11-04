@@ -187,7 +187,17 @@ In 0.16.54, the map shows the response implementation in the Django disconnect s
 
 These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
 
-For a metered map comparison, use identical read-only source checkouts, prompts, model settings and native navigation tools. Keep the rubric and benchmark code outside both checkouts. The treatment adds the map as an initial orientation tool and records its invocation. Judge every hop against the frozen source and account for all requests, incomplete attempts and repairs in both modes. This preflight makes no model calls.
+For a future metered map comparison, prepare the common task prompts and the treatment's initial map context from the pinned sources:
+
+```sh
+mkdir -p bench/results
+python3 -B bench/map_navigation.py --prepare > bench/results/navigation-plan.json
+python3 -B bench/map_navigation.py --grade flask-streaming bench/results/flask-answer.json
+```
+
+Each task records the source revision and a hash of the generated map. Give each arm the common prompt and its own orientation field, with identical read-only checkouts, model settings and native navigation tools. Keep the benchmark code and the other arm's context outside both workspaces. The grader checks the ordered path, symbol and line for each requested statement at the pinned source. A partial or malformed answer fails. This grades source citations. It does not judge narrative explanations.
+
+The prepared data and grader work offline. A separate metered launcher must record the delivered context, provider cache usage, all requests, incomplete attempts and repairs in both modes before comparing costs.
 
 ## Index completion wait
 
