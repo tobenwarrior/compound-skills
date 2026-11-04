@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.38 (2026-11-04)
+
+- Route scoped extractions with known callers and policies through the saved rule. Reserve the full skill for refactors that need discovery or behavior decisions.
+- Read edit targets with the editor's required read tool on the first pass and batch independent reads and checks. [Saved trace evidence](bench/README.md#direct-routing-and-edit-reads).
+
 ## 0.16.37 (2026-11-04)
 
 - Keep scoped extraction searches inside the checkout and start from named files and callers. Expand discovery for concrete dependencies required by the task.

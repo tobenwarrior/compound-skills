@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for complex refactors, new features, performance work and PR authoring, or to enable Compound guidance for a session, project, or all projects."
+description: "Use when a refactor needs caller discovery or behavior decisions, for new features, performance work and PR authoring, or to manage Compound guidance."
 license: MIT
 ---
 
@@ -27,7 +27,7 @@ Read known files before searching. For a named file whose path is unknown, look 
 
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
-Batch independent reads. Send one patch with all required hunks for each file when the editor supports it. Keep dependent replacements ordered with a single-replacement editor. If reads expire each turn, batch fresh reads of edit targets before preparing the patch. Implement only options needed by actual callers or an explicitly requested API. Keep dependent checks ordered. Read the matching workflow below in the first batch of relevant reads. Use the refactor guide for a behavior-preserving extraction, including its internal interface. Open another guide only for a distinct unresolved decision. Reuse unchanged guidance and current evidence.
+Read edit targets first with the editor's required read tool. Batch independent reads. Send one patch with all required hunks for each file when the editor supports it. Keep dependent replacements ordered with a single-replacement editor. If reads expire each turn, batch fresh reads of edit targets before preparing the patch. Implement only options needed by actual callers or an explicitly requested API. Keep dependent checks ordered. Read the matching workflow below in the first batch of relevant reads. Use the refactor guide for a behavior-preserving extraction, including its internal interface. Open another guide only for a distinct unresolved decision. Reuse unchanged guidance and current evidence.
 
 | Task | Reference |
 | --- | --- |

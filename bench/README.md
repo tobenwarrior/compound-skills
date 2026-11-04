@@ -48,7 +48,15 @@ An offline replay reversed the three saved signature-related edits in a copy of 
 
 Two saved Compound refactors searched outside their checkouts after the relevant source was available. The slug refactor spent requests 6 and 7 on a surrounding directory and instruction search, using $0.00395534 of Go allowance. The Dispatchkit refactor had passed its checks before requests 10–12 searched parent directories and the benchmark tree, using $0.00163497. These searches returned no new implementation evidence. The figures describe the five recorded requests. [Slug comparison](diagram_sources/comparison_v0169.json) · [Dispatchkit comparison](diagram_sources/comparison_dispatch_v01631.json)
 
-The 0.16.37 saved rule keeps discovery for scoped extractions in the checkout. The full guide starts with named files and expands only for a concrete external caller or dependency. Cost on the revised rule remains unmeasured.
+The 0.16.37 saved rule keeps discovery for scoped extractions in the checkout. The full guide starts with named files and expands only for a concrete external caller or dependency. The next matched comparison used this rule.
+
+#### Direct routing and edit reads
+
+The saved 0.16.37 Dispatchkit comparison used 27 requests with Compound and 15 without. Both modes passed both tasks on their first attempts. Go allowance was $0.00610678 with Compound and $0.00405995 without.
+
+The Compound bug fix used 15 requests for 14 tool calls. The baseline used nine requests for 14 calls. The first edit failed the editor's read prerequisite after a shell read, so the agent read the test again through the native tool. On the scoped refactor, the first two requests loaded the skill and its refactor guide before opening the named files. Those two requests used $0.00027731 of allowance. Two more requests searched the fixture and its Git history before opening the named callers. Those searches used $0.00073959 and found no new implementation evidence.
+
+The 0.16.38 rule puts the editor's required read tool first, asks the agent to batch independent calls and search for unknowns, and routes scoped extractions directly through the saved guidance. Offline checks verify rule delivery. Total cost on the revised rule remains unmeasured.
 
 #### Consecutive upstream Flask fixes
 
