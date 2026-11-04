@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.22 (2026-11-04)
+
+- Save global guidance before configuring optional map access. A denied or unavailable cache setting is reported separately, so it cannot prevent routing setup.
+- Return a working local map URL when automatic browser launch fails. Open it manually without running the map command again.
+
 ## 0.16.21 (2026-11-04)
 
 - Resolve the repository root without reading its file inventory in the map client or service. Index freshness checks still detect changes to the checkout.

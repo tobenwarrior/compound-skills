@@ -12,19 +12,21 @@ The activation step writes no files; later tasks retain their normal authorizati
 
 Use the bundled [helper](../scripts/project_setup.py) through Python 3.11+, using the skill's actual install directory.
 
-`setup global` configures personal defaults across all projects on this machine for each of Codex, Cursor, and Claude Code that is installed, meaning its configuration folder exists. Preflight local state access first: resolve `COMPOUND_SKILLS_STATE_DIR`, defaulting to `~/.cache/compound-skills`, and create that directory. For each installed app among the selected hosts, merge only its absolute path into the native write-path lists:
-
-- Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
-- Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
-- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path, so they come only from Claude Code's own copy: run from another app's copy, the helper reports none and says so. Setup again after a plugin update replaces them.
-
-Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up locally and validate config before writing; reject symlinked or malformed config paths. A managed policy may prevent access. Report state-access results separately from routing; blocked access leaves project `setup` unable to record its assessment. Use a fresh session to test the saved configuration, then enable routing:
+`setup global` enables personal defaults across projects. Save routing first:
 
 ```bash
 python3 <installed-skill-dir>/scripts/project_setup.py enable --global
 ```
 
-It manages a small routing section in the Codex home's `AGENTS.md` and existing nonempty `AGENTS.override.md`, and a Claude user rule at `~/.claude/rules/compound-skills.md`. It respects `CODEX_HOME` and `CLAUDE_CONFIG_DIR`. Without `--host`, it sets up only apps whose configuration folder exists and names any it skipped; add `--host codex`, `--host cursor`, or `--host claude` for one app, or `--host all` for every app.
+It manages a small routing section in the Codex home's `AGENTS.md` and existing nonempty `AGENTS.override.md`, and a Claude user rule at `~/.claude/rules/compound-skills.md`. It respects `CODEX_HOME` and `CLAUDE_CONFIG_DIR`. Without `--host`, it selects apps whose configuration folder exists and names any it skipped. Use `--host codex`, `--host cursor`, or `--host claude` for one app, or `--host all` for every app.
+
+After routing succeeds, configure optional map access for the selected hosts. Resolve `COMPOUND_SKILLS_STATE_DIR` (default `~/.cache/compound-skills`) and create it when permitted. Merge only its absolute path into the native write-path lists:
+
+- Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
+- Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
+- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path, so they come only from Claude Code's own copy: run from another app's copy, the helper reports none and says so. Setup again after a plugin update replaces them.
+
+Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up and validate config before writing. Skip symlinked, malformed or inaccessible config paths and report the affected host. If state access is denied, skip its write-path setup and report that the live map and project assessment state may be unavailable. Routing stays enabled where the helper succeeded. Report routing and map access separately and use a fresh session to test the saved defaults.
 
 Cursor carries the routing rule in the native plugin. Install at user scope and leave its `compound-default` rule set to Always in Customize → Rules. Global setup reports Cursor as host-managed; it cannot verify or change that UI setting. If available, inspect it through the host UI; otherwise explain this one-time installation requirement. Do not edit Cursor's private database or claim Cursor is configured from a file written by the helper.
 

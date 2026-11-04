@@ -1479,7 +1479,14 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "open":
-            print(open_map(args.repo, args.query, not args.no_open))
+            try:
+                url = open_map(args.repo, args.query, not args.no_open)
+            except MapServerError as exc:
+                if exc.url is None:
+                    raise
+                print("browser launch failed. Open the URL manually.", file=sys.stderr)
+                url = exc.url
+            print(url)
             return 0
         if args.command == "status":
             return _status()
