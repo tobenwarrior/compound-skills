@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import fcntl
 from pathlib import Path
 from decimal import Decimal
 from tempfile import TemporaryDirectory
@@ -221,7 +222,9 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  money=min(Decimal(PLAN['total_max_allowance_usd'])-all_used['allowance'],Decimal(PLAN['per_arm_max_allowance_usd'])-arm_used['allowance'])
  if remaining<=0 or money<=0:raise RuntimeError('Budget reached before next attempt')
  cap=min(PLAN['max_requests_per_run'] if attempt==0 else PLAN['max_requests_per_repair'],remaining)
- env={**os.environ,'COMPOUND_EXPECT_ROUTING':'1' if arm=='with' else '0','DSH_HOME':PLAN['dsh_home'],'DSH_PERMISSION_MODE':'workspace-write','PATH':str(BASE/'runtime/bin')+':'+os.environ['PATH'],'COMPOUND_PILOT_METER':str(out/'requests.jsonl'),'COMPOUND_PILOT_MAX_CALLS':str(cap),'COMPOUND_PILOT_MAX_USD':str(min(money,Decimal(PLAN['max_allowance_per_run_usd'])))}
+ env={**os.environ,'COMPOUND_PILOT_EXPECT_MODEL':PLAN['model'],
+      'COMPOUND_PILOT_EXPECT_OUTPUT_CAP':str(PLAN.get('output_cap', '')),
+      'COMPOUND_EXPECT_ROUTING':'1' if arm=='with' else '0','DSH_HOME':PLAN['dsh_home'],'DSH_PERMISSION_MODE':'workspace-write','PATH':str(BASE/'runtime/bin')+':'+os.environ['PATH'],'COMPOUND_PILOT_METER':str(out/'requests.jsonl'),'COMPOUND_PILOT_MAX_CALLS':str(cap),'COMPOUND_PILOT_MAX_USD':str(min(money,Decimal(PLAN['max_allowance_per_run_usd'])))}
  command=['node','--import',str(BASE/'meter.mjs'),PLAN['cli'],'--profile',PLAN['profile'],'--patch',str(BASE/(arm+'.yml')),'--json']
  if session:command+=['--session-id',session]
  out.mkdir()
@@ -310,5 +313,10 @@ if __name__ == '__main__':
         from yharness_verdict import evaluate
         print(json.dumps(evaluate(PLAN, records()), indent=2))
     else:
-        for index in map(int, sys.argv[1:]):
-            run(index)
+        with (BASE / 'plan.sha256').open() as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise RuntimeError('Benchmark already has an active launcher for this run directory') from None
+            for index in map(int, sys.argv[1:]):
+                run(index)

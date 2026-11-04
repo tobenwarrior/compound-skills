@@ -1,10 +1,20 @@
 import { appendFileSync } from 'node:fs';
 const original = globalThis.fetch;
-const pending = new Set();
+let pending;
+let unverifiable = false;
 let calls = 0, used = 0;
 const path = process.env.COMPOUND_PILOT_METER;
 const maxCalls = Number(process.env.COMPOUND_PILOT_MAX_CALLS ?? 20);
 const maxCost = Number(process.env.COMPOUND_PILOT_MAX_USD ?? 0.25);
+const expectedModel = process.env.COMPOUND_PILOT_EXPECT_MODEL;
+const expectedOutputCap = process.env.COMPOUND_PILOT_EXPECT_OUTPUT_CAP;
+if (!Number.isSafeInteger(maxCalls) || maxCalls < 0 || !Number.isFinite(maxCost) || maxCost < 0) {
+  throw new Error('Benchmark has an invalid request or allowance guard');
+}
+
+function amountReported(amount) {
+  return typeof amount === 'number' && Number.isFinite(amount) && amount >= 0;
+}
 function save(record) { if (path) appendFileSync(path, JSON.stringify(record) + '\n', {mode:0o600}); }
 function normalized(usage) {
   if (!usage || typeof usage !== 'object') return undefined;
@@ -26,17 +36,33 @@ export async function observe(response, record) {
       while(true) { const {done,value}=await reader.read(); if(done) break; text+=decoder.decode(value,{stream:true}); let i; while((i=text.indexOf('\n'))>=0){accept(text.slice(0,i).replace(/\r$/,''));text=text.slice(i+1);} }
       text+=decoder.decode(); if(text) accept(text);
     } else { const value=await response.json(); usage=normalized(value.usage);lastModel=value.model;id=value.id; }
-    const amount=usage?.allowance ?? usage?.list_cost ?? usage?.cost;
-    if(typeof amount==='number' && Number.isFinite(amount)) used+=amount;
+    if (amountReported(usage?.allowance)) used += usage.allowance;
+    if (record.status !== 200 || (expectedModel && lastModel !== expectedModel) ||
+        ![usage?.allowance, usage?.list_cost, usage?.cost].every(amountReported)) {
+      unverifiable = true;
+    }
     save({...record,model:lastModel,response_id:id,usage,complete:!!usage,ended_at:new Date().toISOString()});
-  } catch(error) { save({...record,complete:false,error:String(error),ended_at:new Date().toISOString()}); }
+  } catch(error) {
+    unverifiable = true;
+    save({...record,complete:false,error:String(error),ended_at:new Date().toISOString()});
+  }
 }
 globalThis.fetch = async function(input, init) {
   const url = new URL(typeof input==='string'||input instanceof URL ? input : input.url);
   if(url.hostname!=='opencode.ai' || !/\/(chat\/completions|responses|messages)$/.test(url.pathname)) return original(input,init);
-  await Promise.all([...pending]);
-  if(calls===0 && typeof init?.body==='string') {
-    const body=JSON.parse(init.body);
+  // Wait for final usage before permitting another model request.
+  while (pending) await pending;
+  if (unverifiable) {
+    save({event:'meter_stop',calls,used});
+    throw new Error('Benchmark stopped after an unverified provider response');
+  }
+  if(calls>=maxCalls || used>=maxCost) { save({event:'budget_stop',calls,used}); throw new Error('Local benchmark request/allowance limit reached'); }
+  const body = typeof init?.body === 'string' ? JSON.parse(init.body) : null;
+  if ((expectedModel && body?.model !== expectedModel) ||
+      (expectedOutputCap && (body?.max_tokens ?? body?.max_completion_tokens) !== Number(expectedOutputCap))) {
+    throw new Error('Benchmark refuses request outside the frozen model or output cap');
+  }
+  if (calls === 0 && body) {
     const prompt=JSON.stringify(body);
     const managedRouting=['global','project'].some(scope =>
       prompt.includes(`<!-- compound-skills:${scope}-setup:start -->`) &&
@@ -48,13 +74,29 @@ globalThis.fetch = async function(input, init) {
     save({event:'request_preflight',tools:names,routing_present:routingPresent,model:body.model,max_tokens:body.max_tokens??body.max_completion_tokens});
     if(!names.includes('bash') || !names.includes('read') || !names.includes('edit') || !names.includes('write')) throw new Error('Benchmark refuses model request: required editing tools did not activate');
   }
-  if(calls>=maxCalls || used>=maxCost) { save({event:'budget_stop',calls,used}); throw new Error('Local benchmark request/allowance limit reached'); }
   const record={event:'request',number:++calls,started_at:new Date().toISOString()};
   save({...record,event:'request_started'});
+  let settle;
+  pending = new Promise(resolve => { settle = resolve; });
+  const finish = () => {
+    pending = undefined;
+    settle();
+  };
   try {
     const response=await original(input,init);
-    const p=observe(response.clone(),{...record,status:response.status});pending.add(p);void p.finally(()=>pending.delete(p));
+    void observe(response.clone(), {...record,status:response.status}).then(finish, () => {
+      unverifiable = true;
+      finish();
+    });
     return response;
-  } catch(error) { save({...record,complete:false,error:String(error),ended_at:new Date().toISOString()});throw error; }
+  } catch(error) {
+    unverifiable = true;
+    try {
+      save({...record,complete:false,error:String(error),ended_at:new Date().toISOString()});
+    } finally {
+      finish();
+    }
+    throw error;
+  }
 };
-process.once('beforeExit',async()=>{await Promise.all([...pending]);});
+process.once('beforeExit', async () => { await pending; });

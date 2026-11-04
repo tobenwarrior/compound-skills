@@ -18,6 +18,8 @@ The [0.16.12 comparison](diagram_sources/comparison_v01612_completion.json) reco
 
 The current `yharness_completion.py` is a launcher for a prepared run directory with a frozen plan, Y Harness profile, isolated workspaces, grader and meter. The repository alone does not contain those run directories or private transcripts. Before dispatching a later attempt, the launcher checks prior attempts for complete grading and usage. It rejects duplicate or missing dispatch numbers and does not turn unreported usage into a zero charge.
 
+The runner allows one active launcher per run directory. The OpenCode Go meter checks the model and output cap against the frozen plan and waits for the previous response’s final usage before sending another request. A transport failure or an unverifiable response stops dispatch. The dollar guard is checked before each request. A response already in flight can cross it.
+
 #### Fresh dispatchkit sequence
 
 [Dispatchkit](data/dispatchkit/tasks.json) is a small, dependency-free Python workload with two consecutive changes. The first reports a webhook routing symptom without naming a file or function. The second asks for a shared helper while preserving two caller policies. Each mode starts from the same clean fixture. Its code and conversation carry forward between tasks, with opposite mode order on the second task.
