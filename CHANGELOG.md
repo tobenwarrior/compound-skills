@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.20 (2026-11-04)
+
+- Find PHP declarations written with mixed-case tags and keywords, or preceded by attributes on the same line. Keep declarations in PHP regions and ignore apparent symbols inside backtick strings.
+- Refresh PHP entries from the previous map cache format while reusing other validated entries. Existing Python and other language outlines can stay warm after the upgrade.
+
 ## 0.16.19 (2026-11-04)
 
 - Look past the first 50 candidates when a query has no lexical evidence. Promote source-only matches found within the remaining 8 MiB budget and a 200-file total cap. The same no-follow opener handles both passes.

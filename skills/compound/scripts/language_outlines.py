@@ -27,7 +27,7 @@ _TYPE_PATTERNS: dict[str, re.Pattern[str]] = {
     "cpp": re.compile(r"^\s*(?:template\s*<.*?>\s*)?(?:(?:typedef|static|extern|final|sealed)\s+)*(class|struct|union|enum)\s+(?:(?:class|struct)\s+)?"),
     "csharp": re.compile(r"^\s*(?:\[[^\]\n]*\]\s*)*(?:(?:public|protected|private|internal|abstract|static|sealed|partial|readonly|ref|new)\s+)*(?:(record)(?:\s+(?:class|struct))?|(class|interface|struct|enum|delegate))\s+(" + _IDENTIFIER + r")\b"),
     "ruby": re.compile(r"^\s*(?:class|module)\s+([A-Z][\w]*(?:::[A-Z][\w]*)*)\b"),
-    "php": re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(class|interface|trait|enum)\s+(" + _IDENTIFIER + r")\b"),
+    "php": re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(class|interface|trait|enum)\s+(" + _IDENTIFIER + r")\b", re.IGNORECASE),
     "swift": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|internal|fileprivate|open|final|indirect|actor)\s+)*(class|struct|enum|protocol|actor|typealias)\s+(?!(?:[a-z]+\s+)*(?:func|var|subscript)\b)(" + _IDENTIFIER + r")\b"),
     "kotlin": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|protected|internal|open|final|abstract|sealed|data|value|expect|actual|annotation|enum|inner|companion)\s+)*(class|interface|object)\s+(" + _IDENTIFIER + r")\b"),
 }
@@ -42,7 +42,7 @@ _FUNCTION_PATTERNS: dict[str, re.Pattern[str]] = {
     "go": re.compile(r"^\s*func\s+(?:\([^)]*\)\s*)?(" + _IDENTIFIER + r")(?:\s*\[(?:[^\[\]\n]|\[[^\[\]\n]*\])*\])?\s*\("),
     "rust": re.compile(r"^\s*(?:(?:pub(?:\s*\([^)]*\))?|unsafe|async|const|extern)\s+)*fn\s+([A-Za-z_]\w*)\s*(?:<[^;{}]*>)?\s*\("),
     "ruby": re.compile(r"^\s*def\s+(?:(?:self)\.)?([A-Za-z_]\w*[!?=]?)"),
-    "php": re.compile(r"^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*function\s+(?:&\s*)?([A-Za-z_]\w*)\s*\("),
+    "php": re.compile(r"^\s*(?:(?:public|protected|private|static|final|abstract)\s+)*function\s+(?:&\s*)?([A-Za-z_]\w*)\s*\(", re.IGNORECASE),
     "swift": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|internal|fileprivate|open|static|class|override|mutating|nonmutating|final|dynamic)\s+)*func\s+([A-Za-z_]\w*)\s*" + _GENERIC + r"\("),
     "kotlin": re.compile(r"^\s*" + _ANNOTATIONS + r"(?:(?:public|private|protected|internal|open|final|abstract|override|inline|infix|operator|suspend|tailrec|external|expect|actual)\s+)*fun\s+" + _GENERIC + r"(?:[\w$.<>?]+\.)?([A-Za-z_]\w*)\s*\("),
 }
@@ -76,7 +76,7 @@ _C_KEYWORDS = {"__asm__", "__attribute__", "__declspec", "alignas", "alignof", "
 _LINE_END = re.compile(r"[\r\n]")
 _RUBY_HEREDOC = re.compile(r"<<([~-]?)([\"'`]?)([A-Za-z_]\w*)\2")
 _PHP_HEREDOC = re.compile(r"<<<[ \t]*()([\"']?)([A-Za-z_]\w*)\2")
-_PHP_OPEN = re.compile(r"<\?(?:php\b|=)?")
+_PHP_OPEN = re.compile(r"<\?(?:php\b|=)?", re.IGNORECASE)
 _COMMENT_STYLES = {
     "go": ("//", "/*"), "rust": ("//", "/*"), "java": ("//", "/*"),
     "c": ("//", "/*"), "cpp": ("//", "/*"), "csharp": ("//", "/*"),
@@ -244,6 +244,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
     escaped = False
     ruby_doc = False
     php_html = php  # PHP files start as inline HTML until <?php
+    php_attribute_depth = 0
     heredoc: tuple[int, int] | None = None  # (end of opener line, end of body) still to skip
     i = 0
     length = len(source)
@@ -376,14 +377,20 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             blank(i, i + 2)
             i += 2
             php_html = True
+            php_attribute_depth = 0
             continue
         if block_comments and source.startswith("/*", i):
             block_depth = 1
             blank(i, i + 2)
             i += 2
             continue
+        if php and source.startswith("#[", i):
+            php_attribute_depth += 1
+            blank(i, i + 2)
+            i += 2
+            continue
         line_marker = next((marker for marker in line_comments if source.startswith(marker, i)), None)
-        if line_marker and not (php and source.startswith("#[", i)):
+        if line_marker:
             line_end = line_end_at(i)
             if php:
                 # A PHP line comment also ends at ?>, which returns to inline HTML.
@@ -400,7 +407,7 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             continue
         if source[i] in {'"', "'", "`"}:
             char = source[i]
-            if char == "`" and language not in {"go", "rust", "cpp", "csharp"}:
+            if char == "`" and language not in {"go", "rust", "cpp", "csharp", "php"}:
                 i += 1
                 continue
             # Rust and C-family apostrophes are char literals only if closed;
@@ -421,6 +428,13 @@ def _mask_comments_and_strings(source: str, language: str) -> str:
             chars[i] = " "
             i += 1
             continue
+        if php_attribute_depth:
+            # Quotes and comments have already been consumed, so only code brackets affect depth.
+            if source[i] == "[":
+                php_attribute_depth += 1
+            elif source[i] == "]":
+                php_attribute_depth -= 1
+            blank(i, i + 1)
         i += 1
     return "".join(chars)
 

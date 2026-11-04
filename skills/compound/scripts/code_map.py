@@ -47,7 +47,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 14
+CACHE_VERSION = 15
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_ALIAS_CONFIGS = 64
 MAX_ALIAS_CONFIG_BYTES = 64 * 1024
@@ -1288,7 +1288,9 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     version = payload.get("version")
     # Python outlines depend on the interpreter that parsed them, so another version re-parses them.
     same_python = payload.get("python") == PYTHON_VERSION
-    if version != CACHE_VERSION:
+    # Version 14 has the same entry fields, but its PHP lexer can misidentify symbols.
+    stale_php = version == 14
+    if version != CACHE_VERSION and not stale_php:
         if isinstance(version, int) and 0 <= version < CACHE_VERSION:
             return {}, "code-map cache requires migration"
         return {}, "code-map cache has an unsupported shape"
@@ -1298,6 +1300,8 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     reusable: dict[str, Any] = {}
     for path_name, entry in raw.items():
         current = candidates.get(path_name)
+        if stale_php and current and current["language"] == "php":
+            continue
         if isinstance(path_name, str) and current and _valid_entry(entry, path_name) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"] and (same_python or entry["language"] != "python"):
             reusable[path_name] = entry
     return reusable, None
