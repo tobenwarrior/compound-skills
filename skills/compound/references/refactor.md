@@ -2,7 +2,7 @@
 
 Preserve each caller's accepted inputs, outputs, errors and defaults. An extracted helper needs the interface its current callers require; a common name does not authorize a common policy. A new signature needs an actual caller or an explicit API requirement.
 
-Finish after required checks pass and the diff has been reviewed. Reopen the change for a failing check or a concrete caller or project requirement.
+Start with the named files and their callers and tests. Expand outside the checkout only for a concrete external caller or dependency the task requires. Finish after required checks pass and the diff has been reviewed. Reopen the change for a failing check or a concrete caller or project requirement.
 
 1. Identify the shared operation and differing policies once. Keep nonshared validation, public exceptions and I/O with their existing owners. Make differing policies required arguments at migrated call sites unless a requested/existing API specifies defaults. Choose one preserving interface and use it throughout the change.
 2. Determine coverage from the existing assertions before running tests. If existing caller assertions already cover the affected behavior, run them as the baseline. Otherwise add missing cases together per file using existing fixtures, then run the baseline. Run it once with the documented command and environment before source edits. Call existing APIs, with original observed values/errors; do not import the proposed helper. Keep those assertions unchanged after extraction. A failing baseline must be resolved first.

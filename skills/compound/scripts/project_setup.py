@@ -52,12 +52,13 @@ BLOCK_LINES = (
     "",
     'Review diffs, callers and tests. Probe only if permitted and source is insufficient. After denial, '
     'source only. Bug fixes require one failing regression before source edits and a final '
-    'full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline '
+    'full suite. Scoped extractions require known callers and behavior. Search the checkout. '
+    'Add missing cases. Baseline '
     'once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. '
     'Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while '
     'inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, '
-    'features, performance and PR authoring. Follow project instructions and user scope. Report checks, '
-    'limits and failures. Omit AI commit attribution.',
+    'features, performance and PR authoring. Follow project and user instructions. Report checks and '
+    'limits. Omit AI commit attribution.',
     END_MARKER,
 )
 

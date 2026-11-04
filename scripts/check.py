@@ -15,7 +15,7 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.16.36"
+VERSION = "0.16.37"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
 SKILLS = ("compound", "map", "setup", "setup-global", "status-global")

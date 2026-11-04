@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.36 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.37 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -277,7 +277,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 ### What loads when
 
 - **Every request:** the always-on rule and the plugin's skill list. The benchmarked rule added about 510 tokens; the shorter rule below has not been remeasured in a host.
-- **Scoped extractions with known callers and behavior:** the always-on rule. Add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
+- **Scoped extractions with known callers and behavior:** the always-on rule. Start in the checkout, add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
 - **Broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
 - **When a task needs it:** the matching guide. The refactor guide covers extractions that need more investigation of callers or behavior. The verification guide covers independent verification or an unresolved evidence gap.
 - **Bug fixes, reviews and questions:** only the always-on rule. Reviews use source evidence first and run only necessary permitted checks. A denial ends probing, and review findings alone do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
@@ -287,7 +287,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule as `setup-global` saves it. The latest two-change benchmark used the 0.16.31 rule.
 
-> Review diffs, callers and tests. Probe only if permitted and source is insufficient. After denial, source only. Bug fixes require one failing regression before source edits and a final full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, features, performance and PR authoring. Follow project instructions and user scope. Report checks, limits and failures. Omit AI commit attribution.
+> Review diffs, callers and tests. Probe only if permitted and source is insufficient. After denial, source only. Bug fixes require one failing regression before source edits and a final full suite. Scoped extractions require known callers and behavior. Search the checkout. Add missing cases. Baseline once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
 
 ### Commits
 

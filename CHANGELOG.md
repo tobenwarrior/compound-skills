@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.37 (2026-11-04)
+
+- Keep scoped extraction searches inside the checkout and start from named files and callers. Expand discovery for concrete dependencies required by the task.
+- Two saved refactors spent five requests on searches outside their checkouts without finding new implementation evidence. [Trace evidence](bench/README.md#checkout-scope-in-saved-refactors).
+
 ## 0.16.36 (2026-11-04)
 
 - Ask reviews to report findings once source establishes the trigger and impact. Use a permitted probe only for a specific evidence gap or required check. Keep the saved rule within 100 words.

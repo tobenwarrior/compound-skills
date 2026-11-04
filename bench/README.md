@@ -44,6 +44,12 @@ In the [0.16.31 Dispatchkit comparison](diagram_sources/comparison_dispatch_v016
 
 An offline replay reversed the three saved signature-related edits in a copy of the final artifact. The same network-disabled grader accepted both states. Both preserved the earlier routing fix, passed the hidden refactor checks, kept the original tests and passed all six final tests. The 0.16.32 saved rule routes this kind of scoped extraction directly and gives it a finish point after the required checks and diff review. The replay measures the saved work and checks the two artifacts. The new routing has no live cost measurement.
 
+#### Checkout scope in saved refactors
+
+Two saved Compound refactors searched outside their checkouts after the relevant source was available. The slug refactor spent requests 6 and 7 on a surrounding directory and instruction search, using $0.00395534 of Go allowance. The Dispatchkit refactor had passed its checks before requests 10–12 searched parent directories and the benchmark tree, using $0.00163497. These searches returned no new implementation evidence. The figures describe the five recorded requests. [Slug comparison](diagram_sources/comparison_v0169.json) · [Dispatchkit comparison](diagram_sources/comparison_dispatch_v01631.json)
+
+The 0.16.37 saved rule keeps discovery for scoped extractions in the checkout. The full guide starts with named files and expands only for a concrete external caller or dependency. Cost on the revised rule remains unmeasured.
+
 #### Consecutive upstream Flask fixes
 
 This sequence starts both modes at Flask commit `514fc6b`. Fix the IPv6 test-client session bug first and the IPv6 development-server parsing bug second. The existing real-bug benchmark used the individual tasks separately. This sequence keeps the same checkout and conversation within each mode, then checks that the second change preserves the first.
