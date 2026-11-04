@@ -487,6 +487,8 @@ A paired offline replay against `4fe07d3` alternated the two rankers over the sa
 
 A paired replay against `426c835` used the same five queries per repository and alternated the rankers for 21 repetitions. In 0.16.57, median ranking CPU fell 6–12% on Django and changed by less than 2% on Flask. Full ranked paths, matching files, and source-read counts and bytes matched in all ten cases. The ranker reuses test-path classifications and scores metadata only when it matches a query term. This measures local ranking with a warm index.
 
+A 0.16.64 paired replay against `68b1beb` alternated rankers for 25 repetitions per query. On five Django queries, median ranking CPU fell 17–26%. On five Flask queries, it fell 15–23%. Ranked paths, match sets, every scanned file and the source bytes read matched in all ten cases. The scanner splits ASCII identifiers directly from bytes and retains normalized Unicode processing when the query and file need it. This measures local warm-index ranking.
+
 ## Saved model-work audit
 
 The [saved call audit](diagram_sources/work_audit.json) reads the completed Y Harness / DeepSeek V4.1 Flash sequence as data: 72 model requests and 116 tools with Compound, 61 and 92 without. Slugs account for eight of the eleven extra requests. Three treatment edits and one control edit were rejected by read prerequisites. Both modes' initial Git identity failures remain counted; they are an environment limitation, not evidence of a Compound prompt defect. The annotations identify the relevant saved steps and resulting prompt/code changes without deducting hypothetical future savings.

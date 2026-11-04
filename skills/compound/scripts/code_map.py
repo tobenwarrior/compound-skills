@@ -119,6 +119,7 @@ QUERY_TEST_WORDS = frozenset({"test", "tests", "testing", "spec", "specs"})
 TEST_DIRS = frozenset({"test", "tests", "__tests__", "spec", "specs", "e2e"})
 TEST_FILE = re.compile(r"^test_.*\.py$|^conftest\.py$|_test\.[a-z0-9]+$|\.(?:test|spec)\.[a-z0-9]+$")
 IDENTIFIER = re.compile(r"[A-Za-z0-9_]+")
+IDENTIFIER_BYTE_TABLE = bytes(value if IDENTIFIER.fullmatch(chr(value)) else 32 for value in range(256))
 UNICODE_IDENTIFIER = re.compile(r"[A-Za-z0-9_\u0080-\U0010FFFF]+")
 WORD_PART = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+")
 # Focus weights were tuned on recent Flask, click and Hono commits; the README reports other commits.
@@ -1107,10 +1108,11 @@ def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str
         return set(), 0
     if b"\0" in data:
         return set(), len(data)
-    decoded = data.decode("utf-8", "replace")
-    if unicode_query and not decoded.isascii():
+    if unicode_query and not data.isascii():
+        decoded = data.decode("utf-8", "replace")
         return terms.intersection(map(_stem, _word_parts(decoded))), len(data)
-    candidates = filter(finder.search, set(IDENTIFIER.findall(decoded)))
+    tokens = map(bytes.decode, set(data.translate(IDENTIFIER_BYTE_TABLE).split()))
+    candidates = filter(finder.search, tokens)
     return {term for term in map(_stem, _word_parts(" ".join(candidates))) if term in terms}, len(data)
 
 
