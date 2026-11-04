@@ -512,9 +512,15 @@ def _locations(
     filtered = 0
     result: list[dict[str, Any]] = []
     seen: set[tuple[str, int, int]] = set()
+    paths: dict[str, str | None] = {}
     for location in values[:MAX_EXAMINED_RESULTS]:
         uri, line, character = _location_parts(location, link=link)
-        relative = _uri_to_indexed_path(uri, root, inventory)
+        if not isinstance(uri, str):
+            filtered += 1
+            continue
+        if uri not in paths:
+            paths[uri] = _uri_to_indexed_path(uri, root, inventory)
+        relative = paths[uri]
         if relative is None:
             filtered += 1
             continue

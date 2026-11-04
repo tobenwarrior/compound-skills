@@ -493,6 +493,8 @@ A 0.16.64 paired replay against `68b1beb` alternated rankers for 25 repetitions 
 
 0.16.66 reuses the repository inventory for both source validation and result filtering. A local replay against `4918876` alternated the adapters for 15 lookups per repository with the deterministic LSP server from the local tests. Git subprocesses fell from eight to four on pinned Flask and Django checkouts, with identical definition, reference, and coverage JSON. Median adapter time including server startup fell from 125 to 76 ms on Flask and 325 to 179 ms on Django. The server fixture measures adapter overhead independently of language-server analysis.
 
+0.16.67 also validates each URI once per response. In 11 alternating pairs per repository, a fixture server returned 2,000 locations in one file. Safe file opens fell from 2,002 to three per lookup. Median adapter time fell from 398 to 81 ms on Flask and from 498 to 178 ms on Django. Sparse responses used three opens in both versions, and every lookup returned identical JSON. These timings include local server startup and measure adapter work with a synthetic response.
+
 ## Saved model-work audit
 
 The [saved call audit](diagram_sources/work_audit.json) reads the completed Y Harness / DeepSeek V4.1 Flash sequence as data: 72 model requests and 116 tools with Compound, 61 and 92 without. Slugs account for eight of the eleven extra requests. Three treatment edits and one control edit were rejected by read prerequisites. Both modes' initial Git identity failures remain counted; they are an environment limitation, not evidence of a Compound prompt defect. The annotations identify the relevant saved steps and resulting prompt/code changes without deducting hypothetical future savings.
