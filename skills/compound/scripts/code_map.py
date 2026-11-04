@@ -1085,6 +1085,7 @@ def _literal_query_names(query: str) -> frozenset[str]:
     )
 
 
+@functools.lru_cache(maxsize=MAX_FILES)
 def _is_test(path: str) -> bool:
     parts = path.lower().split("/")
     return any(part in TEST_DIRS or part.endswith(("-tests", "_tests")) for part in parts[:-1]) or bool(TEST_FILE.search(parts[-1]))
@@ -1151,17 +1152,23 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     if not terms and not IDENTIFIER.search(query):
         return _rank_unfocused(records, by_path, reverse)
     exact_path = query.removeprefix("./")
-    path_terms = {path: _path_terms(path) for path in by_path}
-    symbol_terms = {
-        path: _symbol_name_terms(tuple(symbol["name"] for symbol in record["symbols"]))
-        for path, record in by_path.items()
-    }
-    occurrences = {
-        term: sum(term in path_terms[path] or term in symbol_terms[path] for path in by_path)
-        for term in terms
-    }
+    wanted = set(terms)
+    occurrences = dict.fromkeys(terms, 0)
+    term_matches = {}
+    for path, record in by_path.items():
+        path_matches = wanted & _path_terms(path)
+        names = tuple(symbol["name"] for symbol in record["symbols"])
+        symbol_matches = wanted & _symbol_name_terms(names)
+        if path_matches or symbol_matches:
+            term_matches[path] = (path_matches, symbol_matches)
+            for term in path_matches | symbol_matches:
+                occurrences[term] += 1
     weights = {term: math.log(1 + len(records) / (1 + count)) for term, count in occurrences.items()}
-    matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
+    matched = dict.fromkeys(by_path, 0.0)
+    for path, (path_matches, symbol_matches) in term_matches.items():
+        matched[path] = sum(
+            weight * ((term in path_matches) + (term in symbol_matches)) for term, weight in weights.items()
+        )
     literal_names = _literal_query_names(query) if exact_path not in by_path else frozenset()
     literal_paths = {
         path for path, record in by_path.items()
@@ -1210,7 +1217,6 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     finder = re.compile("|".join(sorted({re.escape(term.rstrip("i") or term) for term in terms})), re.IGNORECASE)
     head = order[:CONTENT_RANK_FILES]
     budget = CONTENT_RANK_BYTES
-    wanted = set(terms)
     unicode_query = not query.isascii() and any(not char.isascii() and ("_" + char).isidentifier() for char in query)
     unseen = set()
     if len(terms) > 1 and exact_path not in by_path:

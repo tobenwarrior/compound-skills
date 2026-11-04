@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.57 (2026-11-04)
+
+- Reuse test-path classification and skip scoring metadata for files with no matching query terms. [Warm query profile](bench/README.md#profile-local-map-queries)
+
 ## 0.16.56 (2026-11-04)
 
 - Show up to eight declarations in an exact-file agent summary, including declarations whose names differ from the filename. [Exact-path replay](bench/README.md#exact-path-agent-summaries)
