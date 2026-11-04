@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.33 (2026-11-04)
+
+- Keep Unicode identifier parts in focused map queries, including single CJK characters and combining marks. Match normalized spellings in paths, symbol outlines and bounded source scans.
+- Five local Unicode queries found their intended file and 48 existing controls kept their focus and probe counts. [Offline checks](bench/README.md#unicode-map-queries).
+
 ## 0.16.32 (2026-11-04)
 
 - Route scoped extractions with known callers and behavior through the saved rule. Keep the caller baseline and final checks, and finish after diff review. Load the full guide for broader refactors. Run `setup-global` again to refresh saved rules.

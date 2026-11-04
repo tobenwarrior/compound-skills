@@ -21,8 +21,9 @@ import sys
 import tempfile
 import time
 import urllib.parse
+import unicodedata
 from pathlib import Path, PurePosixPath
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 try:
     from .onboarding import _reject_symlink, _state_paths
     from .workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
@@ -117,6 +118,7 @@ QUERY_TEST_WORDS = frozenset({"test", "tests", "testing", "spec", "specs"})
 TEST_DIRS = frozenset({"test", "tests", "__tests__", "spec", "specs", "e2e"})
 TEST_FILE = re.compile(r"^test_.*\.py$|^conftest\.py$|_test\.[a-z0-9]+$|\.(?:test|spec)\.[a-z0-9]+$")
 IDENTIFIER = re.compile(r"[A-Za-z0-9_]+")
+UNICODE_IDENTIFIER = re.compile(r"[A-Za-z0-9_\u0080-\U0010FFFF]+")
 WORD_PART = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+")
 # Focus weights were tuned on recent Flask, click and Hono commits; the README reports other commits.
 CONTENT_WEIGHT = 0.5
@@ -986,15 +988,38 @@ def _record(path: str, entry: dict[str, Any], known: set[str], aliases: list[dic
     if "source_limit" in entry.get("native_imports", {}).get("diagnostics", ()):
         record["outline_note"] = "; ".join(filter(None, (record.get("outline_note"), "local import links read from the first 256 KiB")))
     return record
+def _identifier_tokens(text: str) -> list[str]:
+    if text.isascii():
+        return IDENTIFIER.findall(text)
+    # Python symbols are NFKC-normalized. Keep identifier continuation marks
+    # that a regex using Unicode word characters would split off.
+    text = unicodedata.normalize("NFKC", text)
+    separators = {ord(char): " " for char in set(text) if not char.isascii() and not ("_" + char).isidentifier()}
+    return UNICODE_IDENTIFIER.findall(text.translate(separators))
+
+
+def _identifier_words(tokens: list[str]) -> Iterator[str]:
+    for token in tokens:
+        for chunk in token.split("_"):
+            if chunk.isascii():
+                yield from (part.lower() for part in WORD_PART.findall(chunk))
+            else:
+                yield chunk.casefold()
+
+
 def _word_parts(text: str) -> set[str]:
-    """Lowercase words of identifiers and prose, split at underscores, digits and case changes."""
-    return {part.lower() for token in set(IDENTIFIER.findall(text)) for chunk in token.split("_") for part in WORD_PART.findall(chunk)}
+    """Keep ASCII navigation terms and add whole normalized Unicode identifier parts."""
+    parts = {part.lower() for token in set(IDENTIFIER.findall(text)) for chunk in token.split("_")
+             for part in WORD_PART.findall(chunk)}
+    if not text.isascii():
+        parts.update(_identifier_words(_identifier_tokens(text)))
+    return parts
 
 
 @functools.lru_cache(maxsize=1 << 16)
 def _stem(word: str) -> str:
     """Fold common English endings so handler, handles and handling, or cookie and cookies, compare equal."""
-    if len(word) <= 3:
+    if len(word) <= 3 or not word.isascii():
         return word
     if word.endswith("ies") and len(word) > 4:
         word = word[:-3] + "i"
@@ -1022,8 +1047,8 @@ def _name_terms(name: str) -> frozenset[str]:
 
 def _query_terms(query: str) -> tuple[list[str], bool]:
     """Return the distinct folded query words that can name a file, and whether the query is about tests."""
-    words = [part.lower() for token in IDENTIFIER.findall(query) for chunk in token.split("_") for part in WORD_PART.findall(chunk)]
-    terms = [_stem(word) for word in words if len(word) > 1 and word not in QUERY_STOP_WORDS]
+    words = list(_identifier_words(_identifier_tokens(query)))
+    terms = [_stem(word) for word in words if (len(word) > 1 or not word.isascii()) and word not in QUERY_STOP_WORDS]
     return list(dict.fromkeys(terms)), any(word in QUERY_TEST_WORDS for word in words)
 
 
@@ -1032,10 +1057,10 @@ def _is_test(path: str) -> bool:
     return any(part in TEST_DIRS or part.endswith(("-tests", "_tests")) for part in parts[:-1]) or bool(TEST_FILE.search(parts[-1]))
 
 
-def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str], terms: set[str], opener: Callable[[str], int] | None = None) -> tuple[set[str], int]:
+def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str], terms: set[str], opener: Callable[[str], int] | None = None, unicode_query: bool = False) -> tuple[set[str], int]:
     """Return which ``terms`` occur in the first ``limit`` bytes of an indexed file, and the bytes read.
 
-    ``finder`` keeps the identifiers that can fold to a term, so other words are never split or folded.
+    ``finder`` narrows the ASCII scan. Unicode queries also compare normalized words in Unicode source.
     """
     try:
         with os.fdopen(opener(relative) if opener else _open_source(root, relative), "rb") as source:
@@ -1046,7 +1071,10 @@ def _content_terms(root: Path, relative: str, limit: int, finder: re.Pattern[str
         return set(), 0
     if b"\0" in data:
         return set(), len(data)
-    candidates = filter(finder.search, set(IDENTIFIER.findall(data.decode("utf-8", "replace"))))
+    decoded = data.decode("utf-8", "replace")
+    if unicode_query and not decoded.isascii():
+        return terms.intersection(map(_stem, _word_parts(decoded))), len(data)
+    candidates = filter(finder.search, set(IDENTIFIER.findall(decoded)))
     return {term for term in map(_stem, _word_parts(" ".join(candidates))) if term in terms}, len(data)
 
 
@@ -1086,9 +1114,9 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         for dependency in record["dependencies"]:
             if dependency in reverse:
                 reverse[dependency].add(record["path"])
-    if not IDENTIFIER.search(query):
-        return _rank_unfocused(records, by_path, reverse)
     terms, about_tests = _query_terms(query)
+    if not terms and not IDENTIFIER.search(query):
+        return _rank_unfocused(records, by_path, reverse)
     exact_path = query.removeprefix("./")
     path_terms = {path: _name_terms(path) for path in by_path}
     symbol_terms = {path: frozenset().union(*(_name_terms(symbol["name"]) for symbol in record["symbols"])) for path, record in by_path.items()}
@@ -1137,6 +1165,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     head = order[:CONTENT_RANK_FILES]
     budget = CONTENT_RANK_BYTES
     wanted = set(terms)
+    unicode_query = not query.isascii() and any(not char.isascii() and ("_" + char).isidentifier() for char in query)
     unseen = set()
     if len(terms) == 2 and exact_path not in by_path:
         unseen = {term for term, count in occurrences.items() if not count}
@@ -1154,7 +1183,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
             nonlocal budget
             if budget <= 0:
                 return set()
-            found, used = _content_terms(root, path, min(MAX_FILE_BYTES, budget), finder, wanted, opener)
+            found, used = _content_terms(root, path, min(MAX_FILE_BYTES, budget), finder, wanted, opener, unicode_query)
             budget -= used
             if found and query_matches is not None:
                 query_matches.add(path)
