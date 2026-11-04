@@ -211,6 +211,12 @@ A direct CLI replay against `b9db91b` queried `./src/flask/wrappers.py` and `./d
 
 A local regression replay gave the in-process map two files with the same name and reduced either the inventory cap or the source budget to one file. Before 0.16.47, the inventory cap returned the archived copy and the source budget left the requested file without symbols. With 0.16.47, both cases return the requested file and its symbol, with and without a leading `./`. Coverage remains partial in all four cases. The same failures and fixes reproduced at the shipped limits with 20,000 archive files plus the target for inventory and 64 one-MiB archive files plus the target for source reads. Six exact-path and topic comparisons on the pinned Flask and Django checkouts returned the same results, excluding JSON generation timestamps.
 
+## Lowercase symbol queries
+
+On the parent of Flask commit `2a8a38b051fc248865730bf3511bf2e2ea325e81`, the query `support query in methodview` did not show `src/flask/views.py` in the 0.16.47 agent summary. The file was outside the first 12 ranked paths. In 0.16.48, the file ranks second and the summary includes its `MethodView` symbol. The ranker now keeps the lowercase spelling of an alphanumeric symbol alongside its component words.
+
+The replay used one unchanged index per commit parent, the cleaned commit title, and the default 2,500-character summary. This was the only changed file ranking or visible path list in 24 development queries from Flask and Click. A separate 72-query check used the first 24 qualifying non-merge commits in attrs at `c8bb9bf`, Packaging at `78d8673`, and marshmallow at `b762ea2d`, using the selection rules in [map_retrieval.py](map_retrieval.py) and each project's source directory. All 72 kept their first 12 paths and visible path lists. No model calls were needed for the replay.
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:

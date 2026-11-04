@@ -1047,7 +1047,10 @@ def _stem(word: str) -> str:
 
 @functools.lru_cache(maxsize=1 << 16)
 def _name_terms(name: str) -> frozenset[str]:
-    return frozenset(_stem(part) for part in _word_parts(name))
+    parts = _word_parts(name)
+    if name.isascii() and name.isalnum():
+        parts.add(name.lower())
+    return frozenset(_stem(part) for part in parts)
 
 
 @functools.lru_cache(maxsize=MAX_FILES)

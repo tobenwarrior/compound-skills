@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.48 (2026-11-04)
+
+- Match lowercase queries such as `methodview` to the complete mixed-case symbol name in ranking and summaries. [Local replay](bench/README.md#lowercase-symbol-queries)
+
 ## 0.16.47 (2026-11-04)
 
 - Give the exact requested file first use of the inventory and source read budgets in an in-process code map. [Local regression replay](bench/README.md#exact-path-agent-summaries)
