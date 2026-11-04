@@ -1,0 +1,390 @@
+{
+  "schema": "compound-dispatch-comparison-1",
+  "compound_commit": "c9f627299b1a1ebe0c390787ecfb46ead01cf52b",
+  "compound_version": "0.16.31",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "reasoning_effort": "high",
+  "output_cap": 32768,
+  "schedule": [
+    [
+      0,
+      0,
+      "with"
+    ],
+    [
+      0,
+      0,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "with"
+    ]
+  ],
+  "sequences": [
+    {
+      "fixture": "dispatchkit",
+      "fixture_head": "8d862ea8eabf16f89e09dd9c58267a1c60250483",
+      "tasks": [
+        {
+          "name": "encoded-route-bug",
+          "prompt": "A partner's webhook delivery reaches the dispatcher with its route URL-encoded. A registered handler works for /hooks/acme/billing, but the equivalent request sent as /hooks/acme%2Fbilling?source=partner returns 404. Fix the behavior and add a new regression test that fails on the original code. Preserve the existing tests."
+        },
+        {
+          "name": "share-event-packaging",
+          "prompt": "publish.py and replay.py each build an event envelope with their own helper (_make_envelope and _replay_envelope). Add one shared package_event operation in a new dispatchkit/packaging.py module and use it from both callers. Keep live publishing at attempt 1 and mode live, even if the input contains another attempt. Replay must preserve a recorded attempt, default a missing attempt to 0, and use mode replay. Keep each caller's validation and error messages. Remove the duplicated helpers and preserve the existing tests."
+        }
+      ]
+    }
+  ],
+  "task_scope": "Fresh checkouts of the previously benchmarked synthetic Dispatchkit repository. Counterbalanced order reversed from the 0.16.15 pilot, with a persistent workspace and conversation in each arm.",
+  "success_policy": "Independent cumulative acceptance, including regression on original source, both suites and retained original tests. Every billed response must report valid usage.",
+  "stopping_policy": "Stop the mode after its single follow-up fails or a budget guard is reached. Stop comparison for any invalid meter, provider, or isolation condition.",
+  "followup_policy": "One repair or recovery after an incorrect artifact, with independent feedback. Correct artifact accepted without requiring final prose.",
+  "billing_policy": "Every attempt and repair counted. Request guards before dispatch. An in-flight response can cross a dollar guard.",
+  "decision_policy": "Both arms must accept both tasks. Compound must have strictly lower total Go allowance and list-price usage, with no increase in cash charges.",
+  "caching": "Provider cache not reset.",
+  "fixture_fingerprints": {
+    "dispatchkit": "7efeadbee59b43c4b62c28be46219899294896bc12a70eeb5069e1bb7276a913"
+  },
+  "grader_fingerprint": "9bf605f0d90d790a26382a470ea15eb5f1e015747ce54ea99ee225468a911003",
+  "runner_sha256": "33ee7e73c8866123b5306be085e92edf1d2cca7172e4d3ea4d2d7e883511efc3",
+  "meter_sha256": "5436d8c83d4a9606604f39002b2b8c66d287f2387acaeb52d7a82bab83d7e0b1",
+  "verdict_sha256": "1d439dac73a3df4706386820b1d681f6db0d64500c388eeb7aa18f641908263b",
+  "grader_driver_sha256": "beffbb64905472624a54f2de5762556ecedaa1aafb12ca6a30492d3559e82fb9",
+  "preflight_sha256": "9b7a436332d0206516b6438ee4ec3a2136ac47e07a8d2c41ea73c44edfd16857",
+  "profile_hashes": {
+    "without": "9aa56e58ea8fa55fb6313bd42d055ed744850346cdb6f8927044c5b471bb46da",
+    "with": "4dacd4c61887ac20198b5ecc2d9d56c08560f88290e929c5913d9ed7d33401fd"
+  },
+  "instruction_hashes": {
+    "without": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "with": "116a283cd3b9308134aa33a9276dd26f5417459285fbf125e74ad6acb72baa54"
+  },
+  "total_max_requests": 96,
+  "per_arm_max_requests": 48,
+  "max_requests_per_run": 24,
+  "max_requests_per_repair": 16,
+  "max_repairs_per_stage": 1,
+  "total_max_allowance_usd": "0.12",
+  "per_arm_max_allowance_usd": "0.06",
+  "max_allowance_per_run_usd": "0.04",
+  "max_wall_seconds_per_run": 600,
+  "docker_image_id": "sha256:b529c5f2f2f4d903d256b495313ab527256743fd2d2861bf006609eeda95d57b",
+  "retries": 0,
+  "date": "2026-11-04",
+  "plan_sha256": "922fe4c3c6e9d934a69a9dd409e2bf8ac16bbef223ad26c66b19d2575ec4ff4d",
+  "summary": {
+    "valid": true,
+    "claim": true,
+    "complete": true,
+    "compound_cheaper": true,
+    "errors": [],
+    "arms": {
+      "without": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.01003350",
+              "list_cost": "0.01672252",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00595399",
+              "list_cost": "0.00992332",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.01598749",
+          "list_cost": "0.02664584",
+          "cost": "0"
+        },
+        "requests": 19,
+        "tool_calls": 26,
+        "native_steps": 19,
+        "blocked_before_dispatch": 0,
+        "completion_tokens": 7653,
+        "reasoning_tokens_reported": 4128,
+        "input_tokens": 183522,
+        "cached_input_tokens": 127872,
+        "repairs": 0
+      },
+      "with": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00352985",
+              "list_cost": "0.00588308",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.01081377",
+              "list_cost": "0.01802291",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.01434362",
+          "list_cost": "0.02390599",
+          "cost": "0"
+        },
+        "requests": 24,
+        "tool_calls": 38,
+        "native_steps": 24,
+        "blocked_before_dispatch": 0,
+        "completion_tokens": 11825,
+        "reasoning_tokens_reported": 6850,
+        "input_tokens": 322404,
+        "cached_input_tokens": 295936,
+        "repairs": 0
+      }
+    }
+  },
+  "attempts": [
+    {
+      "index": 0,
+      "stage": 0,
+      "task": "encoded-route-bug",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 9,
+      "tool_calls": 13,
+      "costs": {
+        "allowance": "0.00352985",
+        "list_cost": "0.00588308",
+        "cost": "0"
+      },
+      "accepted": true,
+      "valid_usage": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "budget_stopped": false,
+      "timed_out": false,
+      "prompt_sha256": "bed25d86cc07fbc05acd4340373f357b7eb6abdaf3d1e57575a35df10309b646",
+      "grade": {
+        "success": true,
+        "checks": {
+          "test_bug": true
+        },
+        "original_tests_retained": true,
+        "regression_test": true
+      },
+      "original_suite_tests": 2,
+      "own_suite_tests": 3,
+      "native_steps": 9,
+      "blocked_before_dispatch": 0,
+      "terminal_reasons": [
+        "completed"
+      ],
+      "input_tokens": 62177,
+      "cached_input_tokens": 52864,
+      "completion_tokens": 2310,
+      "reasoning_tokens_reported": 768,
+      "record_sha256": "e74c838cb7e54cdca05836a2628b626a87d106de454465bc4a197a865ebe4dd2",
+      "events_sha256": "9f0c19fb2b2244d5ceb2e9f4f24b7fe3783010b5ffb6bac7ddd39d35bf2f6260"
+    },
+    {
+      "index": 1,
+      "stage": 0,
+      "task": "encoded-route-bug",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 9,
+      "tool_calls": 12,
+      "costs": {
+        "allowance": "0.01003350",
+        "list_cost": "0.01672252",
+        "cost": "0"
+      },
+      "accepted": true,
+      "valid_usage": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "budget_stopped": false,
+      "timed_out": false,
+      "prompt_sha256": "bed25d86cc07fbc05acd4340373f357b7eb6abdaf3d1e57575a35df10309b646",
+      "grade": {
+        "success": true,
+        "checks": {
+          "test_bug": true
+        },
+        "original_tests_retained": true,
+        "regression_test": true
+      },
+      "original_suite_tests": 2,
+      "own_suite_tests": 3,
+      "native_steps": 9,
+      "blocked_before_dispatch": 0,
+      "terminal_reasons": [
+        "completed"
+      ],
+      "input_tokens": 57011,
+      "cached_input_tokens": 11136,
+      "completion_tokens": 2411,
+      "reasoning_tokens_reported": 974,
+      "record_sha256": "b81d6dd8dfd77475db4f114e016975bef0dedde747d26f9d3ebbd6b08cba953a",
+      "events_sha256": "16d0e74a76836ee5251dff5c8b8958411cfa7ee1e76fbcfb4f9ae65d068fa3f5"
+    },
+    {
+      "index": 2,
+      "stage": 1,
+      "task": "share-event-packaging",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 10,
+      "tool_calls": 14,
+      "costs": {
+        "allowance": "0.00595399",
+        "list_cost": "0.00992332",
+        "cost": "0"
+      },
+      "accepted": true,
+      "valid_usage": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "budget_stopped": false,
+      "timed_out": false,
+      "prompt_sha256": "3786a7a9c61c5d524f499c52ba4025aea655bbb331d8f7f54051e3451e92c684",
+      "grade": {
+        "success": true,
+        "checks": {
+          "test_bug": true,
+          "test_refactor": true
+        },
+        "original_tests_retained": true,
+        "regression_test": true
+      },
+      "original_suite_tests": 2,
+      "own_suite_tests": 4,
+      "native_steps": 10,
+      "blocked_before_dispatch": 0,
+      "terminal_reasons": [
+        "completed"
+      ],
+      "input_tokens": 126511,
+      "cached_input_tokens": 116736,
+      "completion_tokens": 5242,
+      "reasoning_tokens_reported": 3154,
+      "record_sha256": "2ddd783a9c405f0f6dedc78d482d9ea64f10035b62d42aeb6747b43da35b59b6",
+      "events_sha256": "ea8e8ebcf1c96787f35463c1c525247246561081879e784c3ae95b0ac8cd46ff"
+    },
+    {
+      "index": 3,
+      "stage": 1,
+      "task": "share-event-packaging",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 15,
+      "tool_calls": 25,
+      "costs": {
+        "allowance": "0.01081377",
+        "list_cost": "0.01802291",
+        "cost": "0"
+      },
+      "accepted": true,
+      "valid_usage": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "budget_stopped": false,
+      "timed_out": false,
+      "prompt_sha256": "3786a7a9c61c5d524f499c52ba4025aea655bbb331d8f7f54051e3451e92c684",
+      "grade": {
+        "success": true,
+        "checks": {
+          "test_bug": true,
+          "test_refactor": true
+        },
+        "original_tests_retained": true,
+        "regression_test": true
+      },
+      "original_suite_tests": 2,
+      "own_suite_tests": 6,
+      "native_steps": 15,
+      "blocked_before_dispatch": 0,
+      "terminal_reasons": [
+        "completed"
+      ],
+      "input_tokens": 260227,
+      "cached_input_tokens": 243072,
+      "completion_tokens": 9515,
+      "reasoning_tokens_reported": 6082,
+      "record_sha256": "f082fcd49d51394ba72ed0f233edee0a52e53408553b2b67d809e277ef6340f9",
+      "events_sha256": "17ae361ece54b60ac78a2abf12d5ce25ac7cc343e142720771ed134a1beed817"
+    }
+  ],
+  "allowance_reduction_pct": "10.28222691617008048167661090",
+  "total_experiment_requests": 43,
+  "total_experiment_costs": {
+    "allowance": "0.03033111",
+    "list_cost": "0.05055183",
+    "cost": "0"
+  },
+  "session_audit": [
+    {
+      "arm": "with",
+      "rule_present": true,
+      "skills": [
+        "compound"
+      ],
+      "refactor_guide_loaded": true,
+      "current_guide_content_confirmed": true,
+      "turns": 2,
+      "events": 171
+    },
+    {
+      "arm": "without",
+      "rule_present": false,
+      "skills": [],
+      "refactor_guide_loaded": false,
+      "current_guide_content_confirmed": false,
+      "turns": 2,
+      "events": 132
+    }
+  ],
+  "scope": "One counterbalanced two-change sequence per mode in fresh copies of the previously benchmarked synthetic Dispatchkit fixture. Source and conversation persist within each mode. No general or lifetime cost claim."
+}

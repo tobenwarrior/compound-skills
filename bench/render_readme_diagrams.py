@@ -405,9 +405,9 @@ def comparisons():
         yield item['asset'], chart.svg()
 
 
-def dispatch_comparison():
+def dispatch_comparison(source):
     """Render the fresh matched cost comparison after the ledger meets the claim gate."""
-    data = json.loads((SOURCES / 'comparison_dispatch_v01615.json').read_text())
+    data = json.loads(source.read_text())
     summary = data['summary']
     arms = [summary['arms'][mode] for mode in ('without', 'with')]
     cost = [money(arm['totals']['allowance']) for arm in arms]
@@ -426,7 +426,8 @@ def dispatch_comparison():
     reduction = (1 - cost[1] / cost[0]) * 100
     desc = (f'Dispatchkit matched pilot. Go allowance was ${cost[0]} without and ${cost[1]} with Compound, '
             f'{reduction:.1f}% less. Both modes finished both tasks. All attempts and repairs included.')
-    subtitle = 'Compound 0.16.15 · DeepSeek V4.1 Flash through Y Harness · one sequence per mode'
+    subtitle = (f"Compound {data['compound_version']} · DeepSeek V4.1 Flash through Y Harness"
+                ' · one sequence per mode')
     chart = Canvas(958, f'Two changes, {reduction:.1f}% less allowance', 'MEASURED PILOT', desc, subtitle)
     chart.card(24, 157, 992, 251)
     maximum = max(cost) * Decimal('1.08')
@@ -439,7 +440,8 @@ def dispatch_comparison():
         chart.pair(y + 34, values, [f'${v:.8f}' for v in values], maximum, label)
     chart.text(52, 910, 'The same repository and conversation carry forward within each mode.', 17, weight=650)
     chart.text(52, 937, 'One synthetic sequence per mode. All bars use the same allowance scale.', 15, 'muted')
-    yield 'benchmark-dispatch-v01615.svg', chart.svg()
+    version = data['compound_version'].replace('.', '')
+    return f'benchmark-dispatch-v{version}.svg', chart.svg()
 
 
 def main():
@@ -450,7 +452,7 @@ def main():
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
     outputs.update(workflows())
-    outputs.update(dispatch_comparison())
+    outputs.update(dispatch_comparison(source) for source in sorted(SOURCES.glob('comparison_dispatch_v*.json')))
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
