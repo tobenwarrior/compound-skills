@@ -1707,35 +1707,29 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         return value
     suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
     usable = limit - len(suffix)
-    leading = compact[:4]
-    last_path_end = 0
-    if leading:
-        first_rows = lines[:header_count + len(leading) - 1]
-        last_path_end = len("\n".join([*first_rows, leading[-1][0]]))
-    expanded = last_path_end <= usable and exact_symbol is None and not exact_file
-    if leading and len(header) <= usable and (expanded or usable < last_path_end):
-        rows = compact if expanded else leading
+    topic_query = exact_symbol is None and not exact_file
+    if compact and len(header) <= usable and (topic_query or len(header) + 1 + len(compact[0][0]) > usable):
         # Fit complete ranked paths first, then attach source line hints.
         remaining = usable - len(header)
         visible = []
-        for path_line, _ in rows:
+        for path_line, _ in compact:
             size = 1 + len(path_line)
             if size > remaining:
                 break
             visible.append(path_line)
             remaining -= size
-        for index, (_, hints) in enumerate(rows[:len(visible)]):
+        for index, (_, hints) in enumerate(compact[:len(visible)]):
             if not hints:
                 continue
             hint = " symbols: " + hints[0]
-            if expanded and index < len(leading) and len(hints) > 1:
+            if topic_query and index < 4 and len(hints) > 1:
                 second = ", " + hints[1]
                 if len(hint) + len(second) <= remaining:
                     hint += second
             if len(hint) <= remaining:
                 visible[index] += hint
                 remaining -= len(hint)
-        if expanded:
+        if topic_query:
             for index, rendered in enumerate(lines[header_count:header_count + len(visible)]):
                 extra = len(rendered) - len(visible[index])
                 if extra <= remaining:

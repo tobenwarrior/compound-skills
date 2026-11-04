@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.62 (2026-11-04)
+
+- Keep more ranked paths in compact code-map summaries. At a 1,300-character limit, a focused query on the pinned Flask fixture now shows both the session implementation and its existing test.
+
 ## 0.16.61 (2026-11-04)
 
 - Turn a known bug into its failing regression before further investigation. After the fix, run the full suite and check the diff, then finish. Reserve extra probes for a specific evidence gap or project requirement.
