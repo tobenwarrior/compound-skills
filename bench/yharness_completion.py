@@ -174,7 +174,7 @@ def records(*, for_summary=False):
     if not root.exists():
         return []
     result = []
-    navigation_tools = None
+    expected_tools = None
     for folder in sorted(p for p in root.iterdir() if p.is_dir()):
         record_path = folder / 'record.json'
         if not record_path.is_file():
@@ -201,23 +201,35 @@ def records(*, for_summary=False):
             raise RuntimeError(f'Invalid prior attempt {folder.name}: recorded costs disagree with meter')
         if GRADER == 'flask-sequence' and not ungraded:
             validate_artifact_record(folder, record)
-        if GRADER == 'map-navigation' and valid_usage:
+        if GRADER in ('map-navigation', 'flask-sequence') and valid_usage:
             preflight = [row for row in rows(folder / 'requests.jsonl') if row.get('event') == 'request_preflight']
             task = PLAN['sequences'][0]['tasks'][record['stage']]
-            prompt = NAVIGATION_REPAIR if record['attempt'] else navigation_prompt(task, record['arm'])
+            if GRADER == 'map-navigation':
+                prompt = NAVIGATION_REPAIR if record['attempt'] else navigation_prompt(task, record['arm'])
+            elif record['attempt']:
+                initial = next((item for item in result if item['index'] == record['index'] and item['attempt'] == 0), None)
+                if initial is None:
+                    raise RuntimeError(f'Invalid prior attempt {folder.name}: missing initial attempt')
+                prompt = flask_feedback(record['stage'], initial['grade'])
+            else:
+                prompt = task['prompt']
             expected = hashlib.sha256(prompt.encode()).hexdigest()
             if (len(preflight) != 1 or preflight[0].get('prompt_sha256') != expected
                     or record.get('prompt_sha256') != expected):
-                raise RuntimeError(f'Invalid prior attempt {folder.name}: navigation prompt mismatch')
-            context_hash = preflight[0].get('context_sha256')
-            if not isinstance(context_hash, str) or len(context_hash) != 64:
-                raise RuntimeError(f'Invalid prior attempt {folder.name}: missing navigation context hash')
-            record['context_sha256'] = context_hash
+                raise RuntimeError(f'Invalid prior attempt {folder.name}: delivered prompt mismatch')
+            routing = GRADER == 'flask-sequence' and record['arm'] == 'with'
+            if preflight[0].get('routing_present') is not routing:
+                raise RuntimeError(f'Invalid prior attempt {folder.name}: delivered routing mismatch')
+            if GRADER == 'map-navigation':
+                context_hash = preflight[0].get('context_sha256')
+                if not isinstance(context_hash, str) or len(context_hash) != 64:
+                    raise RuntimeError(f'Invalid prior attempt {folder.name}: missing navigation context hash')
+                record['context_sha256'] = context_hash
             tools = sorted(preflight[0]['tools'])
-            if navigation_tools is None:
-                navigation_tools = tools
-            if tools != navigation_tools:
-                raise RuntimeError('Navigation attempts must expose the same tool set')
+            if expected_tools is None:
+                expected_tools = tools
+            if tools != expected_tools:
+                raise RuntimeError('Matched attempts must expose the same tool set')
         result.append(record)
     if GRADER == 'flask-sequence':
         for record in result:
@@ -388,11 +400,12 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
       'COMPOUND_EXPECT_ROUTING':'1' if arm=='with' else '0','DSH_HOME':PLAN['dsh_home'],'DSH_PERMISSION_MODE':'workspace-write','PATH':str(BASE/'runtime/bin')+':'+os.environ['PATH'],'COMPOUND_PILOT_METER':str(out/'requests.jsonl'),'COMPOUND_PILOT_MAX_CALLS':str(cap),'COMPOUND_PILOT_MAX_USD':str(min(money,Decimal(PLAN['max_allowance_per_run_usd'])))}
  env.update(COMPOUND_PILOT_READ_ONLY='0', COMPOUND_PILOT_EXPECT_PROMPT_SHA256='')
  prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest()
+ if GRADER in ('map-navigation', 'flask-sequence'):
+  env['COMPOUND_PILOT_EXPECT_PROMPT_SHA256']=prompt_sha256
  workspace=BASE/'workspace'
  if GRADER == 'map-navigation':
   workspace=workspace/spec['repo']
-  env.update(COMPOUND_EXPECT_ROUTING='0', DSH_PERMISSION_MODE='read-only',
-             COMPOUND_PILOT_READ_ONLY='1', COMPOUND_PILOT_EXPECT_PROMPT_SHA256=prompt_sha256)
+  env.update(COMPOUND_EXPECT_ROUTING='0', DSH_PERMISSION_MODE='read-only', COMPOUND_PILOT_READ_ONLY='1')
  command=['node','--import',str(BASE/'meter.mjs'),PLAN['cli'],'--profile',PLAN['profile'],'--patch',str(BASE/(arm+'.yml')),'--json']
  if session:command+=['--session-id',session]
  out.mkdir()
@@ -486,6 +499,18 @@ def run(index):
   run_stage(index,stage,arm,session)
 
 
+def flask_feedback(stage, grade):
+    # Stage-specific feedback keeps the current prompt distinct from prior repairs in the resumed session.
+    feedback = (
+        f'The independent check for stage {stage + 1} did not pass. Continue from the current files and '
+        'finish this task. Preserve previously accepted changes and do not remove or weaken existing tests. '
+        'Check the reported bug and verify your regression on the source before and after this stage.'
+    )
+    if grade.get('scope', {}).get('unexpected_files'):
+        feedback += ' Restore unrelated changes outside this fix and its tests.'
+    return feedback
+
+
 def run_stage(index,stage,arm,session,previous=None):
  task=PLAN['sequences'][0]['tasks'][stage]
  prompt=navigation_prompt(task,arm) if GRADER == 'map-navigation' else task['prompt']
@@ -498,9 +523,7 @@ def run_stage(index,stage,arm,session,previous=None):
   if GRADER == 'map-navigation':
    feedback=NAVIGATION_REPAIR
   elif GRADER == 'flask-sequence':
-   feedback+=' Check the reported bug and verify your regression on the source before and after this stage.'
-   if record['grade'].get('scope', {}).get('unexpected_files'):
-    feedback+=' Restore unrelated changes outside this fix and its tests.'
+   feedback=flask_feedback(stage,record['grade'])
   else:
    feedback+='\n'+json.dumps({k:v for k,v in record['grade'].items() if k!='success'},indent=2)
   record=invoke(index,stage,arm,1,feedback,record['session_id'],attempt_kind=kind,previous=previous)
