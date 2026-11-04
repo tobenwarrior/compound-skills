@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.58 (2026-11-04)
+
+- Direct agents from focused map results to scoped search and nearby source lines. [Saved navigation trace](bench/README.md#multi-step-navigation-preflight)
+
 ## 0.16.57 (2026-11-04)
 
 - Reuse test-path classification and skip scoring metadata for files with no matching query terms. [Warm query profile](bench/README.md#profile-local-map-queries)

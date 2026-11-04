@@ -1633,7 +1633,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if exact_file:
         confirmation = "indexed outline; inspect source before edits."
     elif terms or literal_names:
-        confirmation = "metadata only; matching symbols; inspect source before edits."
+        confirmation = "metadata only. Search listed files, then read nearby lines."
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",

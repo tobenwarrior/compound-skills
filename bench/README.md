@@ -189,6 +189,8 @@ These are starting points for navigation. They measure neither the agent's compl
 
 The [0.16.57 matched navigation comparison](diagram_sources/comparison_navigation_v01657.json) records all six metered attempts. Both modes passed all ten source citations. The two arms matched on every field of the initial provider request outside the task message.
 
+On Django disconnect handling, the map arm used fewer requests and tool calls but had 10,688 uncached input tokens versus 5,805 without the map. Its first three tool results retained 17,925 bytes of source excerpts. A keyless replay used the terms from its later scoped search across the 22 complete Python paths and import hints in the original map. The search returned 1,874 bytes and found all four cited lines, which passed the source grader. Compound 0.16.58 directs agents to search listed files and read nearby lines. The replay verifies the source evidence. Agent behavior and cost under the revised prompt remain unmeasured.
+
 Prepare the common task prompts and the treatment's initial map context from the pinned sources:
 
 ```sh
