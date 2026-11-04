@@ -1,11 +1,17 @@
 from contextlib import contextmanager
 import fcntl
+import stat
 from pathlib import Path
 from decimal import Decimal
 from tempfile import TemporaryDirectory
 import os,sys,json,subprocess,shutil,time,signal,tarfile,hashlib
 BASE=Path(__file__).resolve().parent
 FLASK_FIXTURE = 'flask-ipv6-session'
+FLASK_STAGE_FILES = (
+    frozenset(('src/flask/testing.py', 'tests/test_testing.py')),
+    frozenset(('src/flask/app.py', 'tests/test_basic.py')),
+)
+FLASK_SCOPE_IGNORED = frozenset(('.git', '.pytest_cache', '__pycache__'))
 NAVIGATION_REPOS = ('django', 'flask')
 NAVIGATION_REPAIR = 'The independent source check did not pass. Recheck the citations and return only the complete JSON array.'
 
@@ -25,6 +31,37 @@ def tree_digest(root):
             with path.open('rb') as handle:
                 digest.update(b'file\0' + os.fsencode(relative) + b'\0' + hashlib.file_digest(handle, 'sha256').digest())
     return digest.hexdigest()
+
+
+def flask_scope(project, stage, previous=None):
+    """Compare the whole checkout with the original and the accepted earlier patch."""
+    def files(root):
+        inventory = {}
+        for folder, directories, names in os.walk(root):
+            directories[:] = [name for name in directories if name not in FLASK_SCOPE_IGNORED]
+            for name in (*directories, *names):
+                if name in FLASK_SCOPE_IGNORED:
+                    continue
+                path = Path(folder) / name
+                mode = path.lstat().st_mode
+                relative = path.relative_to(root).as_posix()
+                if stat.S_ISLNK(mode):
+                    inventory[relative] = ('link', os.readlink(path))
+                elif stat.S_ISREG(mode):
+                    with path.open('rb') as handle:
+                        inventory[relative] = ('file', bool(mode & stat.S_IXUSR),
+                                               hashlib.file_digest(handle, 'sha256').digest())
+                elif not stat.S_ISDIR(mode):
+                    inventory[relative] = ('special', stat.S_IFMT(mode))
+        return inventory
+
+    baseline = files(BASE / 'fixtures' / FLASK_FIXTURE)
+    if previous is not None:
+        baseline = {name: value for name, value in baseline.items() if not name.startswith(('src/', 'tests/'))}
+        baseline.update(files(previous))
+    current = files(project)
+    changed = sorted(name for name in baseline.keys() | current.keys() if baseline.get(name) != current.get(name))
+    return {'changed_files': changed, 'unexpected_files': sorted(set(changed) - FLASK_STAGE_FILES[stage])}
 
 
 def flask_input_hashes():
@@ -404,8 +441,12 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
   record['artifact_sha256']=artifact_digest(archive)
   previous_tree, previous_digest=previous if previous is not None else (None,None)
   record['previous_artifact_sha256']=previous_digest
-  with restored_artifact(archive,record['artifact_sha256']) as captured:
-   result=grade(captured,stage,previous_tree)
+  scope=flask_scope(project,stage,previous_tree)
+  if scope['unexpected_files']:
+   result={'success':False,'scope':scope}
+  else:
+   with restored_artifact(archive,record['artifact_sha256']) as captured:
+    result={**grade(captured,stage,previous_tree),'scope':scope}
  else:
   result=grade(project,stage)
  record.update(grade=result,accepted=result['success'] and valid,native_exit_success=code==0,final_message_present=bool(finals),final=finals[-1] if finals else None)
@@ -436,7 +477,7 @@ def run(index):
   digest=accepted['artifact_sha256']
   folder=attempt_folder(accepted['index'],accepted['task'],arm,accepted['attempt'])
   with restored_artifact(folder/'final.tgz',digest) as previous:
-   if any(tree_digest(BASE/'active'/arm/part) != tree_digest(previous/part) for part in ('src','tests')):
+   if flask_scope(BASE/'active'/arm,stage,previous)['changed_files']:
     raise RuntimeError('Active Flask worktree does not match the accepted prior snapshot')
    run_stage(index,stage,arm,accepted['session_id'],(previous,digest))
  else:
@@ -458,6 +499,8 @@ def run_stage(index,stage,arm,session,previous=None):
    feedback=NAVIGATION_REPAIR
   elif GRADER == 'flask-sequence':
    feedback+=' Check the reported bug and verify your regression on the source before and after this stage.'
+   if record['grade'].get('scope', {}).get('unexpected_files'):
+    feedback+=' Restore unrelated changes outside this fix and its tests.'
   else:
    feedback+='\n'+json.dumps({k:v for k,v in record['grade'].items() if k!='success'},indent=2)
   record=invoke(index,stage,arm,1,feedback,record['session_id'],attempt_kind=kind,previous=previous)
