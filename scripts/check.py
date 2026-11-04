@@ -15,7 +15,7 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.16.30"
+VERSION = "0.16.31"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
 SKILLS = ("compound", "map", "setup", "setup-global", "status-global")
@@ -162,6 +162,23 @@ def public_files(root: Path, errors: list[dict[str, str]]) -> list[Path]:
         paths.extend(parent / name for name in files if not ignored(parent, name, False) and regular_or_link(parent / name))
         paths.extend(parent / name for name in directories if safe_is_symlink(root, parent / name, errors))
     return sorted(paths, key=lambda path: relative(root, path))
+
+
+def release_files(root: Path, public: list[Path], errors: list[dict[str, str]]) -> set[Path]:
+    """Return indexed files in Git checkouts and available files in unpacked archives."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--cached", "-z"],
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return set(public)
+    if result.returncode != 0:
+        return set(public)
+    if result.stderr:
+        add(errors, "release_inventory", ".", "Git could not read the complete staged release inventory")
+    return {root / item.decode("utf-8", "surrogateescape") for item in result.stdout.split(b"\0") if item}
 
 
 def read_json(root: Path, path: str, label: str, errors: list[dict[str, str]]) -> dict[str, Any] | None:
@@ -653,11 +670,12 @@ def check_package(root: Path) -> dict[str, Any]:
         for path in symlinks:
             add(errors, "release_symlink", relative(root, path), "release paths may not be symlinks")
         scannable = [path for path in public if not under_symlink(root, path, errors)]
-        published = set(public) | {parent for path in public for parent in path.parents if inside(parent, root)}
+        release = release_files(root, public, errors) if root_is_directory else set()
+        published = release | {parent for path in release for parent in path.parents if inside(parent, root)}
         check_index_worktree(root, errors)
         manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
         if rule := check_cursor_rule(root, errors):
-            if rule in public:
+            if rule in release:
                 host_rules.append(rule)
             else:
                 add(errors, "release_inventory", CURSOR_RULE_PATH, "declared Cursor rule is not in release inventory")
@@ -665,6 +683,10 @@ def check_package(root: Path) -> dict[str, Any]:
             add(errors, "cursor_rule_unexpected", relative(root, extra), "only the compound-default rule may ship; Cursor would load others into chats")
         marketplaces = {path: value for path, kind in MARKETPLACES.items() if (value := check_marketplace(root, path, kind, errors)) is not None}
         skills = check_skills(root, errors, public, published) if root_is_directory else {}
+        required = (*manifests, *marketplaces, *(f"skills/{name}/SKILL.md" for name in skills))
+        for path in required:
+            if root / path not in release:
+                add(errors, "release_inventory", path, "required file is not in the release inventory")
         for path in scannable:
             path_name = relative(root, path)
             if path_name.startswith(("tests/", "test/")):
@@ -672,7 +694,8 @@ def check_package(root: Path) -> dict[str, Any]:
             text = release_text(path, root, errors)
             if text is None:
                 continue
-            readable.append(path)
+            if path in release:
+                readable.append(path)
             for kind, pattern in PRIVATE_PATTERNS:
                 if pattern.search(text):
                     add(errors, "sensitive_content", path_name, f"detected {kind} pattern")

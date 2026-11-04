@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.31 (2026-11-04)
+
+- Validate required manifests, marketplaces, skill entrypoints, rules and local links against staged files. Continue scanning untracked public files for accidental disclosure and validate unpacked archives from their contents.
+
 ## 0.16.30 (2026-11-04)
 
 - Reject invalid JSON in the map cache, runtime record and project registry. Reparse source when saved metadata cannot be decoded, and enforce read caps on actual cache and runtime bytes.

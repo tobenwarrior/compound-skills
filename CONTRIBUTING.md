@@ -16,7 +16,7 @@ Use representative task fixtures before editing. Compare current guidance with t
 
 Every integration or compaction includes pruning. Replace weaker guidance in place; delete superseded instructions and unused supporting files, updating callers, links, manifests, and evaluations in the same change. Keep no archive, disabled copy, or redundant entrypoint; Git history retains prior versions. Preserve required notices and behavior that evaluations still justify. Add a reference only when conditional use saves unrelated reads; `compound` owns the shared engineering guidance; `map` and the three setup/status shortcuts are thin entrypoints. Keep workflow logic in the core and add no redundant discoverable workflows.
 
-Run `python3 scripts/check.py --json` from the repository root. Report discovery and entrypoint cost separately from optional references and executable resources. Bytes and words are measurements; token estimates depend on the tokenizer.
+Stage the intended release files, then run `python3 scripts/check.py --json` from the repository root. The checker resolves required files and local links against the Git index. Report discovery and entrypoint cost separately from optional references and executable resources. Bytes and words are measurements; token estimates depend on the tokenizer.
 
 For model upgrades, test deletion or compression against unchanged behavioral cases. Repeat uncertain comparisons and examine failure severity. Keep the shorter version only when the observed results support it; preserve essential constraints even when one sample succeeds without them.
 
