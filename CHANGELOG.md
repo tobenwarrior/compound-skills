@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.53 (2026-11-04)
+
+- Reuse the complete untracked inventory during live map freshness checks and avoid a second directory walk in Git status. [Warm query replay](bench/README.md#warm-map-query-work)
+
 ## 0.16.52 (2026-11-04)
 
 - Start reviews from the diff. Use a reproduction only for a specific unresolved finding or a required check, with permission established before scratch setup. [Saved review replay](bench/README.md#source-first-review-trace-replay)

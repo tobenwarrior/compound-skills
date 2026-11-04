@@ -121,13 +121,16 @@ def _inventory_fingerprint(root: Path) -> str:
     inventory, notes = engine._git_inventory(root)
     if inventory is None or engine.UNTRACKED_INVENTORY_NOTE in notes:
         return ""
-    # An oversized status keeps its prefix (branch, then tracked changes); the metadata below still covers every mapped path.
-    status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], engine.MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
+    # A complete inventory already covers untracked paths and their metadata.
+    capped = engine.INVENTORY_CAP_NOTE in notes
+    untracked = "--untracked-files=all" if capped else "--untracked-files=no"
+    status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", untracked],
+                                        engine.MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
     if status is None:
         return ""
     digest = hashlib.sha256(status)
     digest.update(inventory)
-    digest.update(b"\0capped=" + (b"1" if engine.INVENTORY_CAP_NOTE in notes else b"0"))
+    digest.update(b"\0capped=" + (b"1" if capped else b"0"))
     paths = sorted(set(inventory.split(b"\0")))
     for raw in paths:
         if not raw:

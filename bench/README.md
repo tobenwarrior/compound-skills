@@ -245,6 +245,14 @@ The replay selects 12 evenly spaced names with one indexed defining file per rep
 
 ## Warm map query work
 
+From 0.16.53, the live freshness check uses the complete Git inventory to cover untracked paths and asks Git status for tracked changes only. Reproduce the change with:
+
+```sh
+python3 -B bench/map_warm_work.py --baseline-ref 8b37ae8
+```
+
+Git Trace2 reported one directory walk instead of two on each of three warm queries per pinned Flask and Django checkout. Each query returned the same summary bytes and used six Git processes in both versions. The full status walk remains available when the inventory is capped. Separate local checks covered untracked additions, edits, renames and removals, and a staging change with identical worktree contents.
+
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:
 
 ```sh

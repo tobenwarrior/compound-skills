@@ -42,6 +42,8 @@ def measure(scripts, nested, query, state):
             if run_query() != expected:
                 raise RuntimeError("Query output changed on an unchanged checkout")
             commands = Counter()
+            directory_walks = Counter()
+            sessions = {}
             for line in trace.read_text().splitlines():
                 event = json.loads(line)
                 if event["event"] == "start":
@@ -49,9 +51,13 @@ def measure(scripts, nested, query, state):
                     if argv[1:3] != ["--no-optional-locks", "-C"]:
                         raise RuntimeError("Unexpected Git invocation in the map trace")
                     commands[argv[4]] += 1
+                    sessions[event["sid"]] = argv[4]
+                elif event["event"] == "region_enter" and event.get("category") == "dir" and event.get("label") == "read_directory":
+                    directory_walks[sessions[event["sid"]]] += 1
             if not commands:
                 raise RuntimeError("No Git commands recorded")
-            rows.append({"git_processes": sum(commands.values()), "git_commands": dict(sorted(commands.items()))})
+            rows.append({"git_processes": sum(commands.values()), "git_commands": dict(sorted(commands.items())),
+                         "directory_walks": dict(sorted(directory_walks.items()))})
         return expected, rows
     finally:
         subprocess.run([sys.executable, "-B", str(scripts / "map_server.py"), "stop"],
