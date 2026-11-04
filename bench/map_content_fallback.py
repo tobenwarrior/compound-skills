@@ -79,7 +79,8 @@ def measure(baseline_ref, mixed=False):
             miss = "compoundnonexistentfallbackprobe"
             if mixed:
                 topic, topic_path = cases[-1]
-                cases = (*cases, (topic_path, topic_path))
+                probe, target = cases[0]
+                cases = (*cases, (topic_path, topic_path), (f"{name} {probe}", target))
                 miss = f"{topic.split()[0]} {miss}"
             for query, target in (*cases, (miss, None)):
                 previous, candidate = [replay(module, model, root, query, target) for module in (before, current)]
@@ -120,6 +121,6 @@ def measure(baseline_ref, mixed=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline-ref", required=True)
-    parser.add_argument("--mixed", action="store_true", help="run two-keyword probes and their controls")
+    parser.add_argument("--mixed", action="store_true", help="run mixed-keyword probes and their controls")
     args = parser.parse_args()
     print(json.dumps(measure(args.baseline_ref, args.mixed), indent=2))

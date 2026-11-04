@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.42 (2026-11-04)
+
+- Keep the bounded missing-keyword lookup when a query adds repository context. The three qualified Flask, Click and Packaging probes now show their target while keeping their three leading paths. [Replay and controls](bench/README.md#mixed-keyword-lookups)
+
 ## 0.16.41 (2026-11-04)
 
 - Reuse file classification and symbol-name terms across map queries. On pinned Django, median ranking CPU fell 17–32% across five warm queries with identical ranked paths and source reads. [Local ranking measurements](bench/README.md#profile-local-map-queries)

@@ -235,6 +235,8 @@ python3 -B bench/map_content_fallback.py --baseline-ref 9dae2d0 --mixed
 
 All three selected lookups show the previously missing file in the default summary and keep their first three ranked paths. The extra scan took 1, 17 and 42 source probes. Six exact-path and ordinary topic controls kept their original focus and probe counts. Three partial misses used 42 to 50 additional probes and preserved focus. The 36 saved commit titles were also queried on the pinned trees. All 36 kept their focus and 35 kept their probe counts. The remaining title took 50 extra probes. The scan shares the existing 8 MiB cap. [Probe counts, bytes and pins](diagram_sources/map_mixed_keywords_v01625.json).
 
+With `--baseline-ref 1d7696d --mixed`, the replay also checks each source-only query prefixed with its repository name. All three targets went from absent to visible. Flask, Click and Packaging used 11, 17 and 42 additional probes, respectively. The first three ranked paths stayed the same. The 36 commit-title controls kept identical focus. Three took 50 extra probes each, with no additional match. In a separate replay of 24 recent Flask and Click titles on their actual parent checkouts, both versions showed 25 of the 27 touched source files in the agent summary and ranked 22 in the top four. These are offline navigation checks.
+
 ## Unicode map queries
 
 On a 65-file local fixture, five focused queries missed their expected file with the previous ranker. The revised ranker put all five first, including a single-character CJK symbol, a decomposed accented spelling and a Devanagari word found only in a source comment. The source-only match used the existing bounded fallback after the first 50 files.

@@ -1106,8 +1106,8 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     """Rank paths and symbols, then read bounded source content when a root is supplied.
 
     When the first candidates and metadata give no lexical evidence, use the
-    remaining read budget to look deeper. For a two-keyword query with one
-    missing word, give the first additional hit one focus slot. Rarer words
+    remaining read budget to look deeper. For a query with exactly one missing
+    keyword, give the first additional hit one focus slot. Rarer words
     weigh more. Larger code
     files, widely imported ones, current changes and recent co-changes of
     matches rank higher; tests rank lower unless the query is about tests.
@@ -1177,7 +1177,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     wanted = set(terms)
     unicode_query = not query.isascii() and any(not char.isascii() and ("_" + char).isidentifier() for char in query)
     unseen = set()
-    if len(terms) == 2 and exact_path not in by_path:
+    if len(terms) > 1 and exact_path not in by_path:
         unseen = {term for term, count in occurrences.items() if not count}
     rescored = {}
     rescued = []
