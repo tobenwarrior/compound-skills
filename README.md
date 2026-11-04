@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.45 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.46 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -289,7 +289,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 ### What loads when
 
-- **Every request:** the always-on rule and the plugin's skill list. The historical rule added about 510 tokens. The Flask comparison uses the current shorter rule below.
+- **Every request:** the always-on rule and the plugin's skill list. The historical rule added about 510 tokens. The Flask comparison uses the shorter rule from 0.16.45.
 - **Scoped extractions with known callers and behavior:** the always-on rule. Start in the checkout, add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
 - **Broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
 - **When a task needs it:** the matching guide. The refactor guide covers extractions that need more investigation of callers or behavior. The verification guide covers independent verification or an unresolved evidence gap.
@@ -300,7 +300,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule as `setup-global` saves it. The Flask and Dispatchkit charts use the rules from 0.16.45 and 0.16.31, respectively.
 
-> Review diffs, callers and tests. Probe unresolved findings when permitted. After denial, source only. Read edit targets first using required read tools. Bugs require a targeted failing regression before source edits, then the full suite. Handle scoped extractions with known policies here. Cover gaps, baseline once, preserve policies, retest, review diff. Search checkout for unknowns. Batch independent calls. Use documented commands, avoiding byproducts (`python -B`). Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
+> Review diffs, callers and tests. Probe unresolved findings when permitted. After denial, source only. Use required native Read before edits. Bugs require a targeted failing regression before source edits, then the full suite. Extra checks need project requirements or evidence gaps. For scoped extractions, cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch independent calls. Use documented checks, avoiding byproducts (`python -B`). Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
 
 ### Commits
 

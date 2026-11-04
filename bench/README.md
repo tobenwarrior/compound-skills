@@ -88,6 +88,8 @@ The runner checks these inputs before each attempt and checks the two starting c
 
 The grader runs the cumulative hidden checks and the original, previous and final test suites where applicable. At each stage it requires an added or changed regression to fail on the preceding source and pass on the current source. In preflight, the full reference passes 493 tests. The grader rejects a missing fix, a second fix that drops the first, a missing second regression and removal of the first regression. These preflight checks run offline. The [0.16.45 Flask comparison](diagram_sources/comparison_flask_v01645.json) records the metered Y Harness run with DeepSeek V4.1 Flash. Its ledger includes all four attempts, usage, artifact hashes and cumulative grades.
 
+In the 0.16.45 Compound runs, both fixes passed narrower post-fix checks and then passed the full suite without intervening edits. The second run also tried to edit a file it had read through the shell. Y Harness required its native Read tool before accepting the edit. After the final suite passed, separate mypy and Ruff calls reported that the tools were unavailable. The 0.16.46 rule names native Read and reserves extra checks for project requirements or gaps in evidence. The comparison ledger includes those charges. Cost under the revised rule remains unmeasured.
+
 ## Compare a change with main
 
 ```bash

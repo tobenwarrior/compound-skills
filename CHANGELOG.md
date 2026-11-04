@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.46 (2026-11-04)
+
+- Use the editor's required native Read before edits. Keep the failing regression and final suite, and reserve extra checks for project requirements or gaps in evidence. [Saved Flask traces](bench/README.md#consecutive-upstream-flask-fixes)
+
 ## 0.16.45 (2026-11-04)
 
 - Give bug fixes a targeted failing regression before source edits and a full suite afterward. Keep the pre-edit baseline instruction with scoped extractions and give Python checks a concrete way to avoid bytecode cleanup. [Saved verification replay](bench/README.md#direct-routing-and-edit-reads)
