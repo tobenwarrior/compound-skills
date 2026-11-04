@@ -1,0 +1,93 @@
+{
+  "scope": "Distinct warm CLI text queries after one initial viewer query. Compare registry bytes, inode and modification time. Zero model calls.",
+  "baseline_ref": "9ecfd4ffc64d62e37e627f5f98cd59c3e996f2bf",
+  "candidate_sha256": "7bcfbde7cd653b1d46ed740a9f75b14550459b9855f793babd97fe728ea9ed5c",
+  "repositories": [
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "queries": [
+        "request context",
+        "blueprint registration",
+        "session cookie"
+      ],
+      "before": {
+        "viewer_query_retained": false,
+        "queries": [
+          {
+            "summary_sha256": "52887857717f0699d7b4915f4835ccee042b5947612899dde5e62838b953e045",
+            "registry_changed": true
+          },
+          {
+            "summary_sha256": "9957885b6627547681047bb2e8c552f6f8e52dc9520044baac52080639d9ccb3",
+            "registry_changed": true
+          },
+          {
+            "summary_sha256": "bdd45ae11d5a8e721b336a4c14938fe19c0206a7458553abe9b157b170e78d2b",
+            "registry_changed": true
+          }
+        ]
+      },
+      "after": {
+        "viewer_query_retained": true,
+        "queries": [
+          {
+            "summary_sha256": "52887857717f0699d7b4915f4835ccee042b5947612899dde5e62838b953e045",
+            "registry_changed": false
+          },
+          {
+            "summary_sha256": "9957885b6627547681047bb2e8c552f6f8e52dc9520044baac52080639d9ccb3",
+            "registry_changed": false
+          },
+          {
+            "summary_sha256": "bdd45ae11d5a8e721b336a4c14938fe19c0206a7458553abe9b157b170e78d2b",
+            "registry_changed": false
+          }
+        ]
+      }
+    },
+    {
+      "repository": "django",
+      "source_head": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "queries": [
+        "queryset annotations",
+        "model constraints",
+        "URL resolution"
+      ],
+      "before": {
+        "viewer_query_retained": false,
+        "queries": [
+          {
+            "summary_sha256": "1899a5a9a30280495a054cc87c6783a1150c568ee699334d9f582f95c82ac81c",
+            "registry_changed": true
+          },
+          {
+            "summary_sha256": "4feab010493c527da01f690071e94877c52d4eab66d3d2f13e377ed6436eb0fe",
+            "registry_changed": true
+          },
+          {
+            "summary_sha256": "814c38f51c07bdaaab4a8b87f8503a19b967aafa535967b21321769ec7048f48",
+            "registry_changed": true
+          }
+        ]
+      },
+      "after": {
+        "viewer_query_retained": true,
+        "queries": [
+          {
+            "summary_sha256": "1899a5a9a30280495a054cc87c6783a1150c568ee699334d9f582f95c82ac81c",
+            "registry_changed": false
+          },
+          {
+            "summary_sha256": "4feab010493c527da01f690071e94877c52d4eab66d3d2f13e377ed6436eb0fe",
+            "registry_changed": false
+          },
+          {
+            "summary_sha256": "814c38f51c07bdaaab4a8b87f8503a19b967aafa535967b21321769ec7048f48",
+            "registry_changed": false
+          }
+        ]
+      }
+    }
+  ]
+}

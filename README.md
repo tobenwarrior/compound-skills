@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.26 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.27 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -229,6 +229,8 @@ The map is optional for agents: use named files and native symbol navigation dir
 The current query implementation pins the repository directory once while reading candidate files, instead of walking all root ancestors for each candidate. Reads remain fresh and reject symlinks; ranking, candidate limits and returned paths are unchanged in the offline comparison. [Local profiling and reproduction](bench/README.md#profile-local-map-queries). Earlier [cache timings](bench/historical-comparisons.md#map-cache-timings) and [summary-density measurements](bench/historical-comparisons.md#map-summary-density) remain separate from the without/with comparisons.
 
 On an unchanged Flask or Django checkout, a warm query uses six Git commands, including the file inventory and status checks that detect edits. All six measured queries returned byte-identical summaries after duplicate work was removed. [Local measurements](bench/README.md#warm-map-query-work).
+
+Agent text and JSON queries preserve the viewer's saved focus. Six distinct warm text queries on Flask and Django returned identical summaries while avoiding registry replacements. [Local replay](bench/README.md#saved-viewer-focus).
 
 When a short summary would hide leading matches, the map reserves space for complete file paths before symbol detail. In a 36-query replay at 500 characters, visible changed-file paths rose from 22 to 29 out of 41. At the default 2,500 characters, both renderers showed 38 of 41. [Replay and source pins](bench/README.md#focused-summary-coverage).
 

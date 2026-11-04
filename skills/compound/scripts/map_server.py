@@ -693,7 +693,8 @@ def _wait_for_index(runtime: dict[str, Any], project: str) -> dict[str, Any]:
 
 
 def _agent_response(repo: str | os.PathLike[str], query: str, max_files: int, refresh: bool, max_chars: int | None = None) -> Any:
-    _, runtime, root = _open_registered(repo, query, max_files, refresh=refresh, requery=True)
+    # The explicit response query does not replace the viewer's saved query.
+    _, runtime, root = _open_registered(repo, "", max_files, refresh=refresh)
     project = _project_id(root)
     error = _wait_for_index(runtime, project).get("error")
     if error:
@@ -1007,7 +1008,13 @@ class MapService:
             project = self.projects.get(project_id)
             force = refresh
             if project is None:
-                project = Project(project_id, root.name, root, query[:MAX_QUERY], INDEX_MAX_FILES)
+                name = root.name
+                saved = self._registry.get(project_id)
+                if saved is not None and saved["root"] == str(root):
+                    name = saved["name"]
+                    if not requery:
+                        query = saved["query"]
+                project = Project(project_id, name, root, query[:MAX_QUERY], INDEX_MAX_FILES)
                 project.last_used = time.monotonic()
                 self.projects[project_id] = project
                 force = True

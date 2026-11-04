@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.27 (2026-11-04)
+
+- Keep agent text and JSON queries separate from the saved viewer focus. Preserve the viewer query when an agent starts the service again.
+- Six distinct warm text queries on pinned Flask and Django snapshots produced identical summaries. Registry replacements fell from six to zero, and explicit viewer updates still persisted. [Replay](bench/README.md#saved-viewer-focus).
+
 ## 0.16.26 (2026-11-04)
 
 - Route global setup and status directly to the activation guide. A saved-guidance status check inspects map permissions only when asked.
