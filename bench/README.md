@@ -171,6 +171,16 @@ python3 -B bench/map_exact_path.py --baseline-ref efe0a7a
 
 Both rankers use the same map metadata and source checkout. The replay selects 24 evenly spaced paths from each sorted Python file list and adds the two paths that exposed the issue. The requested file ranked first for 19 of 50 queries before the fix and 50 of 50 afterward. The full ranking for one topic query per repository stayed the same. [Paths, ranks and pins](diagram_sources/map_exact_path_v01624.json).
 
+## Exact-path agent summaries
+
+Replay the default text response for 50 exact paths from pinned Flask and Django checkouts, using the same index for both renderers:
+
+```sh
+python3 -B bench/map_exact_path.py --baseline-ref 5357032 --summary
+```
+
+Ranking probes fell from 2,500 to zero, avoiding 53,672,632 source bytes in the summary phase. Total emitted text fell from 113,688 to 39,925 bytes, a 64.9% reduction. The summaries kept the same indexed record for each target. Three grew because the single-file layout could show more of the target outline. Four topic and miss controls stayed byte-identical with the same reads. These counts exclude Git and indexing work.
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:

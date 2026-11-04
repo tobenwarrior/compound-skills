@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.34 (2026-11-04)
+
+- Return the named file and its import hints in exact-path agent summaries. The warm service reads the indexed row directly.
+- On 50 exact paths from pinned Flask and Django, ranking source probes fell from 2,500 to zero and emitted text shrank 64.9% in total. [Offline replay](bench/README.md#exact-path-agent-summaries).
+
 ## 0.16.33 (2026-11-04)
 
 - Keep Unicode identifier parts in focused map queries, including single CJK characters and combining marks. Match normalized spellings in paths, symbol outlines and bounded source scans.

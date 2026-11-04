@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from common import REPO, SOURCES, git
 from replay_navigation_scope import load
@@ -24,7 +26,56 @@ def ranked(module, records, root, query):
     return [row["path"] for row in module._rank(records, query, root)]
 
 
-def compare(baseline_ref):
+def summary(service, engine, project, query):
+    probes = source_bytes = 0
+    read = engine._content_terms
+
+    def count(*args, **kwargs):
+        nonlocal probes, source_bytes
+        terms, used = read(*args, **kwargs)
+        probes += 1
+        source_bytes += used
+        return terms, used
+
+    with patch.object(service, "_refresh"), patch.object(engine, "_content_terms", side_effect=count):
+        model, body = service.summary_response(project, 2000, query, 2500)
+    text = json.loads(body)["text"]
+    return model, text, {
+        "source_probes": probes, "source_bytes": source_bytes, "text_bytes": len(text.encode()),
+        "file_rows": sum(line.startswith('- "') for line in text.splitlines()),
+    }
+
+
+def compare_summaries(old_server, server, root, model, paths, topic):
+    modules = old_server, server
+    services = [module.MapService("benchmark", 0, {}) for module in modules]
+    projects = [module.Project("benchmark", root.name, root, "", 5000, model=model) for module in modules]
+    pairs = list(zip(services, (module.engine for module in modules), projects))
+    rows = []
+    for path in paths:
+        (before, _, old), (after, text, new) = [summary(service, engine, project, path) for service, engine, project in pairs]
+        old_target = next(file for file in before["files"] if file["path"] == path)
+        if (before["focus"][0] != path or after["focus"] != [path] or after["files"] != [old_target]
+                or new["file_rows"] != 1 or new["source_probes"] or ('- ' + json.dumps(path)) not in text):
+            raise RuntimeError(f"Exact-file summary lost its target or ranked source: {path}")
+        rows.append({"path": path, "before": old, "after": new})
+    controls = [topic, "unknowncompoundsymbolzz"]
+    for query in controls:
+        old, new = [summary(service, engine, project, query) for service, engine, project in pairs]
+        if old != new:
+            raise RuntimeError(f"Ordinary summary changed: {query}")
+    return {"queries": rows, "unchanged_controls": controls}
+
+
+def load_server(path):
+    spec = importlib.util.spec_from_file_location("exact_path_baseline_server", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def compare(baseline_ref, summaries=False):
     revision = git(REPO, "rev-parse", "--verify", baseline_ref + "^{commit}", check=True).strip()
     before = subprocess.check_output(["git", "show", f"{revision}:{SOURCE.as_posix()}"], cwd=REPO)
     sys.path.insert(0, str((REPO / SOURCE).parent))
@@ -34,6 +85,15 @@ def compare(baseline_ref):
         snapshot = Path(scratch) / "before.py"
         snapshot.write_bytes(before)
         baseline = load(snapshot, "exact_path_baseline")
+        if summaries:
+            import map_server as server
+
+            server_source = SOURCE.with_name("map_server.py")
+            snapshot = Path(scratch) / "baseline_server.py"
+            snapshot.write_bytes(subprocess.check_output(
+                ["git", "show", f"{revision}:{server_source.as_posix()}"], cwd=REPO))
+            old_server = load_server(snapshot)
+            old_server.engine = baseline
         for name, (head, example, topic) in SNAPSHOTS.items():
             root = SOURCES / name
             if git(root, "rev-parse", "HEAD", check=True).strip() != head or git(root, "status", "--porcelain", check=True).strip():
@@ -43,6 +103,10 @@ def compare(baseline_ref):
             paths = sorted(row["path"] for row in records if row["language"] == "python")
             sample = [paths[index * len(paths) // SAMPLE_SIZE] for index in range(SAMPLE_SIZE)]
             sample = list(dict.fromkeys([*sample, example]))
+            if summaries:
+                rows.append({"repository": name, "head": head,
+                             **compare_summaries(old_server, server, root, model, sample, topic)})
+                continue
             queries = []
             for path in sample:
                 old = ranked(baseline, records, root, path)
@@ -55,6 +119,9 @@ def compare(baseline_ref):
             rows.append({"repository": name, "head": head, "indexed_python_files": len(paths),
                          "example": example, "topic_control": topic, "topic_order_unchanged": True,
                          "queries": queries})
+    if summaries:
+        return {"scope": "Warm indexed text responses on the same metadata. Counts exclude Git and indexing. Zero model calls.",
+                "baseline_ref": revision, "repositories": rows}
     return {"scope": "Evenly spaced Python paths from each sorted index plus the reported example, deduplicated. "
                      "Both rankers use the same indexed metadata and read the same checkout. Zero model calls.",
             "baseline_ref": revision, "baseline_source_sha256": hashlib.sha256(before).hexdigest(),
@@ -65,4 +132,6 @@ def compare(baseline_ref):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline-ref", required=True)
-    print(json.dumps(compare(parser.parse_args().baseline_ref), indent=2))
+    parser.add_argument("--summary", action="store_true", help="count ranking reads and text bytes on the same index")
+    args = parser.parse_args()
+    print(json.dumps(compare(args.baseline_ref, args.summary), indent=2))

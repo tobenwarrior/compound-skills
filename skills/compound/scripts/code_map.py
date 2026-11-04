@@ -1547,12 +1547,17 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
-    focused_query = bool(terms) and "query_matches" in model
-    lines.append("Focus (query matches; follow only task-relevant links):" if focused_query else "Focus:")
-    focus = model["query_matches"] if focused_query else model["focus"]
-    if focused_query and not focus:
-        lines.append("No query matches in scanned candidates; use native search or refine the query.")
     by_path = {file["path"]: file for file in model["files"]}
+    exact_path = query.removeprefix("./")
+    focused_query = bool(terms) and "query_matches" in model
+    if exact_path in by_path:
+        lines.append("Focus (exact indexed path):")
+        focus = [exact_path]
+    else:
+        lines.append("Focus (query matches; follow only task-relevant links):" if focused_query else "Focus:")
+        focus = model["query_matches"] if focused_query else model["focus"]
+        if focused_query and not focus:
+            lines.append("No query matches in scanned candidates; use native search or refine the query.")
     header_count = len(lines)
     header = "\n".join(lines)
     compact: list[tuple[str, str]] = []
