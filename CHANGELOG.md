@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.45 (2026-11-04)
+
+- Give bug fixes a targeted failing regression before source edits and a full suite afterward. Keep the pre-edit baseline instruction with scoped extractions and give Python checks a concrete way to avoid bytecode cleanup. [Saved verification replay](bench/README.md#direct-routing-and-edit-reads)
+
 ## 0.16.44 (2026-11-04)
 
 - Keep tracked files navigable when Git cannot list untracked files. Show partial coverage, preserve the full disk cache, and recheck the inventory on the next explicit query. [Recovery replay](bench/README.md#warm-map-query-work)

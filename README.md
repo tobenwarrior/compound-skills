@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.44 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.45 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -290,7 +290,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule as `setup-global` saves it. The two-change chart uses the 0.16.31 rule.
 
-> Review diffs, callers and tests. Probe unresolved findings when permitted. After denial, source only. Read edit targets first using required read tools. Bugs require a failing regression before source edits, then the full suite. Scoped extractions with known caller policies use this rule. Search checkout for unknowns. Cover gaps, baseline once, preserve policies, retest, review diff. Batch independent calls. Use documented commands. Prevent test byproducts. Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
+> Review diffs, callers and tests. Probe unresolved findings when permitted. After denial, source only. Read edit targets first using required read tools. Bugs require a targeted failing regression before source edits, then the full suite. Handle scoped extractions with known policies here. Cover gaps, baseline once, preserve policies, retest, review diff. Search checkout for unknowns. Batch independent calls. Use documented commands, avoiding byproducts (`python -B`). Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
 
 ### Commits
 
