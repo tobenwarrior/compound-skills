@@ -167,6 +167,20 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Multi-step navigation preflight
+
+Replay three read-only navigation prompts on the pinned Flask and Django sources. The tasks trace ASGI disconnect cleanup, row-lock handling in and out of a test transaction, and Flask streaming teardown. The prompts name behavior and public APIs. The grader's file paths, symbols and source witnesses stay outside the agent's checkout.
+
+```sh
+python3 -B bench/map_navigation.py
+```
+
+The local preflight checks that each witness occurs within its named symbol at the source pin. For each case, it runs the same fixed lookup query in both tools. Without Compound, it uses literal `git grep` counts, ranks Python files by distinct terms in their path or source, and lists top-level tests last. With Compound, it takes the first four complete file paths from the normal 2,500-character summary. Counts use distinct rubric files. Import hints are available to the reader and excluded from the first-four score.
+
+At 0.16.49, without and with Compound found 1/3 and 1/3 on disconnect cleanup, 1/3 and 0/3 on row locks, and 3/3 and 2/3 on streaming. These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
+
+For a metered map comparison, use identical read-only source checkouts, prompts, model settings and native navigation tools. Keep the rubric and benchmark code outside both checkouts. The treatment adds the map as an initial orientation tool and records its invocation. Judge every hop against the frozen source and account for all requests, incomplete attempts and repairs in both modes. This preflight makes no model calls.
+
 ## Index completion wait
 
 Compare warm local summary calls on pinned Flask and Django checkouts. Run from the 0.16.28 checkpoint:
