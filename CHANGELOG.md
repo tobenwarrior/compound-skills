@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.40 (2026-11-04)
+
+- Refresh existing project or global routing after an upgrade with `compound refresh` or `compound refresh global`. Status points stale installations to the new action. Refresh leaves setup and repository assessment for explicit setup requests.
+
 ## 0.16.39 (2026-11-04)
 
 - Use the indexed file directly for exact-path text in read-only, no-cache, and service fallback commands. Keep the index coverage and import hints.

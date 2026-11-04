@@ -322,7 +322,7 @@ def _outdated_warning(target: TargetState, block_lines: Sequence[str], command: 
         return None
     if _replace_block(target.text, target.markers, block_lines) == target.text:
         return None
-    return f"Compound rule is from an earlier version; run {command} again to update it: {target.path}"
+    return f"Compound rule is from an earlier version at {target.path}. Run {command} to update it."
 
 
 def _warning_list(
@@ -333,7 +333,7 @@ def _warning_list(
 ) -> list[str]:
     warnings: list[str] = []
     for state in (primary, override, fallback):
-        if state is not None and (warning := _outdated_warning(state, BLOCK_LINES, "setup")) is not None:
+        if state is not None and (warning := _outdated_warning(state, BLOCK_LINES, "compound refresh")) is not None:
             warnings.append(warning)
     if override.exists and override.text and override.text.strip() and override.markers is None:
         warnings.append(f"AGENTS.override.md may shadow AGENTS.md without managed routing: {override.path}")
@@ -394,7 +394,7 @@ def _installed_hosts() -> tuple[tuple[str, ...], tuple[str, ...]]:
 def _global_target_warning(target: TargetState, description: str) -> str | None:
     if target.exists and (target.text or "").strip() and target.markers is None:
         return f"{description} contains unmanaged content and was left unchanged: {target.path}"
-    return _outdated_warning(target, GLOBAL_BLOCK_LINES, "setup-global")
+    return _outdated_warning(target, GLOBAL_BLOCK_LINES, "compound refresh global")
 
 
 def _load_global_context(host_names: Sequence[str]) -> GlobalContext:
@@ -712,6 +712,19 @@ def _planned_enable(context: Context) -> list[tuple[TargetState, str, bool]]:
     return plans
 
 
+def _planned_refresh(
+    targets: Iterable[TargetState], block_lines: Sequence[str],
+) -> list[tuple[TargetState, str, bool]]:
+    plans = []
+    for state in targets:
+        if state.markers is None or state.text is None:
+            continue
+        new_text = _replace_block(state.text, state.markers, block_lines)
+        if new_text != state.text:
+            plans.append((state, new_text, False))
+    return plans
+
+
 def _planned_disable(context: Context) -> list[tuple[TargetState, str, bool]]:
     plans: list[tuple[TargetState, str, bool]] = []
     for state in (context.primary, context.override, context.fallback):
@@ -893,9 +906,9 @@ def _resolve_root(raw: str) -> Path:
 
 def _parser() -> argparse.ArgumentParser:
     parser = JsonArgumentParser(
-        description="Enable, inspect, or disable bounded Compound Skills routing blocks."
+        description="Enable, refresh, inspect, or disable bounded Compound Skills routing blocks."
     )
-    parser.add_argument("action", nargs="?", help="enable, status, or disable")
+    parser.add_argument("action", nargs="?", help="enable, refresh, status, or disable")
     scope = parser.add_mutually_exclusive_group()
     scope.add_argument("--project-root", metavar="PATH", help="project root")
     scope.add_argument("--global", dest="global_scope", action="store_true", help="use global user instruction files")
@@ -922,15 +935,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _emit(_payload(_action_hint(argv_list), "error", False, None, [], error=str(exc)))
 
     action = args.action or ""
-    if action not in {"enable", "status", "disable"}:
-        return _emit(_payload(action, "error", False, None, [], error="action must be enable, status, or disable"))
+    if action not in {"enable", "refresh", "status", "disable"}:
+        return _emit(_payload(action, "error", False, None, [], error="action must be enable, refresh, status, or disable"))
     if args.host is not None and not args.global_scope:
         return _emit(_payload(action, "error", False, None, [], error="--host requires --global"))
     if args.global_scope:
         global_context: GlobalContext | None = None
         try:
             skipped: tuple[str, ...] = ()
-            if args.host is None and action in {"enable", "status"}:
+            if args.host is None and action in {"enable", "refresh", "status"}:
                 host_names, skipped = _installed_hosts()
                 if action == "enable" and not host_names:
                     raise SetupError("no Claude Code, Codex or Cursor configuration folder found; add --host to choose an app")
@@ -947,11 +960,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                         global_context,
                     )
                 )
-            plans = (
-                _global_enable_plans(global_context)
-                if action == "enable"
-                else _global_disable_plans(global_context)
-            )
+            if action == "refresh":
+                targets = (target for host in global_context.hosts for target in host.targets)
+                plans = _planned_refresh(targets, GLOBAL_BLOCK_LINES)
+            elif action == "enable":
+                plans = _global_enable_plans(global_context)
+            else:
+                plans = _global_disable_plans(global_context)
             changed, changed_paths = _apply(plans)
             after = _load_global_context(host_names)
             after = replace(after, notes=after.notes + skipped)
@@ -994,7 +1009,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         path = context.primary.path
         if action == "status":
             return _emit(_payload(action, _status_name(context), False, path, context.warnings))
-        plans = _planned_enable(context) if action == "enable" else _planned_disable(context)
+        if action == "refresh":
+            plans = _planned_refresh((context.primary, context.override, context.fallback), BLOCK_LINES)
+        elif action == "enable":
+            plans = _planned_enable(context)
+        else:
+            plans = _planned_disable(context)
         changed, changed_paths = _apply(plans)
         after = _load_context(root)
         return _emit(
