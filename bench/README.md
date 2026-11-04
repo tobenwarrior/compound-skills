@@ -215,6 +215,8 @@ python3 -B bench/map_warm_work.py --baseline-ref 85f2616
 
 Each version warms an isolated local map service once per checkout and then repeats the same focused query three times. Git Trace2 counts processes started by both the CLI and the service. Every warm query used 6 Git subprocesses, down from 12, and both versions printed the same summary bytes. The remaining file inventory and status checks keep the map fresh. This measures local subprocess work with zero model calls. [Counts and source pins](diagram_sources/map_warm_work_v01621.json).
 
+A recovery replay primed an isolated cache on each pinned Flask and Django checkout, simulated one Git inventory failure, then queried the unchanged checkout. Against `ddb1b8f`, Flask recovery went from 125 file parses to zero, and Django from 3,497 to one. The recovered file records matched exactly. A valid empty inventory still removes old entries. The simulation used local files and no model requests.
+
 ## Source-only map lookups
 
 Compare the default agent summary and local source reads on pinned Flask, Click and packaging snapshots:

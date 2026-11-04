@@ -945,6 +945,8 @@ class MapService:
                     return
                 refresh, project.reparse = project.reparse, False
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text", refresh=refresh)
+            if model["coverage"].get("inventory_available") is False:
+                raise MapServerError(model["coverage"]["notes"][0])
             after = _inventory_fingerprint(project.root) if before else ""
             git_state = _model_git_state(model)
             with project.lock:

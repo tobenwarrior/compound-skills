@@ -319,7 +319,8 @@ def lookup_symbols(
         root = code_map._repo_path(repo)
         # Reuse the existing, Git-ignore-aware inventory to locate the canonical
         # worktree root. No non-Git filesystem walk is attempted.
-        git_root, head, inventory, inventory_notes = code_map._git_context(root)
+        git_root, head, paths, inventory_notes = code_map._git_context(root)
+        inventory = paths or []
         excluded = dropped = 0
         # _build never reads source files with private names or in vendored folders.
         unscanned_source = sum(

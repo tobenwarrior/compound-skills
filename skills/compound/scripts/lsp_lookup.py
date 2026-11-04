@@ -147,7 +147,7 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
         inventory_root, _head, inventory, notes = code_map._git_context(root)
     except (OSError, ValueError) as exc:
         raise LspLookupError("repository source inventory is unavailable") from exc
-    if notes or inventory_root != root:
+    if inventory is None or notes or inventory_root != root:
         raise LspLookupError("repository source inventory is unavailable")
     if relative not in set(inventory):
         raise LspLookupError("file is not in the indexed repository source inventory")
@@ -598,7 +598,7 @@ def lookup_lsp(
         inventory_root, _head, inventory_list, notes = code_map._git_context(root)
     except (OSError, ValueError) as exc:
         raise LspLookupError("repository source inventory is unavailable") from exc
-    if notes or inventory_root != root:
+    if inventory_list is None or notes or inventory_root != root:
         raise LspLookupError("repository source inventory is unavailable")
     inventory = set(inventory_list)
     document_uri = (root / relative).as_uri()

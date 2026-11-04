@@ -228,15 +228,16 @@ def _git_root(supplied: Path) -> tuple[Path, str | None]:
     return root, None
 
 
-def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
+def _git_context(supplied: Path) -> tuple[Path, str, list[str] | None, list[str]]:
+    """Return None for an unavailable inventory and an empty list for a completed empty one."""
     root, note = _git_root(supplied)
     if note is not None:
-        return root, "", [], [note]
+        return root, "", None, [note]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
     inventory_data, capped = _git_inventory(root)
     if inventory_data is None:
-        return root, head, [], ["Git inventory unavailable; inspect with native search"]
+        return root, head, None, ["Git inventory unavailable; inspect with native search"]
     notes = [INVENTORY_CAP_NOTE] if capped else []
     inventory = []
     for raw in inventory_data.split(b"\0"):
@@ -1650,8 +1651,12 @@ def _build_model(
 ) -> dict[str, Any]:
     root_input = _repo_path(repo)
     root, head, inventory, notes = _git_context(root_input)
-    return _build(root, head, inventory, notes, query, _clamp(int(max_files), 1, MAX_FILES), not no_cache,
-                  refresh, write_cache=not cache_read_only, exact_summary=exact_summary)
+    model = _build(root, head, inventory or [], notes, query, _clamp(int(max_files), 1, MAX_FILES),
+                   not no_cache and inventory is not None, refresh,
+                   write_cache=not cache_read_only, exact_summary=exact_summary)
+    if inventory is None:
+        model["coverage"]["inventory_available"] = False
+    return model
 
 
 def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
