@@ -127,6 +127,16 @@ python3 -B bench/map_content_fallback.py --baseline-ref 0ffac77
 
 Four selected queries exercise terms found only in file contents beyond the initial scan. All four targets appear with the fallback. The three normal symbol controls preserve their focus and source probes. The three no-hit controls retain their ranking and probe 92 to 125 files instead of 50. Across those misses, the extra reads total about 52 to 195 KiB per query. The fallback retains an 8 MiB read budget and a 200-file cap. [Probe results and pins](diagram_sources/map_content_fallback_v01619.json).
 
+## Mixed-keyword lookups
+
+Replay selected two-keyword lookups against the same pinned source and map index in both versions:
+
+```sh
+python3 -B bench/map_content_fallback.py --baseline-ref 9dae2d0 --mixed
+```
+
+All three selected lookups show the previously missing file in the default summary and keep their first three ranked paths. The extra scan took 1, 17 and 42 source probes. Six exact-path and ordinary topic controls kept their original focus and probe counts. Three partial misses used 42 to 50 additional probes and preserved focus. The 36 saved commit titles were also queried on the pinned trees. All 36 kept their focus and 35 kept their probe counts. The remaining title took 50 extra probes. The scan shares the existing 8 MiB cap. [Probe counts, bytes and pins](diagram_sources/map_mixed_keywords_v01625.json).
+
 ## Focused summary coverage
 
 Replay focused summaries on commit parent snapshots from pinned Flask, Click and packaging histories already present under `bench/work/sources/`:

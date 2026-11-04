@@ -1,0 +1,230 @@
+{
+  "scope": "Selected source-only lookups and controls on pinned local repositories. These probes measure visible paths and local reads, with zero model calls.",
+  "baseline_ref": "9dae2d0e7baffbde96246c9e7967f9b4ae4dd101",
+  "baseline_source_sha256": "6c51b79a420cad89c24d4306d73f1a5806ca29f704251c1550884f354be6dbee",
+  "candidate_source_sha256": "07481d3dc7905d7bd2953a5bb6eef6fcd42cd59a1952180288a8c907c3a533e5",
+  "probes": [
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "source-only",
+      "query": "pytest pluginmanager",
+      "target": "tests/test_logging.py",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 570894,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 51,
+        "source_bytes": 573423,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "ordinary",
+      "query": "route handlers",
+      "target": "src/flask/app.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 550894,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 550894,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "ordinary",
+      "query": "src/flask/app.py",
+      "target": "src/flask/app.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 554595,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 554595,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "miss",
+      "query": "route compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 547327,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 100,
+        "source_bytes": 616264,
+        "target_visible": false
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "source-only",
+      "query": "encoding multibyte",
+      "target": "tests/test_types/test_File.py",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 962077,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 67,
+        "source_bytes": 996261,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "ordinary",
+      "query": "command completion",
+      "target": "src/click/core.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 881271,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 881271,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "ordinary",
+      "query": "src/click/core.py",
+      "target": "src/click/core.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 948323,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 948323,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "miss",
+      "query": "command compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 881842,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 100,
+        "source_bytes": 1007021,
+        "target_visible": false
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "source-only",
+      "query": "platform mousebender",
+      "target": "tests/pylock/pylock.spec-example.toml",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1303467,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 92,
+        "source_bytes": 1510976,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "ordinary",
+      "query": "specifier versions",
+      "target": "src/packaging/specifiers.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1390441,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 1390441,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "ordinary",
+      "query": "src/packaging/specifiers.py",
+      "target": "src/packaging/specifiers.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1223224,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 1223224,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "miss",
+      "query": "specifier compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1275470,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 92,
+        "source_bytes": 1510976,
+        "target_visible": false
+      }
+    }
+  ],
+  "commit_title_controls_on_pinned_trees": {
+    "queries": 36,
+    "unchanged_reads": 35,
+    "unchanged_focus": 36,
+    "extra_probes": 50
+  }
+}

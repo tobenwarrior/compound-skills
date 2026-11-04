@@ -1071,7 +1071,9 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     """Rank paths and symbols, then read bounded source content when a root is supplied.
 
     When the first candidates and metadata give no lexical evidence, use the
-    remaining read budget to look deeper. Rarer words weigh more. Larger code
+    remaining read budget to look deeper. For a two-keyword query with one
+    missing word, give the first additional hit one focus slot. Rarer words
+    weigh more. Larger code
     files, widely imported ones, current changes and recent co-changes of
     matches rank higher; tests rank lower unless the query is about tests.
     A supplied query_matches set receives the paths with query evidence.
@@ -1090,10 +1092,11 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     exact_path = query.removeprefix("./")
     path_terms = {path: _name_terms(path) for path in by_path}
     symbol_terms = {path: frozenset().union(*(_name_terms(symbol["name"]) for symbol in record["symbols"])) for path, record in by_path.items()}
-    weights = {
-        term: math.log(1 + len(records) / (1 + sum(term in path_terms[path] or term in symbol_terms[path] for path in by_path)))
+    occurrences = {
+        term: sum(term in path_terms[path] or term in symbol_terms[path] for path in by_path)
         for term in terms
     }
+    weights = {term: math.log(1 + len(records) / (1 + count)) for term, count in occurrences.items()}
     matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
     matching_paths = {path for path, value in matched.items() if value > 0 or path == exact_path}
     if query_matches is not None:
@@ -1134,6 +1137,9 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     head = order[:CONTENT_RANK_FILES]
     budget = CONTENT_RANK_BYTES
     wanted = set(terms)
+    unseen = set()
+    if len(terms) == 2 and exact_path not in by_path:
+        unseen = {term for term, count in occurrences.items() if not count}
     rescored = {}
     rescued = []
     with contextlib.ExitStack() as stack:
@@ -1158,16 +1164,26 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
             path = record["path"]
             found = scan(path)
             has_evidence = has_evidence or bool(found)
+            unseen.difference_update(found)
             content = sum(weights[term] for term in terms if term in found)
             rescored[path] = score(path, matched[path] + CONTENT_WEIGHT * content)
-        if not has_evidence:
-            # With no lexical evidence yet, spend only the remaining budget on deeper candidates.
-            for record in order[CONTENT_RANK_FILES:CONTENT_FALLBACK_FILES]:
+        missing = next(iter(unseen)) if has_evidence and len(unseen) == 1 else None
+        if missing and any(
+            missing in _name_terms(symbol.get("signature") or "") for record in head for symbol in record["symbols"]
+        ):
+            missing = None
+        if not has_evidence or missing:
+            # Search one extra window for a missing keyword. Queries with no evidence use the full fallback.
+            end = CONTENT_RANK_FILES * 2 if missing else CONTENT_FALLBACK_FILES
+            for record in order[CONTENT_RANK_FILES:end]:
                 if budget <= 0:
                     break
                 path = record["path"]
                 found = scan(path)
-                if found:
+                if missing and missing in found:
+                    rescued.append(record)
+                    break
+                if found and not missing:
                     content = sum(weights[term] for term in terms if term in found)
                     rescored[path] = score(path, CONTENT_WEIGHT * content)
                     rescued.append(record)
@@ -1179,9 +1195,10 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     head.sort(key=rank_key)
     if not rescued:
         return head + order[CONTENT_RANK_FILES:]
-    rescued.sort(key=rank_key)
     rescued_paths = {record["path"] for record in rescued}
-    return rescued + head + [record for record in order[CONTENT_RANK_FILES:] if record["path"] not in rescued_paths]
+    # Keep the leading results while giving the missing keyword one visible path.
+    leading = head[:3] + rescued + head[3:] if missing else sorted(rescued, key=rank_key) + head
+    return leading + [record for record in order[CONTENT_RANK_FILES:] if record["path"] not in rescued_paths]
 def _note(notes: list[str], value: str) -> None:
     if value and value not in notes:
         notes.append(value)

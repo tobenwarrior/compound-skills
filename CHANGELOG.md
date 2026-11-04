@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.25 (2026-11-04)
+
+- If one of two keywords has evidence, look for the missing keyword in up to 50 more files within the same byte budget. Stop at the first hit and preserve the first three results.
+- The three selected mixed-keyword lookups on Flask, Click and packaging now show their target files. In the 36 commit-title controls, all focus lists stayed the same and 35 used the same number of source probes. [Replay and probe costs](bench/README.md#mixed-keyword-lookups).
+
 ## 0.16.24 (2026-11-04)
 
 - Put exact repository-relative path queries first, including paths written with `./`. The requested file remains visible under a one-file response cap.
