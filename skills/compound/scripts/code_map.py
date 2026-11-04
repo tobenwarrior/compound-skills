@@ -1448,6 +1448,9 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if focused_query and not focus:
         lines.append("No query matches in scanned candidates; use native search or refine the query.")
     by_path = {file["path"]: file for file in model["files"]}
+    header_count = len(lines)
+    header = "\n".join(lines)
+    compact: list[tuple[str, str]] = []
     for path in focus:
         file = by_path.get(path)
         if not file:
@@ -1469,6 +1472,10 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         if len(file["dependencies"]) > len(dependency_values):
             dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
         line = f"- {json.dumps(path, ensure_ascii=True)} [{file['language']}]"
+        if focused_query:
+            top = symbol_values[0] if symbol_values else None
+            hint = f" symbols: {top['name']} ({top['kind']}:{top['line']})" if top else ""
+            compact.append((line, hint))
         if symbols:
             line += " symbols: " + symbols
         if dependencies:
@@ -1480,6 +1487,28 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if len(value) <= limit:
         return value
     suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
+    usable = limit - len(suffix)
+    leading = compact[:4]
+    if leading:
+        first_rows = lines[:header_count + len(leading) - 1]
+        last_path_end = len("\n".join([*first_rows, leading[-1][0]]))
+    else:
+        last_path_end = 0
+    if leading and len(header) <= usable < last_path_end:
+        # Reserve space for the leading complete paths before adding symbol hints.
+        remaining = usable - len(header)
+        visible = []
+        for path_line, _ in leading:
+            size = 1 + len(path_line)
+            if size > remaining:
+                break
+            visible.append(path_line)
+            remaining -= size
+        for index, (_, hint) in enumerate(leading[:len(visible)]):
+            if len(hint) <= remaining:
+                visible[index] += hint
+                remaining -= len(hint)
+        return "\n".join([header, *visible]) + suffix
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
 def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
     if no_cache and cache_read_only:

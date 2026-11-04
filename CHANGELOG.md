@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.18 (2026-11-04)
+
+- Keep the first four focused candidates visible when long signatures or import lists would crowd them out and their paths fit. The compact fallback keeps whole paths and adds the best matching symbol when space permits.
+- On 36 commit-parent replays, complete changed-file paths visible at 500 characters rose from 22 to 29 out of 41. The default 2,500-character budget showed 38 of 41 in both renders. Each pair used the same ranked map. [Replay and source pins](bench/README.md#focused-summary-coverage).
+
 ## 0.16.17 (2026-11-04)
 
 - Recheck the original instruction text before applying project or global setup. When a target changes during preparation, stop and preserve the newer edit. Recheck each file before its replacement or removal and report any earlier updates if setup stops partway through.

@@ -97,6 +97,16 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Focused summary coverage
+
+Replay focused summaries on commit parent snapshots from pinned Flask, Click and packaging histories already present under `bench/work/sources/`:
+
+```sh
+python3 -B bench/map_text_coverage.py --baseline-ref 2b96ffa
+```
+
+The replay selects 12 qualifying commit subjects per repository and renders each ranked map with both versions at 500 and 2,500 characters. It counts whole paths that were present in the parent and touched by the commit. At 500 characters, visibility rose from 22 to 29 of 41 changed-file paths. At 2,500 characters, both renders showed 38 of 41. This checks what the summary exposes before source inspection. [Raw counts and source pins](diagram_sources/map_text_coverage_v01618.json).
+
 ## Tasks
 
 `python3 bench/bench.py tasks` lists them. `--tasks` takes names or tags.

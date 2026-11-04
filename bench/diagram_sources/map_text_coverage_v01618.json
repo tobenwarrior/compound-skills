@@ -1,0 +1,755 @@
+{
+  "scope": "Keyless presentation replay on commit parent snapshots. Same ranked map for both renders. Measures complete paths visible in the agent summary, not agent reads or model cost.",
+  "baseline_ref": "2b96ffad76c8270dfd484c19584495ca46caec26",
+  "baseline_source_sha256": "0736b2377c1459883e719c062aa12fcdf36dd5ee670399afa102aab5c857406b",
+  "candidate_source_sha256": "86b5cf4b32add48163a652193d56be9566349584794ccfbdf603469524139885",
+  "source_heads": {
+    "flask": "49943b5a94413a530761350f04e896f76e8d620e",
+    "click": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+    "packaging": "78d8673da4d275bb7aee0126a5edc3cf90976af1"
+  },
+  "queries": [
+    {
+      "repository": "flask",
+      "commit": "bfc8f983871dcadf0492578d9ab72d951b34c19c",
+      "query": "add `versionchanged` for ctx signature change",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 7,
+          "after_paths": 7,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "f2ef7a553e800989f5e7c4ed4487dfd011c6dd40",
+      "query": "werkzeug 3.2 compat",
+      "touched_paths_at_parent": 2,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 2,
+          "after_touched_paths": 2
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "d086db856be187255b8ec61ef409357393020f32",
+      "query": "fix typing",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 11,
+          "after_paths": 11,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "329c32b916938d33fec41f40eb7ed854bf0b3e2b",
+      "query": "fix dev",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 3,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "7689f98403e2c0b0bc8d1031e60f8cff2620e86a",
+      "query": "drop support for Python 3.10",
+      "touched_paths_at_parent": 3,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 3,
+          "after_touched_paths": 3
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+      "query": "fix docs ref",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "d318b683471101618febed18996405ad26462110",
+      "query": "explain seek",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 4,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "2a8a38b051fc248865730bf3511bf2e2ea325e81",
+      "query": "support query in methodview",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "89992954ec71b594b1b911f98977cdc8ad46a057",
+      "query": "add app.query route decorator",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "7203feabf723edae0286ae5dc64fec8ac4c91735",
+      "query": "Fix IPv6 server name parsing",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 0,
+          "after_touched_paths": 0
+        },
+        "2500": {
+          "before_paths": 4,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "de8429ffda8cfb54db175529e2bae72a24e1fa7e",
+      "query": "Fix IPv6 session transactions",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "flask",
+      "commit": "81798b406f97ffe4795d2c9fc18db7db744a96dc",
+      "query": "fix typos",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 1,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 3,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "9f0bcdf0d868edfc71435cd0aac2dcc08cf94828",
+      "query": "Add `Parameter.spec` and deprecate `human_readable_name`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 3,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "b90faad1788bc030bb3320938f07c9189f42d7d0",
+      "query": "Deprecate a parameter name that Click 9.0 will refuse or lower case",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "e2bddbc801dabc4efc3c3c1e32b53b3f938d3efc",
+      "query": "Deprecate a parameter name that is not a Python identifier",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "f67c2bb6c2f055c1c7a57cd46c3697fc26a7742e",
+      "query": "Fix short help abbreviation",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 9,
+          "after_paths": 9,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "05f6fd0df4ecbd104eb7a229f9f185c2484dee69",
+      "query": "Always return a help record for an `Argument`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 8,
+          "after_paths": 8,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "405a5481e4dbd5022799993d787bd8446137d9a3",
+      "query": "Move common `help` argument from `Option` and `Argument` to `Parameter`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "f25f697a439acc2b0d84aa8f5413330f4e2e75cf",
+      "query": "List every argument in the `Positional arguments` help section",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 7,
+          "after_paths": 7,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "22177f857a34e3c35ba957553853a37f23feb37e",
+      "query": "`path_type` narrows the converted value's type for `convert` and `prompt`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 3,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "271effb3d96da5575eb527216ce3552bd7628fab",
+      "query": "Add `Option.get_help_spec` to return the option's help left part",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 4,
+          "after_paths": 4,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "fc518e41218b447e875fe27244ae692c269bcb77",
+      "query": "Fix race condition on `KeyboardInterrupt` arriving in `Command.main()`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 8,
+          "after_paths": 8,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "94f17e276fbdd7348b88b05170923ecacb7b32bf",
+      "query": "Remove unused bindings and constants from `_winconsole`",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 2,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 3,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "click",
+      "commit": "f58ca3e81424a35626c8a475eb59ab95589008ce",
+      "query": "Fix `copy`, `deepcopy` and `pickle` of `Sentinel` members",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "query": "answer containment and disjointness together",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 2,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "b635dc5e60d6fb8020416c6bab9421964bfa342a",
+      "query": "stop disjointness queries at the first overlap",
+      "touched_paths_at_parent": 2,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "f124fb7f2a18e41a5593f4c5c47d63db6f49f0d1",
+      "query": "cache a Specifier's canonical form",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "1a62a26afe0f4881593e31bed4f7753bd1c8fe27",
+      "query": "subtract version intervals directly",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "ffced26d0a30557a0e181dbaca561a0432ddec53",
+      "query": "add `__replace__` to Specifier and SpecifierSet",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 9,
+          "after_paths": 9,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "fc613377731e5211ab6e08e6fd6163f09ae67ce8",
+      "query": "compare cached version keys",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "5706b87c213ab3171a6dfbd5e9ff91259d19931c",
+      "query": "cache formatted marker strings",
+      "touched_paths_at_parent": 2,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 7,
+          "after_paths": 7,
+          "before_touched_paths": 2,
+          "after_touched_paths": 2
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "4b243af94ff6885c89b8acd7a22fc5714b18cb96",
+      "query": "add Requirement.__replace__",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 11,
+          "after_paths": 11,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "ae9d39c13b5f5485b6295eb100b08ef9c3dde852",
+      "query": "require the complete pylock filename to match",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 7,
+          "after_paths": 7,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "332d716676eb934b67ede4054a3e3e0d4022b2d3",
+      "query": "use explicit keywords in __replace__",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 12,
+          "after_paths": 12,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "fa52d7237a74effdadd4ad2627d4ca413234cac2",
+      "query": "Fix pylock filenames with mixed Windows path separators",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 6,
+          "after_paths": 6,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    },
+    {
+      "repository": "packaging",
+      "commit": "2aada00b158feb36109d77dc91d62baa91f7d400",
+      "query": "reject empty arbitrary versions in requirements",
+      "touched_paths_at_parent": 1,
+      "limits": {
+        "500": {
+          "before_paths": 1,
+          "after_paths": 3,
+          "before_touched_paths": 0,
+          "after_touched_paths": 1
+        },
+        "2500": {
+          "before_paths": 5,
+          "after_paths": 5,
+          "before_touched_paths": 1,
+          "after_touched_paths": 1
+        }
+      }
+    }
+  ],
+  "totals": {
+    "500": {
+      "before_paths": 37,
+      "after_paths": 99,
+      "before_touched_paths": 22,
+      "after_touched_paths": 29,
+      "queries": 36,
+      "touched_paths_at_parent": 41,
+      "queries_with_more_paths": 35,
+      "queries_with_more_touched_paths": 7
+    },
+    "2500": {
+      "before_paths": 249,
+      "after_paths": 251,
+      "before_touched_paths": 38,
+      "after_touched_paths": 38,
+      "queries": 36,
+      "touched_paths_at_parent": 41,
+      "queries_with_more_paths": 2,
+      "queries_with_more_touched_paths": 0
+    }
+  }
+}
