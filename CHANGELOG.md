@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.35 (2026-11-04)
+
+- Keep audit content and worktree scans within the selected checkout. In-checkout links still work, and audit configuration that points outside reports a configuration error.
+- Reuse one checkout handle for file reads where descriptor-relative opens are supported. The pinned Django audit returned the same 101 findings.
+
 ## 0.16.34 (2026-11-04)
 
 - Return the named file and its import hints in exact-path agent summaries. The warm service reads the indexed row directly.

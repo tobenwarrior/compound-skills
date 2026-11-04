@@ -9,7 +9,7 @@ python3 <installed-skill-dir>/scripts/repo_audit.py <repo-root>
 
 Audits are read-only. The explicit `--write-baseline` option writes only
 `.repo-audit-baseline.json`; the checker never deletes or rewrites project
-files.
+files. Size and reference checks read regular files within the selected checkout. Links to files inside that checkout still work. A configuration link that resolves outside it returns exit `2`.
 
 ## Commands and exit status
 

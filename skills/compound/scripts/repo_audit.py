@@ -21,8 +21,15 @@ import re
 import stat
 import subprocess
 import sys
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+
+try:
+    from .safe_open import open_regular_files_nofollow
+except ImportError:  # direct script execution
+    from safe_open import open_regular_files_nofollow
 
 try:
     import tomllib  # py3.11+
@@ -206,17 +213,55 @@ def repo_inventory(root: Path) -> tuple[set[str], bool]:
     return files, False
 
 
-def read_lines(path: Path) -> list[str] | None:
-    """Lines of a regular file (links followed), split on newlines only, from its first 8 MiB."""
+def _checkout_target(root: Path, relative: str) -> Path:
+    """Resolve an audit input against the canonical checkout."""
     try:
-        # O_NONBLOCK keeps a FIFO from blocking the open; fstat then rejects it.
-        with os.fdopen(os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)), "rb") as handle:
-            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
-                return None
-            data = handle.read(MAX_READ_BYTES)
+        target = (root / relative).resolve()
+    except RuntimeError as error:
+        raise OSError(f"{relative}: cannot resolve audit input") from error
+    if not target.is_relative_to(root):
+        raise OSError(f"{relative}: audit input resolves outside the checkout")
+    return target
+
+
+@contextmanager
+def _audit_opener(root: Path) -> Iterator[Callable[[str], int]]:
+    """Keep the checkout open while auditing. Resolve aliases only when needed."""
+    if os.name == "posix" and os.open in os.supports_dir_fd and hasattr(os, "O_NOFOLLOW"):
+        with open_regular_files_nofollow(root) as open_file:
+            def open_relative(relative: str) -> int:
+                try:
+                    return open_file(relative)
+                except OSError:
+                    target = _checkout_target(root, relative)
+                    if target == root / relative:
+                        raise
+                    return open_file(target.relative_to(root).as_posix())
+
+            yield open_relative
+        return
+
+    def open_resolved(relative: str) -> int:
+        target = _checkout_target(root, relative)
+        return os.open(target, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
+
+    yield open_resolved
+
+
+def _read_audit_text(open_file: Callable[[str], int], relative: str, limit: int = -1, errors: str = "strict") -> str:
+    with os.fdopen(open_file(relative), "rb") as handle:
+        if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+            raise OSError(f"{relative}: audit input must be a regular file")
+        data = handle.read(limit)
+    return data.decode("utf-8", errors=errors).replace("\r\n", "\n").replace("\r", "\n")
+
+
+def read_lines(open_file: Callable[[str], int], relative: str) -> list[str] | None:
+    """Lines from the first 8 MiB of a regular file inside the checkout."""
+    try:
+        lines = _read_audit_text(open_file, relative, MAX_READ_BYTES, errors="ignore").split("\n")
     except OSError:
         return None
-    lines = data.decode("utf-8", errors="ignore").replace("\r\n", "\n").replace("\r", "\n").split("\n")
     return lines[:-1] if lines[-1] == "" else lines
 
 
@@ -288,12 +333,12 @@ def _thresholds(rel: str, cfg: Config) -> tuple[int, int]:
     return cfg.soft_max_lines, cfg.hard_max_lines
 
 
-def check_sizes(root: Path, files: list[str], cfg: Config) -> list[Finding]:
+def check_sizes(files: list[str], cfg: Config, open_file: Callable[[str], int]) -> list[Finding]:
     out = []
     for rel in files:
         if Path(rel).suffix.lower() not in SOURCE_EXTS:
             continue
-        lines = read_lines(root / rel)
+        lines = read_lines(open_file, rel)
         if lines is None:
             continue
         n = len(lines)
@@ -314,7 +359,10 @@ def check_sizes(root: Path, files: list[str], cfg: Config) -> list[Finding]:
 def check_worktrees(root: Path, cfg: Config) -> list[Finding]:
     out = []
     for wt in WORKTREE_DIRS:
-        base = root / wt
+        try:
+            base = _checkout_target(root, wt)
+        except OSError:
+            continue
         if not base.is_dir():
             continue
         subs = [p.name for p in base.iterdir() if p.is_dir()]
@@ -338,8 +386,8 @@ def _git_ignored(root: Path, entries: list[str]) -> set[str] | None:
     return {probes[os.fsdecode(path)] for path in result.stdout.split(b"\0") if os.fsdecode(path) in probes}
 
 
-def check_gitignore(root: Path, cfg: Config) -> list[Finding]:
-    lines = read_lines(root / ".gitignore")
+def check_gitignore(root: Path, cfg: Config, open_file: Callable[[str], int]) -> list[Finding]:
+    lines = read_lines(open_file, ".gitignore")
     covered = _git_ignored(root, cfg.required_gitignore)
     if covered is None and lines is not None:
         present = {ln.strip().rstrip("/") for ln in lines if ln.strip()}
@@ -354,7 +402,7 @@ def check_gitignore(root: Path, cfg: Config) -> list[Finding]:
     return []
 
 
-def check_refs(root: Path, files: list[str], cfg: Config) -> list[Finding]:
+def check_refs(files: list[str], cfg: Config, open_file: Callable[[str], int]) -> list[Finding]:
     """Report scripts with no inbound textual match as review candidates.
 
     Dynamic imports, generated code, plugin discovery, and external callers can
@@ -371,7 +419,10 @@ def check_refs(root: Path, files: list[str], cfg: Config) -> list[Finding]:
     cand_stems = {Path(c).stem for c in candidates}
     for rel in files:
         if Path(rel).suffix.lower() in REF_EXTS or Path(rel).name in REF_NAMES:
-            text = "\n".join(read_lines(root / rel) or [])  # read_lines swallows OSError
+            try:
+                text = _read_audit_text(open_file, rel, MAX_READ_BYTES, errors="ignore").removesuffix("\n")
+            except OSError:
+                continue
             for stem in cand_stems:
                 if stem in text and not (rel in candidates and Path(rel).stem == stem):
                     tokens.add(stem)
@@ -469,17 +520,22 @@ def check_noise(inventory: set[str], cfg: Config) -> list[Finding]:
     return out
 
 
-CHECKS_WITH_FILES = (check_root, check_litter, check_junkdirs, check_sizes, check_refs, check_ondisk)
+CHECKS_WITH_FILES = (check_root, check_litter, check_junkdirs)
 
 
 def run_audit(root: Path, cfg: Config) -> list[Finding]:
+    root = root.resolve()
     inventory, listed_by_git = repo_inventory(root)
     files = sorted(f for f in inventory if not _excluded(f))
     findings: list[Finding] = check_noise(inventory, cfg) if listed_by_git else []
     for fn in CHECKS_WITH_FILES:
         findings += fn(root, files, cfg)
-    findings += check_worktrees(root, cfg)
-    findings += check_gitignore(root, cfg)
+    with _audit_opener(root) as open_file:
+        findings += check_sizes(files, cfg, open_file)
+        findings += check_refs(files, cfg, open_file)
+        findings += check_ondisk(root, files, cfg)
+        findings += check_worktrees(root, cfg)
+        findings += check_gitignore(root, cfg, open_file)
     findings += check_config(root, cfg)
     return findings
 
@@ -581,18 +637,20 @@ def load_config(root: Path) -> Config:
     cfg = Config()
     if tomllib is None:
         raise ConfigError("repo_audit requires Python 3.11+ for TOML support")
+    root = root.resolve()
     dedicated, pp = root / ".repo-audit.toml", root / "pyproject.toml"
     try:
-        if dedicated.is_file():
-            section = tomllib.loads(dedicated.read_text(encoding="utf-8"))
-        elif pp.is_file():
-            data = tomllib.loads(pp.read_text(encoding="utf-8"))
-            tool = data.get("tool", {})
-            if not isinstance(tool, dict):
-                raise ConfigError(f"invalid configuration {pp}: [tool] must be a table")
-            section = tool.get("repo_audit", {})
-        else:
-            section = {}
+        with _audit_opener(root) as open_file:
+            if dedicated.is_symlink() or dedicated.is_file():
+                section = tomllib.loads(_read_audit_text(open_file, dedicated.name))
+            elif pp.is_symlink() or pp.is_file():
+                data = tomllib.loads(_read_audit_text(open_file, pp.name))
+                tool = data.get("tool", {})
+                if not isinstance(tool, dict):
+                    raise ConfigError(f"invalid configuration {pp}: [tool] must be a table")
+                section = tool.get("repo_audit", {})
+            else:
+                section = {}
     except (OSError, ValueError, RecursionError) as exc:  # TOMLDecodeError and UnicodeError are ValueErrors
         raise ConfigError(f"invalid configuration: {exc}") from exc
     if not isinstance(section, dict):
