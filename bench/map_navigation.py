@@ -95,9 +95,10 @@ TEXT_PATH = re.compile(r'^- ("(?:[^"\\]|\\.)*") \[', re.MULTILINE)
 SHORTLIST = 4
 
 
-def pinned_source(repo: str) -> Path:
+def pinned_source(repo: str, root: Path | None = None) -> Path:
     """Use exactly the checked-in source pin without fetching or modifying it."""
-    root = SOURCES / repo
+    if root is None:
+        root = SOURCES / repo
     if git(root, "rev-parse", "HEAD", check=True).strip() != PINS[repo][1]:
         raise ValueError(f"{repo}: checkout must be at the benchmark pin")
     if git(root, "status", "--porcelain", "--untracked-files=all", check=True).strip():
@@ -213,9 +214,9 @@ def prepare() -> dict:
     }
 
 
-def grade(case: dict, answer: object) -> dict:
+def grade(case: dict, answer: object, *, root: Path | None = None) -> dict:
     """Check ordered source citations against the private rubric at the source pin."""
-    root = pinned_source(case["repo"])
+    root = pinned_source(case["repo"], root)
     expected = source_hops(root, case["hops"])
     if not isinstance(answer, list) or len(answer) != len(expected):
         return {"success": False, "checks": [False] * len(expected)}

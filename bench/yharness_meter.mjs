@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 const original = globalThis.fetch;
 let pending;
@@ -8,6 +9,8 @@ const maxCalls = Number(process.env.COMPOUND_PILOT_MAX_CALLS ?? 20);
 const maxCost = Number(process.env.COMPOUND_PILOT_MAX_USD ?? 0.25);
 const expectedModel = process.env.COMPOUND_PILOT_EXPECT_MODEL;
 const expectedOutputCap = process.env.COMPOUND_PILOT_EXPECT_OUTPUT_CAP;
+const expectedPromptHash = process.env.COMPOUND_PILOT_EXPECT_PROMPT_SHA256;
+const readOnly = process.env.COMPOUND_PILOT_READ_ONLY === '1';
 if (!Number.isSafeInteger(maxCalls) || maxCalls < 0 || !Number.isFinite(maxCost) || maxCost < 0) {
   throw new Error('Benchmark has an invalid request or allowance guard');
 }
@@ -71,8 +74,20 @@ globalThis.fetch = async function(input, init) {
     const expected=process.env.COMPOUND_EXPECT_ROUTING;
     if(expected!==undefined && routingPresent!==(expected==='1')) throw new Error('Benchmark refuses request: treatment routing missing or control contaminated');
     const names=(body.tools??[]).map(tool=>tool.function?.name??tool.name);
-    save({event:'request_preflight',tools:names,routing_present:routingPresent,model:body.model,max_tokens:body.max_tokens??body.max_completion_tokens});
-    if(!names.includes('bash') || !names.includes('read') || !names.includes('edit') || !names.includes('write')) throw new Error('Benchmark refuses model request: required editing tools did not activate');
+    const required = readOnly ? ['bash', 'read', 'grep', 'glob'] : ['bash', 'read', 'edit', 'write'];
+    if (!required.every(name => names.includes(name)) || (readOnly && (names.includes('edit') || names.includes('write')))) {
+      throw new Error('Benchmark refuses model request: tool set does not match the run mode');
+    }
+    if (expectedPromptHash) {
+      const content = body.messages?.findLast(message => message.role === 'user')?.content;
+      const delivered = typeof content === 'string' ? content :
+        Array.isArray(content) && content.every(part => part?.type === 'text' && typeof part.text === 'string') ? content.map(part => part.text).join('') : null;
+      if (delivered === null || createHash('sha256').update(delivered).digest('hex') !== expectedPromptHash) {
+        throw new Error('Benchmark refuses model request: delivered prompt differs from the frozen prompt');
+      }
+    }
+    save({event:'request_preflight',tools:names,routing_present:routingPresent,model:body.model,max_tokens:body.max_tokens??body.max_completion_tokens,
+      ...(expectedPromptHash ? {prompt_sha256:expectedPromptHash} : {})});
   }
   const record={event:'request',number:++calls,started_at:new Date().toISOString()};
   save({...record,event:'request_started'});

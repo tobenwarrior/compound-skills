@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 import os,sys,json,subprocess,shutil,time,signal,tarfile,hashlib
 BASE=Path(__file__).resolve().parent
 FLASK_FIXTURE = 'flask-ipv6-session'
+NAVIGATION_REPOS = ('django', 'flask')
+NAVIGATION_REPAIR = 'The independent source check did not pass. Recheck the citations and return only the complete JSON array.'
 
 
 def tree_digest(root):
@@ -28,6 +30,17 @@ def tree_digest(root):
 def flask_input_hashes():
     return {'fixture_sha256': tree_digest(BASE / 'fixtures' / FLASK_FIXTURE),
             'grader_sha256': tree_digest(BASE / 'grader')}
+
+
+def navigation_input_hashes():
+    """Fingerprint the read-only source checkouts and the host-side grader."""
+    workspace = BASE / 'workspace'
+    if workspace.is_symlink() or any((workspace / repo).is_symlink() for repo in NAVIGATION_REPOS):
+        raise RuntimeError('Navigation fixtures must be local checkouts')
+    return {
+        'source_sha256': {repo: tree_digest(workspace / repo) for repo in NAVIGATION_REPOS},
+        'grader_sha256': tree_digest(BASE / 'grader'),
+    }
 
 
 def launch_input_hashes():
@@ -53,6 +66,7 @@ def launch_input_hashes():
 if __name__ == '__main__':
     hash_commands = {
         '--flask-input-hashes': flask_input_hashes,
+        '--navigation-input-hashes': navigation_input_hashes,
         '--launch-input-hashes': launch_input_hashes,
     }
     if len(sys.argv) == 2 and sys.argv[1] in hash_commands:
@@ -66,7 +80,7 @@ if PLAN_SHA256 != (BASE / 'plan.sha256').read_text().strip():
     raise RuntimeError('Benchmark plan hash mismatch')
 PLAN = json.loads(PLAN_BYTES)
 GRADER = PLAN.get('grader', 'legacy')
-if GRADER not in ('legacy', 'flask-sequence'):
+if GRADER not in ('legacy', 'flask-sequence', 'map-navigation'):
     raise RuntimeError(f'Unsupported benchmark grader: {GRADER}')
 
 
@@ -123,6 +137,7 @@ def records(*, for_summary=False):
     if not root.exists():
         return []
     result = []
+    navigation_tools = None
     for folder in sorted(p for p in root.iterdir() if p.is_dir()):
         record_path = folder / 'record.json'
         if not record_path.is_file():
@@ -149,6 +164,19 @@ def records(*, for_summary=False):
             raise RuntimeError(f'Invalid prior attempt {folder.name}: recorded costs disagree with meter')
         if GRADER == 'flask-sequence' and not ungraded:
             validate_artifact_record(folder, record)
+        if GRADER == 'map-navigation' and valid_usage:
+            preflight = [row for row in rows(folder / 'requests.jsonl') if row.get('event') == 'request_preflight']
+            task = PLAN['sequences'][0]['tasks'][record['stage']]
+            prompt = NAVIGATION_REPAIR if record['attempt'] else navigation_prompt(task, record['arm'])
+            expected = hashlib.sha256(prompt.encode()).hexdigest()
+            if (len(preflight) != 1 or preflight[0].get('prompt_sha256') != expected
+                    or record.get('prompt_sha256') != expected):
+                raise RuntimeError(f'Invalid prior attempt {folder.name}: navigation prompt mismatch')
+            tools = sorted(preflight[0]['tools'])
+            if navigation_tools is None:
+                navigation_tools = tools
+            if tools != navigation_tools:
+                raise RuntimeError('Navigation attempts must expose the same tool set')
         result.append(record)
     if GRADER == 'flask-sequence':
         for record in result:
@@ -250,6 +278,49 @@ def write_record(folder, record):
     pending.replace(folder / 'record.json')
 
 
+def navigation_prompt(task, arm):
+    orientation = task['orientation'][arm + '_compound']
+    return task['prompt'] + '\n\n' + orientation if orientation else task['prompt']
+
+
+def verify_navigation_inputs():
+    if PLAN.get('navigation_input_hashes') != navigation_input_hashes():
+        raise RuntimeError('Frozen navigation source or grader digest mismatch')
+    profiles = PLAN['profile_hashes']
+    if profiles['with'] != profiles['without'] or any(
+        (BASE / 'instructions' / arm / 'AGENTS.md').read_bytes() for arm in ('with', 'without')
+    ):
+        raise RuntimeError('Navigation requires identical profiles and empty default instructions')
+    pins = {}
+    for task in PLAN['sequences'][0]['tasks']:
+        orientation = task['orientation']
+        summary = orientation['with_compound']
+        if (task['repo'] not in NAVIGATION_REPOS or orientation['without_compound'] or not summary
+                or len(summary) > 2500 or hashlib.sha256(summary.encode()).hexdigest() != task['map_sha256']):
+            raise RuntimeError('Invalid frozen navigation task or map context')
+        if pins.setdefault(task['repo'], task['source_revision']) != task['source_revision']:
+            raise RuntimeError('Navigation tasks must share one source revision per repository')
+    for repo, expected in pins.items():
+        git = ['git', '-C', str(BASE / 'workspace' / repo)]
+        revision = subprocess.check_output([*git, 'rev-parse', 'HEAD'], text=True).strip()
+        if revision != expected or subprocess.check_output([*git, 'status', '--porcelain', '--untracked-files=all']):
+            raise RuntimeError('Navigation checkout must be clean at its frozen revision')
+
+
+def grade_navigation(task, final):
+    sys.path.insert(0, str(BASE / 'grader'))
+    try:
+        from map_navigation import CASES, grade as grade_answer
+    finally:
+        sys.path.pop(0)
+    case = next(case for case in CASES if case['id'] == task['name'] and case['repo'] == task['repo'])
+    try:
+        answer = json.loads(final['text']) if final else None
+    except (KeyError, TypeError, ValueError, RecursionError):
+        answer = None
+    return grade_answer(case, answer, root=BASE / 'workspace' / task['repo'])
+
+
 def verify_launch_inputs():
     for field, observed in launch_input_hashes().items():
         if PLAN.get(field) != observed:
@@ -259,11 +330,13 @@ def verify_launch_inputs():
         or PLAN.get('flask_input_hashes') != flask_input_hashes()
     ):
         raise RuntimeError('Frozen Flask fixture or grader digest mismatch')
+    if GRADER == 'map-navigation':
+        verify_navigation_inputs()
 
 
 def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=None):
  verify_launch_inputs()
- task=PLAN['sequences'][0]['tasks'][stage]['name'];out=attempt_folder(index,task,arm,attempt)
+ spec=PLAN['sequences'][0]['tasks'][stage];task=spec['name'];out=attempt_folder(index,task,arm,attempt)
  prior=records();all_used=totals(prior);arm_used=totals([r for r in prior if r['arm']==arm])
  remaining=min(PLAN['total_max_requests']-all_used['requests'],PLAN['per_arm_max_requests']-arm_used['requests'])
  money=min(Decimal(PLAN['total_max_allowance_usd'])-all_used['allowance'],Decimal(PLAN['per_arm_max_allowance_usd'])-arm_used['allowance'])
@@ -272,6 +345,13 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  env={**os.environ,'COMPOUND_PILOT_EXPECT_MODEL':PLAN['model'],
       'COMPOUND_PILOT_EXPECT_OUTPUT_CAP':str(PLAN.get('output_cap', '')),
       'COMPOUND_EXPECT_ROUTING':'1' if arm=='with' else '0','DSH_HOME':PLAN['dsh_home'],'DSH_PERMISSION_MODE':'workspace-write','PATH':str(BASE/'runtime/bin')+':'+os.environ['PATH'],'COMPOUND_PILOT_METER':str(out/'requests.jsonl'),'COMPOUND_PILOT_MAX_CALLS':str(cap),'COMPOUND_PILOT_MAX_USD':str(min(money,Decimal(PLAN['max_allowance_per_run_usd'])))}
+ env.update(COMPOUND_PILOT_READ_ONLY='0', COMPOUND_PILOT_EXPECT_PROMPT_SHA256='')
+ prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest()
+ workspace=BASE/'workspace'
+ if GRADER == 'map-navigation':
+  workspace=workspace/spec['repo']
+  env.update(COMPOUND_EXPECT_ROUTING='0', DSH_PERMISSION_MODE='read-only',
+             COMPOUND_PILOT_READ_ONLY='1', COMPOUND_PILOT_EXPECT_PROMPT_SHA256=prompt_sha256)
  command=['node','--import',str(BASE/'meter.mjs'),PLAN['cli'],'--profile',PLAN['profile'],'--patch',str(BASE/(arm+'.yml')),'--json']
  if session:command+=['--session-id',session]
  out.mkdir()
@@ -280,7 +360,7 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
      'schema': 'compound-live-attempt-1', 'index': index, 'stage': stage, 'task': task,
      'arm': arm, 'attempt': attempt,
      'attempt_kind': attempt_kind or ('semantic_repair' if attempt else 'initial'),
-     'prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(), 'plan_sha256': PLAN_SHA256,
+     'prompt_sha256': prompt_sha256, 'plan_sha256': PLAN_SHA256,
      'grade': {'success': False, 'infrastructure_error': True}, 'accepted': False,
  }
  # Register the attempt before dispatch so an interrupted launcher leaves a reportable ledger.
@@ -288,7 +368,7 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  print('START',index+1,task,arm,'attempt',attempt,'max_requests',cap,flush=True)
  started=time.monotonic();timed_out=False
  with (out/'events.jsonl').open('w') as stdout,(out/'stderr.log').open('w') as stderr:
-  child=subprocess.Popen(command,cwd=BASE/'workspace',env=env,stdout=stdout,stderr=stderr,start_new_session=True)
+  child=subprocess.Popen(command,cwd=workspace,env=env,stdout=stdout,stderr=stderr,start_new_session=True)
   try:code=child.wait(timeout=PLAN['max_wall_seconds_per_run'])
   except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
    timed_out=isinstance(error,subprocess.TimeoutExpired);os.killpg(child.pid,signal.SIGINT)
@@ -308,8 +388,13 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None,previous=Non
  )
  project=BASE/'active'/arm
  archive=out/'final.tgz'
- archive_attempt(project,archive)
- if GRADER == 'flask-sequence':
+ if GRADER != 'map-navigation':
+  archive_attempt(project,archive)
+ if GRADER == 'map-navigation':
+  if not record['session_id'] or (session and record['session_id'] != session):
+   raise RuntimeError('Navigation attempt did not retain its expected session')
+  result=grade_navigation(spec,finals[-1] if finals else None)
+ elif GRADER == 'flask-sequence':
   if not record['session_id'] or (session and record['session_id'] != session):
    raise RuntimeError('Attempt did not retain its expected session')
   record['artifact_sha256']=artifact_digest(archive)
@@ -337,11 +422,11 @@ def skip(index,stage,arm,reason):
 def run(index):
  _,stage,arm=PLAN['schedule'][index];prior=[r for r in records() if r['arm']==arm]
  if any(r['index']==index for r in prior):raise RuntimeError('Attempt already exists; refusing to rerun')
- if stage and not any(r['stage']==stage-1 and r.get('accepted') for r in prior):
+ if GRADER != 'map-navigation' and stage and not any(r['stage']==stage-1 and r.get('accepted') for r in prior):
   skip(index,stage,arm,'previous task artifact not accepted');return
  if not available(arm):
   skip(index,stage,arm,'request or allowance guard reached');return
- session=max(prior,key=lambda r:(r['stage'],r['attempt']))['session_id'] if prior else None
+ session=max(prior,key=lambda r:(r['stage'],r['attempt']))['session_id'] if prior and GRADER != 'map-navigation' else None
  if GRADER == 'flask-sequence' and stage:
   accepted=accepted_predecessor(prior,stage,arm)
   digest=accepted['artifact_sha256']
@@ -357,13 +442,17 @@ def run(index):
 
 
 def run_stage(index,stage,arm,session,previous=None):
- record=invoke(index,stage,arm,0,PLAN['sequences'][0]['tasks'][stage]['prompt'],session,previous=previous)
+ task=PLAN['sequences'][0]['tasks'][stage]
+ prompt=navigation_prompt(task,arm) if GRADER == 'map-navigation' else task['prompt']
+ record=invoke(index,stage,arm,0,prompt,session,previous=previous)
  if not record['accepted']:
   if not available(arm):
    skip(index,stage,arm,'no budget for the single follow-up');return
   kind='interruption_recovery' if record['exit_code']!=0 or record['timed_out'] or record['budget_stopped'] else 'semantic_repair'
   feedback='The independent check of this task did not pass. Continue from the current files and finish this task. Preserve previously accepted changes and do not remove or weaken existing tests.'
-  if GRADER == 'flask-sequence':
+  if GRADER == 'map-navigation':
+   feedback=NAVIGATION_REPAIR
+  elif GRADER == 'flask-sequence':
    feedback+=' Check the reported bug and verify your regression on the source before and after this stage.'
   else:
    feedback+='\n'+json.dumps({k:v for k,v in record['grade'].items() if k!='success'},indent=2)
@@ -420,5 +509,10 @@ if __name__ == '__main__':
                 print(json.dumps({'plan_sha256': PLAN_SHA256, 'next_index': start,
                                   'schedule_entries': len(PLAN['schedule'])}, indent=2))
             else:
-                for index in dispatch_indices(sys.argv[1:], start):
+                args = sys.argv[1:]
+                if GRADER == 'map-navigation':
+                    if args[:1] != ['--dispatch-navigation']:
+                        raise RuntimeError('Navigation model dispatch requires --dispatch-navigation')
+                    args = args[1:]
+                for index in dispatch_indices(args, start):
                     run(index)
