@@ -1,0 +1,467 @@
+{
+  "compound_commit": "3ab9db8a2e159a91a24aad006dee5e96c627c98a",
+  "compound_version": "0.16.45",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "reasoning_effort": "high",
+  "output_cap": 32768,
+  "schedule": [
+    [
+      0,
+      0,
+      "with"
+    ],
+    [
+      0,
+      0,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "with"
+    ]
+  ],
+  "sequences": [
+    {
+      "fixture": "flask-ipv6-session",
+      "fixture_head": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b",
+      "tasks": [
+        {
+          "name": "flask-ipv6-session",
+          "prompt": "Our tests use the Flask test client with base_url=\"http://[::1]:8000/\". A value we set inside client.session_transaction(base_url=...) never reaches the app: the next client.get(\"/\", base_url=...) sees an empty session. With base_url \"http://localhost:8000/\" the same test passes. Fix the bug and add a regression test that fails before this change. Preserve existing fixes and tests."
+        },
+        {
+          "name": "flask-ipv6-run",
+          "prompt": "Our Flask app sets SERVER_NAME to \"[::1]:8080\" so the development server listens on IPv6 localhost, but app.run() crashes before the server starts with \"ValueError: invalid literal for int() with base 10: ':1]:8080'\". With SERVER_NAME set to \"localhost:8080\" it starts fine. Fix the bug and add a regression test that fails before this change. Preserve existing fixes and tests."
+        }
+      ]
+    }
+  ],
+  "caching": "Provider cache not reset.",
+  "billing_policy": "Every attempt and repair counted. Request guards before dispatch. An in-flight response can cross a dollar guard.",
+  "total_max_allowance_usd": "0.12",
+  "per_arm_max_allowance_usd": "0.06",
+  "max_allowance_per_run_usd": "0.04",
+  "total_max_requests": 96,
+  "per_arm_max_requests": 48,
+  "max_requests_per_run": 24,
+  "max_requests_per_repair": 16,
+  "max_repairs_per_stage": 1,
+  "followup_policy": "One repair or recovery after an incorrect artifact, with independent feedback. Correct artifact accepted without requiring final prose.",
+  "flask_input_hashes": {
+    "fixture_sha256": "8037c27a8d61f9e6b55135008221ed3721640c032fed9fb1dd92a4c377243d48",
+    "grader_sha256": "f9813ab76d3a046eb861ffd30ea8f21436dd62223260c80fd2c9a6b4999ccd94"
+  },
+  "profile_hashes": {
+    "without": "a5c4423ec07d2154e66606d3070b2aee4db008fc4086d8a13ee669168c57ef2d",
+    "with": "95d0578914fb72c9b24f1d9c37eb0b3a4da36ff103853c2fd350d01f19fdd715"
+  },
+  "instruction_hashes": {
+    "without": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "with": "b9fcb7e81800c625fbeb423260ca9f42fbc58e9fefc2787d6ff14f6923fed617"
+  },
+  "runner_sha256": "b8e684a6e49b6882e97d65e3cb09de7c8e789ea654918a3deb0a3c3b0d069261",
+  "meter_sha256": "1afa45b11bb4331cc1d4a1fd2429578c3800d0b7db4b3046a5715861275e7364",
+  "verdict_sha256": "b58b7b7d3d09e65f5b8982c7c02dbc29dd9b46f981fd069280d7a6d121c8346a",
+  "docker_image_id": "sha256:b529c5f2f2f4d903d256b495313ab527256743fd2d2861bf006609eeda95d57b",
+  "remote_python_version": "Python 3.13.5",
+  "remote_node_version": "22.19.0",
+  "task_scope": "Two adjacent upstream Flask bugs in both modes, each starting at the same scrubbed checkout.",
+  "success_policy": "Independent cumulative acceptance, including regression on original source, both suites and retained original tests. Every billed response must report valid usage.",
+  "decision_policy": "Both arms must accept both tasks. Compound must have strictly lower total Go allowance and list-price usage, with no increase in cash charges.",
+  "schema": "compound-flask-sequence-comparison-1",
+  "date": "2026-11-04",
+  "plan_sha256": "80f5038402037042cfe5708ca94c8ae6db23fda380bd5b75da11d059e021ed31",
+  "attempts": [
+    {
+      "index": 0,
+      "stage": 0,
+      "task": "flask-ipv6-session",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "plan_sha256": "80f5038402037042cfe5708ca94c8ae6db23fda380bd5b75da11d059e021ed31",
+      "prompt_sha256": "4aeeedf89c2a7f4a1339dd27f4cdc9714b660d4f7542485ae2f08bc6acf04901",
+      "requests": 20,
+      "tool_calls": 27,
+      "costs": {
+        "allowance": "0.00418366",
+        "list_cost": "0.00697279",
+        "cost": "0"
+      },
+      "valid_usage": true,
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 0.57s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "492 passed in 0.57s"
+          }
+        },
+        "regression_tests": [
+          "tests/test_testing.py::test_session_transactions_ipv6_base_url"
+        ],
+        "removed_tests": [],
+        "weakened_tests": []
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "timed_out": false,
+      "budget_stopped": false,
+      "artifact_sha256": "b0ead6f977e6a3a1f0761178333dcf3c81b91932b2cfb496e0f8972188452ec0",
+      "previous_artifact_sha256": null,
+      "resumed": false,
+      "input_tokens": 272803,
+      "cached_input_tokens": 256512,
+      "completion_tokens": 6266,
+      "reasoning_tokens_reported": 3571,
+      "record_sha256": "de5c4eb9a3d3bc6dbd7f8a2cf74963790c3bd6ea7b8f8bfdd3ced5ab91c6c1a7",
+      "events_sha256": "582f88f7005ce6ee64a090ef87c76845e3839df83e2a6d3c6331a6b98dc0f225",
+      "meter_sha256": "4f6fb945052940a4038907f4fe92a408e75e1564c67d600b5dd90dc7d8fb2a4e",
+      "wall_seconds": "121.87"
+    },
+    {
+      "index": 1,
+      "stage": 0,
+      "task": "flask-ipv6-session",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "plan_sha256": "80f5038402037042cfe5708ca94c8ae6db23fda380bd5b75da11d059e021ed31",
+      "prompt_sha256": "4aeeedf89c2a7f4a1339dd27f4cdc9714b660d4f7542485ae2f08bc6acf04901",
+      "requests": 21,
+      "tool_calls": 25,
+      "costs": {
+        "allowance": "0.00505033",
+        "list_cost": "0.00841723",
+        "cost": "0"
+      },
+      "valid_usage": true,
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 0.78s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "492 passed in 0.57s"
+          }
+        },
+        "regression_tests": [
+          "tests/test_testing.py::test_session_transactions_ipv6_host"
+        ],
+        "removed_tests": [],
+        "weakened_tests": []
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "timed_out": false,
+      "budget_stopped": false,
+      "artifact_sha256": "041ccd7542ff0c91a29957c060e0f5882a7096d9d6dbeb109bceeb35c82623d8",
+      "previous_artifact_sha256": null,
+      "resumed": false,
+      "input_tokens": 322502,
+      "cached_input_tokens": 298240,
+      "completion_tokens": 6472,
+      "reasoning_tokens_reported": 3490,
+      "record_sha256": "c5912e35c6f7b04e312fd2c42e851ab0d5ba6595c1cfa5e07e56bdaaff4f12f0",
+      "events_sha256": "eb87434ebf4d3dc3e874a95c011beb2f457407d9a6b4366cab3a74aded2abe43",
+      "meter_sha256": "0726c635fa1f16e45345da051f0d1e6bc97c01ad1f8b8be6850e2a19132dc141",
+      "wall_seconds": "115.50"
+    },
+    {
+      "index": 2,
+      "stage": 1,
+      "task": "flask-ipv6-run",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "plan_sha256": "80f5038402037042cfe5708ca94c8ae6db23fda380bd5b75da11d059e021ed31",
+      "prompt_sha256": "14e76ad5b4df2d1365bac2aa00db52d8d05befa270e86d6a72ac4845c605ab3b",
+      "requests": 17,
+      "tool_calls": 21,
+      "costs": {
+        "allowance": "0.00578961",
+        "list_cost": "0.00964936",
+        "cost": "0"
+      },
+      "valid_usage": true,
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 0.57s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "493 passed in 0.57s"
+          },
+          "previous": {
+            "ok": true,
+            "summary": "492 passed in 0.58s"
+          }
+        },
+        "regression_tests": [
+          "tests/test_basic.py::test_run_from_config[None-None-[::1]:8080-::1-8080]"
+        ],
+        "removed_tests": [],
+        "weakened_tests": []
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "timed_out": false,
+      "budget_stopped": false,
+      "artifact_sha256": "b5e5714b7880ec405b4ac911529574671cf88a11e787d04c73d0461fbb6ea6eb",
+      "previous_artifact_sha256": "041ccd7542ff0c91a29957c060e0f5882a7096d9d6dbeb109bceeb35c82623d8",
+      "resumed": true,
+      "input_tokens": 598854,
+      "cached_input_tokens": 577152,
+      "completion_tokens": 7771,
+      "reasoning_tokens_reported": 5043,
+      "record_sha256": "29433a50dc24c432b0014ae9433846fd23faf70cddcda9133180d1f76d84095c",
+      "events_sha256": "a2671676e0216e88572b52a82da772771bb8bbc9e7076dc891d602fbe6a69a64",
+      "meter_sha256": "1cde7a6d8b56292a6e1e9df9c44bf6fc48552b5e622ca9144ff629a61f3a9275",
+      "wall_seconds": "141.38"
+    },
+    {
+      "index": 3,
+      "stage": 1,
+      "task": "flask-ipv6-run",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "plan_sha256": "80f5038402037042cfe5708ca94c8ae6db23fda380bd5b75da11d059e021ed31",
+      "prompt_sha256": "14e76ad5b4df2d1365bac2aa00db52d8d05befa270e86d6a72ac4845c605ab3b",
+      "requests": 23,
+      "tool_calls": 27,
+      "costs": {
+        "allowance": "0.00584869",
+        "list_cost": "0.00974781",
+        "cost": "0"
+      },
+      "valid_usage": true,
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 0.56s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "493 passed in 0.65s"
+          },
+          "previous": {
+            "ok": true,
+            "summary": "492 passed in 0.58s"
+          }
+        },
+        "regression_tests": [
+          "tests/test_basic.py::test_run_from_config_ipv6"
+        ],
+        "removed_tests": [],
+        "weakened_tests": []
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "final_message_present": true,
+      "timed_out": false,
+      "budget_stopped": false,
+      "artifact_sha256": "bb1228679fa0281eb0e8916864546ecdd1c8230204d6f7f0e2f6273e79461945",
+      "previous_artifact_sha256": "b0ead6f977e6a3a1f0761178333dcf3c81b91932b2cfb496e0f8972188452ec0",
+      "resumed": true,
+      "input_tokens": 812674,
+      "cached_input_tokens": 797568,
+      "completion_tokens": 8482,
+      "reasoning_tokens_reported": 5217,
+      "record_sha256": "cf440249e6246be5aeec771a83b2c44b54ed55f729d3599bd192f151f91b3a0d",
+      "events_sha256": "d54ae9e7df34180d3c912bb20905253177d61b2e57b03486b85252b955be4a36",
+      "meter_sha256": "30a327d09e3bb6a83cd43cc037141df593745a4d4d49ba6ebe6ab1d2ab3ff229",
+      "wall_seconds": "153.40"
+    }
+  ],
+  "summary": {
+    "valid": true,
+    "claim": true,
+    "complete": true,
+    "compound_cheaper": true,
+    "errors": [],
+    "arms": {
+      "without": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00505033",
+              "list_cost": "0.00841723",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00578961",
+              "list_cost": "0.00964936",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.01083994",
+          "list_cost": "0.01806659",
+          "cost": "0"
+        },
+        "requests": 38,
+        "input_tokens": 921356,
+        "cached_input_tokens": 875392,
+        "completion_tokens": 14243,
+        "reasoning_tokens_reported": 8533,
+        "wall_seconds": "256.88"
+      },
+      "with": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00418366",
+              "list_cost": "0.00697279",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00584869",
+              "list_cost": "0.00974781",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.01003235",
+          "list_cost": "0.01672060",
+          "cost": "0"
+        },
+        "requests": 43,
+        "input_tokens": 1085477,
+        "cached_input_tokens": 1054080,
+        "completion_tokens": 14748,
+        "reasoning_tokens_reported": 8788,
+        "wall_seconds": "275.27"
+      }
+    }
+  },
+  "total_experiment_requests": 81,
+  "total_experiment_costs": {
+    "allowance": "0.02087229",
+    "list_cost": "0.03478719",
+    "cost": "0"
+  },
+  "scope": "One sequence per mode. Two consecutive upstream Flask IPv6 fixes from identical checkouts. Each mode keeps its source changes and conversation for the second task. Provider caches were not reset.",
+  "allowance_reduction_pct": "7.4501",
+  "session_audit": [
+    {
+      "arm": "without",
+      "routing_present": false,
+      "same_session_resumed": true,
+      "accepted_first_artifact_carried_forward": true,
+      "available_tools": [
+        "bash",
+        "edit",
+        "exit_plan_mode",
+        "glob",
+        "grep",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "read",
+        "read_image",
+        "search_skills",
+        "send_message",
+        "skill",
+        "todo_write",
+        "write"
+      ]
+    },
+    {
+      "arm": "with",
+      "routing_present": true,
+      "same_session_resumed": true,
+      "accepted_first_artifact_carried_forward": true,
+      "available_tools": [
+        "bash",
+        "edit",
+        "exit_plan_mode",
+        "glob",
+        "grep",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "read",
+        "read_image",
+        "search_skills",
+        "send_message",
+        "skill",
+        "todo_write",
+        "write"
+      ]
+    }
+  ]
+}
