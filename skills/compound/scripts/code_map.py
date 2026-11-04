@@ -363,6 +363,7 @@ def _language(rel: str) -> str | None:
     if name == "dockerfile" or name.startswith("dockerfile."):
         return "config"
     return None if name in NON_CODE_NAMES else LANGUAGES.get(suffix)
+@functools.lru_cache(maxsize=MAX_FILES)
 def _entry_config(rel: str) -> bool:
     name = PurePosixPath(rel).name.lower()
     return name in CONFIG_NAMES or name == "dockerfile" or name.startswith("dockerfile.")
@@ -1045,6 +1046,12 @@ def _name_terms(name: str) -> frozenset[str]:
     return frozenset(_stem(part) for part in _word_parts(name))
 
 
+@functools.lru_cache(maxsize=MAX_FILES)
+def _symbol_name_terms(names: tuple[str, ...]) -> frozenset[str]:
+    """Reuse a bounded symbol vocabulary while its names are unchanged."""
+    return frozenset().union(*(_name_terms(name) for name in names))
+
+
 def _query_terms(query: str) -> tuple[list[str], bool]:
     """Return the distinct folded query words that can name a file, and whether the query is about tests."""
     words = list(_identifier_words(_identifier_tokens(query)))
@@ -1119,7 +1126,10 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         return _rank_unfocused(records, by_path, reverse)
     exact_path = query.removeprefix("./")
     path_terms = {path: _name_terms(path) for path in by_path}
-    symbol_terms = {path: frozenset().union(*(_name_terms(symbol["name"]) for symbol in record["symbols"])) for path, record in by_path.items()}
+    symbol_terms = {
+        path: _symbol_name_terms(tuple(symbol["name"] for symbol in record["symbols"]))
+        for path, record in by_path.items()
+    }
     occurrences = {
         term: sum(term in path_terms[path] or term in symbol_terms[path] for path in by_path)
         for term in terms

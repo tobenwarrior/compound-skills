@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.41 (2026-11-04)
+
+- Reuse file classification and symbol-name terms across map queries. On pinned Django, median ranking CPU fell 17–32% across five warm queries with identical ranked paths and source reads. [Local ranking measurements](bench/README.md#profile-local-map-queries)
+
 ## 0.16.40 (2026-11-04)
 
 - Refresh existing project or global routing after an upgrade with `compound refresh` or `compound refresh global`. Status points stale installations to the new action. Refresh leaves setup and repository assessment for explicit setup requests.
