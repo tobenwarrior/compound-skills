@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.52 (2026-11-04)
+
+- Start reviews from the diff. Use a reproduction only for a specific unresolved finding or a required check, with permission established before scratch setup. [Saved review replay](bench/README.md#source-first-review-trace-replay)
+
 ## 0.16.51 (2026-11-04)
 
 - Show the indexed definition of a bare, unambiguous symbol directly in CLI summaries. [Pinned replay](bench/README.md#exact-symbol-agent-summaries)

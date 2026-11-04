@@ -50,7 +50,7 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Review diffs, callers and tests. Probe unresolved findings when permitted. After denial, source only. "
+    "Review diff first. Follow relevant callers/tests. Probe gaps when permitted. After denial, source only. "
     "Use required native Read before edits. Bugs require a targeted failing regression before source edits, "
     "then the full suite. Extra checks need project requirements or evidence gaps. For scoped extractions, "
     "cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch independent "
