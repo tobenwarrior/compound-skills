@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.15 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.16 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -282,7 +282,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
 
-> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: one defect-specific failing regression is the reproduction before source edits; run the final full suite. Refactors: preserve differing caller policies explicitly; characterize callers before baseline; compare afterwards. Use documented test commands; inspect setup errors before retrying. Omit AI co-author/generated-by commit lines. Read narrowly; honor current-turn read/edit prerequisites. For refactors, new features, performance work and PR authoring, load installed Compound Skills `compound` via available tools; read needed references. Follow project instructions and user scope. Report checks/limits and Compound load failures.
+> Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after denial, stop repro work and continue from source. Bug fixes: one defect-specific failing regression is the reproduction before source edits; run the final full suite. Refactors: preserve differing caller policies explicitly; characterize callers before baseline; compare afterwards. Use documented test commands; inspect setup errors before retrying. Prevent untracked test outputs with supported options. Omit AI co-author/generated-by commit lines. Read narrowly; honor current-turn read/edit prerequisites. For refactors, new features, performance and PR authoring, load `compound`; read relevant references. Follow project instructions and user scope. Report checks/limits and Compound load failures.
 
 ### Commits
 

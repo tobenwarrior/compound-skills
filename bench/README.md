@@ -34,6 +34,8 @@ The preflight requires the original bug, an unfixed refactor, a behavior-changin
 
 In a prepared run directory, copy `yharness_verdict.py` beside the runner and use `python3 -B run.py --summary` to evaluate saved usage and grades. It does not dispatch requests. The fixture preflight needs neither a run directory nor a provider key.
 
+The [saved Dispatchkit trace audit](diagram_sources/work_review_dispatch_v01615.json) separates the two stages. The bug-fix runs reported 25.5% versus 85.9% cached input without and with Compound. On the follow-up refactor, cached input shares were closer at 90.8% and 94.0%. Compound used 13 versus 9 requests on the refactor, with 2,479 versus 6,762 reported reasoning tokens and lower billed allowance. The audit identifies extra searches and generated-file cleanup in that run, retains every charge and makes no estimate for a different cache state.
+
 ## Compare a change with main
 
 ```bash

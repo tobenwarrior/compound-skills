@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.16 (2026-11-04)
+
+- Start with known files and keep searches inside the checkout. Use existing caller assertions to identify coverage gaps, add the missing cases, then run one baseline before source edits. Batch the helper and caller changes after that baseline.
+- Prevent untracked test byproducts with supported options. The saved Dispatchkit refactor spent two requests checking and removing Python bytecode from earlier test runs. The same fixture tests pass with `python -B` and create no bytecode in a clean copy. Refresh saved project or global rules to pick up this instruction.
+- The [saved work audit](bench/diagram_sources/work_review_dispatch_v01615.json) records the extra searches, early test run and cleanup alongside the measured cache and reasoning differences. These changes have offline checks. Model cost for 0.16.16 has yet to be measured.
+
 ## 0.16.15 (2026-11-04)
 
 - Use one workflow guide for a behavior-preserving extraction. Read the matching guide with the initial source batch, and open Verify only for independent verification or a specific evidence gap. Retain the passing baseline, final caller checks and required project checks.

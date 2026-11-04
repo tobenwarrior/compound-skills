@@ -54,11 +54,11 @@ BLOCK_LINES = (
     'denial, stop repro work and continue from source. Bug fixes: one defect-specific failing regression '
     'is the reproduction before source edits; run the final full suite. Refactors: preserve differing '
     'caller policies explicitly; characterize callers before baseline; compare afterwards. Use documented '
-    'test commands; inspect setup errors before retrying. Omit AI co-author/generated-by commit lines. '
+    'test commands; inspect setup errors before retrying. Prevent untracked test outputs with supported '
+    'options. Omit AI co-author/generated-by commit lines. '
     'Read narrowly; honor current-turn read/edit prerequisites. For refactors, new features, performance '
-    'work and PR authoring, load installed Compound Skills `compound` via available tools; read needed '
-    'references. Follow project instructions and user scope. Report checks/limits and Compound load '
-    'failures.',
+    'and PR authoring, load `compound`; read relevant references. Follow project instructions and user '
+    'scope. Report checks/limits and Compound load failures.',
     END_MARKER,
 )
 
