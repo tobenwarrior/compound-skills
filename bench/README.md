@@ -63,6 +63,16 @@ python3 bench/bench.py report --label my-change --baseline main
 
 Add `--models opus,sonnet` to cover both models. Each model gets its own tables, because a change can help one and not the other.
 
+## Installed plugin smoke test
+
+With Codex CLI, Claude Code and Python 3.11 on your path:
+
+```sh
+python3.11 -B bench/smoke_plugin_install.py --ref HEAD
+```
+
+The check installs a Git archive through each host's local marketplace in a temporary home. From the installed copy it checks the five skill files, global setup, status, idempotence and removal, plus a read-only map and the local viewer's HTML and CSS. It preserves an existing instruction and checks paths containing spaces. It uses no model calls. Pass `--host codex` or `--host claude` for one host. The 0.16.29 check used Codex CLI 0.162.1, Claude Code 2.1.312 and Python 3.11.15.
+
 ## Audit costs without new runs
 
 ```bash

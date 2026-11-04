@@ -378,8 +378,7 @@ def _host_home(name: str) -> Path:
 def _installed_hosts() -> tuple[tuple[str, ...], tuple[str, ...]]:
     """The apps whose configuration folder exists, and a note for each one skipped.
 
-    Enabling without --host sets up only these, so a machine without Codex or Cursor gets no files or settings for
-    them; --host names one app, and --host all sets up every app even before its folder exists.
+    Default setup and status use these apps. --host names one app, and --host all selects every supported host.
     """
     selected: list[str] = []
     notes: list[str] = []
@@ -388,7 +387,7 @@ def _installed_hosts() -> tuple[tuple[str, ...], tuple[str, ...]]:
         if home.is_dir():
             selected.append(name)
         else:
-            notes.append(f"Skipped {HOST_LABELS[name]}: {home} does not exist; add --host {name} to set it up anyway.")
+            notes.append(f"Skipped {HOST_LABELS[name]}: {home} does not exist. Use --host {name} to select it explicitly.")
     return tuple(selected), tuple(notes)
 
 
@@ -931,9 +930,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         global_context: GlobalContext | None = None
         try:
             skipped: tuple[str, ...] = ()
-            if args.host is None and action == "enable":
+            if args.host is None and action in {"enable", "status"}:
                 host_names, skipped = _installed_hosts()
-                if not host_names:
+                if action == "enable" and not host_names:
                     raise SetupError("no Claude Code, Codex or Cursor configuration folder found; add --host to choose an app")
             else:
                 host_names = GLOBAL_HOST_NAMES if args.host in (None, "all") else (args.host,)

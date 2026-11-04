@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.29 (2026-11-04)
+
+- Global status checks the apps selected by default setup. A configured Codex-only or Claude-only installation reports enabled. Use `--host all` to inspect every supported host.
+- Add a keyless install smoke test that installs a Git archive with both CLIs, exercises saved routing and opens the local viewer with Python 3.11. [Install smoke test](bench/README.md#installed-plugin-smoke-test).
+
 ## 0.16.28 (2026-11-04)
 
 - Let agent map requests resume when the index check finishes instead of sleeping between status requests. Keep a bounded wait and signal completion after queued refreshes finish.
