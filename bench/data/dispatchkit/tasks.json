@@ -1,0 +1,10 @@
+[
+  {
+    "name": "encoded-route-bug",
+    "prompt": "A partner's webhook delivery reaches the dispatcher with its route URL-encoded. A registered handler works for /hooks/acme/billing, but the equivalent request sent as /hooks/acme%2Fbilling?source=partner returns 404. Fix the behavior and add a new regression test that fails on the original code. Preserve the existing tests."
+  },
+  {
+    "name": "share-event-packaging",
+    "prompt": "publish.py and replay.py each build an event envelope with their own helper (_make_envelope and _replay_envelope). Add one shared package_event operation in a new dispatchkit/packaging.py module and use it from both callers. Keep live publishing at attempt 1 and mode live, even if the input contains another attempt. Replay must preserve a recorded attempt, default a missing attempt to 0, and use mode replay. Keep each caller's validation and error messages. Remove the duplicated helpers and preserve the existing tests."
+  }
+]

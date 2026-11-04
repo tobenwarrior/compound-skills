@@ -18,6 +18,22 @@ The [0.16.12 comparison](diagram_sources/comparison_v01612_completion.json) reco
 
 The current `yharness_completion.py` is a launcher for a prepared run directory with a frozen plan, Y Harness profile, isolated workspaces, grader and meter. The repository alone does not contain those run directories or private transcripts. Before dispatching a later attempt, the launcher checks prior attempts for complete grading and usage. It rejects duplicate or missing dispatch numbers and does not turn unreported usage into a zero charge.
 
+#### Fresh dispatchkit sequence
+
+[Dispatchkit](data/dispatchkit/tasks.json) is a small, dependency-free Python workload with two consecutive changes. The first reports a webhook routing symptom without naming a file or function. The second asks for a shared helper while preserving two caller policies. Each mode starts from the same clean fixture. Its code and conversation carry forward between tasks, with opposite mode order on the second task.
+
+The grader runs both tasks' hidden checks after the refactor, runs the original tests against the changed source, and checks the agent's final test suite and retained original tests. It also reruns the added bug regression on the original source and requires a failure. Only the fixture goes into either agent workspace. The hidden checks and the preserving and wrong variants stay outside the agent workspaces.
+
+Run the fixture and grading preflight without a model or Docker:
+
+```sh
+python3 -B bench/yharness_dispatch.py --validate bench/data/dispatchkit
+```
+
+The preflight requires the original bug, an unfixed refactor, a behavior-changing extraction and a lost earlier fix to fail. It requires the independently written fixes to pass. Any live run uses the same settings and one repair or recovery opportunity per task in both modes. The verdict uses every recorded attempt and requires both modes to finish both tasks before comparing allowance, list-price usage and cash charges.
+
+In a prepared run directory, copy `yharness_verdict.py` beside the runner and use `python3 -B run.py --summary` to evaluate saved usage and grades. It does not dispatch requests. The fixture preflight needs neither a run directory nor a provider key.
+
 ## Compare a change with main
 
 ```bash

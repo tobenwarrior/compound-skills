@@ -2,8 +2,11 @@ from pathlib import Path
 from decimal import Decimal
 import os,sys,json,subprocess,shutil,time,signal,tarfile,hashlib
 BASE=Path(__file__).resolve().parent
-PLAN=json.loads((BASE/'plan.json').read_text())
-assert hashlib.sha256((BASE/'plan.json').read_bytes()).hexdigest()==(BASE/'plan.sha256').read_text().strip()
+PLAN_BYTES = (BASE / 'plan.json').read_bytes()
+PLAN_SHA256 = hashlib.sha256(PLAN_BYTES).hexdigest()
+if PLAN_SHA256 != (BASE / 'plan.sha256').read_text().strip():
+    raise RuntimeError('Benchmark plan hash mismatch')
+PLAN = json.loads(PLAN_BYTES)
 
 def rows(path):return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
 def records():
@@ -16,6 +19,8 @@ def records():
         if not record_path.is_file():
             raise RuntimeError(f'Incomplete attempt folder: {folder.name}')
         record = json.loads(record_path.read_text())
+        if record.get('plan_sha256') != PLAN_SHA256:
+            raise RuntimeError(f'Invalid prior attempt {folder.name}: benchmark plan hash mismatch')
         requests = request_rows(folder)
         if record.get('requests') != len(requests):
             raise RuntimeError(f'Invalid prior attempt {folder.name}: request count mismatch')
@@ -33,7 +38,7 @@ def totals(items):
 
 def grade(project,stage):
  args=['docker','run','--rm','--read-only','--network','none','--cap-drop','ALL','--security-opt','no-new-privileges','--cpus','2','--memory','512m','--pids-limit','128','--tmpfs','/tmp:rw,nosuid,size=128m']
- for src,dst in [(project,'/input/project'),(BASE/'fixtures/shopkit','/input/original'),(BASE/'grader','/grader')]:args+=['--mount',f'type=bind,source={src},target={dst},readonly']
+ for src,dst in [(project,'/input/project'),(BASE/'fixtures'/PLAN['sequences'][0]['fixture'],'/input/original'),(BASE/'grader','/grader')]:args+=['--mount',f'type=bind,source={src},target={dst},readonly']
  args+=['--entrypoint','/usr/bin/python3',PLAN['docker_image_id'],'-B','/grader/grade.py',str(stage)]
  result=subprocess.run(args,text=True,capture_output=True,timeout=90)
  if result.returncode:raise RuntimeError('Independent grader failed: '+result.stderr[-3000:])
@@ -110,7 +115,7 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None):
  valid=valid_usage_rows(req)
  known=known_costs(req)
  sessions=[e for e in events if e.get('type')=='session'];finals=[e for e in events if e.get('type')=='final']
- record={'schema':'compound-live-attempt-1','index':index,'stage':stage,'task':task,'arm':arm,'attempt':attempt,'attempt_kind':attempt_kind or ('initial' if not attempt else 'semantic_repair'),'requests':len(req),'tool_calls':sum(e.get('type')=='tool_call' for e in events),'known_costs':known,'costs':known if valid else {k:None for k in known},'valid_usage':valid,'exit_code':code,'timed_out':timed_out,'budget_stopped':any(r.get('event')=='budget_stop' for r in meter),'session_id':sessions[0]['sessionId'] if sessions else session,'resumed':bool(session),'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),'plan_sha256':(BASE/'plan.sha256').read_text().strip(),'wall_seconds':time.monotonic()-started}
+ record={'schema':'compound-live-attempt-1','index':index,'stage':stage,'task':task,'arm':arm,'attempt':attempt,'attempt_kind':attempt_kind or ('initial' if not attempt else 'semantic_repair'),'requests':len(req),'tool_calls':sum(e.get('type')=='tool_call' for e in events),'known_costs':known,'costs':known if valid else {k:None for k in known},'valid_usage':valid,'exit_code':code,'timed_out':timed_out,'budget_stopped':any(r.get('event')=='budget_stop' for r in meter),'session_id':sessions[0]['sessionId'] if sessions else session,'resumed':bool(session),'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),'plan_sha256':PLAN_SHA256,'wall_seconds':time.monotonic()-started}
  (out/'record.json').write_text(json.dumps(record,indent=2)+'\n')
  result=grade(BASE/'active'/arm,stage)
  record.update(grade=result,accepted=result['success'] and valid,native_exit_success=code==0,final_message_present=bool(finals),final=finals[-1] if finals else None)
@@ -146,5 +151,10 @@ def run(index):
   record=invoke(index,stage,arm,1,feedback,record['session_id'],attempt_kind=kind)
  print('STAGE_DONE',index,arm,record['accepted'],flush=True)
 
-if __name__=='__main__':
- for index in map(int,sys.argv[1:]):run(index)
+if __name__ == '__main__':
+    if sys.argv[1:] == ['--summary']:
+        from yharness_verdict import evaluate
+        print(json.dumps(evaluate(PLAN, records()), indent=2))
+    else:
+        for index in map(int, sys.argv[1:]):
+            run(index)
