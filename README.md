@@ -24,10 +24,10 @@ Use Compound when a change needs evidence that behavior is preserved: a failing 
 
 - **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
 - **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
-- **File discovery:** the map found 74% of changed source files in its top four, versus 67% for a word search that also skips common words and lists tests last, over 240 held-out commits. [Map evidence](#does-it-find-the-files-a-change-touches).
+- **Code navigation:** Compound’s map used **8.6% less Go allowance** on three read-only Django and Flask tasks, with all ten citations correct in both modes. [Matched navigation results](#navigation-cost-on-django-and-flask).
 - **Cost.** Two upstream Flask fixes used 7.5% less Go allowance overall with Compound. The earlier Dispatchkit sequence used 10.3% less overall, and the invoicekit bug-fix sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
 
-The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7, 0.16.31 and 0.16.45 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
+The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7, 0.16.31, 0.16.45 and 0.16.57 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
 
 **What changes on your machine:** `setup-global` installs Compound's default routing in supported hosts and Claude Code allow rules for its own guides and map query. The map uses a user cache outside your repository and a service on `127.0.0.1:43127`; its scripts connect only to loopback. Project cleanup runs only when you explicitly request `setup`. Commits follow project conventions and omit AI co-author/generated-by lines. [Installation and removal details](#what-it-changes-on-your-machine).
 
@@ -245,6 +245,16 @@ Warm summaries took a median **110 ms on Flask** and **355 ms on Django** in a l
 
 Short summaries prioritize complete file paths before symbol detail. The map can spend part of its existing byte budget looking deeper when evidence is missing. [Summary coverage](bench/README.md#focused-summary-coverage) · [Source-only lookups](bench/README.md#source-only-map-lookups) · [Mixed-keyword lookups](bench/README.md#mixed-keyword-lookups)
 
+### Navigation cost on Django and Flask
+
+Three tasks traced Django’s ASGI disconnect handling, Django’s row locks, and Flask’s request context during streaming. Each mode used the same pinned source, task prompt, read-only tools and DeepSeek V4.1 Flash settings in Y Harness. Each task started a fresh session. The treatment received the Compound 0.16.57 map summary alongside the prompt.
+
+![Three matched navigation tasks. Go allowance was $0.00389500 without Compound and $0.00355966 with the map. Both modes got 10/10 source citations right.](.github/assets/benchmark-navigation-v01657.svg)
+
+Without Compound, the three tasks used **$0.00389500** in Go allowance and **$0.00649165** at API list price across **15 requests**. With the map, they used **$0.00355966** and **$0.00593276** across **10 requests**. Both modes passed all three tasks on their first attempts and incurred $0 in additional cash charges. Disconnect handling cost more with the map. Row locks and Flask streaming cost less. [All attempts, usage and grades](bench/diagram_sources/comparison_navigation_v01657.json)
+
+Provider caching was left in its normal state. Cached input was 74.2% without the map and 61.5% with it. The grader checks the paths, symbols and lines for ten source statements. This comparison covers one attempt per task and mode. [Workload and method](bench/README.md#multi-step-navigation-preflight)
+
 ### Does it find the files a change touches?
 
 **Without Compound: 67%. With Compound's map: 74%.** This is the average share of a commit's changed source files present in the top four results, over 240 held-out commits from Flask, Click, Hono and Gin. Both modes use the same commit title and parent snapshot. The control skips common words and lists tests last, so it is the stronger saved word-search baseline.
@@ -253,7 +263,7 @@ Short summaries prioritize complete file paths before symbol detail. The map can
 
 The map combines path and symbol matches, bounded content reads and import connections. This result is **7 percentage points more file recall**, not a measured coding-task speedup. Gains were small on Click and Gin; the control already found many targets. The snapshots had no history, so co-change hints contributed nothing. [Ranking method, per-repository results and weaker controls](bench/historical-comparisons.md#map-file-ranking).
 
-The saved agent map ablation mostly used tasks that named the files to edit. Removing the query changed little and reduced cost by about 2%, within noise. It neither establishes a large navigation benefit nor diagnoses a broken map. An unknown-file, multi-hop task would test that benefit more directly; it has not been measured here. [Map ablation](bench/historical-comparisons.md#does-the-map-query-pay-for-itself).
+The earlier map ablation mostly used tasks that named the files to edit. Removing the query reduced cost by about 2%, within the noise of that sample. [Map ablation](bench/historical-comparisons.md#does-the-map-query-pay-for-itself).
 
 ## Limits
 
@@ -266,7 +276,7 @@ The saved agent map ablation mostly used tasks that named the files to edit. Rem
 - **The habit measures are Compound's own checklist,** and the plain rule names them too; the outcomes are what tests and the judge measured.
 - **The judge** is Claude Opus 5.5, also one of the agents under test.
 - **Other plugins** were measured only against 0.14.0, as we set them up, on tasks of our choosing, and the benchmark's author also wrote Compound; their larger workflows were not tested.
-- **The map's** effect on outcomes was too small to measure; its ranking was tuned on other Flask, Click and Hono commits.
+- **Map scope.** The metered result covers three read-only citation tasks with prepared map summaries. The earlier coding ablation showed little change. Ranking was tuned on other Flask, Click and Hono commits.
 - **Instructions, not enforcement.** Compound asks the agent; it cannot force it.
 
 ## Reference

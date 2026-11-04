@@ -187,7 +187,9 @@ In 0.16.54, the map shows the response implementation in the Django disconnect s
 
 These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
 
-For a future metered map comparison, prepare the common task prompts and the treatment's initial map context from the pinned sources:
+The [0.16.57 matched navigation comparison](diagram_sources/comparison_navigation_v01657.json) records all six metered attempts. Both modes passed all ten source citations. The two arms matched on every field of the initial provider request outside the task message.
+
+Prepare the common task prompts and the treatment's initial map context from the pinned sources:
 
 ```sh
 mkdir -p bench/results

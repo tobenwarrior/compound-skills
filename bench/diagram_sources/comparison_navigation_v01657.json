@@ -1,0 +1,410 @@
+{
+  "schema": "compound-map-navigation-live-1",
+  "compound_version": "0.16.57",
+  "map_script_sha256": "becd06f1eb38a9386798c5e90057ed3f4f49b7cc8f0c72cdec8760b7f4d47a10",
+  "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+  "model": "deepseek-v4.1-flash",
+  "provider": "opencode-go",
+  "output_cap": 4096,
+  "reasoning_effort": "high",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "schedule": [
+    [
+      0,
+      0,
+      "with"
+    ],
+    [
+      0,
+      0,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "without"
+    ],
+    [
+      0,
+      1,
+      "with"
+    ],
+    [
+      0,
+      2,
+      "with"
+    ],
+    [
+      0,
+      2,
+      "without"
+    ]
+  ],
+  "source_pins": {
+    "django": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+    "flask": "49943b5a94413a530761350f04e896f76e8d620e"
+  },
+  "tasks": [
+    {
+      "id": "django-disconnect",
+      "repo": "django",
+      "source_revision": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "map_sha256": "ccbc84c198ba6d71b87ee6a9aa0dfa5fa3f49ae68664e0c72a7e78d880a3e7aa"
+    },
+    {
+      "id": "django-row-locks",
+      "repo": "django",
+      "source_revision": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "map_sha256": "6a8aeb2d5fb81c29b034218c126d35132a070a282cbe6a2349b48a72316db39a"
+    },
+    {
+      "id": "flask-streaming",
+      "repo": "flask",
+      "source_revision": "49943b5a94413a530761350f04e896f76e8d620e",
+      "map_sha256": "ea81cf85f851053d81d900a0983cac824ba2ff4428ad66e7dc3e93eea0b332a3"
+    }
+  ],
+  "total_max_allowance_usd": "0.08",
+  "attempts": [
+    {
+      "index": 0,
+      "stage": 0,
+      "task": "django-disconnect",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "04564b619821966a0c86412954e85c921eabbafbf658679709a712d06f1a9b77",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 6,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00195459",
+        "list_cost": "0.00325764",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "af05ab57ec249703cbca4789e4bc95877c47010127f9783b0bf64aaa8ac5b821",
+      "started": 3,
+      "completed": 3,
+      "input_tokens": 21568,
+      "cached_input_tokens": 10880,
+      "completion_tokens": 2703,
+      "record_sha256": "3135cba9a8f696dae78c239ac9058ef431d1539edaa09e20effaea877a16112a",
+      "meter_sha256": "485c4c1d352d7f7b49fd686862b7dfe30f506ddef3d34abf762c7628737fb4e6"
+    },
+    {
+      "index": 1,
+      "stage": 0,
+      "task": "django-disconnect",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "cfb9ba034b5c0377bd503f9ef01d498d2a8a6126d0ca9e99a7926f02f9a5cea7",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 12,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00170397",
+        "list_cost": "0.00283996",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "af05ab57ec249703cbca4789e4bc95877c47010127f9783b0bf64aaa8ac5b821",
+      "started": 5,
+      "completed": 5,
+      "input_tokens": 21805,
+      "cached_input_tokens": 16000,
+      "completion_tokens": 3202,
+      "record_sha256": "c4a180ccc31fe5226a43454aaf5bae119c6eb9e426bd245acd4e3a541cd2ce71",
+      "meter_sha256": "3a8cf19b2fed96c89d3b56a41cf0889e5cd7529adf0a0f4010040ea8abe3ff91"
+    },
+    {
+      "index": 2,
+      "stage": 1,
+      "task": "django-row-locks",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "5cb0213fe5814770c698d0c5eeed4fc57f99400e04029529b75e54bf0867f5dc",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 8,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00078793",
+        "list_cost": "0.00131320",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "af05ab57ec249703cbca4789e4bc95877c47010127f9783b0bf64aaa8ac5b821",
+      "started": 4,
+      "completed": 4,
+      "input_tokens": 14744,
+      "cached_input_tokens": 11136,
+      "completion_tokens": 1231,
+      "record_sha256": "ed59f44ed4a943bcdcd17d8b295473c60db0acb32df811c576e85922fdd2c4f6",
+      "meter_sha256": "78cd7e2f39fee55dc02d6c48823daa0e5a6debb780fe075a74f3762ccbf58d42"
+    },
+    {
+      "index": 3,
+      "stage": 1,
+      "task": "django-row-locks",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "c784f56ef8aee878b5cf0167f0ebb2dbfdeb235e40d064e8097d1b5e174dc4d4",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 8,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00073752",
+        "list_cost": "0.00122920",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "af05ab57ec249703cbca4789e4bc95877c47010127f9783b0bf64aaa8ac5b821",
+      "started": 4,
+      "completed": 4,
+      "input_tokens": 16643,
+      "cached_input_tokens": 13184,
+      "completion_tokens": 1118,
+      "record_sha256": "300c3d7cd69c2eeef25ae5b6a4487619a1cedbddfa3152ab1f002c31716335af",
+      "meter_sha256": "42a23c31040560f30bf6b775b2bc834b26e17345bdad47cdc3bb81df022e7092"
+    },
+    {
+      "index": 4,
+      "stage": 2,
+      "task": "flask-streaming",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "ddd97225b11b0576568e37d53127edec716ba195fc969d91885ef23a213ea684",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 6,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00086755",
+        "list_cost": "0.00144592",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "4ec10a445f73bf0d9d9a8b8bec1872f750abbe5d0fcb9c15041ba71781fa41ef",
+      "started": 3,
+      "completed": 3,
+      "input_tokens": 12959,
+      "cached_input_tokens": 7424,
+      "completion_tokens": 989,
+      "record_sha256": "925dbb553d3eddc1262fd7dd908e37d810f2ed6fad3ec508be2eb374cb0543f3",
+      "meter_sha256": "399ecf8321988a492aca27528854eeee969c07561fbe3a46957e863ec9e34f8a"
+    },
+    {
+      "index": 5,
+      "stage": 2,
+      "task": "flask-streaming",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "prompt_sha256": "6ca6abaef4b3f7759eb66122614c272cf288d8f7d1a5674bf7725a60369ab556",
+      "plan_sha256": "5af2b8536cb9b4c05ac371fe6213e047e9132dd0669dfb80ce1765ba23ddb52c",
+      "tool_calls": 10,
+      "valid_usage": true,
+      "costs": {
+        "allowance": "0.00140310",
+        "list_cost": "0.00233849",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": [
+          true,
+          true,
+          true
+        ]
+      },
+      "accepted": true,
+      "native_exit_success": true,
+      "budget_stopped": false,
+      "resumed": false,
+      "request_context_sha256": "4ec10a445f73bf0d9d9a8b8bec1872f750abbe5d0fcb9c15041ba71781fa41ef",
+      "started": 6,
+      "completed": 6,
+      "input_tokens": 33013,
+      "cached_input_tokens": 24448,
+      "completion_tokens": 1634,
+      "record_sha256": "96f236588ac16cdabe1b37e4a84657f28897eb8d5b2c03b7c68861a088309334",
+      "meter_sha256": "a518a04687f6eb13d2a78ecb0ef5fe32d8868fdb266ee4188a681254bbb09473"
+    }
+  ],
+  "summary": {
+    "valid": true,
+    "claim": true,
+    "complete": true,
+    "compound_cheaper": true,
+    "errors": [],
+    "arms": {
+      "without": {
+        "attempts": 3,
+        "stages": [
+          0,
+          1,
+          2
+        ],
+        "accepted_stages": [
+          0,
+          1,
+          2
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00170397",
+              "list_cost": "0.00283996",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00078793",
+              "list_cost": "0.00131320",
+              "cost": "0"
+            }
+          },
+          "2": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00140310",
+              "list_cost": "0.00233849",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.00389500",
+          "list_cost": "0.00649165",
+          "cost": "0"
+        },
+        "requests": 15,
+        "citations_correct": 10,
+        "repairs": 0,
+        "input_tokens": 69562,
+        "cached_input_tokens": 51584,
+        "completion_tokens": 6067
+      },
+      "with": {
+        "attempts": 3,
+        "stages": [
+          0,
+          1,
+          2
+        ],
+        "accepted_stages": [
+          0,
+          1,
+          2
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00195459",
+              "list_cost": "0.00325764",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00073752",
+              "list_cost": "0.00122920",
+              "cost": "0"
+            }
+          },
+          "2": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00086755",
+              "list_cost": "0.00144592",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.00355966",
+          "list_cost": "0.00593276",
+          "cost": "0"
+        },
+        "requests": 10,
+        "citations_correct": 10,
+        "repairs": 0,
+        "input_tokens": 51170,
+        "cached_input_tokens": 31488,
+        "completion_tokens": 4810
+      }
+    }
+  },
+  "scope": "One fresh, read-only session per task and arm. The treatment receives the prepared Compound map summary with the common task. Provider caches are in their normal state."
+}

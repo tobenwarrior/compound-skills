@@ -468,6 +468,74 @@ def two_change_comparison(source):
     return f'benchmark-{asset}-v{version}.svg', chart.svg()
 
 
+def navigation_comparison(source):
+    """Render source-graded navigation only when the matched cost ledger qualifies."""
+    data = json.loads(source.read_text())
+    labels = (
+        ('django-disconnect', 'Django · ASGI disconnect', 4),
+        ('django-row-locks', 'Django · Row locks', 3),
+        ('flask-streaming', 'Flask · Streaming request context', 3),
+    )
+    if (data['schema'] != 'compound-map-navigation-live-1' or data['provider'] != 'opencode-go'
+            or data['model'] != 'deepseek-v4.1-flash'
+            or [task['id'] for task in data['tasks']] != [case[0] for case in labels]):
+        raise ValueError('Unsupported navigation comparison')
+    plan = {'sequences': [{'tasks': [{'name': case[0]} for case in labels]}],
+            'schedule': data['schedule'], 'plan_sha256': data['plan_sha256']}
+    attempts = data['attempts']
+    summary = data['summary']
+    verified = evaluate(plan, ({**attempt, 'known_costs': attempt['costs']} for attempt in attempts))
+    if not verified['claim'] or any(summary[key] != verified[key] for key in (
+        'valid', 'complete', 'claim', 'compound_cheaper', 'errors',
+    )):
+        raise ValueError('Navigation chart requires lower Compound costs and every task accepted in both modes')
+    for attempt in attempts:
+        checks = attempt['grade']['checks']
+        if (type(attempt['started']) is not int or attempt['started'] < 1 or attempt['started'] != attempt['completed']
+                or len(checks) != labels[attempt['stage']][2] or any(type(check) is not bool for check in checks)
+                or all(checks) != attempt['grade']['success']):
+            raise ValueError('Navigation attempt counts or source grades do not match the ledger')
+    for stage in range(len(labels)):
+        pair = [attempt for attempt in attempts if attempt['stage'] == stage and attempt['attempt'] == 0]
+        hashes = {attempt['request_context_sha256'] for attempt in pair}
+        if len(hashes) != 1 or not isinstance(pair[0]['request_context_sha256'], str) or len(pair[0]['request_context_sha256']) != 64:
+            raise ValueError('Navigation requires matched request context outside the task prompt')
+    arms = []
+    citations = sum(case[2] for case in labels)
+    for mode in ('without', 'with'):
+        arm = summary['arms'][mode]
+        scoped = [attempt for attempt in attempts if attempt['arm'] == mode]
+        if (any(arm[key] != value for key, value in verified['arms'][mode].items())
+                or arm['requests'] != sum(attempt['started'] for attempt in scoped)
+                or arm['repairs'] != sum(attempt['attempt'] == 1 for attempt in scoped)
+                or arm['citations_correct'] != citations):
+            raise ValueError('Navigation arm totals do not reconcile to the recorded attempts')
+        arms.append(arm)
+
+    allowance = [money(arm['totals']['allowance']) for arm in arms]
+    reduction = (1 - allowance[1] / allowance[0]) * 100
+    title = f'Three navigation tasks, {reduction:.1f}% less allowance'
+    description = (
+        f'Without Compound ${allowance[0]:.8f}. With Compound’s map ${allowance[1]:.8f}. '
+        f'Both modes got {citations}/{citations} citations right. All attempts and repairs included.'
+    )
+    chart = Canvas(1160, title, 'MATCHED NAVIGATION', description,
+                   f"Compound {data['compound_version']} · DeepSeek V4.1 Flash through Y Harness")
+    chart.card(24, 158, 992, 250)
+    maximum = max(allowance) * Decimal('1.08')
+    chart.pair(196, allowance, [f'${value:.8f}' for value in allowance], maximum)
+    chart.text(52, 384, f"{citations}/{citations} citations in both modes · {arms[0]['requests']} / {arms[1]['requests']} requests without / with", 16, 'muted')
+    for stage, (_, label, _) in enumerate(labels):
+        y = 428 + stage * 222
+        chart.card(24, y, 992, 206)
+        values = [money(arm['by_stage'][str(stage)]['totals']['allowance']) for arm in arms]
+        chart.pair(y + 34, values, [f'${v:.8f}' for v in values], maximum, label)
+    chart.text(52, 1110, 'Same pinned source and prompt. The treatment receives the map summary.', 17, weight=650)
+    chart.text(52, 1137, 'One fresh session per task and mode. All bars use the same allowance scale.', 15, 'muted')
+    version = data['compound_version'].replace('.', '')
+    return f'benchmark-navigation-v{version}.svg', chart.svg()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Fail if checked-in SVGs differ from their sources')
@@ -478,6 +546,7 @@ def main():
     outputs.update(workflows())
     for family in ('dispatch', 'flask'):
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
+    outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
