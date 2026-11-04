@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.56 (2026-11-04)
+
+- Show up to eight declarations in an exact-file agent summary, including declarations whose names differ from the filename. [Exact-path replay](bench/README.md#exact-path-agent-summaries)
+
 ## 0.16.55 (2026-11-04)
 
 - Use the failing regression as the bug-fix baseline and the full suite as confirmation in the default rule. This covers the same regression without a separate passing run when the full suite includes it. [Saved Flask verification](bench/README.md#consecutive-upstream-flask-fixes)

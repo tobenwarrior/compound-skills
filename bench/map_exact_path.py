@@ -53,16 +53,29 @@ def compare_summaries(old_server, server, root, model, paths, topic):
     pairs = list(zip(services, (module.engine for module in modules), projects))
     rows = []
     for path in paths:
-        (before, _, old), (after, text, new) = [summary(service, engine, project, path) for service, engine, project in pairs]
+        (before, before_text, old), (after, after_text, new) = [
+            summary(service, engine, project, path) for service, engine, project in pairs
+        ]
         old_target = next(file for file in before["files"] if file["path"] == path)
         if (before["focus"][0] != path or after["focus"] != [path] or after["files"] != [old_target]
-                or new["file_rows"] != 1 or new["source_probes"] or ('- ' + json.dumps(path)) not in text):
+                or new["file_rows"] != 1 or new["source_probes"] or ('- ' + json.dumps(path)) not in after_text):
             raise RuntimeError(f"Exact-file summary lost its target or ranked source: {path}")
-        rows.append({"path": path, "before": old, "after": new})
+        declarations = [
+            (symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})"
+            for symbol in old_target["symbols"]
+        ]
+        before_visible = {declaration for declaration in declarations if declaration in before_text}
+        after_visible = {declaration for declaration in declarations if declaration in after_text}
+        if not before_visible <= after_visible or (declarations and not after_visible):
+            raise RuntimeError(f"Exact-file summary lost its outline: {path}")
+        rows.append({"path": path, "before": old, "after": new,
+                     "before_declarations": len(before_visible), "after_declarations": len(after_visible)})
     controls = [topic, "unknowncompoundsymbolzz"]
     for query in controls:
-        old, new = [summary(service, engine, project, query) for service, engine, project in pairs]
-        if old != new:
+        (_, old_text, old), (_, new_text, new) = [
+            summary(service, engine, project, query) for service, engine, project in pairs
+        ]
+        if old != new or old_text != new_text:
             raise RuntimeError(f"Ordinary summary changed: {query}")
     return {"queries": rows, "unchanged_controls": controls}
 

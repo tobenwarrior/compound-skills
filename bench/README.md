@@ -221,7 +221,7 @@ Both rankers use the same map metadata and source checkout. The replay selects 2
 
 ## Exact-path agent summaries
 
-Replay the default text response for 50 exact paths from pinned Flask and Django checkouts, using the same index for both renderers:
+The original 0.16.34 replay compares 50 exact paths from pinned Flask and Django checkouts using the same index for both renderers. Run it from commit `ad89f69`:
 
 ```sh
 python3 -B bench/map_exact_path.py --baseline-ref 5357032 --summary
@@ -232,6 +232,14 @@ Ranking probes fell from 2,500 to zero, avoiding 53,672,632 source bytes in the 
 A direct CLI replay against `b9db91b` queried `./src/flask/wrappers.py` and `./django/urls/base.py` at the same repository pins with `--max-files 3 --max-chars 500`. Each path ran with `--no-cache`, `--cache-read-only` after priming, and a simulated unavailable service after priming. Across the six commands, query ranking went from 300 source probes and 5,564,763 bytes read to zero. All six responses were byte-identical, indexing parse counts matched, and read-only and no-cache state stayed unchanged. The replay used local files and no model requests.
 
 A local regression replay gave the in-process map two files with the same name and reduced either the inventory cap or the source budget to one file. Before 0.16.47, the inventory cap returned the archived copy and the source budget left the requested file without symbols. With 0.16.47, both cases return the requested file and its symbol, with and without a leading `./`. Coverage remains partial in all four cases. The same failures and fixes reproduced at the shipped limits with 20,000 archive files plus the target for inventory and 64 one-MiB archive files plus the target for source reads. Six exact-path and topic comparisons on the pinned Flask and Django checkouts returned the same results, excluding JSON generation timestamps.
+
+Compare declaration visibility against 0.16.55 on the same 50 paths:
+
+```sh
+python3 -B bench/map_exact_path.py --baseline-ref 8a54318 --summary
+```
+
+The 0.16.56 summaries retain every previously visible declaration and show more on 23 paths, increasing the total from 120 to 218. Total text grew from 39,925 to 42,944 bytes. All 50 responses still show one file and make zero source-ranking probes. Four topic and miss controls are byte-identical. The replay excludes indexing and makes no model calls.
 
 ## Lowercase symbol queries
 

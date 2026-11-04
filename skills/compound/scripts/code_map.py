@@ -1620,26 +1620,31 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     terms = _query_terms(query)[0]
     exact_path = query.removeprefix("./")
     literal_names = _literal_query_names(query)
+    by_path = {file["path"]: file for file in model["files"]}
+    exact_symbol = model.get("exact_symbol")
+    exact_file = exact_symbol is None and exact_path in by_path
+    confirmation = "metadata only; inspect listed files before changing behavior."
+    if exact_file:
+        confirmation = "indexed outline; inspect source before edits."
+    elif terms or literal_names:
+        confirmation = "metadata only; matching symbols; inspect source before edits."
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",
         f"Coverage: {coverage.get('indexed', 0)}/{coverage.get('inventory', 0)} files indexed; "
         f"{coverage.get('excluded', 0)} excluded; {coverage.get('skipped', 0)} skipped; "
         f"{'partial' if partial else 'complete'}",
-        ("Source confirmation: metadata only; matching symbols; inspect source before edits."
-         if terms or literal_names else "Source confirmation: metadata only; inspect listed files before changing behavior."),
+        f"Source confirmation: {confirmation}",
     ]
     excluded_reasons = coverage.get("excluded_reasons", {})
     if isinstance(excluded_reasons, dict) and excluded_reasons:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
-    by_path = {file["path"]: file for file in model["files"]}
     focused_query = bool(terms or literal_names) and "query_matches" in model
-    exact_symbol = model.get("exact_symbol")
     if exact_symbol is not None:
         lines.append("Focus (exact indexed symbol):")
         focus = model["focus"]
-    elif exact_path in by_path:
+    elif exact_file:
         literal_names = frozenset()
         lines.append("Focus (exact indexed path):")
         focus = [exact_path]
@@ -1665,7 +1670,10 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 signature = _name_terms(symbol.get("signature", ""))
                 return sum(2 * (term in name) + (term in signature) for term in terms)
             ranked_symbols = sorted(file["symbols"], key=relevance, reverse=True)
-            symbol_values = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
+            if exact_file:
+                symbol_values = ranked_symbols[:8]
+            else:
+                symbol_values = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
         else:
             symbol_values = file["symbols"][:8]
         symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)
