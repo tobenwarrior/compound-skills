@@ -141,15 +141,16 @@ def _language_id(relative: str, language: str) -> str:
     return name if name in {"dockerfile", "makefile", "go.mod"} else code_map.LANGUAGES.get(suffix, "plaintext")
 
 
-def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
-    """Return source text and LSP language id only for a safe indexed source file."""
+def _indexed_source(root: Path, relative: str) -> tuple[str, str, set[str]]:
+    """Read a safe indexed source file and retain the inventory for filtering results."""
     try:
-        inventory_root, _head, inventory, notes = code_map._git_context(root)
+        inventory_root, _head, inventory_list, notes = code_map._git_context(root)
     except (OSError, ValueError) as exc:
         raise LspLookupError("repository source inventory is unavailable") from exc
-    if inventory is None or notes or inventory_root != root:
+    if inventory_list is None or notes or inventory_root != root:
         raise LspLookupError("repository source inventory is unavailable")
-    if relative not in set(inventory):
+    inventory = set(inventory_list)
+    if relative not in inventory:
         raise LspLookupError("file is not in the indexed repository source inventory")
     candidate, reason = code_map._candidate(root, relative, git_inventory=True)
     if candidate is None:
@@ -187,7 +188,7 @@ def _indexed_source(root: Path, relative: str) -> tuple[str, str]:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         raise LspLookupError("source file is not valid UTF-8") from exc
-    return text, _language_id(relative, candidate["language"])
+    return text, _language_id(relative, candidate["language"]), inventory
 
 
 def _line_prefix(text: str, line: int, column: int) -> str:
@@ -591,16 +592,8 @@ def lookup_lsp(
     timeout_value = _bounded_timeout(timeout)
     output_limit = _bounded_int(max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES, "max_output_bytes")
     command = _server_argv_or_error(server_command)
-    text, language = _indexed_source(root, relative)
+    text, language, inventory = _indexed_source(root, relative)
     prefix = _line_prefix(text, line, column)
-
-    try:
-        inventory_root, _head, inventory_list, notes = code_map._git_context(root)
-    except (OSError, ValueError) as exc:
-        raise LspLookupError("repository source inventory is unavailable") from exc
-    if inventory_list is None or notes or inventory_root != root:
-        raise LspLookupError("repository source inventory is unavailable")
-    inventory = set(inventory_list)
     document_uri = (root / relative).as_uri()
 
     process: subprocess.Popen[bytes] | None = None

@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.66 (2026-11-05)
+
+- Reuse one Git inventory for semantic lookup source validation and result filtering.
+
 ## 0.16.65 (2026-11-05)
 
 - End bare `compound contribute` after source-only orientation, before map or engineering startup.

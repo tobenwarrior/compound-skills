@@ -489,6 +489,10 @@ A paired replay against `426c835` used the same five queries per repository and 
 
 A 0.16.64 paired replay against `68b1beb` alternated rankers for 25 repetitions per query. On five Django queries, median ranking CPU fell 17–26%. On five Flask queries, it fell 15–23%. Ranked paths, match sets, every scanned file and the source bytes read matched in all ten cases. The scanner splits ASCII identifiers directly from bytes and retains normalized Unicode processing when the query and file need it. This measures local warm-index ranking.
 
+## Semantic lookup inventory
+
+0.16.66 reuses the repository inventory for both source validation and result filtering. A local replay against `4918876` alternated the adapters for 15 lookups per repository with the deterministic LSP server from the local tests. Git subprocesses fell from eight to four on pinned Flask and Django checkouts, with identical definition, reference, and coverage JSON. Median adapter time including server startup fell from 125 to 76 ms on Flask and 325 to 179 ms on Django. The server fixture measures adapter overhead independently of language-server analysis.
+
 ## Saved model-work audit
 
 The [saved call audit](diagram_sources/work_audit.json) reads the completed Y Harness / DeepSeek V4.1 Flash sequence as data: 72 model requests and 116 tools with Compound, 61 and 92 without. Slugs account for eight of the eleven extra requests. Three treatment edits and one control edit were rejected by read prerequisites. Both modes' initial Git identity failures remain counted; they are an environment limitation, not evidence of a Compound prompt defect. The annotations identify the relevant saved steps and resulting prompt/code changes without deducting hypothetical future savings.
