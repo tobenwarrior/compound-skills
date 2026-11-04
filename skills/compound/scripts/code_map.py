@@ -125,7 +125,7 @@ WORD_PART = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+")
 CONTENT_WEIGHT = 0.5
 SIZE_WEIGHT = 0.3
 IMPORTER_WEIGHT = 0.3
-TEST_FACTOR = 0.5
+TEST_FACTOR = 0.45
 CONTENT_RANK_FILES = 50
 CONTENT_FALLBACK_FILES = 200
 CONTENT_RANK_BYTES = 8 * 1024 * 1024
@@ -1059,6 +1059,12 @@ def _symbol_name_terms(names: tuple[str, ...]) -> frozenset[str]:
     return frozenset().union(*(_name_terms(name) for name in names))
 
 
+
+def _path_terms(path: str) -> frozenset[str]:
+    terms = _name_terms(path)
+    return terms | {"context"} if "ctx" in terms else terms
+
+
 def _query_terms(query: str) -> tuple[list[str], bool]:
     """Return the distinct folded query words that can name a file, and whether the query is about tests."""
     words = list(_identifier_words(_identifier_tokens(query)))
@@ -1145,7 +1151,7 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
     if not terms and not IDENTIFIER.search(query):
         return _rank_unfocused(records, by_path, reverse)
     exact_path = query.removeprefix("./")
-    path_terms = {path: _name_terms(path) for path in by_path}
+    path_terms = {path: _path_terms(path) for path in by_path}
     symbol_terms = {
         path: _symbol_name_terms(tuple(symbol["name"] for symbol in record["symbols"]))
         for path, record in by_path.items()
@@ -1481,7 +1487,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     terms, about_tests = _query_terms(query)
     exact_path = query.removeprefix("./")
     order = sorted(candidates, key=lambda path: (
-        path != exact_path, -sum(term in _name_terms(path) for term in terms),
+        path != exact_path, -sum(term in _path_terms(path) for term in terms),
         not _entry_config(path), not about_tests and _is_test(path), path,
     ))
     inventory_capped = len(order) > MAX_FILES

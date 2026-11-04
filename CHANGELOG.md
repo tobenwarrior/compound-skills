@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.54 (2026-11-04)
+
+- Recognize `ctx` in paths as a match for context and give implementation files a little more weight when a query does not ask for tests. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)
+
 ## 0.16.53 (2026-11-04)
 
 - Reuse the complete untracked inventory during live map freshness checks and avoid a second directory walk in Git status. [Warm query replay](bench/README.md#warm-map-query-work)
