@@ -68,6 +68,7 @@ MAX_REGISTRY_PROJECTS = 32
 MAX_REGISTRY_BYTES = 256 * 1024
 MAX_REGISTRY_NAME = 256
 MODEL_WAIT = 30.0
+INDEX_STATUS_WAIT = 0.5
 # An index pass can hold the GIL for seconds, so a busy service answers late.
 REQUEST_TIMEOUT = 5.0
 MAX_LOADED_PROJECTS = 8
@@ -680,8 +681,9 @@ def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool =
 
 def _wait_for_index(runtime: dict[str, Any], project: str) -> dict[str, Any]:
     deadline = time.monotonic() + MODEL_WAIT
+    path = "/api/status?" + urllib.parse.urlencode({"project": project, "wait": 1})
     while True:
-        status, value, raw = _request(runtime["port"], "GET", "/api/status?" + urllib.parse.urlencode({"project": project}), runtime["token"])
+        status, value, raw = _request(runtime["port"], "GET", path, runtime["token"])
         if status != 200 or value is None:
             detail = raw.decode("utf-8", "replace")[:300]
             raise MapServerError(f"map index unavailable ({status}): {detail}")
@@ -689,7 +691,6 @@ def _wait_for_index(runtime: dict[str, Any], project: str) -> dict[str, Any]:
             return value
         if time.monotonic() >= deadline:
             raise MapServerError("map index did not become ready before the bounded wait")
-        time.sleep(0.1)
 
 
 def _agent_response(repo: str | os.PathLike[str], query: str, max_files: int, refresh: bool, max_chars: int | None = None) -> Any:
@@ -757,7 +758,7 @@ class Project:
     inventory_fingerprint: str | None = None
     stalled: bool = False
     reparse: bool = False
-    lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
+    lock: threading.Condition = dataclasses.field(default_factory=threading.Condition, repr=False)
 
 
 def _rank_model(model: dict[str, Any], query: str, root: Path | None) -> tuple[list[dict[str, Any]], set[str] | None]:
@@ -917,6 +918,7 @@ class MapService:
             with project.lock:
                 if project.rerun is None:
                     project.indexing = False
+                    project.lock.notify_all()
                     return
                 force, project.rerun = project.rerun, None
 
@@ -998,6 +1000,7 @@ class MapService:
                 project.indexing = False
                 project.error = str(exc)[:500]
                 project.updated_at = _now()
+                project.lock.notify_all()
 
     def register(self, root: Path, query: str, max_files: int, refresh: bool = False, requery: bool = False) -> Project:
         project_id = _project_id(root)
@@ -1046,9 +1049,11 @@ class MapService:
                 self._evict_loaded(keep=project)
             return project
 
-    def status(self, project: Project) -> dict[str, Any]:
+    def status(self, project: Project, wait: bool = False) -> dict[str, Any]:
         self._refresh(project)
         with project.lock:
+            if wait:
+                project.lock.wait_for(lambda: not project.indexing, timeout=INDEX_STATUS_WAIT)
             return {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "indexing": project.indexing, "error": project.error, "updated_at": project.updated_at}
 
     def _index_snapshot(
@@ -1248,7 +1253,11 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
                 self._error(404, "unknown project")
                 return
             if parsed.path == "/api/status":
-                self._respond(200, _json(self.service.status(project)))
+                wait = params.get("wait") == ["1"]
+                if wait and not self._authorized():
+                    self._error(401, "authorization required")
+                    return
+                self._respond(200, _json(self.service.status(project, wait=wait)))
                 return
             requested = params.get("max_files", [None])[0]
             try:

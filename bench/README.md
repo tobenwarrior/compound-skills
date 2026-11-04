@@ -97,6 +97,16 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Index completion wait
+
+Compare warm local summary calls on pinned Flask and Django checkouts. Run from the 0.16.28 checkpoint:
+
+```sh
+python3 -B bench/map_index_wait.py --baseline-ref 8477c8a
+```
+
+The replay warms each service once and repeats its query seven times. It measures elapsed time for the live summary function, including the Git and file checks, with interpreter startup outside the measurement. Flask used two to three status requests before the change and Django used four to six. Each updated query used one request. Median elapsed times were 149.19 ms versus 110.39 ms on Flask and 410.11 ms versus 354.87 ms on Django. Both versions returned byte-identical summaries. [Samples, source pins and hashes](diagram_sources/map_index_wait_v01628.json).
+
 ## Saved viewer focus
 
 Compare distinct warm CLI text queries on pinned Flask and Django checkouts. Run from the 0.16.27 checkpoint:

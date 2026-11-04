@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.28 (2026-11-04)
+
+- Let agent map requests resume when the index check finishes instead of sleeping between status requests. Keep a bounded wait and signal completion after queued refreshes finish.
+- Fourteen warm queries on pinned Flask and Django checkouts each used one status request and returned byte-identical summaries. [Latency replay](bench/README.md#index-completion-wait).
+
 ## 0.16.27 (2026-11-04)
 
 - Keep agent text and JSON queries separate from the saved viewer focus. Preserve the viewer query when an agent starts the service again.
