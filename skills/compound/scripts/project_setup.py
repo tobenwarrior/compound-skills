@@ -50,15 +50,14 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    'Review-only: inspect diff/callers/tests; execute only for unresolved findings when permitted; after '
-    'denial, stop repro work and continue from source. Bug fixes: one defect-specific failing regression '
-    'is the reproduction before source edits; run the final full suite. Refactors: preserve differing '
-    'caller policies explicitly; characterize callers before baseline; compare afterwards. Use documented '
-    'test commands; inspect setup errors before retrying. Prevent untracked test outputs with supported '
-    'options. Omit AI co-author/generated-by commit lines. '
-    'Read narrowly; honor current-turn read/edit prerequisites. For refactors, new features, performance '
-    'and PR authoring, load `compound`; read relevant references. Follow project instructions and user '
-    'scope. Report checks/limits and Compound load failures.',
+    'Reviews inspect diffs, callers and tests. Probe unresolved findings only with permission. After '
+    'denial, use source only. Bug fixes require one failing regression before source edits and a final '
+    'full suite. Refactors characterize differing caller policies before one baseline and verify '
+    'preservation afterward. Use documented commands. Prevent untracked test outputs with supported '
+    'options. Diagnose setup failures before retrying. Reuse passing checks while inputs and '
+    'environment match. Read narrowly. Honor current-turn read/edit prerequisites. Load `compound` and '
+    'relevant references for refactors, features, performance and PR authoring. Follow project '
+    'instructions and user scope. Report checks, limits and load failures. Omit AI commit attribution.',
     END_MARKER,
 )
 

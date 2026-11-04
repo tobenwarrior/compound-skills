@@ -37,7 +37,11 @@ globalThis.fetch = async function(input, init) {
   await Promise.all([...pending]);
   if(calls===0 && typeof init?.body==='string') {
     const body=JSON.parse(init.body);
-    const routingPresent=JSON.stringify(body).includes('Review-only: inspect diff/callers/tests;');
+    const prompt=JSON.stringify(body);
+    const managedRouting=['global','project'].some(scope =>
+      prompt.includes(`<!-- compound-skills:${scope}-setup:start -->`) &&
+      prompt.includes(`<!-- compound-skills:${scope}-setup:end -->`));
+    const routingPresent=managedRouting || prompt.includes('Review-only: inspect diff/callers/tests;');
     const expected=process.env.COMPOUND_EXPECT_ROUTING;
     if(expected!==undefined && routingPresent!==(expected==='1')) throw new Error('Benchmark refuses request: treatment routing missing or control contaminated');
     const names=(body.tools??[]).map(tool=>tool.function?.name??tool.name);

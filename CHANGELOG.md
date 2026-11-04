@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.23 (2026-11-04)
+
+- Reuse passing checks when inputs and environment are unchanged. Count the final bug suite as confirmation when it includes the regression, and rerun only unresolved parts of a combined refactor probe.
+- Deliver the same 100-word guidance through generated rules, Cursor and chat activation. The default rule is 50 bytes shorter. [Saved examples](bench/README.md#reusing-final-checks).
+
 ## 0.16.22 (2026-11-04)
 
 - Save global guidance before configuring optional map access. A denied or unavailable cache setting is reported separately, so it cannot prevent routing setup.
