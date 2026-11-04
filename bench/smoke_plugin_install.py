@@ -69,12 +69,29 @@ def check_host(host, executable, package, scratch):
 
     run("git", "init", "-q")
     (project / "demo.py").write_text("def demo():\n    return 42\n")
-    model = json.loads(run(sys.executable, "-B", str(scripts / "code_map.py"), "--repo", str(project),
-                           "--cache-read-only", "--format", "json", "--query", "demo.py", "--max-files", "1"))
-    assert model["focus"] == ["demo.py"]
+    query = (sys.executable, "-B", str(scripts / "code_map.py"), "--repo", str(project),
+             "--format", "json", "--query", "demo.py", "--max-files", "1")
     service = (sys.executable, "-B", str(scripts / "map_server.py"))
     try:
+        assert json.loads(run(*query))["focus"] == ["demo.py"]
+    finally:
+        run(*service, "stop")
+
+    directory = Path(env["COMPOUND_SKILLS_STATE_DIR"]) / "code-map"
+    cached, = [path for path in directory.glob("*.json") if path.name != "registry.json"]
+    invalid = b'{"version":' + b"9" * 6000 + b"}"
+    for path in (cached, directory / "runtime.json", directory / "registry.json"):
+        path.write_bytes(invalid)
+        path.chmod(0o600)
+    model = json.loads(run(*query, "--cache-read-only"))
+    assert model["focus"] == ["demo.py"]
+    assert "invalid cache entries were reparsed" in model["coverage"]["notes"]
+    assert cached.read_bytes() == invalid
+
+    try:
         url = run(*service, "open", "--repo", str(project), "--query", "demo.py", "--no-open")
+        assert json.loads(run(*query))["focus"] == ["demo.py"]
+        assert cached.read_bytes() != invalid
         assert urlsplit(url).hostname == "127.0.0.1"
         opener = build_opener(ProxyHandler({}))
         with opener.open(url, timeout=5) as response:
@@ -89,7 +106,7 @@ def check_host(host, executable, package, scratch):
     assert retained.read_text() == "Keep this existing instruction.\n"
     return {"host": host, "host_version": version, "installed_version": installed["version"],
             "skills": sorted(ENTRYPOINTS), "global_enable_status_disable": "pass",
-            "read_only_map": "pass", "local_viewer_html_and_css": "pass"}
+            "read_only_map": "pass", "invalid_state_recovery": "pass", "local_viewer_html_and_css": "pass"}
 
 
 def smoke(ref, hosts):

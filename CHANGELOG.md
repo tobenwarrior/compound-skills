@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.30 (2026-11-04)
+
+- Reject invalid JSON in the map cache, runtime record and project registry. Reparse source when saved metadata cannot be decoded, and enforce read caps on actual cache and runtime bytes.
+- Verify that an installed map can open again after all three state files are invalid. The read-only query reparses source while preserving the saved file. [Install smoke test](bench/README.md#installed-plugin-smoke-test).
+
 ## 0.16.29 (2026-11-04)
 
 - Global status checks the apps selected by default setup. A configured Codex-only or Claude-only installation reports enabled. Use `--host all` to inspect every supported host.

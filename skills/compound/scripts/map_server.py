@@ -67,6 +67,7 @@ REGISTRY_FILE = "registry.json"
 MAX_REGISTRY_PROJECTS = 32
 MAX_REGISTRY_BYTES = 256 * 1024
 MAX_REGISTRY_NAME = 256
+MAX_RUNTIME_BYTES = 4096
 MODEL_WAIT = 30.0
 INDEX_STATUS_WAIT = 0.5
 # An index pass can hold the GIL for seconds, so a busy service answers late.
@@ -374,7 +375,7 @@ def _read_registry() -> dict[str, dict[str, str]]:
         if len(raw) > MAX_REGISTRY_BYTES:
             return {}
         value = json.loads(raw.decode("utf-8"))
-    except (MapServerError, OSError, UnicodeError, json.JSONDecodeError):
+    except (OSError, ValueError, RecursionError):
         return {}
     if not isinstance(value, dict) or value.get("version") != REGISTRY_VERSION:
         return {}
@@ -463,8 +464,12 @@ def _read_runtime(path: Path) -> tuple[dict[str, Any] | None, str | None]:
         # Windows reports every writable file as mode 0o666, so only POSIX modes show who can read it.
         if os.name == "posix" and path.stat().st_mode & 0o077:
             return None, "runtime file permissions are unsafe"
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        with path.open("rb") as handle:
+            raw = handle.read(MAX_RUNTIME_BYTES + 1)
+        if len(raw) > MAX_RUNTIME_BYTES:
+            return None, "runtime file is invalid: size limit exceeded"
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, ValueError, RecursionError) as exc:
         return None, f"runtime file is invalid: {exc}"
     if not isinstance(value, dict):
         return None, "runtime file has an invalid shape"

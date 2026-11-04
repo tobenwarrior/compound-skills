@@ -1307,8 +1307,12 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     try:
         if path.stat().st_size > MAX_CACHE_BYTES:
             return {}, "code-map cache is too large"
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        with path.open("rb") as handle:
+            data = handle.read(MAX_CACHE_BYTES + 1)
+        if len(data) > MAX_CACHE_BYTES:
+            return {}, "code-map cache is too large"
+        payload = json.loads(data.decode("utf-8"))
+    except (OSError, ValueError, RecursionError) as exc:
         return {}, f"code-map cache is invalid: {exc}"
     if not isinstance(payload, dict):
         return {}, "code-map cache has an unsupported shape"
