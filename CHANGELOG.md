@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.69 (2026-11-05)
+
+- Refresh change labels when Git status exceeds the map freshness limit.
+
 ## 0.16.68 (2026-11-05)
 
 - Refresh an open code map after the local service restarts, even when the first index revision matches the last displayed revision.

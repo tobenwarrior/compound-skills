@@ -125,7 +125,7 @@ def _inventory_fingerprint(root: Path) -> str:
     capped = engine.INVENTORY_CAP_NOTE in notes
     untracked = "--untracked-files=all" if capped else "--untracked-files=no"
     status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", untracked],
-                                        engine.MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
+                                        engine.MAX_GIT_INVENTORY_BYTES)
     if status is None:
         return ""
     digest = hashlib.sha256(status)
