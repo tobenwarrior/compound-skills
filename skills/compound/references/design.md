@@ -14,7 +14,7 @@ Implement in units with observable checks. Migrate internal callers together whe
 
 ## Existing repositories
 
-Use the requested checkout. Check fork or upstream metadata when the target is unclear. A bare `contribute` gives a short read-only orientation from the contribution guide, a representative code-and-test pair, and the documented checks. Ask what the user wants to change.
+Use the requested checkout. Check fork or upstream metadata when the target is unclear. A bare `contribute` gives a short read-only orientation from the contribution guide, a representative code-and-test pair, and the documented checks. Use source reads for orientation. Ask what the user wants to change, then stop.
 
 For edits, check working-tree status and use applicable project instructions, including any for the affected directory. Reuse established conventions. Start from the target, its caller and nearest test. Read another example only if the local pattern is still unclear. Consult path-scoped history, design notes, or linked issues and PRs only when the rationale could change the patch. Distinguish recorded decisions from inference.
 

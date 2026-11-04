@@ -14,7 +14,7 @@ For a review-only Compound request, follow [Review](references/review.md) direct
 
 For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md) first.
 
-For `contribute` or edits in an unfamiliar or upstream repository, start with [Existing repositories](references/design.md#existing-repositories).
+For `contribute` or edits in an unfamiliar or upstream repository, start with [Existing repositories](references/design.md#existing-repositories). Bare `contribute` ends after the read-only orientation and skips engineering startup.
 
 ## Start
 

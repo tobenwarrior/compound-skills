@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.65 (2026-11-05)
+
+- End bare `compound contribute` after source-only orientation, before map or engineering startup.
+
 ## 0.16.64 (2026-11-05)
 
 - Split ASCII identifiers directly from source bytes during code-map ranking. The local replay matched results and read counts, with 15–26% lower median ranking CPU across ten pinned Flask and Django queries. [Ranking profile](bench/README.md#profile-local-map-queries)
