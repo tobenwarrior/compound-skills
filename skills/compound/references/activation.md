@@ -59,3 +59,11 @@ For `compound refresh global`, use `refresh --global` and preserve any requested
 ## Inspect or remove defaults
 
 For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report whether a project `setup` assessed it; global status checks saved routing for the same installed apps as global setup and directs users with outdated rules to refresh. Use `--host all` to inspect every supported host. Inspect native cache-path entries and Claude Code permission rules only when the user also asks about map access. Disable removes only the helper's managed sections in that scope, deletes files left empty, and ends the current chat preference. Global disable leaves independent project defaults intact; also remove the Claude Code permission rules that global setup added. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
+
+For a Claude Code map permission check, run this from Claude Code's installed copy:
+
+```bash
+python3 -B <installed-skill-dir>/scripts/project_setup.py status --global --host claude --check-claude-permissions
+```
+
+Report `hosts.claude.permission_check` separately from saved routing. It checks whether the exact expected entries are present in user `settings.json`. Effective access also depends on Claude Code's other permission settings. If entries are missing, run `setup-global` in Claude Code when the user asks to repair them. Unavailable settings leave routing status intact.

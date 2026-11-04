@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.49 (2026-11-04)
+
+- Check Claude Code's saved map allow entries on request. Report missing entries for the current install separately from routing status, and leave user settings untouched.
+
 ## 0.16.48 (2026-11-04)
 
 - Match lowercase queries such as `methodview` to the complete mixed-case symbol name in ranking and summaries. [Local replay](bench/README.md#lowercase-symbol-queries)

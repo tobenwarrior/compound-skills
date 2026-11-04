@@ -2,9 +2,9 @@
 """Enable or inspect bounded Compound Skills routing blocks.
 
 Project mode edits project-local instruction files.  Global mode edits only
-the selected user instruction files.  The helper never installs a skill,
-reads credentials, changes host settings, or edits an ancestor instruction
-file.
+the selected user instruction files. The optional Claude permissions check
+reads only its user settings file and reports the expected allow rules. The
+helper never changes host settings or edits an ancestor instruction file.
 """
 
 from __future__ import annotations
@@ -568,6 +568,45 @@ def _claude_permission_rules() -> list[str]:
     return [f"Bash(python3 -B {code_map}:*)", f"Bash(python3 {code_map}:*)", f"Read(/{skill_dir}/**)"]
 
 
+MAX_CLAUDE_SETTINGS_BYTES = 1024 * 1024
+
+
+def _claude_permission_check(rules: Sequence[str]) -> dict[str, object]:
+    """Check literal allow entries in Claude Code's user settings."""
+    try:
+        base = _host_home("claude")
+        # Allow a linked home ancestor while keeping the config directory and settings file no-follow.
+        canonical = base.parent.resolve() / base.name
+        if not rules or not Path(__file__).resolve().is_relative_to(canonical):
+            return {"status": "unavailable", "message": "Run the permission check from Claude Code's installed copy."}
+        try:
+            from .safe_open import open_regular_nofollow
+        except ImportError:  # direct script execution
+            from safe_open import open_regular_nofollow
+        with os.fdopen(open_regular_nofollow(canonical, "settings.json"), "rb") as settings:
+            data = settings.read(MAX_CLAUDE_SETTINGS_BYTES + 1)
+        if len(data) > MAX_CLAUDE_SETTINGS_BYTES:
+            raise ValueError("settings exceed the size limit")
+        document = json.loads(data)
+        permissions = document.get("permissions", {}) if isinstance(document, dict) else None
+        allowed = permissions.get("allow", []) if isinstance(permissions, dict) else None
+        if not isinstance(allowed, list) or not all(isinstance(rule, str) for rule in allowed):
+            raise ValueError("invalid allow list")
+    except FileNotFoundError:
+        allowed = []
+    except (OSError, ValueError, RuntimeError):
+        return {"status": "unavailable", "message": "Could not safely inspect Claude Code's user settings."}
+
+    missing = [rule for rule in rules if rule not in allowed]
+    if missing:
+        return {
+            "status": "missing",
+            "missing_rules": missing,
+            "message": "Run setup-global in Claude Code to add the missing rules for this installation.",
+        }
+    return {"status": "present", "missing_rules": []}
+
+
 def _global_payload(
     action: str,
     status: str,
@@ -576,6 +615,7 @@ def _global_payload(
     *,
     error: str | None = None,
     changed_paths: Sequence[str] = (),
+    check_claude_permissions: bool = False,
 ) -> dict[str, object]:
     hosts: dict[str, object] = {}
     notes: list[str] = [GLOBAL_PREREQUISITE]
@@ -606,7 +646,10 @@ def _global_payload(
                 hosts[host.name]["runtime_verified"] = False
             if host.name == "claude":
                 other = _other_app_holding_this_install()
-                hosts[host.name]["permission_rules"] = [] if other else _claude_permission_rules()
+                rules = [] if other else _claude_permission_rules()
+                hosts[host.name]["permission_rules"] = rules
+                if check_claude_permissions:
+                    hosts[host.name]["permission_check"] = _claude_permission_check(rules)
                 if other:
                     note = CLAUDE_RULES_ELSEWHERE_NOTE.format(app=other)
                     hosts[host.name]["notes"].append(note)
@@ -913,6 +956,8 @@ def _parser() -> argparse.ArgumentParser:
     scope.add_argument("--project-root", metavar="PATH", help="project root")
     scope.add_argument("--global", dest="global_scope", action="store_true", help="use global user instruction files")
     parser.add_argument("--host", choices=("all", "codex", "cursor", "claude"), help="global host selection")
+    parser.add_argument("--check-claude-permissions", action="store_true",
+                        help="check user allow entries with status --global --host claude")
     return parser
 
 
@@ -939,6 +984,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _emit(_payload(action, "error", False, None, [], error="action must be enable, refresh, status, or disable"))
     if args.host is not None and not args.global_scope:
         return _emit(_payload(action, "error", False, None, [], error="--host requires --global"))
+    if args.check_claude_permissions and (action != "status" or not args.global_scope or args.host != "claude"):
+        return _emit(_payload(action, "error", False, None, [],
+                              error="--check-claude-permissions requires status --global --host claude"))
     if args.global_scope:
         global_context: GlobalContext | None = None
         try:
@@ -958,6 +1006,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         _global_status_name(global_context),
                         False,
                         global_context,
+                        check_claude_permissions=args.check_claude_permissions,
                     )
                 )
             if action == "refresh":
