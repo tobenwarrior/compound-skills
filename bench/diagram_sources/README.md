@@ -24,3 +24,5 @@ The generator uses only Python's standard library. It writes every README SVG in
 `work_audit.json` counts saved Y Harness / DeepSeek V4.1 Flash events and records source hashes, edit prerequisite refusals and annotated extra-work causes. `navigation_replay.json` checks the changed map presentation on the saved query and pinned fixture, preserving the entire ranked index. Neither artifact projects new model behavior or subtracts hypothetical costs.
 
 `work_review_v0169.json` annotates exact saved request steps and their recorded usage from `comparison_v0169.json`. It keeps useful mixed-step work and functional corrections distinct from optional exploration/polish. Costs are retained unchanged; the annotations do not establish future savings.
+
+`comparison_dispatch_v01615.json` records the fresh two-change Dispatchkit sequence. It includes every attempt, exact provider-reported charges, input-cache counts and the independent cumulative grades. The generated cost chart requires both modes to accept both tasks and checks that all attempts reconcile with the totals. This was one sequence per mode on a synthetic repository.

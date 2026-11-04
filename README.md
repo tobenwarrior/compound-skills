@@ -2,13 +2,15 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.15 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–3 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.15 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
 Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
 
-**Latest workflow check — Compound 0.16.7:** a sequence of three bug fixes on the invoicekit fixture consumed **15.5% less OpenCode Go allowance**, with **3/3 changes correct in both modes**. The full six-change workflow is now completed in both modes, including repairs; two unreported provider costs prevent an exact overall savings claim. [Results and scope](#completed-workflow-six-changes-with-repairs).
+**Fresh two-change pilot — Compound 0.16.15:** **60.0% less OpenCode Go allowance**, with **2/2 changes correct in both modes**. This was one synthetic Python sequence per mode. [Results and scope](#fresh-two-change-comparison).
+
+**Earlier bug-fix sequence — Compound 0.16.7:** a sequence of three bug fixes on the invoicekit fixture consumed **15.5% less OpenCode Go allowance**, with **3/3 changes correct in both modes**. The full six-change workflow is now completed in both modes, including repairs; two unreported provider costs prevent an exact overall savings claim. [Results and scope](#completed-workflow-six-changes-with-repairs).
 
 ![Three consecutive invoicekit fixes: without Compound $0.00810803 Go allowance, with Compound $0.00685117, 15.5% less; both modes passed all three changes without repair. One sequence per mode on a previously used synthetic fixture.](.github/assets/benchmark-workflow-bugs.svg)
 
@@ -23,9 +25,9 @@ Use Compound when a change needs evidence that behavior is preserved: a failing 
 - **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
 - **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
 - **File discovery:** the map found 74% of changed source files in its top four, versus 67% for a word search that also skips common words and lists tests last, over 240 held-out commits. [Map evidence](#does-it-find-the-files-a-change-touches).
-- **Cost:** the latest three-fix sequence used 15.5% less Go allowance with both modes correct. The full workflow and historical refactors do not show overall savings. Review findings did not improve in the measured task. [All workload results](#benchmark).
+- **Cost.** The fresh two-change pilot used 60.0% less Go allowance with both modes correct. The earlier three-bug sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
 
-The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The latest pilot and workflow used 0.16.7 with DeepSeek through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
+The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used 0.16.7 or 0.16.15 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
 
 **What changes on your machine:** `setup-global` installs Compound's default routing in supported hosts and Claude Code allow rules for its own guides and map query. The map uses a user cache outside your repository and a service on `127.0.0.1:43127`; its scripts connect only to loopback. Project cleanup runs only when you explicitly request `setup`. Commits follow project conventions and omit AI co-author/generated-by lines. [Installation and removal details](#what-it-changes-on-your-machine).
 
@@ -115,6 +117,16 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 
 The DeepSeek workflows and larger historical rounds below use different runtimes and models; compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#reproduce-and-inspect) rerun the Claude Code rounds. The tasks are Python projects.
 
+### Fresh two-change comparison
+
+On a fresh dispatchkit fixture, Compound 0.16.15 used **60.0% less OpenCode Go allowance** with DeepSeek V4.1 Flash through Y Harness. Both modes completed **2/2 changes**. The sequence fixed a URL-encoded webhook route, then extracted a helper while preserving live and replay policies. The second grade rechecked the earlier fix. Both modes kept the original tests, and the new regression failed on the original source and passed on the changed source.
+
+![Without and with Compound on two consecutive dispatchkit changes. Go allowance $0.02291479 and $0.00917567. Both modes passed both changes. The chart includes every attempt and repair.](.github/assets/benchmark-dispatch-v01615.svg)
+
+Without Compound used **$0.02291479** of allowance and **$0.03819131** of API list-price usage. With Compound used **$0.00917567** and **$0.01529278**. All four initial attempts passed. The runs used 21 model requests without and 23 with Compound. The recorded cash charge was $0 in both modes under the existing plan. [Complete usage and grades](bench/diagram_sources/comparison_dispatch_v01615.json).
+
+Each mode had one sequence in an isolated copy of the same small Python repository. Source changes and conversation carried forward, and mode order reversed for the second task. The provider reported 65.9% of input tokens cached without Compound and 91.9% with Compound. Caches were left in their normal state. This pilot measures those billed runs. General and long-term savings need evidence across more projects and repetitions. [Workload and grading](bench/README.md#fresh-dispatchkit-sequence).
+
 ### Completed workflow: six changes with repairs
 
 On 2–3 November 2026, DeepSeek V4.1 Flash through Y Harness completed all three invoicekit bug fixes and all three shopkit refactors in both modes. Each repository kept its code changes and native conversation across three tasks. **Both modes finished 6/6 changes correctly**, passing cumulative hidden checks, the original suite and their final suites; no original test was removed or weakened. Each mode needed one semantic repair on the slug refactor after changing a facet key from `café` to `cafe`.
@@ -172,7 +184,7 @@ Compound changed the verification process much more than the number of bugs fixe
 
 The historical review task showed **no finding advantage**: both modes found all three defects. In the side-by-side 0.16.0 round, reviews cost 1.61× the cost without Compound with Opus and 2.21× with Sonnet. Questions covered a median of 11/11 key points with Opus and 9/11 with Sonnet in both modes. Compound now keeps reviews and questions out of the full engineering skill and stops reproduction work after execution is denied. The latest prompt changes have not been measured in new agent runs. [Review evidence](bench/historical-comparisons.md#where-it-doesnt-help-reviews).
 
-The DeepSeek bug sequence and earlier pilot show scoped allowance savings; the completed six-change workflow does not establish overall savings. Neither the historical correctness gains nor smaller map summaries establish that Compound is always cheaper. We include failed implementations and repairs when comparing cost.
+The fresh two-change pilot, the DeepSeek bug sequence and the earlier pilot show scoped allowance savings; the completed six-change workflow does not establish overall savings. Neither the historical correctness gains nor smaller map summaries establish that Compound is always cheaper. We include failed implementations and repairs when comparing cost.
 
 ### Removing extra model work
 

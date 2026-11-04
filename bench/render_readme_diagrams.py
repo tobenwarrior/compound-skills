@@ -405,6 +405,43 @@ def comparisons():
         yield item['asset'], chart.svg()
 
 
+def dispatch_comparison():
+    """Render the fresh matched cost comparison after the ledger meets the claim gate."""
+    data = json.loads((SOURCES / 'comparison_dispatch_v01615.json').read_text())
+    summary = data['summary']
+    arms = [summary['arms'][mode] for mode in ('without', 'with')]
+    cost = [money(arm['totals']['allowance']) for arm in arms]
+    list_price = [money(arm['totals']['list_cost']) for arm in arms]
+    cash = [money(arm['totals']['cost']) for arm in arms]
+    if (not summary['complete'] or not summary['claim'] or
+            any(len(arm['accepted_stages']) != 2 for arm in arms) or
+            not (cost[1] < cost[0] and list_price[1] < list_price[0] and cash[1] <= cash[0])):
+        raise ValueError('Dispatch chart requires both tasks accepted in both modes with lower Compound costs')
+    for mode, arm in zip(('without', 'with'), arms):
+        attempts = [a for a in data['attempts'] if a['arm'] == mode]
+        if (len(attempts) != arm['attempts'] or sum(a['requests'] for a in attempts) != arm['requests']
+                or any(sum(money(a['costs'][field]) for a in attempts) != money(arm['totals'][field])
+                       for field in ('allowance', 'list_cost', 'cost'))):
+            raise ValueError(f'Dispatch {mode}: attempts differ from arm totals')
+    reduction = (1 - cost[1] / cost[0]) * 100
+    desc = (f'Dispatchkit matched pilot. Go allowance was ${cost[0]} without and ${cost[1]} with Compound, '
+            f'{reduction:.1f}% less. Both modes finished both tasks. All attempts and repairs included.')
+    subtitle = 'Compound 0.16.15 · DeepSeek V4.1 Flash through Y Harness · one sequence per mode'
+    chart = Canvas(958, f'Two changes, {reduction:.1f}% less allowance', 'MEASURED PILOT', desc, subtitle)
+    chart.card(24, 157, 992, 251)
+    maximum = max(cost) * Decimal('1.08')
+    chart.pair(196, cost, [f'${value:.8f}' for value in cost], maximum)
+    chart.text(52, 387, f"2/2 accepted in each mode · {arms[0]['requests']} / {arms[1]['requests']} model requests without / with", 16, 'muted')
+    for stage, label in enumerate(('Webhook routing bug', 'Event-envelope refactor')):
+        y = 428 + stage * 226
+        chart.card(24, y, 992, 206)
+        values = [money(arm['by_stage'][str(stage)]['totals']['allowance']) for arm in arms]
+        chart.pair(y + 34, values, [f'${v:.8f}' for v in values], maximum, label)
+    chart.text(52, 910, 'The same repository and conversation carry forward within each mode.', 17, weight=650)
+    chart.text(52, 937, 'One synthetic sequence per mode. All bars use the same allowance scale.', 15, 'muted')
+    yield 'benchmark-dispatch-v01615.svg', chart.svg()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Fail if checked-in SVGs differ from their sources')
@@ -413,6 +450,7 @@ def main():
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
     outputs.update(workflows())
+    outputs.update(dispatch_comparison())
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
