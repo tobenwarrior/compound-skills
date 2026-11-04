@@ -1477,7 +1477,7 @@ def _summary_target(
     return defining_file, name if defining_file is not None else None
 
 
-def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False) -> dict[str, Any]:
+def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False, rank_focus: bool = True) -> dict[str, Any]:
     candidates: dict[str, dict[str, Any]] = {}
     skipped = 0
     excluded = 0
@@ -1573,14 +1573,18 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     exact, exact_symbol = (
         _summary_target(records, query, allow_symbol=not budget_hit) if exact_summary else (None, None)
     )
-    if exact is None:
-        ranked = _rank(records, query, root, query_matches=query_matches)
-        selected = sorted(ranked[:max_files], key=lambda record: record["path"])
-        focus = [record["path"] for record in ranked[:min(12, max_files)]]
-    else:
+    if exact is not None:
         selected = [exact]
         focus = [exact["path"]]
         query_matches.add(exact["path"])
+    elif not rank_focus and len(records) <= max_files:
+        # Ranking cannot change the path-sorted selection when all records fit.
+        selected = sorted(records, key=lambda record: record["path"])
+        focus = []
+    else:
+        ranked = _rank(records, query, root, query_matches=query_matches)
+        selected = sorted(ranked[:max_files], key=lambda record: record["path"])
+        focus = [record["path"] for record in ranked[:min(12, max_files)]]
     # Coverage counts indexed files even when an exact summary displays one row.
     indexed = min(len(records), max_files)
     file_cap = len(records) > max_files

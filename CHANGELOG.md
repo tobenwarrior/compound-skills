@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.71 (2026-11-05)
+
+- Skip map focus ranking during exact symbol lookup when the selected inventory fits, avoiding an extra content scan before lexical occurrence search.
+
 ## 0.16.70 (2026-11-05)
 
 - Make the native read prerequisite explicit for each edit target in the saved routing rule. [Saved Flask traces](bench/README.md#consecutive-upstream-flask-fixes)

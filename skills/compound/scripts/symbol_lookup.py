@@ -353,11 +353,10 @@ def lookup_symbols(
             model_notes.append(f"symbol lookup inventory capped at {file_limit} files")
         if unscanned_source:
             model_notes.append(f"{unscanned_source} source files with private names or in vendored folders were not scanned")
-        # Match build_map's default read-only cache behavior without rendering
-        # or serializing the entire model; _build never writes when requested.
+        # Lookup needs every outline in the bounded inventory, without a ranked focus.
         model = code_map._build(
             git_root, head, bounded_inventory, model_notes, name, file_limit,
-            use_cache=not no_cache, refresh=False, write_cache=False,
+            use_cache=not no_cache, refresh=False, write_cache=False, rank_focus=False,
         )
         model["coverage"]["inventory"] = len(inventory)
         model["coverage"]["excluded"] += excluded
