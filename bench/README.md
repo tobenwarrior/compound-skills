@@ -330,3 +330,13 @@ The [0.16.11 comparison](diagram_sources/comparison_v01611.json) used 38 request
 In the [saved Dispatchkit bug-fix comparison](diagram_sources/comparison_dispatch_v01615.json), the control's suite passed at request 8. Diff inspection and bytecode cleanup followed, then request 11 repeated the suite with bytecode disabled and no intervening source or test edits. Compound ran its final suite after its last edit. In the [older failed Compound slug attempt](diagram_sources/work_audit.json), requests 12 and 13 both ran the same seeded 5,000-input product check. The second probe investigated a facet mismatch, so only its repeated product check was redundant.
 
 The 0.16.23 default rule is 754 UTF-8 bytes, down from 804, at 100 words in both versions. It directs agents to reuse passing checks on unchanged inputs and environments. The bug guide counts the final suite as the regression confirmation when it includes that test. The refactor guide reruns only the unresolved part of a combined probe. The saved comparison keeps every attempt and charge.
+
+## Grouping source edits
+
+```sh
+python3 -B bench/replay_refactor_patch.py
+```
+
+The accepted Sonnet retry refactor in `v016b` sent six replacements and one file creation in a single assistant message. The replay combines those literal edits into one patch against the frozen fixture and checks all three resulting files against the saved artifact byte for byte. The earlier test edit, pre-edit baseline and final suite are separate phases. This checks patch equivalence and tool operations. It uses no model calls or recorded shell commands and makes no estimate of billed savings. [Replay counts and hashes](diagram_sources/refactor_patch_replay_v01626.json).
+
+The global setup and status shortcuts also link directly to the activation reference. Their explicit instruction path no longer includes the previous 5,278-byte engineering skill body. This is a source-size measurement.

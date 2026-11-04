@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.25 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.26 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -92,7 +92,7 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 | What you want | Command |
 | --- | --- |
 | Turn it on for every project (once, from any app) | `setup-global` |
-| Check that it is on | `status-global` |
+| Check saved global guidance | `status-global` |
 | Assess and tidy the current project (the only time it changes files you did not name) | `setup` |
 | Open the code map | `map` |
 | Check or stop the map service | `map status`, `map stop` |
@@ -105,7 +105,7 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 | What you want | Claude Code | Codex | Cursor |
 | --- | --- | --- | --- |
 | Turn it on for every project (once, from any app) | `/compound-skills:setup-global` | `$setup-global` | `/setup-global` |
-| Check that it is on | `/compound-skills:status-global` | `$status-global` | `/status-global` |
+| Check saved global guidance | `/compound-skills:status-global` | `$status-global` | `/status-global` |
 | Assess and tidy the current project | `/compound-skills:setup` | `$setup` | `/setup` |
 | Open the code map | `/compound-skills:map` | `$map` | `/map` |
 | Use it in this chat only | `/compound-skills:compound` | `$compound` | `/compound` |

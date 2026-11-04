@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.26 (2026-11-04)
+
+- Route global setup and status directly to the activation guide. A saved-guidance status check inspects map permissions only when asked.
+- Group related source hunks into one patch when the editor supports it. A saved retry refactor's six replacements and one new file can be applied in one patch with byte-identical source. [Offline replay](bench/README.md#grouping-source-edits).
+
 ## 0.16.25 (2026-11-04)
 
 - If one of two keywords has evidence, look for the missing keyword in up to 50 more files within the same byte budget. Stop at the first hit and preserve the first three results.

@@ -1,0 +1,20 @@
+{
+  "scope": "Source-edit phase only. Test edits and checks stay separate. No saved commands, project code or model ran.",
+  "run_id": "2ce1bb32",
+  "record_sha256": "2fc6e7ba410700c2832fbd034ddb56dde9494ae8917744f07ab2e4a6e3769198",
+  "events_sha256": "882bec1ff65b259587a79c7d1655b58c5eda0429726bb1ec1f94c7231248c7cf",
+  "fixture_head": "cdd6e88a0e51b7b6c46e7920404dbc44b2af28b4",
+  "source_files": [
+    "src/shopkit/payments.py",
+    "src/shopkit/webhooks.py",
+    "src/shopkit/retrying.py"
+  ],
+  "saved_source_edit_messages": 1,
+  "saved_source_tool_calls": {
+    "Edit": 6,
+    "Write": 1
+  },
+  "replay_patch_applications": 1,
+  "byte_identical_source_files": 3,
+  "saved_result_accepted": true
+}
