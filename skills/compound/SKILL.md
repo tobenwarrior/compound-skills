@@ -27,17 +27,17 @@ For named-file tasks, read those files and their relevant callers/tests directly
 
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers. Follow [repository assessment](references/onboarding.md) only for an explicit project `setup`; no other request assesses or cleans up the repository.
 
-Batch independent required reads and same-file edits. Respect the host's read-before-edit rules: if reads expire each turn, batch fresh file-tool reads of edit targets before constructing the patch. Implement only options needed by actual callers or an explicitly requested API. Keep dependent checks ordered. Read only the matching reference below; reuse unchanged guidance and current evidence.
+Batch independent required reads and same-file edits. Respect the host's read-before-edit rules: if reads expire each turn, batch fresh file-tool reads of edit targets before constructing the patch. Implement only options needed by actual callers or an explicitly requested API. Keep dependent checks ordered. Read the matching workflow below in the first batch of relevant reads. Use the refactor guide for a behavior-preserving extraction, including its internal interface. Open another guide only for a distinct unresolved decision. Reuse unchanged guidance and current evidence.
 
 | Task | Reference |
 | --- | --- |
 | Explain behavior or rationale | [Investigate](references/investigate.md) |
-| Add behavior or choose interfaces and ownership | [Design](references/design.md) |
+| Add behavior or design a new caller-facing contract | [Design](references/design.md) |
 | Reproduce and fix a defect | [Debug](references/debug.md) |
 | Change structure while preserving behavior | [Refactor](references/refactor.md) |
 | Improve measured performance | [Performance](references/performance.md) |
 | Assess a design or diff | [Review](references/review.md) |
-| Establish completion evidence | [Verify](references/verify.md) |
+| Independently verify or resolve an evidence gap | [Verify](references/verify.md) |
 | Inspect repository hygiene | [Repository hygiene](references/repo-hygiene.md) |
 
 ## Engineering judgment
@@ -50,4 +50,4 @@ Use the host's available tools and models. Delegate independent work when useful
 
 At the commit/PR stage, reopen [Git and pull requests](references/git.md); never add AI coauthors or generated-by credits.
 
-Finish when the requested scope is covered and selected checks pass; reopen a settled choice only for new evidence of a concrete defect or a project requirement. Report the outcome, checks and limits; omit repeated plans and edit-by-edit narration unless requested. Distinguish observations from inference. Load [verification](references/verify.md) before claiming a change works.
+Verify the final artifact with the selected workflow and required project checks. Inspect the results and report what they establish. Read [Verify](references/verify.md) for an independent verification request or an unresolved evidence gap. Finish when the requested scope is covered and selected checks pass. Reopen a settled choice only for a concrete failure or project requirement. Report the outcome, checks and limits.

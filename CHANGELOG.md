@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.15 (2026-11-04)
+
+- Use one workflow guide for a behavior-preserving extraction. Read the matching guide with the initial source batch, and open Verify only for independent verification or a specific evidence gap. Retain the passing baseline, final caller checks and required project checks.
+- Reuse sufficient caller tests. Batch additions for uncovered behavior and group independent final checks. In the saved 0.16.12 slug trace, one separate request opened Design after Refactor and Verify had already loaded. That request used 1,835 reasoning tokens. The saved charges remain intact. No new model runs measured the effect on total cost.
+
 ## 0.16.14 (2026-11-04)
 
 - Rank each live JSON map response once, even when the transport limit requires progressively smaller projections. The projections share the same index snapshot, ranked candidates and lexical matches.
