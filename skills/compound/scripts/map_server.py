@@ -118,14 +118,16 @@ _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 def _inventory_fingerprint(root: Path) -> str:
     """The engine's capped Git inventory, a bounded Git status and worktree metadata, or "" (never a cache hit) when Git fails."""
-    inventory, capped = engine._git_inventory(root)
+    inventory, notes = engine._git_inventory(root)
+    if inventory is None or engine.UNTRACKED_INVENTORY_NOTE in notes:
+        return ""
     # An oversized status keeps its prefix (branch, then tracked changes); the metadata below still covers every mapped path.
     status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", "--untracked-files=all"], engine.MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
-    if inventory is None or status is None:
+    if status is None:
         return ""
     digest = hashlib.sha256(status)
     digest.update(inventory)
-    digest.update(b"\0capped=" + (b"1" if capped else b"0"))
+    digest.update(b"\0capped=" + (b"1" if engine.INVENTORY_CAP_NOTE in notes else b"0"))
     paths = sorted(set(inventory.split(b"\0")))
     for raw in paths:
         if not raw:
@@ -947,7 +949,8 @@ class MapService:
             model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text", refresh=refresh)
             if model["coverage"].get("inventory_available") is False:
                 raise MapServerError(model["coverage"]["notes"][0])
-            after = _inventory_fingerprint(project.root) if before else ""
+            untracked_missing = engine.UNTRACKED_INVENTORY_NOTE in model["coverage"]["notes"]
+            after = _inventory_fingerprint(project.root) if before and not untracked_missing else ""
             git_state = _model_git_state(model)
             with project.lock:
                 old = project.model

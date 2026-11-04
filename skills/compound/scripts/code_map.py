@@ -62,6 +62,7 @@ MAX_COCHANGE_RESULTS = 6
 MAX_GIT_LOG_BYTES = 1024 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
 INVENTORY_CAP_NOTE = "Git inventory capped at 4 MiB of paths; later files are not indexed"
+UNTRACKED_INVENTORY_NOTE = "Git untracked inventory unavailable. Showing tracked paths only."
 MAX_CACHE_BYTES = 8 * 1024 * 1024
 SKIP_DIRS = {".git", "vendor", "node_modules"}
 BUILD_DIRS = {"build", "dist"}
@@ -202,21 +203,24 @@ def repository_name(root: Path) -> str:
 def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
-def _git_inventory(root: Path) -> tuple[bytes | None, bool]:
-    """Return whole NUL-terminated paths within MAX_GIT_INVENTORY_BYTES, tracked first, and whether the cap cut any."""
+def _git_inventory(root: Path) -> tuple[bytes | None, list[str]]:
+    """Return bounded whole NUL-terminated paths, tracked first, with any inventory gaps."""
     tracked = _bounded_git_output(root, ["ls-files", "--cached", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
     if tracked is None:
-        return None, False
+        return None, []
     # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
     # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
     reserve = max(MAX_GIT_INVENTORY_BYTES - len(tracked), MAX_GIT_INVENTORY_BYTES // 4)
     others = _bounded_git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"], reserve, keep_prefix=True)
+    notes = []
     if others is None:
-        return None, False
-    capped = len(tracked) + len(others) > MAX_GIT_INVENTORY_BYTES
-    # Keep the complete entries read so far instead of mapping nothing.
+        others = b""
+        notes.append(UNTRACKED_INVENTORY_NOTE)
+    if len(tracked) + len(others) > MAX_GIT_INVENTORY_BYTES:
+        notes.append(INVENTORY_CAP_NOTE)
+    # Keep the complete entries read so far.
     others = others[:others.rfind(b"\0", 0, reserve) + 1]
-    return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1] + others, capped
+    return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1] + others, notes
 def _git_root(supplied: Path) -> tuple[Path, str | None]:
     root_result = _git(supplied, "rev-parse", "--show-toplevel")
     if root_result is None or root_result.returncode != 0:
@@ -235,10 +239,9 @@ def _git_context(supplied: Path) -> tuple[Path, str, list[str] | None, list[str]
         return root, "", None, [note]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
-    inventory_data, capped = _git_inventory(root)
+    inventory_data, notes = _git_inventory(root)
     if inventory_data is None:
         return root, head, None, ["Git inventory unavailable; inspect with native search"]
-    notes = [INVENTORY_CAP_NOTE] if capped else []
     inventory = []
     for raw in inventory_data.split(b"\0"):
         rel = os.fsdecode(raw) if raw else ""
@@ -1484,7 +1487,8 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
             if entry.get("parse_note"):
                 _note(notes, entry["parse_note"])
         entries[rel] = entry
-    budget_hit = bool(limited) or inventory_capped or INVENTORY_CAP_NOTE in notes
+    inventory_incomplete = UNTRACKED_INVENTORY_NOTE in notes
+    budget_hit = bool(limited) or inventory_capped or INVENTORY_CAP_NOTE in notes or inventory_incomplete
     known = set(entries)
     aliases = _load_alias_configs(root, candidates)
     if any(config.get("unloaded") for config in aliases):
@@ -1542,7 +1546,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
         model["query_matches"] = [path for path in model["focus"] if path in query_matches]
     if branch:
         model["branch"] = branch
-    if use_cache and write_cache:
+    if use_cache and write_cache and not inventory_incomplete:
         try:
             _write_json(root, {path: reusable[path] for path in sorted(reusable)})
         except CodeMapError as exc:

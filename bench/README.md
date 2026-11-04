@@ -217,6 +217,8 @@ Each version warms an isolated local map service once per checkout and then repe
 
 A recovery replay primed an isolated cache on each pinned Flask and Django checkout, simulated one Git inventory failure, then queried the unchanged checkout. Against `ddb1b8f`, Flask recovery went from 125 file parses to zero, and Django from 3,497 to one. The recovered file records matched exactly. A valid empty inventory still removes old entries. The simulation used local files and no model requests.
 
+A second replay failed only the untracked-file enumeration on the same clean pins. Against `72c710d`, the partial map returned 125 Flask and 3,496 Django records where both previously returned zero. The exact target was visible in each summary, with an explicit untracked-coverage warning. Both full caches stayed byte-identical and recovery used the same number of parses as the baseline.
+
 ## Source-only map lookups
 
 Compare the default agent summary and local source reads on pinned Flask, Click and packaging snapshots:

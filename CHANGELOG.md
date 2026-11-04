@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.44 (2026-11-04)
+
+- Keep tracked files navigable when Git cannot list untracked files. Show partial coverage, preserve the full disk cache, and recheck the inventory on the next explicit query. [Recovery replay](bench/README.md#warm-map-query-work)
+
 ## 0.16.43 (2026-11-04)
 
 - Preserve the existing code-map cache and live index when Git cannot list the checkout. After a simulated failure, the unchanged Flask and Django checkouts needed 0 and 1 file parses to recover, versus 125 and 3,497 before. [Recovery replay](bench/README.md#warm-map-query-work)
