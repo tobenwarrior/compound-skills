@@ -172,6 +172,10 @@ def records(*, for_summary=False):
             if (len(preflight) != 1 or preflight[0].get('prompt_sha256') != expected
                     or record.get('prompt_sha256') != expected):
                 raise RuntimeError(f'Invalid prior attempt {folder.name}: navigation prompt mismatch')
+            context_hash = preflight[0].get('context_sha256')
+            if not isinstance(context_hash, str) or len(context_hash) != 64:
+                raise RuntimeError(f'Invalid prior attempt {folder.name}: missing navigation context hash')
+            record['context_sha256'] = context_hash
             tools = sorted(preflight[0]['tools'])
             if navigation_tools is None:
                 navigation_tools = tools
@@ -496,6 +500,15 @@ if __name__ == '__main__':
         report = evaluate(PLAN, saved)
         for arm, totals in report['arms'].items():
             totals['requests'] = sum(row['requests'] for row in saved if row['arm'] == arm)
+        if GRADER == 'map-navigation':
+            initial = {(row['stage'], row['arm']): row['context_sha256'] for row in saved
+                       if row['attempt'] == 0 and row['valid_usage']}
+            for stage in range(len(PLAN['sequences'][0]['tasks'])):
+                without = initial.get((stage, 'without'))
+                with_map = initial.get((stage, 'with'))
+                if without and with_map and without != with_map:
+                    report['errors'].append(f'Stage {stage}: request context outside the task prompt differs between arms')
+                    report.update(claim=False, compound_cheaper=False)
         print(json.dumps(report, indent=2))
     else:
         with (BASE / 'plan.sha256').open() as lock:

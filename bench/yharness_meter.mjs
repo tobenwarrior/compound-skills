@@ -78,16 +78,28 @@ globalThis.fetch = async function(input, init) {
     if (!required.every(name => names.includes(name)) || (readOnly && (names.includes('edit') || names.includes('write')))) {
       throw new Error('Benchmark refuses model request: tool set does not match the run mode');
     }
+    let contextHash;
     if (expectedPromptHash) {
-      const content = body.messages?.findLast(message => message.role === 'user')?.content;
-      const delivered = typeof content === 'string' ? content :
-        Array.isArray(content) && content.every(part => part?.type === 'text' && typeof part.text === 'string') ? content.map(part => part.text).join('') : null;
-      if (delivered === null || createHash('sha256').update(delivered).digest('hex') !== expectedPromptHash) {
-        throw new Error('Benchmark refuses model request: delivered prompt differs from the frozen prompt');
+      // Y Harness can append its environment context as a separate user message.
+      const messages = Array.isArray(body.messages) ? body.messages : [];
+      const matches = [];
+      for (const [index, message] of messages.entries()) {
+        if (message?.role !== 'user') continue;
+        const content = message.content;
+        const delivered = typeof content === 'string' ? content :
+          Array.isArray(content) && content.every(part => part?.type === 'text' && typeof part.text === 'string') ? content.map(part => part.text).join('') : null;
+        if (delivered !== null && createHash('sha256').update(delivered).digest('hex') === expectedPromptHash) {
+          matches.push(index);
+        }
       }
+      if (matches.length !== 1) {
+        throw new Error('Benchmark refuses model request: delivered prompt does not uniquely match the frozen prompt');
+      }
+      const context = { ...body, messages: messages.filter((_, index) => index !== matches[0]) };
+      contextHash = createHash('sha256').update(JSON.stringify(context)).digest('hex');
     }
     save({event:'request_preflight',tools:names,routing_present:routingPresent,model:body.model,max_tokens:body.max_tokens??body.max_completion_tokens,
-      ...(expectedPromptHash ? {prompt_sha256:expectedPromptHash} : {})});
+      ...(expectedPromptHash ? {prompt_sha256:expectedPromptHash,context_sha256:contextHash} : {})});
   }
   const record={event:'request',number:++calls,started_at:new Date().toISOString()};
   save({...record,event:'request_started'});
