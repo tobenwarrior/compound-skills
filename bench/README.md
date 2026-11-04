@@ -117,6 +117,12 @@ This command only reads saved records and works without Linux or Claude Code. It
 
 Spend per accepted result is the batch's recorded spend divided by accepted results, including spend on unsuccessful attempts. Existing runs do not link agent correction sessions or sequences of project changes, so this is an audit of first-attempt batches, not a measurement of long-term savings. It does not estimate how many retries would succeed.
 
+### Source-first review trace replay
+
+In the saved second-round Flask review, four runs per mode found all three planted defects. Both stock Sonnet runs used one diff read each. Across all four runs per mode, Compound used 28 tool calls in 21 assistant messages, versus 11 calls in nine messages without Compound. Each Compound run attempted runtime setup after reading the diff. After the first denial in each run, they made 11 more denied Bash calls and five successful scratch writes or edits.
+
+The pinned source exposes the three mechanisms in the changed method. The closure shares the loop's directory binding, the cache fallback treats zero as unset, and the file-serving call joins an unchecked filename. The 0.16.36 saved rule asks reviews to probe only when source evidence is insufficient and execution is permitted. The explicit review guide also limits scratch reproductions to required work or a concrete gap that needs a permitted probe. These are saved counts and source checks. Review costs on the revised rule remain unmeasured. [Historical review comparison](historical-comparisons.md#where-it-doesnt-help-reviews).
+
 ## Arms
 
 | Arm | What runs |

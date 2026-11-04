@@ -50,8 +50,8 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    'Reviews inspect diffs, callers and tests. Probe unresolved findings only with permission. After '
-    'denial, use source only. Bug fixes require one failing regression before source edits and a final '
+    'Review diffs, callers and tests. Probe only if permitted and source is insufficient. After denial, '
+    'source only. Bug fixes require one failing regression before source edits and a final '
     'full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline '
     'once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. '
     'Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while '

@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.35 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.36 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -184,7 +184,7 @@ Compound changed the verification process much more than the number of bugs fixe
 
 ### Reviews, questions and cost
 
-The historical review task showed **no finding advantage**: both modes found all three defects. In the side-by-side 0.16.0 round, reviews cost 1.61× the cost without Compound with Opus and 2.21× with Sonnet. Questions covered a median of 11/11 key points with Opus and 9/11 with Sonnet in both modes. Compound now keeps reviews and questions out of the full engineering skill and stops reproduction work after execution is denied. The latest prompt changes have not been measured in new agent runs. [Review evidence](bench/historical-comparisons.md#where-it-doesnt-help-reviews).
+The historical review task showed **no finding advantage**: both modes found all three defects. In the side-by-side 0.16.0 round, reviews cost 1.61× the cost without Compound with Opus and 2.21× with Sonnet. Questions covered a median of 11/11 key points with Opus and 9/11 with Sonnet in both modes. Compound keeps reviews and questions on the saved rule. Reviews use runtime probes only for findings that source cannot settle or for required checks, and stop probing after a denial. The latest prompt changes have not been measured in new agent runs. [Review evidence](bench/historical-comparisons.md#where-it-doesnt-help-reviews).
 
 The allowance savings apply to the measured two-change runs and three-bug sequence. The completed six-change workflow has incomplete billing records. Every cost comparison includes failed implementations and repairs.
 
@@ -280,14 +280,14 @@ Compound has one short guide for each kind of work and tells the agent to read t
 - **Scoped extractions with known callers and behavior:** the always-on rule. Add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
 - **Broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
 - **When a task needs it:** the matching guide. The refactor guide covers extractions that need more investigation of callers or behavior. The verification guide covers independent verification or an unresolved evidence gap.
-- **Bug fixes, reviews and questions:** only the always-on rule. Reviews inspect source first, execute only necessary permitted checks, and stop execution after denial; review findings do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
+- **Bug fixes, reviews and questions:** only the always-on rule. Reviews use source evidence first and run only necessary permitted checks. A denial ends probing, and review findings alone do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
 - **One chat only:** typing `compound` alone applies the always-on rule's habits to every task in that chat and the skill to the same kinds of work, as a saved setup does.
 
 SKILL.md also holds engineering guidance: use supplied code and known files first, query the map only for unknown files or dependencies, delegate independent work when useful, and keep frontend tooltips to at most two visible lines. Explicit review-only requests go directly to the review guide. Read it before you turn Compound on.
 
 The always-on rule as `setup-global` saves it. The latest two-change benchmark used the 0.16.31 rule.
 
-> Reviews inspect diffs, callers and tests. Probe unresolved findings only with permission. After denial, use source only. Bug fixes require one failing regression before source edits and a final full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, features, performance and PR authoring. Follow project instructions and user scope. Report checks, limits and failures. Omit AI commit attribution.
+> Review diffs, callers and tests. Probe only if permitted and source is insufficient. After denial, source only. Bug fixes require one failing regression before source edits and a final full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, features, performance and PR authoring. Follow project instructions and user scope. Report checks, limits and failures. Omit AI commit attribution.
 
 ### Commits
 

@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.36 (2026-11-04)
+
+- Ask reviews to report findings once source establishes the trigger and impact. Use a permitted probe only for a specific evidence gap or required check. Keep the saved rule within 100 words.
+- In four saved Compound Flask reviews, 11 Bash calls were denied after the first denial and five scratch writes or edits still occurred. Both modes found all three defects. [Trace replay](bench/README.md#source-first-review-trace-replay).
+
 ## 0.16.35 (2026-11-04)
 
 - Keep audit content and worktree scans within the selected checkout. In-checkout links still work, and audit configuration that points outside reports a configuration error.
