@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for refactors, new features, performance work and PR authoring, or to enable Compound guidance for a session, project, or all projects."
+description: "Use for complex refactors, new features, performance work and PR authoring, or to enable Compound guidance for a session, project, or all projects."
 license: MIT
 ---
 

@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.32 (2026-11-04)
+
+- Route scoped extractions with known callers and behavior through the saved rule. Keep the caller baseline and final checks, and finish after diff review. Load the full guide for broader refactors. Run `setup-global` again to refresh saved rules.
+- The saved Dispatchkit refactor passed the independent cumulative grader before its final helper signature rewrite. [Offline trace replay](bench/README.md#scoped-refactor-replay).
+
 ## 0.16.31 (2026-11-04)
 
 - Validate required manifests, marketplaces, skill entrypoints, rules and local links against staged files. Continue scanning untracked public files for accidental disclosure and validate unpacked archives from their contents.

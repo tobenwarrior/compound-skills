@@ -2,13 +2,13 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.31 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.32 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. For refactors, new features, performance work and PR authoring, the agent also loads Compound's skill: a short guide for that kind of work and a local map of the code.
+Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. Scoped extractions with known callers use the saved rule directly. Broader refactors, new features, performance work and PR authoring use Compound’s task guides and code map when needed.
 
-**Current two-change benchmark with Compound 0.16.31** used **10.3% less OpenCode Go allowance** overall, with **2/2 changes correct in both modes**. [Results and scope](#fresh-two-change-comparison).
+**Two-change benchmark with Compound 0.16.31** used **10.3% less OpenCode Go allowance** overall, with **2/2 changes correct in both modes**. [Results and scope](#fresh-two-change-comparison).
 
 **Earlier bug-fix sequence — Compound 0.16.7:** a sequence of three bug fixes on the invoicekit fixture consumed **15.5% less OpenCode Go allowance**, with **3/3 changes correct in both modes**. The full six-change workflow is now completed in both modes, including repairs; two unreported provider costs prevent an exact overall savings claim. [Results and scope](#completed-workflow-six-changes-with-repairs).
 
@@ -25,7 +25,7 @@ Use Compound when a change needs evidence that behavior is preserved: a failing 
 - **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
 - **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
 - **File discovery:** the map found 74% of changed source files in its top four, versus 67% for a word search that also skips common words and lists tests last, over 240 held-out commits. [Map evidence](#does-it-find-the-files-a-change-touches).
-- **Cost.** The current two-change benchmark used 10.3% less Go allowance with both modes correct. The follow-up refactor cost more with Compound. The earlier three-bug sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
+- **Cost.** The latest measured two-change benchmark used 10.3% less Go allowance with both modes correct. The follow-up refactor cost more with Compound. The earlier three-bug sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
 
 The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7 or 0.16.31 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
 
@@ -277,16 +277,17 @@ Compound has one short guide for each kind of work and tells the agent to read t
 ### What loads when
 
 - **Every request:** the always-on rule and the plugin's skill list. The benchmarked rule added about 510 tokens; the shorter rule below has not been remeasured in a host.
-- **Refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
-- **When a task needs it:** the matching guide. Behavior-preserving extractions use the refactor guide for caller checks and helper design. The verification guide covers independent verification or an unresolved evidence gap.
+- **Scoped extractions with known callers and behavior:** the always-on rule. Add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
+- **Broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
+- **When a task needs it:** the matching guide. The refactor guide covers extractions that need more investigation of callers or behavior. The verification guide covers independent verification or an unresolved evidence gap.
 - **Bug fixes, reviews and questions:** only the always-on rule. Reviews inspect source first, execute only necessary permitted checks, and stop execution after denial; review findings do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
 - **One chat only:** typing `compound` alone applies the always-on rule's habits to every task in that chat and the skill to the same kinds of work, as a saved setup does.
 
 SKILL.md also holds engineering guidance: use supplied code and known files first, query the map only for unknown files or dependencies, delegate independent work when useful, and keep frontend tooltips to at most two visible lines. Explicit review-only requests go directly to the review guide. Read it before you turn Compound on.
 
-The always-on rule, word for word, as `setup-global` saves it (compacted after the recorded runs; billed cost and behavioral equivalence have not been remeasured):
+The always-on rule as `setup-global` saves it. The latest two-change benchmark used the 0.16.31 rule.
 
-> Reviews inspect diffs, callers and tests. Probe unresolved findings only with permission. After denial, use source only. Bug fixes require one failing regression before source edits and a final full suite. Refactors characterize differing caller policies before one baseline and verify preservation afterward. Use documented commands. Prevent untracked test outputs with supported options. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Read narrowly. Honor current-turn read/edit prerequisites. Load `compound` and relevant references for refactors, features, performance and PR authoring. Follow project instructions and user scope. Report checks, limits and load failures. Omit AI commit attribution.
+> Reviews inspect diffs, callers and tests. Probe unresolved findings only with permission. After denial, use source only. Bug fixes require one failing regression before source edits and a final full suite. For scoped extractions with known callers and behavior, add missing cases. Baseline once, preserve policies, retest, run required checks, review diff, finish. Use documented commands. Prevent test byproducts. Diagnose setup failures before retrying. Reuse passing checks while inputs and environment match. Honor read/edit prerequisites. Load `compound` for other refactors, features, performance and PR authoring. Follow project instructions and user scope. Report checks, limits and failures. Omit AI commit attribution.
 
 ### Commits
 
