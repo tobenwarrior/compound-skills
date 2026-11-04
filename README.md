@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.18 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.19 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -229,6 +229,8 @@ The map is optional for agents: use named files and native symbol navigation dir
 The current query implementation pins the repository directory once while reading candidate files, instead of walking all root ancestors for each candidate. Reads remain fresh and reject symlinks; ranking, candidate limits and returned paths are unchanged in the offline comparison. [Local profiling and reproduction](bench/README.md#profile-local-map-queries). Earlier [cache timings](bench/historical-comparisons.md#map-cache-timings) and [summary-density measurements](bench/historical-comparisons.md#map-summary-density) remain separate from the without/with comparisons.
 
 When a short summary would hide leading matches, the map reserves space for complete file paths before symbol detail. In a 36-query replay at 500 characters, visible changed-file paths rose from 22 to 29 out of 41. At the default 2,500 characters, both renderers showed 38 of 41. [Replay and source pins](bench/README.md#focused-summary-coverage).
+
+When a search finds no lexical match in metadata or the leading 50 files, the map can look deeper within the same byte budget. In a replay, all four selected source-only queries surfaced their target paths. Three ordinary queries kept their existing scan size. [Replay and limits](bench/README.md#source-only-map-lookups).
 
 ### Does it find the files a change touches?
 

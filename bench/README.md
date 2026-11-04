@@ -97,6 +97,16 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Source-only map lookups
+
+Compare the default agent summary and local source reads on pinned Flask, Click and packaging snapshots:
+
+```sh
+python3 -B bench/map_content_fallback.py --baseline-ref 0ffac77
+```
+
+Four selected queries exercise terms found only in file contents beyond the initial scan. All four targets appear with the fallback. The three normal symbol controls preserve their focus and source probes. The three no-hit controls retain their ranking and probe 92 to 125 files instead of 50. Across those misses, the extra reads total about 52 to 195 KiB per query. The fallback retains an 8 MiB read budget and a 200-file cap. [Probe results and pins](diagram_sources/map_content_fallback_v01619.json).
+
 ## Focused summary coverage
 
 Replay focused summaries on commit parent snapshots from pinned Flask, Click and packaging histories already present under `bench/work/sources/`:

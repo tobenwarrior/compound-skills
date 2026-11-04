@@ -1,0 +1,188 @@
+{
+  "scope": "Selected source-only lookups and controls on pinned local repositories. These probes measure visible paths and local reads, with zero model calls.",
+  "baseline_ref": "0ffac779f985236b6106a1a6c36c0133e5f4055e",
+  "baseline_source_sha256": "86b5cf4b32add48163a652193d56be9566349584794ccfbdf603469524139885",
+  "candidate_source_sha256": "9350a64fc04d5057e299f80f61b04cbb480de96361a1724026c4ad7589a9949b",
+  "probes": [
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "source-only",
+      "query": "pluginmanager",
+      "target": "tests/test_logging.py",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 570894,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 125,
+        "source_bytes": 623828,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "ordinary",
+      "query": "Blueprint",
+      "target": "src/flask/blueprints.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 573836,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 573836,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "kind": "miss",
+      "query": "compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 570894,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 125,
+        "source_bytes": 623828,
+        "target_visible": false
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "source-only",
+      "query": "multibyte",
+      "target": "tests/test_types/test_File.py",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 963465,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 114,
+        "source_bytes": 1023895,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "ordinary",
+      "query": "Command",
+      "target": "src/click/core.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 881842,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 881842,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "click",
+      "source_head": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "kind": "miss",
+      "query": "compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 963465,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 114,
+        "source_bytes": 1023895,
+        "target_visible": false
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "source-only",
+      "query": "jsonschema",
+      "target": "tests/test_dependency_groups.py",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1311540,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 92,
+        "source_bytes": 1510976,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "source-only",
+      "query": "mousebender",
+      "target": "tests/pylock/pylock.spec-example.toml",
+      "focus_preserved": false,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1311540,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 92,
+        "source_bytes": 1510976,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "ordinary",
+      "query": "SpecifierSet",
+      "target": "src/packaging/specifiers.py",
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1292567,
+        "target_visible": true
+      },
+      "after": {
+        "source_probes": 50,
+        "source_bytes": 1292567,
+        "target_visible": true
+      }
+    },
+    {
+      "repository": "packaging",
+      "source_head": "78d8673da4d275bb7aee0126a5edc3cf90976af1",
+      "kind": "miss",
+      "query": "compoundnonexistentfallbackprobe",
+      "target": null,
+      "focus_preserved": true,
+      "before": {
+        "source_probes": 50,
+        "source_bytes": 1311540,
+        "target_visible": false
+      },
+      "after": {
+        "source_probes": 92,
+        "source_bytes": 1510976,
+        "target_visible": false
+      }
+    }
+  ]
+}

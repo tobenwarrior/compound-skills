@@ -124,6 +124,7 @@ SIZE_WEIGHT = 0.3
 IMPORTER_WEIGHT = 0.3
 TEST_FACTOR = 0.5
 CONTENT_RANK_FILES = 50
+CONTENT_FALLBACK_FILES = 200
 CONTENT_RANK_BYTES = 8 * 1024 * 1024
 _COCHANGE_CACHE: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = {}
 class CodeMapError(ValueError):
@@ -1060,12 +1061,13 @@ def _rank_unfocused(records: list[dict[str, Any]], by_path: dict[str, dict[str, 
 
 
 def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *, query_matches: set[str] | None = None) -> list[dict[str, Any]]:
-    """Order files by query words in paths, symbols and, given ``root``, the text of the leading candidates.
+    """Rank paths and symbols, then read bounded source content when a root is supplied.
 
-    Rarer words weigh more. Larger code files, widely imported ones, current changes and recent co-changes of
+    When the first candidates and metadata give no lexical evidence, use the
+    remaining read budget to look deeper. Rarer words weigh more. Larger code
+    files, widely imported ones, current changes and recent co-changes of
     matches rank higher; tests rank lower unless the query is about tests.
-    A supplied query_matches set receives paths with path, symbol or scanned-content
-    evidence for this query; records and ranking remain unchanged.
+    A supplied query_matches set receives the paths with query evidence.
     """
     if query_matches is not None:
         query_matches.clear()
@@ -1085,8 +1087,9 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
         for term in terms
     }
     matched = {path: sum(weight * ((term in path_terms[path]) + (term in symbol_terms[path])) for term, weight in weights.items()) for path in by_path}
+    matching_paths = {path for path, value in matched.items() if value > 0}
     if query_matches is not None:
-        query_matches.update(path for path, value in matched.items() if value > 0)
+        query_matches.update(matching_paths)
     bonus = dict.fromkeys(by_path, 0.0)
     for path, record in by_path.items():
         bonus[path] += IMPORTER_WEIGHT * math.log1p(len(reverse[path])) + (record.get("changed") in {"added", "modified", "untracked", "renamed"})
@@ -1105,16 +1108,24 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
 
     first = {path: score(path, matched[path]) for path in by_path}
     order = sorted(records, key=lambda record: (-first[record["path"]], not _entry_config(record["path"]), record["path"]))
+    signature_matches = {
+        record["path"] for record in order[:CONTENT_RANK_FILES]
+        if any(term in _name_terms(symbol.get("signature") or "")
+               for symbol in record["symbols"] for term in terms)
+    }
     if query_matches is not None:
-        query_matches.update(record["path"] for record in order[:CONTENT_RANK_FILES]
-                             if any(term in _name_terms(symbol.get("signature") or "")
-                                    for symbol in record["symbols"] for term in terms))
+        query_matches.update(signature_matches)
+    has_evidence = bool(matching_paths or signature_matches)
     if root is None or not terms:
         return order
     # Folding only removes endings or turns a final y into i, so a word that folds to a term contains the term
     # without its final i's.
     finder = re.compile("|".join(sorted({re.escape(term.rstrip("i") or term) for term in terms})), re.IGNORECASE)
-    head, budget, wanted, rescored = order[:CONTENT_RANK_FILES], CONTENT_RANK_BYTES, set(terms), {}
+    head = order[:CONTENT_RANK_FILES]
+    budget = CONTENT_RANK_BYTES
+    wanted = set(terms)
+    rescored = {}
+    rescued = []
     with contextlib.ExitStack() as stack:
         opener = None
         if os.name == "posix" and hasattr(os, "O_NOFOLLOW") and os.open in getattr(os, "supports_dir_fd", ()):
@@ -1122,15 +1133,45 @@ def _rank(records: list[dict[str, Any]], query: str, root: Path | None = None, *
                 opener = stack.enter_context(open_regular_files_nofollow(root))
             except OSError:
                 return order
-        for record in head:
-            found, used = _content_terms(root, record["path"], min(MAX_FILE_BYTES, budget), finder, wanted, opener) if budget > 0 else (set(), 0)
+
+        def scan(path: str) -> set[str]:
+            nonlocal budget
+            if budget <= 0:
+                return set()
+            found, used = _content_terms(root, path, min(MAX_FILE_BYTES, budget), finder, wanted, opener)
             budget -= used
             if found and query_matches is not None:
-                query_matches.add(record["path"])
-            content = sum(weight for term, weight in weights.items() if term in found)
-            rescored[record["path"]] = score(record["path"], matched[record["path"]] + CONTENT_WEIGHT * content)
-    head.sort(key=lambda record: (-rescored[record["path"]], not _entry_config(record["path"]), record["path"]))
-    return head + order[CONTENT_RANK_FILES:]
+                query_matches.add(path)
+            return found
+
+        for record in head:
+            path = record["path"]
+            found = scan(path)
+            has_evidence = has_evidence or bool(found)
+            content = sum(weights[term] for term in terms if term in found)
+            rescored[path] = score(path, matched[path] + CONTENT_WEIGHT * content)
+        if not has_evidence:
+            # With no lexical evidence yet, spend only the remaining budget on deeper candidates.
+            for record in order[CONTENT_RANK_FILES:CONTENT_FALLBACK_FILES]:
+                if budget <= 0:
+                    break
+                path = record["path"]
+                found = scan(path)
+                if found:
+                    content = sum(weights[term] for term in terms if term in found)
+                    rescored[path] = score(path, CONTENT_WEIGHT * content)
+                    rescued.append(record)
+
+    def rank_key(record: dict[str, Any]) -> tuple[float, bool, str]:
+        path = record["path"]
+        return -rescored[path], not _entry_config(path), path
+
+    head.sort(key=rank_key)
+    if not rescued:
+        return head + order[CONTENT_RANK_FILES:]
+    rescued.sort(key=rank_key)
+    rescued_paths = {record["path"] for record in rescued}
+    return rescued + head + [record for record in order[CONTENT_RANK_FILES:] if record["path"] not in rescued_paths]
 def _note(notes: list[str], value: str) -> None:
     if value and value not in notes:
         notes.append(value)

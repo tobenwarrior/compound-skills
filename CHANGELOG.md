@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.19 (2026-11-04)
+
+- Look past the first 50 candidates when a query has no lexical evidence. Promote source-only matches found within the remaining 8 MiB budget and a 200-file total cap. The same no-follow opener handles both passes.
+- Four selected source-only queries on pinned Flask, Click and packaging snapshots now show their target paths. The three ordinary controls retain their focus and 50 source probes. The three no-hit controls use 92 to 125 probes and preserve their ranking. [Replay and source pins](bench/README.md#source-only-map-lookups).
+
 ## 0.16.18 (2026-11-04)
 
 - Keep the first four focused candidates visible when long signatures or import lists would crowd them out and their paths fit. The compact fallback keeps whole paths and adds the best matching symbol when space permits.
