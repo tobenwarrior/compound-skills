@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.61 (2026-11-04)
+
+- Turn a known bug into its failing regression before further investigation. After the fix, run the full suite and check the diff, then finish. Reserve extra probes for a specific evidence gap or project requirement.
+
 ## 0.16.60 (2026-11-04)
 
 - Give test files priority for explicit test searches. Keep mixed queries such as production behavior alongside `TestCase` focused on both paths. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)

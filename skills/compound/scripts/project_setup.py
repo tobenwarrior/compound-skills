@@ -51,8 +51,8 @@ BLOCK_LINES = (
     "## Compound Skills default routing",
     "",
     "Review diff first. Follow relevant callers/tests. Probe gaps when permitted. After denial, source only. "
-    "Use required native Read before edits. Bugs use a failing regression as baseline before source edits and the "
-    "full suite as confirmation. Extra checks need requirements or gaps. Scoped extractions cover gaps, "
+    "Use required native Read before edits. For bugs, run a failing regression first, fix, run the full suite, "
+    "check diff, finish. Extra checks need specific gaps or requirements. Scoped extractions cover gaps, "
     "baseline once, preserve policies, retest, review diff. Search checkout. Batch independent calls. "
     "Use documented checks, avoiding byproducts (`python -B`). Diagnose setup before retrying. "
     "Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, "
