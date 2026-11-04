@@ -1399,7 +1399,12 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
                 temporary.unlink()
             except OSError:
                 pass
-def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True) -> dict[str, Any]:
+def _exact_record(records: list[dict[str, Any]], query: str) -> dict[str, Any] | None:
+    target = query.removeprefix("./")
+    return next((record for record in records if record["path"] == target), None) if target else None
+
+
+def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False) -> dict[str, Any]:
     candidates: dict[str, dict[str, Any]] = {}
     skipped = 0
     excluded = 0
@@ -1489,29 +1494,38 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     if any("local import links capped" in record.get("outline_note", "") for record in records):
         _note(notes, "local import link cap reached; some importers may be missing")
     query_matches: set[str] = set()
-    ranked = _rank(records, query, root, query_matches=query_matches)
-    file_cap = len(ranked) > max_files
+    exact = _exact_record(records, query) if exact_summary else None
+    if exact is None:
+        ranked = _rank(records, query, root, query_matches=query_matches)
+        selected = sorted(ranked[:max_files], key=lambda record: record["path"])
+        focus = [record["path"] for record in ranked[:min(12, max_files)]]
+    else:
+        selected = [exact]
+        focus = [exact["path"]]
+        query_matches.add(exact["path"])
+    # Coverage counts indexed files even when the exact-path summary displays one row.
+    indexed = min(len(records), max_files)
+    file_cap = len(records) > max_files
     truncated = file_cap or budget_hit
     if file_cap:
-        skipped += len(ranked) - max_files
+        skipped += len(records) - max_files
         _note(notes, f"file cap reached at {max_files} files")
     if any(info["language"] in {"python", "javascript", "typescript"} for info in candidates.values()):
         _note(notes, "Python and JavaScript/TypeScript import links are heuristic and incomplete; aliases, dynamic imports, and unresolved modules need native search")
     if any(info["language"] in SUPPORTED_LANGUAGES for info in candidates.values()):
         _note(notes, "Other language symbol outlines and Go/Rust import links are heuristic; verify with native search")
-    selected = sorted(ranked[:max_files], key=lambda record: record["path"])
     model = {
         "root_name": repository_name(root),
         "generated_at": _now(),
         "head": head,
         "coverage": {
-            "inventory": len(inventory), "indexed": len(selected), "truncated": truncated,
+            "inventory": len(inventory), "indexed": indexed, "truncated": truncated,
             "skipped": skipped, "excluded": excluded, "excluded_reasons": excluded_reasons,
             "pending": pending, "limited": limited,
             "notes": notes[:24],
         },
         "files": selected,
-        "focus": [record["path"] for record in ranked[:min(12, max_files)]],
+        "focus": focus,
     }
     if _query_terms(query)[0]:
         model["query_matches"] = [path for path in model["focus"] if path in query_matches]
@@ -1620,14 +1634,23 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 remaining -= len(hint)
         return "\n".join([header, *visible]) + suffix
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
+def _build_model(
+    repo: str | os.PathLike[str], *, query: str, max_files: int, no_cache: bool = False,
+    cache_read_only: bool = False, refresh: bool = False, exact_summary: bool = False,
+) -> dict[str, Any]:
+    root_input = _repo_path(repo)
+    root, head, inventory, notes = _git_context(root_input)
+    return _build(root, head, inventory, notes, query, _clamp(int(max_files), 1, MAX_FILES), not no_cache,
+                  refresh, write_cache=not cache_read_only, exact_summary=exact_summary)
+
+
 def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
     if no_cache and cache_read_only:
         raise CodeMapError("--no-cache and --cache-read-only are mutually exclusive")
     if output_format not in {"text", "json"}:
         raise CodeMapError(f"unsupported output format: {output_format}")
-    root_input = _repo_path(repo)
-    root, head, inventory, notes = _git_context(root_input)
-    model = _build(root, head, inventory, notes, query, _clamp(int(max_files), 1, MAX_FILES), not no_cache, refresh, write_cache=not cache_read_only)
+    model = _build_model(repo, query=query, max_files=max_files, no_cache=no_cache,
+                         cache_read_only=cache_read_only, refresh=refresh)
     max_chars = _clamp(int(max_chars), 500, MAX_CHARS)
     if output_format == "text":
         return model, _text(model, max_chars, query)
@@ -1655,6 +1678,12 @@ def _server_api():
     return map_server
 
 
+def _in_process_text(args: argparse.Namespace) -> str:
+    model = _build_model(args.repo, query=args.query, max_files=args.max_files, no_cache=args.no_cache,
+                         cache_read_only=args.cache_read_only, refresh=args.refresh, exact_summary=True)
+    return _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.format == "html" and args.no_cache:
@@ -1669,11 +1698,14 @@ def main(argv: list[str] | None = None) -> int:
             sys.stdout.write(url + "\n")
             return 0
         if args.no_cache or args.cache_read_only:
-            model, rendered = build_map(
-                args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files,
-                no_cache=args.no_cache, cache_read_only=args.cache_read_only, refresh=args.refresh,
-                output_format=args.format,
-            )
+            if args.format == "text":
+                rendered = _in_process_text(args)
+            else:
+                _, rendered = build_map(
+                    args.repo, query=args.query, max_chars=args.max_chars, max_files=args.max_files,
+                    no_cache=args.no_cache, cache_read_only=args.cache_read_only, refresh=args.refresh,
+                    output_format=args.format,
+                )
         elif args.format == "text":
             try:
                 service = _server_api()
@@ -1692,8 +1724,7 @@ def main(argv: list[str] | None = None) -> int:
                         rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
             except (OSError, ValueError, ImportError) as exc:
                 print(f"local viewer unavailable; using an in-process map: {exc}", file=sys.stderr)
-                model, _ = build_map(args.repo, query=args.query, max_files=args.max_files, refresh=args.refresh)
-                rendered = _text(model, _clamp(args.max_chars, 500, MAX_CHARS), args.query)
+                rendered = _in_process_text(args)
         else:
             try:
                 model = _server_api().get_model(args.repo, query=args.query, max_files=_clamp(args.max_files, 1, MAX_FILES), refresh=args.refresh)

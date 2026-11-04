@@ -1081,12 +1081,11 @@ class MapService:
         current, project_info, revision, indexing, error, selected_query = self._index_snapshot(project, query)
         if current is None:
             return None, project_info, revision, indexing, error
-        if exact_summary and selected_query:
-            target = selected_query.removeprefix("./")
-            exact = next((row for row in current["files"] if row["path"] == target), None)
-            if exact is not None:
-                model = {**current, "files": [exact], "focus": [target], "query_matches": [target]}
-                return model, project_info, revision, indexing, error
+        exact = engine._exact_record(current["files"], selected_query) if exact_summary else None
+        if exact is not None:
+            target = exact["path"]
+            model = {**current, "files": [exact], "focus": [target], "query_matches": [target]}
+            return model, project_info, revision, indexing, error
         requested = RESPONSE_MAX_FILES if max_files is None else max(1, min(RESPONSE_MAX_FILES, int(max_files)))
         return _project_model(current, selected_query, requested, project.root), project_info, revision, indexing, error
 

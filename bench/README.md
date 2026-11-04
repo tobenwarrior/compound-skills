@@ -201,6 +201,8 @@ python3 -B bench/map_exact_path.py --baseline-ref 5357032 --summary
 
 Ranking probes fell from 2,500 to zero, avoiding 53,672,632 source bytes in the summary phase. Total emitted text fell from 113,688 to 39,925 bytes, a 64.9% reduction. The summaries kept the same indexed record for each target. Three grew because the single-file layout could show more of the target outline. Four topic and miss controls stayed byte-identical with the same reads. These counts exclude Git and indexing work.
 
+A direct CLI replay against `b9db91b` queried `./src/flask/wrappers.py` and `./django/urls/base.py` at the same repository pins with `--max-files 3 --max-chars 500`. Each path ran with `--no-cache`, `--cache-read-only` after priming, and a simulated unavailable service after priming. Across the six commands, query ranking went from 300 source probes and 5,564,763 bytes read to zero. All six responses were byte-identical, indexing parse counts matched, and read-only and no-cache state stayed unchanged. The replay used local files and no model requests.
+
 ## Warm map query work
 
 Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:

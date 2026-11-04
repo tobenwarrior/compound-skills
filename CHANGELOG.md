@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.39 (2026-11-04)
+
+- Use the indexed file directly for exact-path text in read-only, no-cache, and service fallback commands. Keep the index coverage and import hints.
+
 ## 0.16.38 (2026-11-04)
 
 - Route scoped extractions with known callers and policies through the saved rule. Reserve the full skill for refactors that need discovery or behavior decisions.
