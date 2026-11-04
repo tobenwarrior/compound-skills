@@ -25,4 +25,6 @@ The generator uses only Python's standard library. It writes every README SVG in
 
 `work_review_v0169.json` annotates exact saved request steps and their recorded usage from `comparison_v0169.json`. It keeps useful mixed-step work and functional corrections distinct from optional exploration/polish. Costs are retained unchanged; the annotations do not establish future savings.
 
-`comparison_dispatch_v01615.json` records the fresh two-change Dispatchkit sequence. It includes every attempt, exact provider-reported charges, input-cache counts and the independent cumulative grades. The generated cost chart requires both modes to accept both tasks and checks that all attempts reconcile with the totals. This was one sequence per mode on a synthetic repository.
+`comparison_dispatch_v01615.json` records the fresh two-change Dispatchkit sequence. It includes every attempt, exact provider-reported charges, input-cache counts and the independent cumulative grades. The generated cost chart recomputes the verdict from every attempt and checks the saved stage and arm totals. It requires complete usage, both tasks accepted in both modes and lower overall cost with Compound. This was one sequence per mode on a synthetic repository.
+
+The same generator accepts a verified upstream Flask ledger as `comparison_flask_v*.json`. It uses the two IPv6 tasks as labels and produces a two-mode SVG only after the same cost and correctness checks pass.

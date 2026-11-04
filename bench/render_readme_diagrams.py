@@ -15,6 +15,8 @@ from pathlib import Path
 import textwrap
 import xml.etree.ElementTree as ET
 
+from yharness_verdict import evaluate
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / 'bench' / 'diagram_sources'
 THEME = json.loads((SOURCES / 'theme.json').read_text())
@@ -405,26 +407,48 @@ def comparisons():
         yield item['asset'], chart.svg()
 
 
-def dispatch_comparison(source):
-    """Render the fresh matched cost comparison after the ledger meets the claim gate."""
+def two_change_comparison(source):
+    """Render a matched comparison after independently reconciling its saved attempts."""
     data = json.loads(source.read_text())
+    fixtures = {
+        'compound-dispatch-comparison-1': (
+            'dispatch', 'Dispatchkit', 'dispatchkit', 'synthetic',
+            (('encoded-route-bug', 'Webhook routing bug'), ('share-event-packaging', 'Event-envelope refactor')),
+        ),
+        'compound-flask-sequence-comparison-1': (
+            'flask', 'Flask', 'flask-ipv6-session', 'upstream Flask',
+            (('flask-ipv6-session', 'IPv6 test-client session'), ('flask-ipv6-run', 'IPv6 development-server parsing')),
+        ),
+    }
+    layout = fixtures.get(data['schema'])
+    if layout is None or data['provider'] != 'opencode-go' or data['model'] != 'deepseek-v4.1-flash':
+        raise ValueError('Unsupported two-change comparison')
+    asset, workload, fixture, scope, labels = layout
+    plan = {key: data[key] for key in ('sequences', 'schedule')}
+    if len(plan['sequences']) != 1:
+        raise ValueError('Expected one matched sequence')
+    sequence = plan['sequences'][0]
+    if sequence['fixture'] != fixture or [task['name'] for task in sequence['tasks']] != [name for name, _ in labels]:
+        raise ValueError(f'{workload} chart does not match its frozen tasks')
+    attempts = data['attempts']
     summary = data['summary']
-    arms = [summary['arms'][mode] for mode in ('without', 'with')]
+    verified = evaluate(plan, ({**attempt, 'known_costs': attempt['costs']} for attempt in attempts))
+    if not verified['claim'] or any(summary[key] != verified[key] for key in (
+        'valid', 'complete', 'claim', 'compound_cheaper', 'errors',
+    )):
+        raise ValueError(f'{workload} chart requires both tasks accepted in both modes with verified lower Compound costs')
+    if any(type(attempt['requests']) is not int or attempt['requests'] < 1 for attempt in attempts):
+        raise ValueError(f'{workload} chart requires a positive request count for every attempt')
+    arms = []
+    for mode in ('without', 'with'):
+        arm = summary['arms'][mode]
+        requests = sum(attempt['requests'] for attempt in attempts if attempt['arm'] == mode)
+        if arm['requests'] != requests or any(arm[key] != value for key, value in verified['arms'][mode].items()):
+            raise ValueError(f'{workload} {mode}: attempts differ from saved stage or arm totals')
+        arms.append(arm)
     cost = [money(arm['totals']['allowance']) for arm in arms]
-    list_price = [money(arm['totals']['list_cost']) for arm in arms]
-    cash = [money(arm['totals']['cost']) for arm in arms]
-    if (not summary['complete'] or not summary['claim'] or
-            any(len(arm['accepted_stages']) != 2 for arm in arms) or
-            not (cost[1] < cost[0] and list_price[1] < list_price[0] and cash[1] <= cash[0])):
-        raise ValueError('Dispatch chart requires both tasks accepted in both modes with lower Compound costs')
-    for mode, arm in zip(('without', 'with'), arms):
-        attempts = [a for a in data['attempts'] if a['arm'] == mode]
-        if (len(attempts) != arm['attempts'] or sum(a['requests'] for a in attempts) != arm['requests']
-                or any(sum(money(a['costs'][field]) for a in attempts) != money(arm['totals'][field])
-                       for field in ('allowance', 'list_cost', 'cost'))):
-            raise ValueError(f'Dispatch {mode}: attempts differ from arm totals')
     reduction = (1 - cost[1] / cost[0]) * 100
-    desc = (f'Dispatchkit matched pilot. Go allowance was ${cost[0]} without and ${cost[1]} with Compound, '
+    desc = (f'{workload} matched pilot. Go allowance was ${cost[0]} without and ${cost[1]} with Compound, '
             f'{reduction:.1f}% less. Both modes finished both tasks. All attempts and repairs included.')
     subtitle = (f"Compound {data['compound_version']} · DeepSeek V4.1 Flash through Y Harness"
                 ' · one sequence per mode')
@@ -433,15 +457,15 @@ def dispatch_comparison(source):
     maximum = max(cost) * Decimal('1.08')
     chart.pair(196, cost, [f'${value:.8f}' for value in cost], maximum)
     chart.text(52, 387, f"2/2 accepted in each mode · {arms[0]['requests']} / {arms[1]['requests']} model requests without / with", 16, 'muted')
-    for stage, label in enumerate(('Webhook routing bug', 'Event-envelope refactor')):
+    for stage, label in enumerate(label for _, label in labels):
         y = 428 + stage * 226
         chart.card(24, y, 992, 206)
         values = [money(arm['by_stage'][str(stage)]['totals']['allowance']) for arm in arms]
         chart.pair(y + 34, values, [f'${v:.8f}' for v in values], maximum, label)
     chart.text(52, 910, 'The same repository and conversation carry forward within each mode.', 17, weight=650)
-    chart.text(52, 937, 'One synthetic sequence per mode. All bars use the same allowance scale.', 15, 'muted')
+    chart.text(52, 937, f'One {scope} sequence per mode. All bars use the same allowance scale.', 15, 'muted')
     version = data['compound_version'].replace('.', '')
-    return f'benchmark-dispatch-v{version}.svg', chart.svg()
+    return f'benchmark-{asset}-v{version}.svg', chart.svg()
 
 
 def main():
@@ -452,7 +476,8 @@ def main():
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
     outputs.update(workflows())
-    outputs.update(dispatch_comparison(source) for source in sorted(SOURCES.glob('comparison_dispatch_v*.json')))
+    for family in ('dispatch', 'flask'):
+        outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
