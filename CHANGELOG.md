@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.59 (2026-11-04)
+
+- Keep more complete ranked paths visible in truncated map summaries. [Pinned navigation replay](bench/README.md#multi-step-navigation-preflight)
+
 ## 0.16.58 (2026-11-04)
 
 - Direct agents from focused map results to scoped search and nearby source lines. [Saved navigation trace](bench/README.md#multi-step-navigation-preflight)

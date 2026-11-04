@@ -185,6 +185,8 @@ At 0.16.49, without and with Compound found 1/3 and 1/3 on disconnect cleanup, 1
 
 In 0.16.54, the map shows the response implementation in the Django disconnect shortlist and matches Flask's `ctx.py` when the query says “context.” Keyword search shows 5 of 9 rubric files across the three cases, and the map shows 7 of 9. The row-lock and explicit test controls retain their results. The three tasks informed the change. A separate replay of 132 commit-title queries preserved every previously found target at ranks 1, 4 and 12 and in the visible summary. One Packaging query gained a target in the top four, and two more gained a target in the top 12. This replay includes 36 previously unused queries drawn from the next 12 qualifying commits per repository after the 0.16.48 validation set in attrs, Packaging and marshmallow.
 
+In 0.16.59, the complete visible summaries show 8 of 9 rubric files across the three pinned queries, up from 7 of 9. The Django disconnect summary now lists `django/db/__init__.py` as a ranked result with `close_old_connections` at line 57. The first four paths and the 2,500-character cap stayed the same. The renderer prioritizes whole paths over some signatures and import details when space is limited.
+
 These are starting points for navigation. They measure neither the agent's completed trace nor model cost.
 
 The [0.16.57 matched navigation comparison](diagram_sources/comparison_navigation_v01657.json) records all six metered attempts. Both modes passed all ten source citations. The two arms matched on every field of the initial provider request outside the task message.

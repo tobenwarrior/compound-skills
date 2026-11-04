@@ -1661,7 +1661,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             lines.append("No query matches in scanned candidates; use native search or refine the query.")
     header_count = len(lines)
     header = "\n".join(lines)
-    compact: list[tuple[str, str]] = []
+    compact: list[tuple[str, list[str]]] = []
     for path in focus:
         file = by_path.get(path)
         if not file:
@@ -1691,9 +1691,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
         line = f"- {json.dumps(path, ensure_ascii=True)} [{file['language']}]"
         if focused_query:
-            top = symbol_values[0] if symbol_values else None
-            hint = f" symbols: {top['name']} ({top['kind']}:{top['line']})" if top else ""
-            compact.append((line, hint))
+            hints = [f"{symbol['name']} ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values[:2]]
+            compact.append((line, hints))
         if symbols:
             line += " symbols: " + symbols
         if dependencies:
@@ -1707,25 +1706,39 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
     usable = limit - len(suffix)
     leading = compact[:4]
+    last_path_end = 0
     if leading:
         first_rows = lines[:header_count + len(leading) - 1]
         last_path_end = len("\n".join([*first_rows, leading[-1][0]]))
-    else:
-        last_path_end = 0
-    if leading and len(header) <= usable < last_path_end:
-        # Reserve space for the leading complete paths before adding symbol hints.
+    expanded = last_path_end <= usable and exact_symbol is None and not exact_file
+    if leading and len(header) <= usable and (expanded or usable < last_path_end):
+        rows = compact if expanded else leading
+        # Fit complete ranked paths first, then attach source line hints.
         remaining = usable - len(header)
         visible = []
-        for path_line, _ in leading:
+        for path_line, _ in rows:
             size = 1 + len(path_line)
             if size > remaining:
                 break
             visible.append(path_line)
             remaining -= size
-        for index, (_, hint) in enumerate(leading[:len(visible)]):
+        for index, (_, hints) in enumerate(rows[:len(visible)]):
+            if not hints:
+                continue
+            hint = " symbols: " + hints[0]
+            if expanded and index < len(leading) and len(hints) > 1:
+                second = ", " + hints[1]
+                if len(hint) + len(second) <= remaining:
+                    hint += second
             if len(hint) <= remaining:
                 visible[index] += hint
                 remaining -= len(hint)
+        if expanded:
+            for index, rendered in enumerate(lines[header_count:header_count + len(visible)]):
+                extra = len(rendered) - len(visible[index])
+                if extra <= remaining:
+                    visible[index] = rendered
+                    remaining -= extra
         return "\n".join([header, *visible]) + suffix
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
 def _build_model(
