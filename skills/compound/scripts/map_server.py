@@ -759,19 +759,26 @@ class Project:
     lock: Any = dataclasses.field(default_factory=threading.RLock, repr=False)
 
 
-def _project_model(model: dict[str, Any], query: str, max_files: int, root: Path | None = None) -> dict[str, Any]:
-    """Bound a response without shrinking the daemon's shared index."""
+def _rank_model(model: dict[str, Any], query: str, root: Path | None) -> tuple[list[dict[str, Any]], set[str] | None]:
+    """Rank the index once for a response, retaining matches for focused queries."""
     records = list(model.get("files", []))
     query_matches: set[str] = set()
     try:
         ranked = engine._rank(records, query[:MAX_QUERY], root, query_matches=query_matches)
     except (AttributeError, TypeError):
         ranked = records
+    return ranked, query_matches if engine._query_terms(query[:MAX_QUERY])[0] else None
+
+
+def _project_ranked_model(
+    model: dict[str, Any], ranked: list[dict[str, Any]], query_matches: set[str] | None, max_files: int,
+) -> dict[str, Any]:
+    """Bound a response without shrinking the daemon's shared index."""
     selected = sorted(ranked[:max_files], key=lambda record: record.get("path", ""))
     result = dict(model)
     result["files"] = selected
     result["focus"] = [record["path"] for record in ranked[:min(12, max_files)]]
-    if engine._query_terms(query[:MAX_QUERY])[0]:
+    if query_matches is not None:
         result["query_matches"] = [path for path in result["focus"] if path in query_matches]
     else:
         result.pop("query_matches", None)
@@ -788,6 +795,11 @@ def _project_model(model: dict[str, Any], query: str, max_files: int, root: Path
         coverage["notes"] = notes[:24]
     result["coverage"] = coverage
     return result
+
+
+def _project_model(model: dict[str, Any], query: str, max_files: int, root: Path | None = None) -> dict[str, Any]:
+    ranked, matches = _rank_model(model, query, root)
+    return _project_ranked_model(model, ranked, matches, max_files)
 
 
 def _mark_response_cap(model: dict[str, Any]) -> dict[str, Any]:
@@ -1032,9 +1044,9 @@ class MapService:
         with project.lock:
             return {"project": {"id": project.id, "name": project.name}, "revision": project.revision, "indexing": project.indexing, "error": project.error, "updated_at": project.updated_at}
 
-    def _model_snapshot(
-        self, project: Project, max_files: int | None = None, query: str | None = None
-    ) -> tuple[dict[str, Any] | None, dict[str, str], int, bool, str | None]:
+    def _index_snapshot(
+        self, project: Project, query: str | None,
+    ) -> tuple[dict[str, Any] | None, dict[str, str], int, bool, str | None, str]:
         self._refresh(project)
         with project.lock:
             current = project.model
@@ -1043,7 +1055,13 @@ class MapService:
             indexing = project.indexing
             error = project.error
             selected_query = project.query if query is None else query
-        if current is None or error:
+        return None if error else current, project_info, revision, indexing, error, selected_query
+
+    def _model_snapshot(
+        self, project: Project, max_files: int | None = None, query: str | None = None,
+    ) -> tuple[dict[str, Any] | None, dict[str, str], int, bool, str | None]:
+        current, project_info, revision, indexing, error, selected_query = self._index_snapshot(project, query)
+        if current is None:
             return None, project_info, revision, indexing, error
         requested = RESPONSE_MAX_FILES if max_files is None else max(1, min(RESPONSE_MAX_FILES, int(max_files)))
         return _project_model(current, selected_query, requested, project.root), project_info, revision, indexing, error
@@ -1063,11 +1081,13 @@ class MapService:
     def map_response(self, project: Project, max_files: int | None = None, query: str | None = None) -> tuple[dict[str, Any] | None, bytes]:
         """Serialize a map response under the transport cap without shrinking the index."""
         cap = RESPONSE_MAX_FILES if max_files is None else max(1, min(RESPONSE_MAX_FILES, int(max_files)))
+        current, project_info, revision, indexing, error, selected_query = self._index_snapshot(project, query)
+        if current is None:
+            return None, _json({"project": project_info, "revision": revision, "indexing": indexing, "error": error, "model": None})
+        ranked, matches = _rank_model(current, selected_query, project.root)
         response_capped = False
         while True:
-            model, project_info, revision, indexing, error = self._model_snapshot(project, cap, query=query)
-            if model is None:
-                return None, _json({"project": project_info, "revision": revision, "indexing": indexing, "error": error, "model": None})
+            model = _project_ranked_model(current, ranked, matches, cap)
             if response_capped:
                 model = _mark_response_cap(model)
             payload = {"project": project_info, "revision": revision, "model": model}

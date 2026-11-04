@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.14 (2026-11-04)
+
+- Rank each live JSON map response once, even when the transport limit requires progressively smaller projections. The projections share the same index snapshot, ranked candidates and lexical matches.
+- On the pinned Django tree (`a05e16a`, 3,496 indexed files), the query `model query annotations` with a 2 MiB test cap returned identical JSON before and after. Ranking passes dropped from 5 to 1 and candidate source scans from 250 to 50. Median local process CPU time over five warm responses was 348 ms before and 128 ms after on macOS arm64 with Python 3.14.5. This measures response construction with a reduced cap. Model usage was not measured.
+
 ## 0.16.13 (2026-11-03)
 
 - Extract the shared operation while leaving nonshared validation, public exceptions and I/O with their existing owners. Differing caller policies become required arguments unless an actual API contract specifies defaults, removing the need to invent a canonical helper default.
