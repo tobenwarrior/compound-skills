@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.63 (2026-11-05)
+
+- Add `compound contribute` for existing repositories. Learn local conventions and the rationale for relevant decisions, then use the smallest patch that fits the project. Without a task, provide read-only orientation.
+
 ## 0.16.62 (2026-11-04)
 
 - Keep more ranked paths in compact code-map summaries. At a 1,300-character limit, a focused query on the pinned Flask fixture now shows both the session implementation and its existing test.

@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.62 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.63 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -101,6 +101,7 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 | Assess and tidy the current project (the only time it changes files you did not name) | `setup` |
 | Open the code map | `map` |
 | Check or stop the map service | `map status`, `map stop` |
+| Work in an existing repository | `compound contribute` followed by your task |
 | Use it in this chat only | `compound` |
 | Remove the global setting | `compound disable global` |
 
@@ -113,10 +114,13 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 | Check saved global guidance | `/compound-skills:status-global` | `$status-global` | `/status-global` |
 | Assess and tidy the current project | `/compound-skills:setup` | `$setup` | `/setup` |
 | Open the code map | `/compound-skills:map` | `$map` | `/map` |
+| Work in an existing repository | `/compound-skills:compound contribute` | `$compound contribute` | `/compound contribute` |
 | Use it in this chat only | `/compound-skills:compound` | `$compound` | `/compound` |
 | Remove the global setting | `/compound-skills:compound disable global` | `$compound disable global` | `/compound disable global` |
 
 </details>
+
+Run `compound contribute` by itself for a read-only orientation. Add a task, such as `compound contribute add CSV export to the reports page`, to have Compound follow the project’s conventions, reuse its existing patterns, and keep the diff focused on the feature. [Existing repositories](skills/compound/references/design.md#existing-repositories)
 
 ## Benchmark
 
@@ -301,16 +305,16 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 - **Every request:** the always-on rule and the plugin's skill list. The historical rule added about 510 tokens. The Flask comparison uses the shorter rule from 0.16.45.
 - **Scoped extractions with known callers and behavior:** the always-on rule. Start in the checkout, add missing caller cases, establish one baseline, preserve each caller’s policy, and finish after required checks and diff review.
-- **Broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
+- **Unfamiliar-repository changes, broader refactors, new features, performance work and PR authoring:** the `compound` skill and needed references. Query the map only for unknown files or dependencies.
 - **When a task needs it:** the matching guide. The refactor guide covers extractions that need more investigation of callers or behavior. The verification guide covers independent verification or an unresolved evidence gap.
-- **Bug fixes, reviews and questions:** only the always-on rule. Reviews use source evidence first and run only necessary permitted checks. A denial ends probing, and review findings alone do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
+- **Familiar bug fixes, reviews and questions:** the always-on rule usually suffices. Reviews use source evidence first and run only necessary permitted checks. A denial ends probing, and review findings alone do not start the bug-fix workflow. In the second 0.16.0 round, the skill loaded in 1 of 24 bug-fix runs and in none of 8 review and question runs. Typing `compound` still loads the skill, and the review guide, for a review.
 - **One chat only:** typing `compound` alone applies the always-on rule's habits to every task in that chat and the skill to the same kinds of work, as a saved setup does.
 
 SKILL.md also holds engineering guidance: use supplied code and known files first, query the map only for unknown files or dependencies, delegate independent work when useful, and keep frontend tooltips to at most two visible lines. Explicit review-only requests go directly to the review guide. Read it before you turn Compound on.
 
 The always-on rule as `setup-global` saves it. The Flask and Dispatchkit charts use the rules from 0.16.45 and 0.16.31, respectively.
 
-> Review diff first. Follow relevant callers/tests. Probe gaps when permitted. After denial, source only. Use required native Read before edits. For bugs, run a failing regression first, fix, run the full suite, check diff, finish. Extra checks need specific gaps or requirements. Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch independent calls. Use documented checks, avoiding byproducts (`python -B`). Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for broader refactors, features, performance and PR authoring. Follow project and user instructions. Report checks and limits. Omit AI commit attribution.
+> Review diff first. Trace callers/tests. Probe gaps when permitted. After denial, source only. Use required native Read before edits. For bugs, run a failing regression first, fix, run the full suite, check diff, finish. Extra checks need specific gaps or requirements. Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch independent calls. Use documented checks, avoiding byproducts (`python -B`). Diagnose setup before retrying. Reuse passing checks while inputs and environment match. Load `compound` for unfamiliar edits, broad refactors, features, performance and PR authoring. Follow project and user instructions. Report checks/limits. Omit AI commit credits.
 
 ### Commits
 

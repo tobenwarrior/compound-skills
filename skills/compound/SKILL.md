@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use when a refactor needs caller discovery or behavior decisions, for new features, performance work and PR authoring, or to manage Compound guidance."
+description: "Use for unfamiliar repo edits, new features, refactors with unknown callers or behavior, performance, PR authoring, or Compound guidance."
 license: MIT
 ---
 
@@ -13,6 +13,8 @@ For visual map requests, including `compound map`, follow the [map utility](../m
 For a review-only Compound request, follow [Review](references/review.md) directly and skip engineering startup.
 
 For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md) first.
+
+For `contribute` or edits in an unfamiliar or upstream repository, start with [Existing repositories](references/design.md#existing-repositories).
 
 ## Start
 
