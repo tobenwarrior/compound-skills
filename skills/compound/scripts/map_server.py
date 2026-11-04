@@ -193,7 +193,7 @@ def _port(raw: str | int | None = None) -> int:
 def _canonical_repo(repo: str | os.PathLike[str]) -> Path:
     try:
         supplied = engine._repo_path(repo)
-        root, _, _, _ = engine._git_context(supplied)
+        root, _ = engine._git_root(supplied)
         return root
     except (OSError, ValueError) as exc:
         raise MapServerError(str(exc)) from exc

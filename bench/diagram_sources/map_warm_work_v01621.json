@@ -1,0 +1,141 @@
+{
+  "scope": "Live focused CLI queries after one warmup per version and checkout. Zero model calls.",
+  "baseline_ref": "85f26160ca28b4e7c0883ff109eab0d6cbb0cb0e",
+  "candidate_sha256": {
+    "code_map.py": "7313b6b0d27836dab583e694a1cdd52d043ae8cac594106c090229d88ab7aae7",
+    "map_server.py": "3affddc593cca1126081632ce6bfa635878e53d1ef6eb6bdb6f77d578f73764f"
+  },
+  "warm_queries_per_version_and_repo": 3,
+  "repositories": [
+    {
+      "repository": "flask",
+      "source_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "subdir": "src/flask",
+      "query": "route handlers",
+      "summary_sha256": "5e37bc74de5a6eb04fca2154502d8deaf5b1332ef26d411c240b3f0e12ba4d45",
+      "before": [
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        }
+      ],
+      "after": [
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        }
+      ]
+    },
+    {
+      "repository": "django",
+      "source_head": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "subdir": "django/db/models",
+      "query": "model query annotations",
+      "summary_sha256": "1ecaef3380b27474b499c9f83c5f7c9bfd787cc392b6c1fd2141476d24a4e56c",
+      "before": [
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 12,
+          "git_commands": {
+            "ls-files": 6,
+            "remote": 1,
+            "rev-parse": 4,
+            "status": 1
+          }
+        }
+      ],
+      "after": [
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        },
+        {
+          "git_processes": 6,
+          "git_commands": {
+            "ls-files": 2,
+            "remote": 1,
+            "rev-parse": 2,
+            "status": 1
+          }
+        }
+      ]
+    }
+  ]
+}

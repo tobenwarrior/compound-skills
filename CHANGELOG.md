@@ -2,6 +2,11 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.21 (2026-11-04)
+
+- Resolve the repository root without reading its file inventory in the map client or service. Index freshness checks still detect changes to the checkout.
+- On pinned Flask and Django snapshots, three warm queries per repository each ran 6 Git subprocesses, down from 12, with byte-identical summaries. [Measurements](bench/README.md#warm-map-query-work).
+
 ## 0.16.20 (2026-11-04)
 
 - Find PHP declarations written with mixed-case tags and keywords, or preceded by attributes on the same line. Keep declarations in PHP regions and ignore apparent symbols inside backtick strings.

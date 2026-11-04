@@ -215,14 +215,21 @@ def _git_inventory(root: Path) -> tuple[bytes | None, bool]:
     # Keep the complete entries read so far instead of mapping nothing.
     others = others[:others.rfind(b"\0", 0, reserve) + 1]
     return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1] + others, capped
-def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
+def _git_root(supplied: Path) -> tuple[Path, str | None]:
     root_result = _git(supplied, "rev-parse", "--show-toplevel")
     if root_result is None or root_result.returncode != 0:
-        return supplied, "", [], ["Git inventory unavailable; use native search to inspect this repository"]
+        return supplied, "Git inventory unavailable; use native search to inspect this repository"
     try:
         root = Path(os.fsdecode(root_result.stdout.removesuffix(b"\n"))).resolve(strict=True)  # names may end in spaces
     except OSError:
-        return supplied, "", [], ["Git root unavailable; use native search to inspect this repository"]
+        return supplied, "Git root unavailable; use native search to inspect this repository"
+    return root, None
+
+
+def _git_context(supplied: Path) -> tuple[Path, str, list[str], list[str]]:
+    root, note = _git_root(supplied)
+    if note is not None:
+        return root, "", [], [note]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
     inventory_data, capped = _git_inventory(root)

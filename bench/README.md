@@ -97,6 +97,16 @@ Plugin arms run from a snapshot named by its content hash. The snapshot leaves o
 
 Another plugin is mounted under its manifest name and gets none of Compound's setup: only its own files and the `+rule:` file, if given. In read tasks it may run any file from its own folder, as Compound may run its map helpers. A run is invalid if any plugin other than the arm's own loads, apart from Claude Code's bundled `cc-plugin-*` plugins. Plugins from elsewhere are code you run: read one before you benchmark it, and pin it by commit.
 
+## Warm map query work
+
+Compare live CLI queries on clean, pinned Flask and Django checkouts under `bench/work/sources/`. Run from the 0.16.21 checkpoint:
+
+```sh
+python3 -B bench/map_warm_work.py --baseline-ref 85f2616
+```
+
+Each version warms an isolated local map service once per checkout and then repeats the same focused query three times. Git Trace2 counts processes started by both the CLI and the service. Every warm query used 6 Git subprocesses, down from 12, and both versions printed the same summary bytes. The remaining file inventory and status checks keep the map fresh. This measures local subprocess work with zero model calls. [Counts and source pins](diagram_sources/map_warm_work_v01621.json).
+
 ## Source-only map lookups
 
 Compare the default agent summary and local source reads on pinned Flask, Click and packaging snapshots:
