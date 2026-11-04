@@ -777,29 +777,46 @@ def _cleanup_staged(staged: Iterable[StagedPlan]) -> None:
         item.temporary = None
 
 
+def _require_unchanged_target(state: TargetState) -> None:
+    """Compare the live instruction file with the snapshot used to plan the write."""
+    try:
+        mode = state.path.lstat().st_mode
+        if not stat.S_ISREG(mode):
+            raise SetupError(f"instruction target is no longer a regular file: {state.path}")
+        current = state.path.read_bytes()
+    except FileNotFoundError:
+        current = None
+    except OSError as exc:
+        raise SetupError(f"could not recheck instruction target {state.path}: {exc}") from exc
+    expected = None if state.text is None else state.bom + state.text.encode("utf-8")
+    if current != expected:
+        raise SetupError(f"instructions changed during setup: {state.path}. Rerun to use the latest text.")
+
+
 def _apply(plans: Iterable[tuple[TargetState, str, bool]]) -> tuple[bool, tuple[str, ...]]:
     staged = _stage(plans)
     changed_paths: list[str] = []
     try:
+        for item in staged:
+            _require_unchanged_target(item.state)
         # Replace all staged files before deleting any emptied file.
-        for item in staged:
+        for item in sorted(staged, key=lambda item: item.remove_file):
+            _require_unchanged_target(item.state)
             if item.remove_file:
-                continue
-            assert item.temporary is not None
-            try:
-                os.replace(item.temporary, item.state.path)
-            except OSError as exc:
-                raise ApplyError(f"could not atomically update {item.state.path}: {exc}", changed_paths) from exc
-            item.temporary = None
+                try:
+                    item.state.path.unlink()
+                except OSError as exc:
+                    raise SetupError(f"could not remove {item.state.path}: {exc}") from exc
+            else:
+                assert item.temporary is not None
+                try:
+                    os.replace(item.temporary, item.state.path)
+                except OSError as exc:
+                    raise SetupError(f"could not atomically update {item.state.path}: {exc}") from exc
+                item.temporary = None
             changed_paths.append(str(item.state.path))
-        for item in staged:
-            if not item.remove_file:
-                continue
-            try:
-                item.state.path.unlink()
-            except OSError as exc:
-                raise ApplyError(f"could not remove {item.state.path}: {exc}", changed_paths) from exc
-            changed_paths.append(str(item.state.path))
+    except SetupError as exc:
+        raise ApplyError(str(exc), changed_paths) from exc
     finally:
         _cleanup_staged(staged)
     return bool(changed_paths), tuple(changed_paths)

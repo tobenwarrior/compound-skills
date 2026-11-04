@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.17 (2026-11-04)
+
+- Recheck the original instruction text before applying project or global setup. When a target changes during preparation, stop and preserve the newer edit. Recheck each file before its replacement or removal and report any earlier updates if setup stops partway through.
+
 ## 0.16.16 (2026-11-04)
 
 - Start with known files and keep searches inside the checkout. Use existing caller assertions to identify coverage gaps, add the missing cases, then run one baseline before source edits. Batch the helper and caller changes after that baseline.

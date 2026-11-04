@@ -34,7 +34,7 @@ Cursor carries the routing rule in the native plugin. Install at user scope and 
 python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <project-root>
 ```
 
-Project setup manages `AGENTS.md`, an existing nonempty root `AGENTS.override.md`, and a project Claude rule when legacy Claude instructions shadow `AGENTS.md`. It changes no global defaults.
+Project setup manages `AGENTS.md`, an existing nonempty root `AGENTS.override.md`, and a project Claude rule when legacy Claude instructions shadow `AGENTS.md`. It changes no global defaults. Both project and global setup stop when the helper detects that an instruction file changed before its update. Report any already-applied paths and rerun against the latest text.
 
 Read the JSON result. After successful project enable, even when routing was already enabled, run the core code-map startup and follow [repository assessment](onboarding.md) in explicit setup mode (`claim --refresh`). Global setup, session activation, status, and disable do not run this pass. Preserve unrelated instructions; stop cleanup on routing errors or partial results. Report routing, assessment, changes, checks, and deferred findings separately; a busy lease means assessment is deferred. Enable the current chat preference too.
 
