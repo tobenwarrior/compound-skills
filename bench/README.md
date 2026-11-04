@@ -94,6 +94,8 @@ In the 0.16.45 Compound runs, both fixes passed narrower post-fix checks and the
 
 In both 0.16.54 Compound attempts, a focused post-fix regression run and the full suite passed on the same edits. The first attempt also ran a passing module baseline before adding its failing regression and tried unavailable Ruff after the full suite. A network-disabled replay of all four saved artifacts passed the independent cumulative grades. The 0.16.55 rule uses the failing regression as baseline and the full suite as confirmation. The replay verifies the artifacts and test coverage. It does not measure adherence to the revised rule or model-cost savings.
 
+The saved 0.16.45, 0.16.54 and 0.16.60 Flask runs contain six rejected edits after the target had been viewed through the shell. Four occurred without Compound and two with Compound. The request containing the 0.16.60 Compound rejection used $0.00028602 of Go allowance. The 0.16.70 rule makes the native read prerequisite apply to each edit target when the host requires it. The saved usage records include those requests. No model run measured adherence or savings under the revised rule.
+
 ## Compare a change with main
 
 ```bash

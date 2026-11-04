@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.70 (2026-11-05)
+
+- Make the native read prerequisite explicit for each edit target in the saved routing rule. [Saved Flask traces](bench/README.md#consecutive-upstream-flask-fixes)
+
 ## 0.16.69 (2026-11-05)
 
 - Refresh change labels when Git status exceeds the map freshness limit.
