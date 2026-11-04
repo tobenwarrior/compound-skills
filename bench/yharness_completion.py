@@ -6,7 +6,28 @@ PLAN=json.loads((BASE/'plan.json').read_text())
 assert hashlib.sha256((BASE/'plan.json').read_bytes()).hexdigest()==(BASE/'plan.sha256').read_text().strip()
 
 def rows(path):return [json.loads(l) for l in path.read_text().splitlines() if l.strip()] if path.exists() else []
-def records():return [json.loads(p.read_text()) for p in sorted((BASE/'runs').glob('*/record.json'))]
+def records():
+    root = BASE / 'runs'
+    if not root.exists():
+        return []
+    result = []
+    for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+        record_path = folder / 'record.json'
+        if not record_path.is_file():
+            raise RuntimeError(f'Incomplete attempt folder: {folder.name}')
+        record = json.loads(record_path.read_text())
+        requests = request_rows(folder)
+        if record.get('requests') != len(requests):
+            raise RuntimeError(f'Invalid prior attempt {folder.name}: request count mismatch')
+        if record.get('valid_usage') is not True or not valid_usage_rows(requests):
+            raise RuntimeError(f'Invalid prior attempt {folder.name}: incomplete or invalid usage')
+        if record.get('known_costs') != known_costs(requests):
+            raise RuntimeError(f'Invalid prior attempt {folder.name}: recorded costs disagree with meter')
+        if not isinstance(record.get('grade', {}).get('success'), bool):
+            raise RuntimeError(f'Incomplete attempt folder: {folder.name} has no final grade')
+        result.append(record)
+    return result
+
 def totals(items):
  return {'requests':sum(r['requests'] for r in items),'allowance':sum((Decimal(r['known_costs']['allowance']) for r in items),Decimal(0))}
 
@@ -18,13 +39,54 @@ def grade(project,stage):
  if result.returncode:raise RuntimeError('Independent grader failed: '+result.stderr[-3000:])
  return json.loads(result.stdout)
 
+def _numbered(events,event,description):
+ selected=[r for r in events if r.get('event')==event]
+ numbers=[r.get('number') for r in selected]
+ if any(type(n) is not int or n<1 for n in numbers):raise RuntimeError(f'Invalid {description} number')
+ if len(numbers)!=len(set(numbers)):raise RuntimeError(f'Duplicate {description}')
+ return {r['number']:r for r in selected}
+
 def request_rows(folder):
- events=rows(folder/'requests.jsonl');started={r['number']:r for r in events if r.get('event')=='request_started'};completed={r['number']:r for r in events if r.get('event')=='request'}
+ events=rows(folder/'requests.jsonl')
+ started=_numbered(events,'request_started','request start number')
+ completed=_numbered(events,'request','request completion number')
+ if set(started)!=set(range(1,len(started)+1)):raise RuntimeError('Noncontiguous request starts')
  if completed.keys()-started.keys():raise RuntimeError('Completion without request start')
- return [completed.get(n,{**r,'complete':False,'error':'request started without final meter record'}) for n,r in sorted(started.items())]
+ return [completed.get(n,{**started[n],'complete':False,'error':'request started without final meter record'}) for n in range(1,len(started)+1)]
+
+COST_FIELDS = ('allowance', 'list_cost', 'cost')
+
+
+def usage_amount(request, field):
+    usage = request.get('usage')
+    if request.get('complete') is not True or not isinstance(usage, dict):
+        return None
+    value = usage.get(field)
+    if type(value) not in (int, float):
+        return None
+    amount = Decimal(str(value))
+    return amount if amount.is_finite() and amount >= 0 else None
+
+
+def valid_usage_rows(requests):
+    return bool(requests) and all(
+        request.get('status') == 200
+        and request.get('model') == PLAN['model']
+        and all(usage_amount(request, field) is not None for field in COST_FIELDS)
+        for request in requests
+    )
+
+
+def known_costs(requests):
+    result = {}
+    for field in COST_FIELDS:
+        amounts = (usage_amount(request, field) for request in requests)
+        result[field] = str(sum((amount for amount in amounts if amount is not None), Decimal(0)))
+    return result
+
 
 def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None):
- task=PLAN['sequences'][0]['tasks'][stage]['name'];out=BASE/'runs'/f'{index:02d}-{task}-{arm}-{attempt}';out.mkdir()
+ task=PLAN['sequences'][0]['tasks'][stage]['name'];out=BASE/'runs'/f'{index:02d}-{task}-{arm}-{attempt}'
  prior=records();all_used=totals(prior);arm_used=totals([r for r in prior if r['arm']==arm])
  remaining=min(PLAN['total_max_requests']-all_used['requests'],PLAN['per_arm_max_requests']-arm_used['requests'])
  money=min(Decimal(PLAN['total_max_allowance_usd'])-all_used['allowance'],Decimal(PLAN['per_arm_max_allowance_usd'])-arm_used['allowance'])
@@ -33,6 +95,7 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None):
  env={**os.environ,'COMPOUND_EXPECT_ROUTING':'1' if arm=='with' else '0','DSH_HOME':PLAN['dsh_home'],'DSH_PERMISSION_MODE':'workspace-write','PATH':str(BASE/'runtime/bin')+':'+os.environ['PATH'],'COMPOUND_PILOT_METER':str(out/'requests.jsonl'),'COMPOUND_PILOT_MAX_CALLS':str(cap),'COMPOUND_PILOT_MAX_USD':str(min(money,Decimal(PLAN['max_allowance_per_run_usd'])))}
  command=['node','--import',str(BASE/'meter.mjs'),PLAN['cli'],'--profile',PLAN['profile'],'--patch',str(BASE/(arm+'.yml')),'--json']
  if session:command+=['--session-id',session]
+ out.mkdir()
  command.append(prompt);(out/'prompt.txt').write_text(prompt)
  print('START',index+1,task,arm,'attempt',attempt,'max_requests',cap,flush=True)
  started=time.monotonic();timed_out=False
@@ -44,8 +107,8 @@ def invoke(index,stage,arm,attempt,prompt,session,attempt_kind=None):
    try:code=child.wait(timeout=15)
    except subprocess.TimeoutExpired:os.killpg(child.pid,signal.SIGKILL);code=child.wait()
  req=request_rows(out);events=rows(out/'events.jsonl');meter=rows(out/'requests.jsonl')
- valid=bool(req) and all(r.get('complete') and r.get('status')==200 and r.get('model')==PLAN['model'] and all(isinstance(r.get('usage',{}).get(k),(int,float)) for k in ['allowance','list_cost','cost']) for r in req)
- known={k:str(sum((Decimal(str(r['usage'][k])) for r in req if r.get('complete') and isinstance(r.get('usage',{}).get(k),(int,float))),Decimal(0))) for k in ['allowance','list_cost','cost']}
+ valid=valid_usage_rows(req)
+ known=known_costs(req)
  sessions=[e for e in events if e.get('type')=='session'];finals=[e for e in events if e.get('type')=='final']
  record={'schema':'compound-live-attempt-1','index':index,'stage':stage,'task':task,'arm':arm,'attempt':attempt,'attempt_kind':attempt_kind or ('initial' if not attempt else 'semantic_repair'),'requests':len(req),'tool_calls':sum(e.get('type')=='tool_call' for e in events),'known_costs':known,'costs':known if valid else {k:None for k in known},'valid_usage':valid,'exit_code':code,'timed_out':timed_out,'budget_stopped':any(r.get('event')=='budget_stop' for r in meter),'session_id':sessions[0]['sessionId'] if sessions else session,'resumed':bool(session),'prompt_sha256':hashlib.sha256(prompt.encode()).hexdigest(),'plan_sha256':(BASE/'plan.sha256').read_text().strip(),'wall_seconds':time.monotonic()-started}
  (out/'record.json').write_text(json.dumps(record,indent=2)+'\n')

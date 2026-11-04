@@ -12,6 +12,12 @@ Nothing here is loaded by Claude Code, Codex or Cursor. Results stay on your mac
 
 Every run is a real agent session billed to your account. Cost grows with arms × tasks × models × repetitions, and `report` shows the measured cost per task.
 
+### Y Harness completion comparisons
+
+The [0.16.12 comparison](diagram_sources/comparison_v01612_completion.json) records the fixed schedule, source hashes, accepted changes and provider-reported costs for all seven attempts. The runner and meter used for that result are pinned at commit `cf2cc41fdd6ba9c84853768eb6b1fe2d1396c4d6`. Their SHA-256 hashes match the public record.
+
+The current `yharness_completion.py` is a launcher for a prepared run directory with a frozen plan, Y Harness profile, isolated workspaces, grader and meter. The repository alone does not contain those run directories or private transcripts. Before dispatching a later attempt, the launcher checks prior attempts for complete grading and usage. It rejects duplicate or missing dispatch numbers and does not turn unreported usage into a zero charge.
+
 ## Compare a change with main
 
 ```bash
