@@ -98,6 +98,8 @@ The saved 0.16.45, 0.16.54 and 0.16.60 Flask runs contain six rejected edits aft
 
 The 0.16.60 Compound test-client trace spent five requests inspecting Werkzeug, running standalone probes and searching history after it had opened the relevant source and test. The development-server trace spent one request searching adjacent CLI code after finding the matching `app.run` test. These six requests used $0.00199995 of Go allowance and included 1,428 reasoning tokens. The 0.16.72 routing rule tells agents to write and run the regression first, and the debug guide names the nearest test as the starting point. The offline replay checks the saved fixes and their regressions against the original sources. Adherence and total model cost under the revised rule remain unmeasured.
 
+The corrected-scope 0.16.72 rerun passed both fixes in both modes. Compound used 78,277 uncached input tokens versus 45,420 without it. The first four requests on the session fix accounted for 19,794 of the 32,857 extra uncached tokens. The provider reported zero cached tokens on those four Compound requests. The saved trace shows a 6,919-byte skill result, the 1,813-byte debug guide and two broad source and test reads before the fourth request. The meter reports cache counts, while the trace shows the context carried into those requests. The provider's reason for the cache misses is unknown. The 0.16.74 rule keeps local bug fixes on the short route when conventions are clear, trims the skill entrypoint and asks for relevant source ranges and concise check output. Offline verification covers delivery and the saved artifacts. Cost on the new guidance remains unmeasured.
+
 ## Compare a change with main
 
 ```bash

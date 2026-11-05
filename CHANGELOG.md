@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.74 (2026-11-05)
+
+- Route local bug fixes through the saved rule when local conventions are clear. Shorten the core skill and use relevant source ranges and concise check output. [Saved Flask trace](bench/README.md#consecutive-upstream-flask-fixes)
+
 ## 0.16.73 (2026-11-05)
 
 - Skip line-by-line matching in exact symbol lookup when the source lacks the literal query. Five offline Flask and Django lookups returned identical results and took 2–8% less median wall time.

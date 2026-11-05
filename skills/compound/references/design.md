@@ -16,7 +16,7 @@ Implement in units with observable checks. Migrate internal callers together whe
 
 Use the requested checkout. Check fork or upstream metadata when the target is unclear. A bare `contribute` gives a short read-only orientation from the contribution guide, a representative code-and-test pair, and the documented checks. Use source reads for orientation. Ask what the user wants to change, then stop.
 
-For edits, check working-tree status and use applicable project instructions, including any for the affected directory. Reuse established conventions. Start from the target, its caller and nearest test. Read another example only if the local pattern is still unclear. Consult path-scoped history, design notes, or linked issues and PRs only when the rationale could change the patch. Distinguish recorded decisions from inference.
+For edits, check working-tree status and use applicable project instructions, including any for the affected directory. Reuse established conventions. Start from the target, its caller and nearest test. Use relevant line ranges. Read another example only if the local pattern is still unclear. Consult path-scoped history, design notes, or linked issues and PRs only when the rationale could change the patch. Distinguish recorded decisions from inference.
 
 Use the smallest patch that fits the local design and preserves existing behavior outside the request. Reuse its extension points, helpers, and test style. Expand scope only for a requirement or compatibility need. Keep unrelated cleanup, formatting, moves, and dependency changes out of the diff.
 
