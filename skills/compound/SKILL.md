@@ -8,6 +8,8 @@ license: MIT
 
 For visual map requests, including `compound map`, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
+For explicit `compound solutions` requests, follow [Project solutions](references/solutions.md) and skip engineering startup.
+
 For a review-only Compound request, follow [Review](references/review.md) and skip engineering startup.
 
 For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md). Only explicit project `setup` opens [repository assessment](references/onboarding.md).

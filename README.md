@@ -18,6 +18,12 @@ Turn it on once and every project gets task-specific guidance: bug fixes reprodu
 
 ![Without Compound versus with Compound on held-out refactors: 10/15 versus 15/15 correct with both models, with stronger regression tests and higher median API cost.](.github/assets/benchmark-heldout.svg)
 
+### Project solutions and PR reminders
+
+Ask `compound solutions search <terms>` to find a saved diagnosis or fix in the project's generated index. Lookup returns a capped shortlist. When a reusable lesson is worth saving, capture a short note and refresh the index. [Note format and commands](skills/compound/references/solutions.md)
+
+Opt in to a short reminder during Compound PR authoring with `git config --local compound.prReminder true`. It prompts you to consider a reusable lesson and leaves the PR workflow unblocked. [Reminder details](skills/compound/references/git.md#optional-pr-reminder)
+
 ## Should you use it?
 
 Use Compound when a change needs evidence that behavior is preserved: a failing regression before a bug fix, caller comparisons before a refactor, and final checks that cover the edited code. Its map helps when you do not yet know where a feature lives or how files connect. Named files and known symbols go straight to the source or native navigation, so a map query does not become a mandatory extra step.
