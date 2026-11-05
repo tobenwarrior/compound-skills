@@ -119,7 +119,8 @@ def preflight() -> dict:
         "upstream_fixes": dict(zip(TASK_NAMES, (first, second))), "cases": cases,
         "tasks": [
             {"name": name, "prompt": REAL_PROMPTS[name].removesuffix(" Please fix it and commit the fix.")
-             + " Fix the bug and add a regression test that fails before this change. Preserve existing fixes and tests."}
+             + " Fix the bug and add a regression test that fails before this change. Preserve existing fixes and tests."
+             " Limit edits to the source and tests needed for this fix. Leave the changelog and other files alone."}
             for name in TASK_NAMES
         ],
     }

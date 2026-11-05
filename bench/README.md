@@ -75,7 +75,7 @@ python3 -B bench/bench.py setup --real flask-ipv6-session,flask-ipv6-run
 python3 -B bench/yharness_flask_sequence.py preflight
 ```
 
-Setup fetches pinned inputs if needed. Preflight uses local copies and prints the starting revision, fixture hash, prompts and grades. The starting repository has one branch, no remotes and neither upstream fix. Keep the preflight report, upstream repository and grading files outside the agent workspaces. Both modes receive the same prompt for each stage. Reverse the order of the modes between stages.
+Setup fetches pinned inputs if needed. Preflight uses local copies and prints the starting revision, fixture hash, prompts and grades. The starting repository has one branch, no remotes and neither upstream fix. Keep the preflight report, upstream repository and grading files outside the agent workspaces. Both modes receive the same prompt for each stage. Each prompt states that edits are limited to the source and tests needed for the fix. Reverse the order of the modes between stages.
 
 Grade each candidate in a disposable, network-disabled runner with read-only inputs and the matching Python environment. Mount the fixture and reference tests there with the benchmark work layout. Save the accepted first-stage snapshot outside the agent workspace before the next task.
 
