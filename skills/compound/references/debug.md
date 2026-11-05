@@ -1,6 +1,6 @@
 # Debug
 
-Capture a concrete failing input, expected result, actual result, and execution surface. Add and run the regression in the nearest test that can express the failure before exploring dependencies, history, or alternative fixes. Use the repository's documented runtime and keep output to relevant failures and summaries. Open more source or run a separate probe when a specific question could change the fix or its verification. If the failure is intermittent, record conditions and instrument the narrowest uncertain boundary within the authorized environment.
+Capture a concrete failing input, expected result, actual result, and execution surface. Add and run the regression in the nearest test that can express the failure before exploring dependencies, history, or alternative fixes. Use the repository's documented runtime and start with a concise failure trace and summary. Expand output when a specific question needs it. Open more source or run a separate probe when a specific question could change the fix or its verification. If the failure is intermittent, record conditions and instrument the narrowest uncertain boundary within the authorized environment.
 
 Form competing hypotheses and run checks that distinguish them. Follow the first incorrect state or effect back to its cause. A guard is appropriate when it handles a legitimate domain state; otherwise it may hide a broken invariant.
 

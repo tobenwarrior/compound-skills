@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="958" viewBox="0 0 1040 958" role="img" aria-labelledby="title desc">
+  <title id="title">Two Flask fixes, 56.0% less allowance</title>
+  <desc id="desc">Flask comparison. Go allowance was $0.14667321 with pstack and $0.06455134 with Compound, 56.0% less. Both passed both fixes. All attempts and repairs included.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="958" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  MEASURED PILOT</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Two Flask fixes, 56.0% less allowance</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Claude Code 2.1.312 · Qwen3.8 Flash · one sequence per plugin</text>
+    <rect x="24" y="157" width="992" height="251" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="196" font-size="19" font-weight="650" fill="#14161c">Go allowance · lower is better</text>
+    <text x="52" y="256" font-size="17" font-weight="600" fill="#14161c">pstack</text>
+    <rect x="286" y="234" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="234" width="472.22222222222223" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="258" font-size="23" font-weight="700" fill="#14161c">$0.14667</text>
+    <text x="52" y="318" font-size="17" font-weight="600" fill="#14161c">Compound</text>
+    <rect x="286" y="296" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="296" width="207.8264818927889" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="320" font-size="23" font-weight="700" fill="#147a43">$0.06455</text>
+    <text x="52" y="387" font-size="16" font-weight="400" fill="#6b6f78">2/2 accepted in each mode · 35 / 33 model requests pstack / Compound</text>
+    <rect x="24" y="428" width="992" height="206" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="462" font-size="19" font-weight="650" fill="#14161c">IPv6 test-client session</text>
+    <text x="52" y="522" font-size="17" font-weight="600" fill="#14161c">pstack</text>
+    <rect x="286" y="500" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="500" width="266.9971394230753" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="524" font-size="23" font-weight="700" fill="#14161c">$0.08293</text>
+    <text x="52" y="584" font-size="17" font-weight="600" fill="#14161c">Compound</text>
+    <rect x="286" y="562" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="562" width="116.65034125863885" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="586" font-size="23" font-weight="700" fill="#147a43">$0.03623</text>
+    <rect x="24" y="654" width="992" height="206" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="688" font-size="19" font-weight="650" fill="#14161c">IPv6 development-server parsing</text>
+    <text x="52" y="748" font-size="17" font-weight="600" fill="#14161c">pstack</text>
+    <rect x="286" y="726" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="726" width="205.22508279914692" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="750" font-size="23" font-weight="700" fill="#14161c">$0.06374</text>
+    <text x="52" y="810" font-size="17" font-weight="600" fill="#14161c">Compound</text>
+    <rect x="286" y="788" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="788" width="91.17614063415004" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="812" font-size="23" font-weight="700" fill="#147a43">$0.02832</text>
+    <text x="52" y="910" font-size="17" font-weight="650" fill="#14161c">The same repository and conversation carry forward within each mode.</text>
+    <text x="52" y="937" font-size="15" font-weight="400" fill="#6b6f78">One upstream Flask sequence per mode. All bars use the same allowance scale.</text>
+  </g>
+</svg>

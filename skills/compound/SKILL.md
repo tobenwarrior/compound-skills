@@ -27,7 +27,7 @@ Use project instructions already supplied; check known repository instruction fi
 
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers.
 
-Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read relevant lines with the native Read tool when the editor requires it. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
+Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read before editing each target when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
 For local bugs, write and run the nearest failing regression before editing source. Use the repository's runtime for tests. Read dependency internals or history only to answer a question that can change the fix. Keep search and test output to relevant matches, failures and summaries. After the fix, run the full suite and check the diff, then finish unless a specific gap or project requirement remains.
 

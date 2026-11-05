@@ -100,6 +100,8 @@ The 0.16.60 Compound test-client trace spent five requests inspecting Werkzeug, 
 
 The corrected-scope 0.16.72 rerun passed both fixes in both modes. Compound used 78,277 uncached input tokens versus 45,420 without it. The first four requests on the session fix accounted for 19,794 of the 32,857 extra uncached tokens. The provider reported zero cached tokens on those four Compound requests. The saved trace shows a 6,919-byte skill result, the 1,813-byte debug guide and two broad source and test reads before the fourth request. The meter reports cache counts, while the trace shows the context carried into those requests. The provider's reason for the cache misses is unknown. The 0.16.74 rule keeps local bug fixes on the short route when conventions are clear, trims the skill entrypoint and asks for relevant source ranges and concise check output. Offline verification covers delivery and the saved artifacts. Cost on the new guidance remains unmeasured.
 
+An offline replay of the two accepted 0.16.72 Compound patches used the saved successful edits and source excerpts around their known locations. The excerpts totaled 3,315 bytes versus 19,165 bytes of native-read output in the trace. The replay omitted one edit rejected by the host before a native read, plus the discovery and duplicate checks outside the patch-and-grade sequence. It recreated both source and test trees byte-for-byte. The independent grader confirmed both regressions against their preceding sources and passed the cumulative checks and 493 final tests. The replay measures source excerpt size with edit locations supplied. It does not measure discovery, model behavior or billed savings.
+
 ## Compare a change with main
 
 ```bash
@@ -135,7 +137,7 @@ With Codex CLI, Claude Code and Python 3.11 on your path:
 python3.11 -B bench/smoke_plugin_install.py --ref HEAD
 ```
 
-The check installs a Git archive through each host's local marketplace in a temporary home. From the installed copy it checks the five skill files, global setup, status, idempotence and removal, plus a read-only map and the local viewer's HTML and CSS. It preserves an existing instruction and checks paths containing spaces. It also corrupts the temporary metadata, runtime and registry files, verifies a read-only query, then checks recovery through the live viewer. It uses no model calls. Pass `--host codex` or `--host claude` for one host. The 0.16.30 check used Codex CLI 0.162.1, Claude Code 2.1.312 and Python 3.11.15.
+The check installs a Git archive through each host's local marketplace in a temporary home. From the installed copy it checks the five skill files, global setup, status, idempotence and removal, plus a read-only map and the local viewer's HTML and CSS. It preserves an existing instruction and checks paths containing spaces. It also corrupts the temporary metadata, runtime and registry files, verifies a read-only query, then checks recovery through the live viewer. It calls the installed helpers directly and uses no model calls. On macOS, add `--fresh-chat` for a separate Codex CLI check. It launches two fresh chats in the temporary home with a scripted loopback provider and outbound access limited to that provider. The first request lists the installed skills in both chats and includes the exact saved rule only after setup. The check verifies native delivery. Use the [first task in the quick start](../README.md#quick-start) to check model behavior. Claude Code and Cursor fresh chats are untested. Pass `--host codex` or `--host claude` for one host. The 0.16.30 check used Codex CLI 0.162.1, Claude Code 2.1.312 and Python 3.11.15.
 
 ## Audit costs without new runs
 
@@ -348,6 +350,30 @@ python3 -B bench/map_text_coverage.py --baseline-ref 2b96ffa
 ```
 
 The replay selects 12 qualifying commit subjects per repository and renders each ranked map with both versions at 500 and 2,500 characters. It counts whole paths that were present in the parent and touched by the commit. At 500 characters, visibility rose from 22 to 29 of 41 changed-file paths. At 2,500 characters, both renders showed 38 of 41. This checks what the summary exposes before source inspection. [Raw counts and source pins](diagram_sources/map_text_coverage_v01618.json).
+
+## Offline release regression gate
+
+```sh
+python3 -B bench/regression_gate.py --historical
+```
+
+The gate checks five workloads independently. Use a small edit, an upstream bug fix, a behavior-preserving refactor, a review with verified findings, and source-grounded navigation. Use the established fixtures as regression controls and freeze separate held-out tasks before evaluating a prompt change. For review and navigation, require the planted findings or expected citations and an unchanged worktree. For edits, use the task's independent tests and patch-scope checks.
+
+The controls are stock with no plugin and the pinned Compound 0.16.45 build at `3ab9db8a2e159a91a24aad006dee5e96c627c98a`. That build passed both upstream Flask fixes at lower measured allowance than stock. The historical audit recomputes saved results from their recorded attempts. It keeps older builds, different models and the pstack comparison in separate cohorts. Saved review costs cover the agent runs. The independent historical judge's charges are unavailable. Offline replays check deterministic behavior and contribute no estimate of candidate model cost.
+
+For a candidate, supply one saved ledger per workload in an ignored `bench/results/` directory. Freeze the task set, the three build identities, and the shared protocol before any requests. Use the same checkout, prompt, tool settings, grader and repair opportunity for all three arms. Verify the delivered inputs and reconcile every paid response against the meter before exporting an attempt.
+
+```sh
+python3 -B bench/regression_gate.py --evidence bench/results/my-gate --candidate "$CANDIDATE_TREE" --historical
+```
+
+Use filenames `small-edit.json`, `upstream-fix.json`, `refactor.json`, `review.json` and `navigation.json`. Each ledger contains `workload`, `plan` and `attempts`.
+
+- The plan contains `builds` keyed by `stock`, `last-good` and `candidate`. Stock is `none`. The other values are the pinned revision and the candidate commit or tree hash. `protocol` records `provider` (`opencode-go`), `runtime`, `model`, `reasoning_effort`, `output_cap`, `allowance_guard` as a decimal string, `request_cap` per arm and `repair_limit` of one per task. Include additional shared tool and budget settings in the protocol as needed.
+- `sequences` contains one object with a `tasks` array. Each task has a `name` and SHA-256 fields `fixture_sha256`, `prompt_sha256` and `grader_sha256`. `schedule` lists `[0, stage, arm]` once for each task and arm. Stage indices start at zero and advance in order within each arm.
+- Every attempt has the fields consumed by the [saved verdict evaluator](yharness_verdict.py), with `costs` holding reconciled decimal `allowance`, `list_cost` and `cost`. Include `index`, `stage`, `task`, `arm`, `attempt`, `attempt_kind`, `accepted`, `grade.success` and `valid_usage`, plus `requests`, `meter_sha256`, the actual `build`, `served_model` and the three delivered task hashes. Set `plan_sha256` to the SHA-256 of the frozen plan encoded as sorted-key JSON with separators `(',', ':')`. Include failed attempts, repairs and interruption recoveries. Mark incomplete metering and retain its known charges. Keep raw transcripts and ledgers local.
+
+Exit code 0 requires every workload to have independently accepted outcomes in all three arms and the candidate's total allowance, list cost and cash charge to be no higher than either control. Exit code 1 identifies a candidate correctness or cost regression. Exit code 2 means evidence is missing, invalid or insufficient for equal-correctness comparison. A cheaper workload cannot offset a regression in another. The historical audit is informational and never changes the gate verdict. This command launches no model or judge.
 
 ## Tasks
 

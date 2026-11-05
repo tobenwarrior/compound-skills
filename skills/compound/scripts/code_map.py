@@ -26,13 +26,25 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterator
 try:
     from .onboarding import _reject_symlink, _state_paths
-    from .workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
+    from .workspace_imports import (
+        MAX_PACKAGE_FILES,
+        load_workspace_aliases,
+        load_workspace_packages,
+        resolve_workspace_alias,
+        resolve_workspace_import,
+    )
     from .language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
     from .safe_open import open_regular_nofollow, open_regular_files_nofollow
     from .language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
 except ImportError:  # direct script execution
     from onboarding import _reject_symlink, _state_paths
-    from workspace_imports import MAX_PACKAGE_FILES, load_workspace_packages, resolve_workspace_import
+    from workspace_imports import (
+        MAX_PACKAGE_FILES,
+        load_workspace_aliases,
+        load_workspace_packages,
+        resolve_workspace_alias,
+        resolve_workspace_import,
+    )
     from language_outlines import SUPPORTED_LANGUAGES, javascript_exports, javascript_outline, mask_javascript, outline as _language_outline, split_lines
     from safe_open import open_regular_nofollow, open_regular_files_nofollow
     from language_imports import extract_language_metadata, build_local_import_index, resolve_go_import, resolve_rust_import, rust_module_dependencies, _sanitize_metadata
@@ -50,12 +62,6 @@ MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
 CACHE_VERSION = 15
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
-MAX_ALIAS_CONFIGS = 64
-MAX_ALIAS_CONFIG_BYTES = 64 * 1024
-MAX_ALIAS_RULES = 2048
-MAX_ALIAS_EXTENDS_DEPTH = 16
-MAX_ALIAS_READS = 128
-MAX_ALIAS_TARGETS = 8
 MAX_COCHANGE_COMMITS = 30
 MAX_COCHANGE_FILES = 60
 MAX_COCHANGE_RESULTS = 6
@@ -233,14 +239,16 @@ def _git_root(supplied: Path) -> tuple[Path, str | None]:
     return root, None
 
 
-def _git_context(supplied: Path) -> tuple[Path, str, list[str] | None, list[str]]:
+def _git_context(
+    supplied: Path, inventory_result: tuple[bytes | None, list[str]] | None = None,
+) -> tuple[Path, str, list[str] | None, list[str]]:
     """Return None for an unavailable inventory and an empty list for a completed empty one."""
     root, note = _git_root(supplied)
     if note is not None:
         return root, "", None, [note]
     head_result = _git(root, "rev-parse", "HEAD")
     head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
-    inventory_data, notes = _git_inventory(root)
+    inventory_data, notes = _git_inventory(root) if inventory_result is None or root != supplied else inventory_result
     if inventory_data is None:
         return root, head, None, ["Git inventory unavailable; inspect with native search"]
     inventory = []
@@ -607,147 +615,8 @@ def _python_dep(path: str, module: str, level: int, imported: str | None, known:
     return None
 
 
-def _config_relative(config_dir: PurePosixPath, value: Any) -> str | None:
-    if not isinstance(value, str) or not value or len(value) > 512:
-        return None
-    candidate = posixpath.normpath(posixpath.join(config_dir.as_posix(), value))
-    if candidate == ".." or candidate.startswith("../") or candidate.startswith("/"):
-        return None
-    return PurePosixPath(candidate).as_posix()
-
-
-def _strip_jsonc(text: str) -> str:
-    """Remove JSONC comments without interpreting config code."""
-    output: list[str] = []
-    index = 0
-    in_string = False
-    escaped = False
-    while index < len(text):
-        character = text[index]
-        following = text[index + 1] if index + 1 < len(text) else ""
-        if in_string:
-            output.append(character)
-            if escaped:
-                escaped = False
-            elif character == "\\":
-                escaped = True
-            elif character == '"':
-                in_string = False
-            index += 1
-            continue
-        if character == '"':
-            in_string = True
-            output.append(character)
-            index += 1
-        elif character == "/" and following == "/":
-            index += 2
-            while index < len(text) and text[index] not in "\r\n":
-                index += 1
-        elif character == "/" and following == "*":
-            index += 2
-            while index + 1 < len(text) and text[index:index + 2] != "*/":
-                if text[index] in "\r\n":
-                    output.append(text[index])
-                index += 1
-            index = min(len(text), index + 2)
-        else:
-            output.append(character)
-            index += 1
-    return re.sub(r",(\s*[}\]])", r"\1", "".join(output))
-
-
 def _load_alias_configs(root: Path, candidates: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    configs: list[dict[str, Any]] = []
-    cache: dict[str, dict[str, Any] | None] = {}
-    reads = 0
-
-    def load(rel: str, active: set[str]) -> dict[str, Any] | None:
-        nonlocal reads
-        if rel in active or len(active) >= MAX_ALIAS_EXTENDS_DEPTH:
-            return None
-        if rel in cache:
-            return cache[rel]
-        if rel not in candidates or reads >= MAX_ALIAS_READS:
-            return None
-        reads += 1
-        info = candidates[rel]
-        try:
-            absolute = info["absolute"]
-            if (absolute.resolve() != (root / rel).resolve() or not absolute.resolve().is_relative_to(root.resolve())
-                    or info["fingerprint"]["size"] > MAX_ALIAS_CONFIG_BYTES):
-                return None
-            with absolute.open("rb") as source:
-                data = source.read(MAX_ALIAS_CONFIG_BYTES + 1)
-            if len(data) > MAX_ALIAS_CONFIG_BYTES or _fingerprint(absolute) != info["fingerprint"]:
-                return None
-            text = data.decode("utf-8-sig")
-            payload = json.loads(_strip_jsonc(text))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError, KeyError):
-            return None
-        if not isinstance(payload, dict):
-            return None
-        directory = PurePosixPath(rel).parent
-        parent = None
-        extends = payload.get("extends")
-        if isinstance(extends, str) and (extends.startswith("./") or extends.startswith("../")):
-            target = _config_relative(directory, extends)
-            if target is not None:
-                options = [target, target + ".json", posixpath.join(target, "tsconfig.json")]
-                for option in options:
-                    if option in candidates:
-                        parent = load(option, active | {rel})
-                        break
-        compiler = payload.get("compilerOptions")
-        if not isinstance(compiler, dict):
-            compiler = {}
-        base_url = parent["base_url"] if parent else None
-        if "baseUrl" in compiler:
-            base_url = _config_relative(directory, compiler["baseUrl"])
-        paths = parent["paths"] if parent else []
-        if isinstance(compiler.get("paths"), dict):
-            paths = []
-            paths_base = PurePosixPath(base_url) if base_url is not None else directory
-            for pattern, targets in list(compiler["paths"].items())[:MAX_ALIAS_RULES]:
-                if not isinstance(pattern, str) or not pattern or len(pattern) > 512 or pattern.count("*") > 1 or not isinstance(targets, list):
-                    continue
-                normalized = [target for target in (_config_relative(paths_base, value) for value in targets[:MAX_ALIAS_TARGETS]) if target is not None]
-                if normalized:
-                    paths.append((pattern, normalized))
-        result = {"directory": directory.as_posix(), "base_url": base_url, "paths": paths}
-        cache[rel] = result
-        return result
-
-    names = {"tsconfig.json", "jsconfig.json"}
-    ordered = sorted(candidates, key=lambda rel: (len(PurePosixPath(rel).parts), rel))
-    unloaded = []
-    for rel in ordered:
-        if PurePosixPath(rel).name.lower() not in names:
-            continue
-        if len(configs) >= MAX_ALIAS_CONFIGS or reads >= MAX_ALIAS_READS and rel not in cache:
-            # Past the caps, leave imports under this config unresolved rather than apply an ancestor's aliases.
-            unloaded.append({"directory": PurePosixPath(rel).parent.as_posix(), "base_url": None, "paths": [], "unloaded": True})
-            continue
-        config = load(rel, set())
-        if config and (config["base_url"] or config["paths"]):
-            configs.append(config)
-    return configs + unloaded
-
-
-def _alias_match(spec: str, pattern: str) -> str | None:
-    if "*" not in pattern:
-        return "" if spec == pattern else None
-    prefix, suffix = pattern.split("*", 1)
-    if not spec.startswith(prefix) or (suffix and not spec.endswith(suffix)):
-        return None
-    end = len(spec) - len(suffix) if suffix else len(spec)
-    value = spec[len(prefix):end]
-    return value if value else None
-
-
-def _config_applies(config: dict[str, Any], path: str) -> bool:
-    directory = config["directory"]
-    parent = PurePosixPath(path).parent.as_posix()
-    return directory in {"", "."} or parent == directory or parent.startswith(directory + "/")
+    return load_workspace_aliases(root, candidates, _fingerprint)
 
 
 def _javascript_candidates(base: str, known: set[str]) -> str | None:
@@ -772,36 +641,10 @@ def _javascript_candidates(base: str, known: set[str]) -> str | None:
     return None
 
 
-def _javascript_alias_dep(path: str, spec: str, known: set[str], configs: list[dict[str, Any]]) -> str | None:
-    applicable = sorted(
-        (config for config in configs if _config_applies(config, path)),
-        key=lambda config: (len(config["directory"].split("/")), config["directory"]),
-        reverse=True,
-    )
-    for config in applicable[:1]:
-        if config.get("unloaded"):
-            return None
-        rules = sorted(config["paths"], key=lambda item: ("*" not in item[0], len(item[0])), reverse=True)
-        for pattern, targets in rules:
-            wildcard = _alias_match(spec, pattern)
-            if wildcard is None:
-                continue
-            for target in targets:
-                candidate = target.replace("*", wildcard)
-                dependency = _javascript_candidates(candidate, known)
-                if dependency:
-                    return dependency
-        if config["base_url"]:
-            dependency = _javascript_candidates(posixpath.join(config["base_url"], spec), known)
-            if dependency:
-                return dependency
-    return None
-
-
 def _javascript_dep(path: str, spec: str, known: set[str], configs: list[dict[str, Any]] | None = None) -> str | None:
     if not spec.startswith("."):
         if configs:
-            return _javascript_alias_dep(path, spec, known, configs)
+            return resolve_workspace_alias(path, spec, known, configs, _javascript_candidates)
         return None
     spec = spec.split("?", 1)[0].split("#", 1)[0]
     base = posixpath.normpath(posixpath.join(PurePosixPath(path).parent.as_posix(), spec))
@@ -1746,9 +1589,10 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
 def _build_model(
     repo: str | os.PathLike[str], *, query: str, max_files: int, no_cache: bool = False,
     cache_read_only: bool = False, refresh: bool = False, exact_summary: bool = False,
+    inventory_result: tuple[bytes | None, list[str]] | None = None,
 ) -> dict[str, Any]:
     root_input = _repo_path(repo)
-    root, head, inventory, notes = _git_context(root_input)
+    root, head, inventory, notes = _git_context(root_input, inventory_result)
     model = _build(root, head, inventory or [], notes, query, _clamp(int(max_files), 1, MAX_FILES),
                    not no_cache and inventory is not None, refresh,
                    write_cache=not cache_read_only, exact_summary=exact_summary)
@@ -1757,7 +1601,11 @@ def _build_model(
     return model
 
 
-def build_map(repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS, max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False, refresh: bool = False, output_format: str = "text") -> tuple[dict[str, Any], str]:
+def build_map(
+    repo: str | os.PathLike[str], *, query: str = "", max_chars: int = DEFAULT_MAX_CHARS,
+    max_files: int = DEFAULT_MAX_FILES, no_cache: bool = False, cache_read_only: bool = False,
+    refresh: bool = False, output_format: str = "text",
+) -> tuple[dict[str, Any], str]:
     if no_cache and cache_read_only:
         raise CodeMapError("--no-cache and --cache-read-only are mutually exclusive")
     if output_format not in {"text", "json"}:

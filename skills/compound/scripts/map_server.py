@@ -116,9 +116,13 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
 _CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
 
 
-def _inventory_fingerprint(root: Path) -> str:
+def _inventory_fingerprint(
+    root: Path, inventory_result: tuple[bytes | None, list[str]] | None = None,
+) -> str:
     """The engine's capped Git inventory, a bounded Git status and worktree metadata, or "" (never a cache hit) when Git fails."""
-    inventory, notes = engine._git_inventory(root)
+    if inventory_result is None:
+        inventory_result = engine._git_inventory(root)
+    inventory, notes = inventory_result
     if inventory is None or engine.UNTRACKED_INVENTORY_NOTE in notes:
         return ""
     # A complete inventory already covers untracked paths and their metadata.
@@ -938,7 +942,8 @@ class MapService:
     def _index_once(self, project: Project, force: bool) -> None:
         self._index_slots.acquire()
         try:
-            before = _inventory_fingerprint(project.root)
+            inventory_result = engine._git_inventory(project.root)
+            before = _inventory_fingerprint(project.root, inventory_result)
             display_name = engine.repository_name(project.root)
             with project.lock:
                 pending = project.model.get("coverage", {}).get("pending", 0) if project.model else 0
@@ -952,7 +957,10 @@ class MapService:
                         project.updated_at = _now()
                     return
                 refresh, project.reparse = project.reparse, False
-            model, _ = engine.build_map(project.root, query="", max_files=INDEX_MAX_FILES, output_format="text", refresh=refresh)
+            model = engine._build_model(
+                project.root, query="", max_files=INDEX_MAX_FILES, refresh=refresh,
+                inventory_result=inventory_result if before else None,
+            )
             if model["coverage"].get("inventory_available") is False:
                 raise MapServerError(model["coverage"]["notes"][0])
             untracked_missing = engine.UNTRACKED_INVENTORY_NOTE in model["coverage"]["notes"]

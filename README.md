@@ -4,51 +4,33 @@
 
 <p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.74 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
-<p align="center"><a href="#should-you-use-it">Should you use it?</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
+<p align="center"><a href="#quick-start">Quick start</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
-Turn it on once and every project gets task-specific guidance: bug fixes reproduce the defect with a failing regression test before source edits, then run the final suite; refactors pin current behavior; reviews inspect source first and stop reproduction work after execution is denied. Commits omit AI co-author lines, and the final response lists checks and limits. Scoped extractions with known callers use the saved rule directly. Broader refactors, new features, performance work and PR authoring use Compound’s task guides and code map when needed.
+## Quick start
 
-**Two consecutive Flask fixes with Compound 0.16.45** used **7.5% less OpenCode Go allowance** overall, with **2/2 fixes correct in both modes**. [Results and scope](#two-consecutive-flask-fixes).
+Install at **User** scope in each app you use. Open a new chat, then run the one-time setup command for that app.
 
-**Earlier bug-fix sequence — Compound 0.16.7:** a sequence of three bug fixes on the invoicekit fixture consumed **15.5% less OpenCode Go allowance**, with **3/3 changes correct in both modes**. The full six-change workflow is now completed in both modes, including repairs; two unreported provider costs prevent an exact overall savings claim. [Results and scope](#completed-workflow-six-changes-with-repairs).
+| App | Install | One-time setup | Check saved guidance |
+| --- | --- | --- | --- |
+| Claude Code | [Install commands](#claude-code) | `/compound-skills:setup-global` | `/compound-skills:status-global` |
+| Codex | [Install commands](#codex) | `$setup-global` | `$status-global` |
+| Cursor | [Install steps](#cursor) | `/setup-global` | `/status-global` |
 
-![Three consecutive invoicekit fixes: without Compound $0.00810803 Go allowance, with Compound $0.00685117, 15.5% less; both modes passed all three changes without repair. One sequence per mode on a previously used synthetic fixture.](.github/assets/benchmark-workflow-bugs.svg)
+**Try a first task.** Open a fresh chat in a repository with a small working-tree diff. Send this as an ordinary message.
 
-**Where Compound stands out:** in the larger historical refactor benchmark, both models completed 15/15 caller-sensitive refactors correctly with Compound, versus 10/15 without it. The tests Compound left behind caught every planted wrong refactor. That is the strongest measured reason to use it; those runs also cost more. [Refactor results](#refactor-correctness).
+> Review my current diff for regressions. Cite the callers or tests that support each finding. Leave files unchanged.
 
-![Without Compound versus with Compound on held-out refactors: 10/15 versus 15/15 correct with both models, with stronger regression tests and higher median API cost.](.github/assets/benchmark-heldout.svg)
+Look for source-backed findings or a clear report that the review found none, along with the checks and their limits.
 
-### Project solutions and PR reminders
+If the checkout is clean, replace [feature] with a behavior you recognize and send this message.
 
-Ask `compound solutions search <terms>` to find a saved diagnosis or fix in the project's generated index. Lookup returns a capped shortlist. When a reusable lesson is worth saving, capture a short note and refresh the index. [Note format and commands](skills/compound/references/solutions.md)
+> Trace [feature] from its entry point to its implementation and tests. Cite file paths and lines. Leave files unchanged.
 
-Opt in to a short reminder during Compound PR authoring with `git config --local compound.prReminder true`. It prompts you to consider a reusable lesson and leaves the PR workflow unblocked. [Reminder details](skills/compound/references/git.md#optional-pr-reminder)
+Look for a trace through source files and the nearest tests, with gaps called out. Setup reports saved guidance and optional map access separately. Use the status command above to check saved guidance if the first task behaves unexpectedly.
 
-## Should you use it?
-
-Use Compound when a change needs evidence that behavior is preserved: a failing regression before a bug fix, caller comparisons before a refactor, and final checks that cover the edited code. Its map helps when you do not yet know where a feature lives or how files connect. Named files and known symbols go straight to the source or native navigation, so a map query does not become a mandatory extra step.
-
-- **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
-- **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
-- **Code navigation:** Compound’s map used **8.6% less Go allowance** on three read-only Django and Flask tasks, with all ten citations correct in both modes. [Matched navigation results](#navigation-cost-on-django-and-flask).
-- **Cost.** Two upstream Flask fixes used 7.5% less Go allowance overall with Compound. The earlier Dispatchkit sequence used 10.3% less overall, and the invoicekit bug-fix sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
-
-The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7, 0.16.31, 0.16.45 and 0.16.57 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
-
-**What changes on your machine:** `setup-global` installs Compound's default routing in supported hosts and Claude Code allow rules for its own guides and map query. The map uses a user cache outside your repository and a service on `127.0.0.1:43127`; its scripts connect only to loopback. Project cleanup runs only when you explicitly request `setup`. Commits follow project conventions and omit AI co-author/generated-by lines. [Installation and removal details](#what-it-changes-on-your-machine).
-
-For the bug-fix habits alone, a small user rule is also a reasonable option; its measured results and the exact rule remain in the [historical controls](bench/historical-comparisons.md#isnt-this-just-a-rule-in-claudemd). Every's Compound Engineering and pstack provide larger planning and orchestration workflows; their separately measured results remain in the [historical comparison](bench/historical-comparisons.md#compared-with-other-plugins).
+Day to day, ask for the task in your own words. Project `setup` is optional and is for assessing and tidying one project.
 
 ## Install
-
-1. Install the plugin at **User** scope in each app you use (below).
-2. Start a new chat (`/reload-plugins` also works in Claude Code) and turn Compound on for every project, once, from any app:<br>
-   `/compound-skills:setup-global` in Claude Code<br>
-   `$setup-global` in Codex<br>
-   `/setup-global` in Cursor
-3. Start a new chat and ask for what you want. Use `status-global` to check saved guidance for the apps you have installed.
-
-To try it first without saving any setting, type `compound` in one chat (`/compound-skills:compound` in Claude Code, `$compound` in Codex, `/compound` in Cursor). After updating the plugin, run `setup-global` again: saved rules keep their old text, and `status-global` warns when they are out of date.
 
 ### Claude Code
 
@@ -70,7 +52,7 @@ codex plugin add compound-skills@compound-skills
 2. Enter `https://github.com/tobenwarrior/compound-skills`, choose **User** scope, then **Import**.
 3. Click **Add** or **Install** beside `compound-skills`, and keep its `compound-default` rule set to **Always** in **Customize → Rules** (set it to **Manual** to turn Compound off). See [Cursor's plugin docs](https://cursor.com/docs/plugins).
 
-We check Codex and Claude Code installs from a clean package with Python 3.11, including saved guidance, the first local map and recovery from invalid saved map state. [Install smoke test](bench/README.md#installed-plugin-smoke-test)
+The install smoke test checks saved guidance, a local map and map state recovery in temporary Codex and Claude Code homes. It uses the installed helpers directly. A separate offline Codex check verifies that a fresh chat receives the saved rule. The first task above lets you check how your model applies it. [Install smoke test](bench/README.md#installed-plugin-smoke-test)
 
 ### What it changes on your machine
 
@@ -97,22 +79,10 @@ These are instructions to the agent, not enforcement; project instructions and y
 
 ## Use it
 
-Each command takes your app's prefix, for example `/compound-skills:map` in Claude Code, `$map` in Codex and `/map` in Cursor.
-
-| What you want | Command |
-| --- | --- |
-| Turn it on for every project (once, from any app) | `setup-global` |
-| Check saved global guidance | `status-global` |
-| Update saved guidance after an upgrade | `compound refresh` or `compound refresh global` |
-| Assess and tidy the current project (the only time it changes files you did not name) | `setup` |
-| Open the code map | `map` |
-| Check or stop the map service | `map status`, `map stop` |
-| Work in an existing repository | `compound contribute` followed by your task |
-| Use it in this chat only | `compound` |
-| Remove the global setting | `compound disable global` |
+To try Compound for one chat before saving settings, use the `compound` command for your app.
 
 <details>
-<summary>Exact command for each app</summary>
+<summary>Exact commands by app</summary>
 
 | What you want | Claude Code | Codex | Cursor |
 | --- | --- | --- | --- |
@@ -120,6 +90,8 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 | Check saved global guidance | `/compound-skills:status-global` | `$status-global` | `/status-global` |
 | Assess and tidy the current project | `/compound-skills:setup` | `$setup` | `/setup` |
 | Open the code map | `/compound-skills:map` | `$map` | `/map` |
+| Check or stop the map | `/compound-skills:map status` or `/compound-skills:map stop` | `$map status` or `$map stop` | `/map status` or `/map stop` |
+| Refresh saved guidance | `/compound-skills:compound refresh global` | `$compound refresh global` | `/compound refresh global` |
 | Work in an existing repository | `/compound-skills:compound contribute` | `$compound contribute` | `/compound contribute` |
 | Use it in this chat only | `/compound-skills:compound` | `$compound` | `/compound` |
 | Remove the global setting | `/compound-skills:compound disable global` | `$compound disable global` | `/compound disable global` |
@@ -127,6 +99,27 @@ Each command takes your app's prefix, for example `/compound-skills:map` in Clau
 </details>
 
 Run `compound contribute` by itself for a read-only orientation. Add a task, such as `compound contribute add CSV export to the reports page`, to have Compound follow the project’s conventions, reuse its existing patterns, and keep the diff focused on the feature. [Existing repositories](skills/compound/references/design.md#existing-repositories)
+
+### Project solutions and PR reminders
+
+Ask `compound solutions search <terms>` to find a saved diagnosis or fix in the project's generated index. Lookup returns a capped shortlist. When a reusable lesson is worth saving, capture a short note and refresh the index. [Note format and commands](skills/compound/references/solutions.md)
+
+Opt in to a short reminder during Compound PR authoring with `git config --local compound.prReminder true`. It prompts you to consider a reusable lesson and leaves the PR workflow unblocked. [Reminder details](skills/compound/references/git.md#optional-pr-reminder)
+
+## Should you use it?
+
+Use Compound when a change needs evidence that behavior is preserved: a failing regression before a bug fix, caller comparisons before a refactor, and final checks that cover the edited code. Its map helps when you do not yet know where a feature lives or how files connect. Named files and known symbols go straight to the source or native navigation, so a map query does not become a mandatory extra step.
+
+- **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
+- **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
+- **Code navigation:** Compound’s map used **8.6% less Go allowance** on three read-only Django and Flask tasks, with all ten citations correct in both modes. [Matched navigation results](#navigation-cost-on-django-and-flask).
+- **Cost.** Two upstream Flask fixes used 7.5% less Go allowance overall with Compound. The earlier Dispatchkit sequence used 10.3% less overall, and the invoicekit bug-fix sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
+
+The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7, 0.16.31, 0.16.45 and 0.16.57 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
+
+**What changes on your machine:** `setup-global` installs Compound's default routing in supported hosts and Claude Code allow rules for its own guides and map query. The map uses a user cache outside your repository and a service on `127.0.0.1:43127`; its scripts connect only to loopback. Project cleanup runs only when you explicitly request `setup`. Commits follow project conventions and omit AI co-author/generated-by lines. [Installation and removal details](#what-it-changes-on-your-machine).
+
+For the bug-fix habits alone, a small user rule is also a reasonable option; its measured results and the exact rule remain in the [historical controls](bench/historical-comparisons.md#isnt-this-just-a-rule-in-claudemd). Every's Compound Engineering and pstack provide larger planning and orchestration workflows; their separately measured results remain in the [historical comparison](bench/historical-comparisons.md#compared-with-other-plugins).
 
 ## Benchmark
 
@@ -141,6 +134,16 @@ With DeepSeek V4.1 Flash through Y Harness, Compound 0.16.45 used **7.5% less Op
 Without Compound used **$0.01083994** in Go allowance and **$0.01806659** at API list price across **38 model requests**. With Compound used **$0.01003235** and **$0.01672060** across **43 requests**. Total agent time was 257 s without Compound and 275 s with it. All four attempts are included. Neither mode needed a repair or incurred an additional cash charge under the subscription. The test-client session fix used 17.2% less allowance with Compound. The development-server fix used 1.0% more. [All attempts, usage and grades](bench/diagram_sources/comparison_flask_v01645.json)
 
 Both modes started from Flask commit `514fc6b`, received the same prompts and used the same tools and model settings. Each carried its checkout and conversation into the second task. Both workspaces had network access disabled. The provider cache was left in its normal state and covered 95.0% of input tokens without Compound and 97.1% with Compound. This was one two-fix sequence per mode. [Workload and grading](bench/README.md#consecutive-upstream-flask-fixes)
+
+### Compound vs pstack on two Flask fixes
+
+Compound’s 0.16.74 development snapshot used **56.0% less OpenCode Go allowance** than pstack 0.15.36. Both passed **2/2 fixes**, including both hidden regressions, the new regression tests and all 494 final tests.
+
+![Compound versus pstack on two Flask fixes. Both passed 2/2 fixes. Compound used $0.06455134 of Go allowance and pstack used $0.14667321, with all attempts and repairs included.](.github/assets/benchmark-pstack-flask-v01674.svg)
+
+Compound used **$0.06455134** across **33 model requests** and passed on both initial attempts. pstack used **$0.14667321** across **35 requests**, including its timed-out first attempt and the successful repair. All five attempts are included. Both incurred $0 in additional cash charges. [All attempts, usage and grades](bench/diagram_sources/comparison_pstack_flask_v01674.json)
+
+Both started at Flask commit `514fc6b` and ran the same prompts in Claude Code 2.1.312 with Qwen3.8 Flash at low effort. Each carried its accepted patch and conversation into the second fix. The two arms had a $0.15 allowance guard each, with $0.04 reserved from initial attempts for repairs. This was one two-fix sequence per plugin under normal provider caching.
 
 ### Fresh two-change comparison
 
@@ -157,6 +160,8 @@ Each mode started from the same previously benchmarked synthetic Python fixture,
 On 2–3 November 2026, DeepSeek V4.1 Flash through Y Harness completed all three invoicekit bug fixes and all three shopkit refactors in both modes. Each repository kept its code changes and native conversation across three tasks. **Both modes finished 6/6 changes correctly**, passing cumulative hidden checks, the original suite and their final suites; no original test was removed or weakened. Each mode needed one semantic repair on the slug refactor after changing a facet key from `café` to `cafe`.
 
 ![Completed six-change workflow: both modes accepted all six changes, including one semantic repair and one provider recovery turn each. Known Go allowance is at least $0.03457468 without Compound and at least $0.05793600 with Compound; one response in each mode has unreported cost. Model requests total 61 without and 72 with.](.github/assets/benchmark-workflow-complete.svg)
+
+![Three consecutive invoicekit fixes: without Compound $0.00810803 Go allowance, with Compound $0.00685117, 15.5% less; both modes passed all three changes without repair. One sequence per mode on a previously used synthetic fixture.](.github/assets/benchmark-workflow-bugs.svg)
 
 **The bug-fix sequence used 15.5% less allowance with Compound:** $0.00685117 versus $0.00810803, with all three changes accepted in each mode and no repairs. Across the complete six-change workload, recorded minimums were **$0.03457468 without / $0.05793600 with Compound**. One provider response in each mode did not report final usage. These are lower bounds, not exact totals; the result **does not establish cheaper overall performance**. All completed responses reported a $0 cash charge under the existing Go subscription; missing charges remain unknown. [Numeric data, including every attempt](bench/diagram_sources/workflow.json).
 
@@ -285,7 +290,7 @@ The earlier map ablation mostly used tasks that named the files to edit. Removin
 - **Tuned on the controlled tasks.** In the 0.14.0 rounds, Compound's rule sentence and refactor guide were revised after earlier runs of the same six tasks.
 - **The habit measures are Compound's own checklist,** and the plain rule names them too; the outcomes are what tests and the judge measured.
 - **The judge** is Claude Opus 5.5, also one of the agents under test.
-- **Other plugins** were measured only against 0.14.0, as we set them up, on tasks of our choosing, and the benchmark's author also wrote Compound; their larger workflows were not tested.
+- **Other plugins.** The historical comparisons used Compound 0.14.0. The newer pstack comparison covers one two-fix Flask sequence. Compound’s author selected the workloads and ran the comparisons.
 - **Map scope.** The metered result covers three read-only citation tasks with prepared map summaries. The earlier coding ablation showed little change. Ranking was tuned on other Flask, Click and Hono commits.
 - **Instructions, not enforcement.** Compound asks the agent; it cannot force it.
 
@@ -302,7 +307,7 @@ Compound has one short guide for each kind of work and tells the agent to read t
 | [Debug](skills/compound/references/debug.md) | Reproduce the bug, find the cause, and add a regression test |
 | [Refactor](skills/compound/references/refactor.md) | Record current behavior, then prove it did not change |
 | [Performance](skills/compound/references/performance.md) | Measure before and after on the same workload |
-| [Review](skills/compound/references/review.md) | Report concrete problems with location, trigger, and impact |
+| [Review](skills/compound/references/review.md) | Trace changed caller edge cases and report concrete triggers and impacts |
 | [Verify](skills/compound/references/verify.md) | Run checks that could prove the change wrong and say what is unverified |
 | [Repository hygiene](skills/compound/references/repo-hygiene.md) | Flag clutter, oversized files, unused scripts, and `.gitignore` gaps |
 | [Git and pull requests](skills/compound/references/git.md) | Write clear commits and PRs with real check results and human authorship |
@@ -320,7 +325,7 @@ SKILL.md also holds engineering guidance: use supplied code and known files firs
 
 The always-on rule as `setup-global` saves it. The Flask and Dispatchkit charts use the rules from 0.16.45 and 0.16.31, respectively.
 
-> Review diff first. Trace callers/tests. Probe gaps when permitted. After denial, source only. Read relevant lines with required native Read per edit target. For bugs, write and run a failing regression, fix, run full suite, check diff, finish. Extra checks need evidence gaps or requirements. Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch calls. Use documented runtime/checks (`python -B`). Diagnose setup before retrying. Reuse passing checks when inputs/environment match. Load `compound` for unclear conventions, broad refactors, features, performance and PR authoring. Follow project/user instructions. Report checks/limits. Omit AI commit credits.
+> Review diff first. Check caller edge cases. Verify changed lifecycle paths run in tests. Probe gaps or requirements with permission. After denial, source only. Read function/test ranges with required native Read per edit target. For bugs, write and run a failing regression, fix, run full suite, check diff, finish. Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch calls. Use documented runtime/checks (`python -B`). Diagnose setup before retrying. Reuse passing checks when inputs/environment match. Load `compound` for unclear conventions, broad refactors, features, performance and PR authoring. Follow project/user instructions. Report checks/limits. Omit AI commit credits.
 
 ### Commits
 

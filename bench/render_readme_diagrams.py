@@ -74,11 +74,12 @@ class Canvas:
                        value, x=x, y=y, font_size=size, font_weight=weight,
                        fill=THEME.get(color, color))
 
-    def pair(self, y, values, displays, maximum, label='Go allowance · lower is better'):
+    def pair(self, y, values, displays, maximum, label='Go allowance · lower is better',
+             modes=('Without Compound', 'With Compound')):
         self.text(52, y, label, 19, weight=650)
         for i, (value, display) in enumerate(zip(values, displays)):
             row_y = y + 38 + i * 62
-            self.text(52, row_y + 22, ['Without Compound', 'With Compound'][i], 17, weight=600)
+            self.text(52, row_y + 22, modes[i], 17, weight=600)
             self.rect(286, row_y, 510, 32, 'background_secondary', 16)
             self.rect(286, row_y, 510 * float(value / maximum), 32,
                       'baseline' if i == 0 else 'green', 16)
@@ -419,11 +420,19 @@ def two_change_comparison(source):
             'flask', 'Flask', 'flask-ipv6-session', 'upstream Flask',
             (('flask-ipv6-session', 'IPv6 test-client session'), ('flask-ipv6-run', 'IPv6 development-server parsing')),
         ),
+        'compound-pstack-flask-sequence-comparison-1': (
+            'pstack-flask', 'Flask', 'flask-ipv6-session', 'upstream Flask',
+            (('flask-ipv6-session', 'IPv6 test-client session'), ('flask-ipv6-run', 'IPv6 development-server parsing')),
+        ),
     }
     layout = fixtures.get(data['schema'])
-    if layout is None or data['provider'] != 'opencode-go' or data['model'] != 'deepseek-v4.1-flash':
+    if layout is None or data['provider'] != 'opencode-go':
         raise ValueError('Unsupported two-change comparison')
     asset, workload, fixture, scope, labels = layout
+    pstack = asset == 'pstack-flask'
+    expected_model = 'qwen3.8-flash' if pstack else 'deepseek-v4.1-flash'
+    if data['model'] != expected_model:
+        raise ValueError('Unsupported two-change comparison model')
     plan = {key: data[key] for key in ('sequences', 'schedule')}
     if len(plan['sequences']) != 1:
         raise ValueError('Expected one matched sequence')
@@ -452,16 +461,26 @@ def two_change_comparison(source):
             f'{reduction:.1f}% less. Both modes finished both tasks. All attempts and repairs included.')
     subtitle = (f"Compound {data['compound_version']} · DeepSeek V4.1 Flash through Y Harness"
                 ' · one sequence per mode')
-    chart = Canvas(958, f'Two changes, {reduction:.1f}% less allowance', 'MEASURED PILOT', desc, subtitle)
+    modes = ('Without Compound', 'With Compound')
+    request_order = 'without / with'
+    if pstack:
+        modes = ('pstack', 'Compound')
+        request_order = 'pstack / Compound'
+        desc = (f'Flask comparison. Go allowance was ${cost[0]} with pstack and ${cost[1]} with Compound, '
+                f'{reduction:.1f}% less. Both passed both fixes. All attempts and repairs included.')
+        subtitle = 'Claude Code 2.1.312 · Qwen3.8 Flash · one sequence per plugin'
+    heading = 'Two Flask fixes' if pstack else 'Two changes'
+    precision = 5 if pstack else 8
+    chart = Canvas(958, f'{heading}, {reduction:.1f}% less allowance', 'MEASURED PILOT', desc, subtitle)
     chart.card(24, 157, 992, 251)
     maximum = max(cost) * Decimal('1.08')
-    chart.pair(196, cost, [f'${value:.8f}' for value in cost], maximum)
-    chart.text(52, 387, f"2/2 accepted in each mode · {arms[0]['requests']} / {arms[1]['requests']} model requests without / with", 16, 'muted')
+    chart.pair(196, cost, [f'${value:.{precision}f}' for value in cost], maximum, modes=modes)
+    chart.text(52, 387, f"2/2 accepted in each mode · {arms[0]['requests']} / {arms[1]['requests']} model requests {request_order}", 16, 'muted')
     for stage, label in enumerate(label for _, label in labels):
         y = 428 + stage * 226
         chart.card(24, y, 992, 206)
         values = [money(arm['by_stage'][str(stage)]['totals']['allowance']) for arm in arms]
-        chart.pair(y + 34, values, [f'${v:.8f}' for v in values], maximum, label)
+        chart.pair(y + 34, values, [f'${v:.{precision}f}' for v in values], maximum, label, modes)
     chart.text(52, 910, 'The same repository and conversation carry forward within each mode.', 17, weight=650)
     chart.text(52, 937, f'One {scope} sequence per mode. All bars use the same allowance scale.', 15, 'muted')
     version = data['compound_version'].replace('.', '')
@@ -544,7 +563,7 @@ def main():
     outputs = {p.stem + '.svg': historical(p) for p in sorted((SOURCES / 'scenes').glob('*.json'))}
     outputs.update(pilots())
     outputs.update(workflows())
-    for family in ('dispatch', 'flask'):
+    for family in ('dispatch', 'flask', 'pstack_flask'):
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
     outputs.update(comparisons())

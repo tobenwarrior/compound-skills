@@ -1,8 +1,10 @@
 # Review
 
-Read the diff first and compare it with the intended behavior. When the diff establishes the trigger and impact, report from it. Read callers and tests to settle specific gaps in the evidence. Bug-fix reproduction steps apply only when implementing a fix.
+Read the diff against the intended behavior. Read callers and tests to settle specific gaps. For a changed default, callback, shared helper, or retry, trace a reachable edge case against prior behavior or the documented contract. For shared helpers, compare affected callers with different policies. Check explicit zero or empty values, when deferred code reads state, or whether a side effect precedes an error. Stop when the trigger and impact are established. Bug-fix reproduction steps apply only when implementing a fix.
 
-Look for correctness failures, unsupported assumptions, concurrency or retry problems, and design that makes a local change unsafe elsewhere. Review reader effort: unnecessary layers, synchronized duplicate state, unclear ownership, and misleading names. Apply project conventions without turning preferences into defects.
+When a diff changes startup, shutdown, cancellation, or a shared runtime boundary, identify the test that exercises the affected production path with that behavior intact. Mock external I/O. If tests replace the behavior under review, report the coverage gap and run one targeted check when permitted.
+
+Check correctness, concurrency, and unsupported assumptions. Flag concrete maintenance problems such as unnecessary layers, duplicate state, unclear ownership, and misleading names. Apply project conventions without turning preferences into defects.
 
 Use independent reviewers for distinct uncertainties when the host supports it and the benefit warrants the cost. Give them the same intent and artifact, then verify findings yourself. Reviewer agreement is supporting evidence, not proof.
 
