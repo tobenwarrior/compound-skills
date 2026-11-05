@@ -50,13 +50,15 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Review diff first. Check caller edge cases. Verify changed lifecycle paths run in tests. Probe gaps or requirements with permission. After denial, source only. "
-    "Read function/test ranges with required native Read per edit target. For bugs, write and run a failing regression, "
+    "Review diff first. Check caller edge cases. Verify changed lifecycle paths run in tests. "
+    "Report confirmed findings promptly. Probe gaps or requirements with permission. After denial, source only. "
+    "Use required native Read first on edit targets. For bugs, write and run a failing regression, "
     "fix, run full suite, check diff, finish. "
-    "Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch calls. "
-    "Use documented runtime/checks (`python -B`). Diagnose setup before retrying. Reuse passing checks when inputs/environment match. "
+    "Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. "
+    "Use project runner first. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup before retrying. "
+    "Batch checkout-local reads/edits. Finish after required checks. "
     "Load `compound` for unclear conventions, broad refactors, features, performance and PR authoring. "
-    "Follow project/user instructions. Report checks/limits. Omit AI commit credits.",
+    "Follow project/user instructions. Omit AI commit credits.",
     END_MARKER,
 )
 

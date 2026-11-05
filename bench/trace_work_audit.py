@@ -45,19 +45,32 @@ def audit_run(folder: Path, include_steps: bool = False) -> dict:
                 if reason in result:
                     rejected.append(dict(step=step, call_id=event['callId'], reason=reason))
                     break
-    if requests != record['requests'] or sum(tools.values()) != record['tool_calls']:
+    recorded = record['requests']
+    meter_path = folder / 'requests.jsonl'
+    meter_events = []
+    if include_steps or (requests != recorded and meter_path.is_file()):
+        meter_events = [json.loads(line) for line in meter_path.read_bytes().splitlines()]
+    blocked = 0
+    if requests == recorded + 1 and not step_tools[requests] and meter_events:
+        stop = meter_events[-1]
+        starts = [event['number'] for event in meter_events if event['event'] == 'request_started']
+        if (stop['event'] == 'budget_stop' and type(stop.get('calls')) is int
+                and stop['calls'] == recorded and starts == list(range(1, recorded + 1))):
+            # A host step can start before the allowance guard rejects its request.
+            requests -= 1
+            blocked = 1
+    if requests != recorded or sum(tools.values()) != record['tool_calls']:
         raise ValueError('record totals do not match saved event counts')
     result = dict(run=folder.name, task=record['task'], arm=record['arm'],
                 attempt_kind=record.get('attempt_kind', 'unlabeled'), requests=requests,
-                tool_calls=sum(tools.values()), tools=dict(sorted(tools.items())),
+                budget_blocked_steps=blocked, tool_calls=sum(tools.values()), tools=dict(sorted(tools.items())),
                 edit_precondition_rejections=rejected,
                 record_sha256=hashlib.sha256(record_bytes).hexdigest(),
                 events_sha256=hashlib.sha256(event_bytes).hexdigest())
     if include_steps:
         result['terminal_reasons'] = terminal_reasons
         meter = {}
-        for line in (folder / 'requests.jsonl').read_bytes().splitlines():
-            response = json.loads(line)
+        for response in meter_events:
             if response.get('event') != 'request':
                 continue
             number = response['number']
