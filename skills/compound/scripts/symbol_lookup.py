@@ -3,7 +3,7 @@
 
 Definitions use existing code-map symbol metadata. Lexical occurrences match
 identifier boundaries in source, including declarations, comments, and strings.
-Python location lookups include source lines only when --excerpt is supplied.
+Python line and literal lookups include source lines only when --excerpt is supplied.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import re
 import stat
 import sys
 import time
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,7 @@ DEFAULT_MAX_OUTPUT_BYTES = 12 * 1024
 MIN_OUTPUT_BYTES = 4 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024
 MAX_LOCATIONS = 12
+MAX_MATCH_LINES = 3
 MAX_EXCERPT_RADIUS = 8
 READ_CHUNK_BYTES = 64 * 1024
 
@@ -164,20 +166,39 @@ def _lookup_locations(
     excerpt_radius: int | None = None,
 ) -> list[dict[str, Any]]:
     """Find Python scopes and any requested excerpts, reading each source file once."""
-    if not 1 <= len(locations) <= MAX_LOCATIONS:
-        raise SymbolLookupError(f"provide between one and {MAX_LOCATIONS} source locations")
-    if excerpt_radius is not None and not 0 <= excerpt_radius <= MAX_EXCERPT_RADIUS:
-        raise SymbolLookupError(f"--excerpt must be between 0 and {MAX_EXCERPT_RADIUS}")
     queries = []
     for location in locations:
         relative, _, raw_line = location.rpartition(":")
-        relative = relative.removeprefix("./")
-        if (
-            not re.fullmatch(r"[1-9][0-9]{0,8}", raw_line)
-            or any(part in {"", ".", ".."} for part in relative.split("/"))
-        ):
+        if not re.fullmatch(r"[1-9][0-9]{0,8}", raw_line):
             raise SymbolLookupError("location must be a repository-relative Python path and positive line")
         queries.append((relative, int(raw_line)))
+    return _lookup_python(
+        repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
+        max_seconds=max_seconds, excerpt_radius=excerpt_radius,
+    )
+
+
+def _lookup_python(
+    repo: str | os.PathLike[str],
+    queries: list[tuple[str, int | str]],
+    *,
+    max_file_bytes: int,
+    max_total_bytes: int,
+    max_seconds: float,
+    excerpt_radius: int | None,
+) -> list[dict[str, Any]]:
+    """Resolve exact lines or literal matches from the same bounded source read."""
+    if not 1 <= len(queries) <= MAX_LOCATIONS:
+        raise SymbolLookupError(f"provide between one and {MAX_LOCATIONS} source queries")
+    if excerpt_radius is not None and not 0 <= excerpt_radius <= MAX_EXCERPT_RADIUS:
+        raise SymbolLookupError(f"--excerpt must be between 0 and {MAX_EXCERPT_RADIUS}")
+    queries = [(relative.removeprefix("./"), selector) for relative, selector in queries]
+    for relative, selector in queries:
+        if any(part in {"", ".", ".."} for part in relative.split("/")):
+            raise SymbolLookupError("lookup requires a repository-relative Python path")
+        if isinstance(selector, str):
+            _valid_symbol(selector)
+    retain_lines = excerpt_radius is not None or any(isinstance(selector, str) for _, selector in queries)
     try:
         root, _, paths, _ = code_map._git_context(code_map._repo_path(repo))
     except code_map.CodeMapError as exc:
@@ -202,15 +223,33 @@ def _lookup_locations(
                 return inner
         return ()
 
+    def location(line: int, count: int, tree: ast.Module, lines: list[str]) -> dict[str, Any]:
+        if time.monotonic() >= deadline:
+            raise SymbolLookupError("Python source lookup timed out")
+        try:
+            scopes = enclosing(tree, line)
+        except RecursionError as exc:
+            raise SymbolLookupError("Python scope nesting exceeds the lookup limit") from exc
+        scope = scopes[-1] if scopes else None
+        entry = {
+            "line": line, "symbol": ".".join(node.name for node in scopes) or None,
+            "start_line": scope.lineno if scope else None, "end_line": scope.end_lineno if scope else None,
+        }
+        if excerpt_radius is not None:
+            first = max(1, line - excerpt_radius)
+            last = min(count, line + excerpt_radius)
+            entry["excerpt"] = [{"line": n, "text": lines[n - 1]} for n in range(first, last + 1)]
+        return entry
+
     parsed: dict[str, tuple[int, ast.Module, list[str]]] = {}
     result = []
-    for relative, line in queries:
+    for relative, selector in queries:
         if relative not in parsed:
             if relative not in inventory:
-                raise SymbolLookupError("location is outside the available Git inventory")
+                raise SymbolLookupError("path is outside the available Git inventory")
             candidate, _ = code_map._candidate(root, relative, git_inventory=True)
             if candidate is None or candidate["language"] != "python":
-                raise SymbolLookupError("location must name an available Python source file")
+                raise SymbolLookupError("lookup must name an available Python source file")
             source, consumed, note = _read_reference_text(
                 root, relative, candidate["fingerprint"], max_file_bytes=limit,
                 remaining_bytes=remaining, deadline=deadline,
@@ -220,26 +259,24 @@ def _lookup_locations(
             remaining -= consumed
             try:
                 lines = split_lines(source)
-                parsed[relative] = len(lines), ast.parse(source), lines if excerpt_radius is not None else []
+                parsed[relative] = len(lines), ast.parse(source), lines if retain_lines else []
             except (SyntaxError, ValueError, RecursionError, MemoryError) as exc:
                 raise SymbolLookupError("Python file could not be parsed") from exc
         count, tree, lines = parsed[relative]
-        if line > count:
-            raise SymbolLookupError("line is outside the source file")
-        try:
-            scopes = enclosing(tree, line)
-        except RecursionError as exc:
-            raise SymbolLookupError("Python scope nesting exceeds the lookup limit") from exc
-        scope = scopes[-1] if scopes else None
-        entry = {
-            "path": relative, "line": line, "symbol": ".".join(node.name for node in scopes) or None,
-            "start_line": scope.lineno if scope else None, "end_line": scope.end_lineno if scope else None,
-        }
-        if excerpt_radius is not None:
-            first = max(1, line - excerpt_radius)
-            last = min(count, line + excerpt_radius)
-            entry["excerpt"] = [{"line": n, "text": lines[n - 1]} for n in range(first, last + 1)]
-        result.append(entry)
+        if isinstance(selector, int):
+            if selector > count:
+                raise SymbolLookupError("line is outside the source file")
+            result.append({"path": relative, **location(selector, count, tree, lines)})
+            continue
+        matches = (number for number, text in enumerate(lines, 1) if selector in text)
+        matching_lines = list(islice(matches, MAX_MATCH_LINES + 1))
+        if time.monotonic() >= deadline:
+            raise SymbolLookupError("Python source lookup timed out")
+        result.append({
+            "path": relative, "literal": selector,
+            "locations": [location(line, count, tree, lines) for line in matching_lines[:MAX_MATCH_LINES]],
+            "truncated": len(matching_lines) > MAX_MATCH_LINES,
+        })
     return result
 
 
@@ -703,7 +740,10 @@ def _parser() -> argparse.ArgumentParser:
     lookup = parser.add_mutually_exclusive_group(required=True)
     lookup.add_argument("--symbol", metavar="NAME")
     lookup.add_argument("--location", action="append", metavar="FILE:LINE", help="find the enclosing Python class or function (repeatable)")
-    parser.add_argument("--excerpt", type=int, metavar="LINES", help="include the cited line and up to 8 lines on each side (requires --location)")
+    lookup.add_argument("--match", action="append", nargs=2, metavar=("FILE", "LITERAL"),
+                        help="find literal text and its enclosing Python symbol in a known file (repeatable)")
+    parser.add_argument("--excerpt", type=int, metavar="LINES",
+                        help="include the selected line and up to 8 lines on each side (requires --location or --match)")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
     parser.add_argument("--max-results", type=int, default=DEFAULT_MAX_RESULTS)
     parser.add_argument(
@@ -728,18 +768,25 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if args.excerpt is not None and args.location is None:
-            raise SymbolLookupError("--excerpt requires --location")
+        python_lookup = args.location is not None or args.match is not None
+        if args.excerpt is not None and not python_lookup:
+            raise SymbolLookupError("--excerpt requires --location or --match")
+        if args.service and python_lookup:
+            raise SymbolLookupError("--service requires --symbol")
         options = {
             "max_files": args.max_files, "max_results": args.max_results,
             "max_seconds": args.timeout, "max_file_bytes": args.max_file_bytes,
             "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
         }
         if args.location is not None:
-            if args.service:
-                raise SymbolLookupError("--service requires --symbol")
             result = _lookup_locations(
                 args.repo, args.location,
+                max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
+                excerpt_radius=args.excerpt,
+            )
+        elif args.match is not None:
+            result = _lookup_python(
+                args.repo, [(relative, literal) for relative, literal in args.match],
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=args.excerpt,
             )
@@ -756,8 +803,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             result = lookup_symbols(args.repo, args.symbol, no_cache=args.no_cache, **options)
         encoded = json.dumps(result, ensure_ascii=True, separators=(",", ":"))
-        if args.location is not None and len(encoded) > _bounded_int(args.max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES):
-            raise SymbolLookupError("locations exceed the output byte cap")
+        if python_lookup and len(encoded) > _bounded_int(args.max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES):
+            raise SymbolLookupError("Python source lookup exceeds the output byte cap")
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2
