@@ -14,7 +14,7 @@ For project solution searches, let `python3 -B <installed-skill-dir>/scripts/sol
 
 For explicit `compound solutions` requests for help, capture, or index refresh, follow [Project solutions](references/solutions.md) and skip engineering startup.
 
-For a review-only Compound request, follow [Review](references/review.md) and skip engineering startup.
+For review-only Compound work, bypass engineering startup. Use the supplied diff or read it from Git at `-U3`. Follow [Review](references/review.md) for targeted checks.
 
 For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md). Only explicit project `setup` opens [repository assessment](references/onboarding.md).
 
