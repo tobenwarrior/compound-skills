@@ -51,7 +51,7 @@ BLOCK_LINES = (
     "## Compound Skills default routing",
     "",
     "Reviews start with diffs. Check caller edge cases. Verify changed lifecycle paths run in tests. "
-    "Report findings promptly. Probe with permission. After denial, source only. Use required native Read. "
+    "Report findings promptly. Probe with permission. After denial, source only. Use required native Read first on edit targets. "
     "For bugs, verify changed arguments against the receiving API before setting test expectations. "
     "Run the regression before source edits. Gate batched fixes on the expected failure. "
     "Run one final full suite and diff. "
