@@ -56,11 +56,12 @@ MAX_FILES = 20000
 MAX_FILE_BYTES = 1024 * 1024
 MAX_READ_BYTES = 64 * 1024 * 1024
 MAX_SYMBOLS = 512
+MAX_QUALIFIED_NAME_CHARS = 128
 MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
-CACHE_VERSION = 15
+CACHE_VERSION = 16
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_COCHANGE_COMMITS = 30
 MAX_COCHANGE_FILES = 60
@@ -422,18 +423,31 @@ def _python_outline(text: str) -> tuple[list[dict[str, Any]], list[list[Any]], l
     symbols: list[dict[str, Any]] = []
     imports: list[list[Any]] = []
     extra_names: list[list[Any]] = []
+    scopes: list[tuple[int, str | None]] = []
     for node in sorted(ast.walk(tree), key=lambda item: getattr(item, "lineno", 0)):
         line = int(getattr(node, "lineno", 1))
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            args = list(node.args.posonlyargs) + list(node.args.args) + list(node.args.kwonlyargs)
-            names = [arg.arg for arg in args]
-            if node.args.vararg:
-                names.append("*" + node.args.vararg.arg)
-            if node.args.kwarg:
-                names.append("**" + node.args.kwarg.arg)
-            symbols.append({"name": node.name, "kind": "function", "line": line, "signature": f"{node.name}({', '.join(names)})"[:128]})
-        elif isinstance(node, ast.ClassDef):
-            symbols.append({"name": node.name, "kind": "class", "line": line})
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            while scopes and line > scopes[-1][0]:
+                scopes.pop()
+            owner = scopes[-1][1] if scopes else ""
+            qualified = f"{owner}.{node.name}" if owner else node.name
+            if owner is None or len(qualified) > MAX_QUALIFIED_NAME_CHARS:
+                qualified = None
+            is_class = isinstance(node, ast.ClassDef)
+            symbol = {"name": node.name, "kind": "class" if is_class else "function", "line": line}
+            if qualified and owner:
+                symbol["qualified_name"] = qualified
+            # Functions end the dotted class namespace, including any classes local to them.
+            scopes.append((node.end_lineno or line, qualified if is_class else None))
+            if not isinstance(node, ast.ClassDef):
+                args = list(node.args.posonlyargs) + list(node.args.args) + list(node.args.kwonlyargs)
+                names = [arg.arg for arg in args]
+                if node.args.vararg:
+                    names.append("*" + node.args.vararg.arg)
+                if node.args.kwarg:
+                    names.append("**" + node.args.kwarg.arg)
+                symbol["signature"] = f"{node.name}({', '.join(names)})"[:128]
+            symbols.append(symbol)
         elif isinstance(node, ast.Import):
             imports.extend([[alias.name, 0, None] for alias in node.names])
         elif isinstance(node, ast.ImportFrom):
@@ -1164,11 +1178,15 @@ def _valid_entry(value: Any, relative: str = "") -> bool:
     if not isinstance(value.get("symbols"), list) or len(value["symbols"]) > MAX_SYMBOLS:
         return False
     for symbol in value["symbols"]:
-        if not isinstance(symbol, dict) or set(symbol) - {"name", "kind", "line", "signature"}:
+        if not isinstance(symbol, dict) or set(symbol) - {"name", "kind", "line", "signature", "qualified_name"}:
             return False
         if not isinstance(symbol.get("name"), str) or not isinstance(symbol.get("kind"), str) or not isinstance(symbol.get("line"), int):
             return False
         if "signature" in symbol and not isinstance(symbol["signature"], str):
+            return False
+        if "qualified_name" in symbol and (
+            not isinstance(symbol["qualified_name"], str) or len(symbol["qualified_name"]) > MAX_QUALIFIED_NAME_CHARS
+        ):
             return False
     exports = value.get("exports")
     if not isinstance(exports, list) or len(exports) > MAX_SYMBOLS or not all(isinstance(item, str) for item in exports):
@@ -1246,9 +1264,8 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     version = payload.get("version")
     # Python outlines depend on the interpreter that parsed them, so another version re-parses them.
     same_python = payload.get("python") == PYTHON_VERSION
-    # Version 14 has the same entry fields, but its PHP lexer can misidentify symbols.
-    stale_php = version == 14
-    if version != CACHE_VERSION and not stale_php:
+    # Reuse older entries whose language outline format is still current.
+    if version not in (14, 15, CACHE_VERSION):
         if isinstance(version, int) and 0 <= version < CACHE_VERSION:
             return {}, "code-map cache requires migration"
         return {}, "code-map cache has an unsupported shape"
@@ -1258,7 +1275,8 @@ def _load_entries(root: Path, candidates: dict[str, dict[str, Any]]) -> tuple[di
     reusable: dict[str, Any] = {}
     for path_name, entry in raw.items():
         current = candidates.get(path_name)
-        if stale_php and current and current["language"] == "php":
+        if current and ((version == 14 and current["language"] == "php")
+                        or (version != CACHE_VERSION and current["language"] == "python")):
             continue
         if isinstance(path_name, str) and current and _valid_entry(entry, path_name) and entry["fingerprint"] == current["fingerprint"] and entry["language"] == current["language"] and (same_python or entry["language"] != "python"):
             reusable[path_name] = entry
@@ -1300,7 +1318,7 @@ def _write_json(root: Path, entries: dict[str, Any]) -> None:
 def _summary_target(
     records: list[dict[str, Any]], query: str, *, allow_symbol: bool,
 ) -> tuple[dict[str, Any] | None, str | None]:
-    """Select a named file or one indexed defining file for a bare symbol."""
+    """Select a named file or one indexed defining file for an exact symbol."""
     target = query.removeprefix("./")
     if target:
         exact = next((record for record in records if record["path"] == target), None)
@@ -1308,12 +1326,16 @@ def _summary_target(
             return exact, None
 
     token = query.strip()
-    if not allow_symbol or not token.isidentifier() or not _literal_query_names(token):
+    parts = token.split(".")
+    if not allow_symbol or not all(part.isidentifier() for part in parts):
+        return None, None
+    if len(parts) == 1 and not _literal_query_names(token):
         return None, None
     name = token.casefold()
+    key = "qualified_name" if len(parts) > 1 else "name"
     defining_file = None
     for record in records:
-        if any(symbol["name"].casefold() == name for symbol in record["symbols"]):
+        if any(symbol.get(key, "").casefold() == name for symbol in record["symbols"]):
             if defining_file is not None:
                 return None, None
             defining_file = record
@@ -1518,7 +1540,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         if not file:
             continue
         if exact_symbol is not None:
-            symbol_values = [symbol for symbol in file["symbols"] if symbol["name"].casefold() == exact_symbol][:8]
+            key = "qualified_name" if "." in exact_symbol else "name"
+            symbol_values = [symbol for symbol in file["symbols"] if symbol.get(key, "").casefold() == exact_symbol][:8]
         elif terms or literal_names:
             def relevance(symbol: dict[str, Any]) -> int:
                 if literal_names and symbol["name"].casefold() in literal_names:
@@ -1533,7 +1556,14 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 symbol_values = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
         else:
             symbol_values = file["symbols"][:8]
-        symbols = ", ".join((symbol.get("signature") or symbol["name"]) + f" ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values)
+        declarations = []
+        for symbol in symbol_values:
+            signature = symbol.get("signature") or symbol["name"]
+            qualified = symbol.get("qualified_name")
+            if qualified and (focused_query or exact_file):
+                signature = qualified + signature.removeprefix(symbol["name"])
+            declarations.append(f"{signature} ({symbol['kind']}:{symbol['line']})")
+        symbols = ", ".join(declarations)
         if symbols and len(file["symbols"]) > len(symbol_values):
             symbols += f" (+{len(file['symbols']) - len(symbol_values)} more symbols)"
         dependency_values = file["dependencies"][:12]
@@ -1542,7 +1572,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
         line = f"- {json.dumps(path, ensure_ascii=True)} [{file['language']}]"
         if focused_query:
-            hints = [f"{symbol['name']} ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values[:2]]
+            hints = [f"{symbol.get('qualified_name', symbol['name'])} ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values[:2]]
             compact.append((line, hints))
         if symbols:
             line += " symbols: " + symbols
