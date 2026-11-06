@@ -6,12 +6,12 @@ license: MIT
 
 # Map
 
-Resolve `<map-skill-dir>` to the directory containing this file.
+`<compound-skill-dir>` is the absolute path to `skills/compound` under this plugin’s root.
 
 For exact Python citations, find unknown files with native search. Before answering, batch candidate lines or literal statements in one read-only lookup:
 
 ```bash
-python3 -B <map-skill-dir>/../compound/scripts/symbol_lookup.py --repo <repo-root> --location "<file:line>" --match "<file>" "<statement>" --excerpt 0
+python3 -B "<compound-skill-dir>/scripts/symbol_lookup.py" --repo "<repo-root>" --location "<file:line>" --match "<file>" "<statement>" --excerpt 0
 ```
 
 Use either option or mix them, up to 12 queries. Results follow query order and give the enclosing symbol. Omit `--excerpt` when you only need the locations. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
@@ -19,7 +19,7 @@ Use either option or mix them, up to 12 queries. Results follow query order and 
 For a bare map invocation or a visual request, open the current repository's live viewer:
 
 ```bash
-python3 -B <map-skill-dir>/../compound/scripts/map_server.py open --repo <repo-root>
+python3 -B "<compound-skill-dir>/scripts/map_server.py" open --repo "<repo-root>"
 ```
 
 Add `--query "<focus>"` for a requested file or topic. Use `--no-open` when opening is unwanted. If browser launch fails, give the user the localhost URL printed by the command. Repeated opens reuse the service and index. Do not generate HTML snapshots or run onboarding cleanup for a viewing request.
