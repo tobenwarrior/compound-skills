@@ -15,6 +15,8 @@ TASK_NAMES = ("flask-ipv6-session", "flask-ipv6-run")
 FIXTURE = FIXTURES / TASK_NAMES[0]
 REFERENCES = REFS / "real"
 PYENV = "flask"
+HOST_ONLY_PROBE = "tests/test_compound_server_name.py"
+HOST_ONLY_CASES = ("default-port", "explicit-zero")
 
 
 def grade(project: Path, stage: int, previous: Path | None = None, *, fixture: Path = FIXTURE) -> dict:
@@ -37,10 +39,20 @@ def grade(project: Path, stage: int, previous: Path | None = None, *, fixture: P
         # The later upstream reference includes the earlier test. The candidate supplies only source.
         reference = REFERENCES / TASK_NAMES[stage - 1] / "fix"
         hidden = compose(fixture, project, reference, scratch / "hidden")
-        statuses = pytest_probe(hidden, PYENV, "run", *frozen.values())
+        compatibility = {}
+        if stage == 2:
+            shutil.copyfile(Path(__file__).with_name("flask_server_name_probe.py"), hidden / HOST_ONLY_PROBE)
+            compatibility = {
+                name: f"{HOST_ONLY_PROBE}::test_host_only_server_name[{name}]" for name in HOST_ONLY_CASES
+            }
+        statuses = pytest_probe(hidden, PYENV, "run", *frozen.values(), *compatibility.values())
         checks = {name: statuses.get(case, "error") for name, case in frozen.items()}
         result = {"success": False, "checks": checks}
-        if any(status != "pass" for status in checks.values()):
+        if compatibility:
+            result["server_name_compatibility"] = {
+                name: statuses.get(case, "error") for name, case in compatibility.items()
+            }
+        if any(statuses.get(case) != "pass" for case in (*frozen.values(), *compatibility.values())):
             return result
 
         final = compose(fixture, project, project, scratch / "final")
@@ -96,6 +108,14 @@ def preflight() -> dict:
         missing_test = compose(FIXTURE, both, first_fix, scratch / "missing-second-regression")
         removed_test = compose(FIXTURE, both, both, scratch / "removed-prior-regression")
         shutil.copy2(FIXTURE / "tests/test_testing.py", removed_test / "tests/test_testing.py")
+        lost_host_only = compose(FIXTURE, both, both, scratch / "lost-host-only")
+        app = lost_host_only / "src/flask/app.py"
+        source = app.read_text()
+        parser = '        if server_name:\n'
+        if source.count(parser) != 1:
+            raise RuntimeError("Could not identify the frozen SERVER_NAME parser")
+        app.write_text(source.replace(parser, parser + '            if ":" not in server_name:\n'
+                                      '                raise ValueError("Invalid server name")\n'))
         variants = {
             "unchanged": (FIXTURE, 1, False, ("fail",)),
             "first_fix": (first_fix, 1, True, ("pass",)),
@@ -104,6 +124,7 @@ def preflight() -> dict:
             "lost_first_fix": (later_only, 2, False, ("fail", "pass")),
             "missing_second_regression": (missing_test, 2, False, ("pass", "pass")),
             "removed_prior_regression": (removed_test, 2, False, ("pass", "pass")),
+            "lost_host_only": (lost_host_only, 2, False, ("pass", "pass")),
         }
         cases = {}
         for name, (project, stage, accepted, statuses) in variants.items():
@@ -113,6 +134,8 @@ def preflight() -> dict:
             cases[name] = result
     if cases["missing_second_regression"]["regression_tests"] or not cases["removed_prior_regression"]["removed_tests"]:
         raise RuntimeError("Test retention or stage-local regression control failed")
+    if cases["lost_host_only"]["server_name_compatibility"] != dict.fromkeys(HOST_ONLY_CASES, "fail"):
+        raise RuntimeError("Host-only server name control did not reproduce the compatibility failure")
 
     return {
         "fixture": TASK_NAMES[0], "fixture_head": head, "fixture_sha256": tree_hash(FIXTURE),
