@@ -270,11 +270,13 @@ Short summaries prioritize complete file paths before symbol detail. The map can
 
 ### Exact Python citations on Codex
 
+Ask `map` to verify an exact Python citation when you need the file, line and enclosing symbol. It can check known lines and literal statements together in one read-only lookup. [Lookup syntax](skills/compound/references/map.md#symbol-lookup)
+
 On two navigation tasks, GPT-6 Luna got **7/7 source citations** right with Compound’s Python lookup, versus **5/7** with source excerpts alone. The lookup run used **44.9% fewer total tokens** across all six attempts and two repairs.
 
 ![Exact Python citations on Codex. Without Compound lookup used 223,910 tokens and got 5/7 citations right. With Compound lookup used 123,326 tokens and got 7/7 right. All six attempts and two control repairs are included.](.github/assets/benchmark-python-citations-codex-luna.svg)
 
-Both modes used the same pinned Flask and Django checkouts, prompts and read-only settings. They searched for the relevant files and used the same benchmark command to get numbered excerpts. The Compound backend used `--match` to also return the enclosing symbol and its line range. All cited lines appeared in lookup output. The control wrapper printed a Git warning, and one malformed control invocation needed a retry. The recorded totals include both. This was one fresh session per task and mode with normal caching. [Per-attempt data and grades](bench/diagram_sources/comparison_codex_python_citations.json) · [Lookup syntax](skills/compound/references/map.md#symbol-lookup)
+Both modes used the same pinned Flask and Django checkouts, prompts and read-only settings. They searched for the relevant files and used the same benchmark command to get numbered excerpts. The Compound backend used `--match` to also return the enclosing symbol and its line range. All cited lines appeared in lookup output. The control wrapper printed a Git warning, and one malformed control invocation needed a retry. The recorded totals include both. This was one fresh session per task and mode with normal caching. [Per-attempt data and grades](bench/diagram_sources/comparison_codex_python_citations.json)
 
 ### Navigation cost on Django and Flask
 

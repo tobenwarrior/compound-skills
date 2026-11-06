@@ -6,7 +6,7 @@ license: MIT
 
 # Compound
 
-For visual map requests, including `compound map`, follow the [map utility](../map/SKILL.md) and skip engineering startup.
+For visual map requests, including `compound map`, or standalone Python citation requests, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
 For explicit `compound solutions` requests, follow [Project solutions](references/solutions.md) and skip engineering startup.
 

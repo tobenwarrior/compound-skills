@@ -19,7 +19,7 @@ import sys
 import time
 from itertools import islice
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 try:
     from . import code_map
@@ -158,16 +158,20 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
 
 def _lookup_locations(
     repo: str | os.PathLike[str],
-    locations: list[str],
+    locations: Sequence[str | Sequence[str]],
     *,
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
     max_total_bytes: int = DEFAULT_MAX_TOTAL_BYTES,
     max_seconds: float = DEFAULT_TIMEOUT,
     excerpt_radius: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Find Python scopes and any requested excerpts, reading each source file once."""
+    """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
     for location in locations:
+        if not isinstance(location, str):
+            relative, literal = location
+            queries.append((relative, literal))
+            continue
         relative, _, raw_line = location.rpartition(":")
         if not re.fullmatch(r"[1-9][0-9]{0,8}", raw_line):
             raise SymbolLookupError("location must be a repository-relative Python path and positive line")
@@ -741,11 +745,11 @@ def _parser() -> argparse.ArgumentParser:
         description="Look up definitions, lexical occurrences and Python source locations. Use --excerpt to include source lines."
     )
     parser.add_argument("--repo", required=True, metavar="PATH")
-    lookup = parser.add_mutually_exclusive_group(required=True)
-    lookup.add_argument("--symbol", metavar="NAME")
-    lookup.add_argument("--location", action="append", metavar="FILE:LINE", help="find the enclosing Python class or function (repeatable)")
-    lookup.add_argument("--match", action="append", nargs=2, metavar=("FILE", "LITERAL"),
-                        help="find literal text and its enclosing Python symbol in a known file (repeatable)")
+    parser.add_argument("--symbol", metavar="NAME", help="look up a symbol by name")
+    parser.add_argument("--location", dest="source_queries", action="append", metavar="FILE:LINE",
+                        help="find the enclosing Python class or function (repeatable)")
+    parser.add_argument("--match", dest="source_queries", action="append", nargs=2, metavar=("FILE", "LITERAL"),
+                        help="find literal text and its enclosing Python symbol (can be mixed with --location)")
     parser.add_argument("--excerpt", type=int, metavar="LINES",
                         help="include the selected line and up to 8 lines on each side (requires --location or --match)")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
@@ -770,9 +774,12 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    python_lookup = args.source_queries is not None
+    if python_lookup == (args.symbol is not None):
+        parser.error("provide --symbol or at least one --location or --match query")
     try:
-        python_lookup = args.location is not None or args.match is not None
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires --location or --match")
         if args.service and python_lookup:
@@ -782,15 +789,9 @@ def main(argv: list[str] | None = None) -> int:
             "max_seconds": args.timeout, "max_file_bytes": args.max_file_bytes,
             "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
         }
-        if args.location is not None:
+        if python_lookup:
             result = _lookup_locations(
-                args.repo, args.location,
-                max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
-                excerpt_radius=args.excerpt,
-            )
-        elif args.match is not None:
-            result = _lookup_python(
-                args.repo, [(relative, literal) for relative, literal in args.match],
+                args.repo, args.source_queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=args.excerpt,
             )
