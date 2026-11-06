@@ -227,7 +227,7 @@ def _search_rows(text: str, query: str, limit: int) -> str:
     lines = text.splitlines()
     if lines[:3] != [MARKER, *TABLE]:
         raise ValueError('INDEX.md is not a generated solutions index')
-    hits = []
+    exact, related = [], []
     for line in lines[3:]:
         cells = line.split('|')
         if len(cells) != 5 or cells[0] or cells[-1]:
@@ -236,12 +236,19 @@ def _search_rows(text: str, query: str, limit: int) -> str:
         if not _valid_path(path) or not _valid_cell(problem, 256) or (tags and not _valid_cell(tags, 600)):
             raise ValueError('unsafe metadata or path in INDEX.md')
         words = [set(WORD.findall(cell.casefold())) for cell in (problem, tags, path)]
-        if terms <= set.union(*words):
-            score = sum(weight * len(terms & field) for weight, field in zip((3, 2, 1), words))
-            hits.append((-score, problem.casefold(), path, _row(problem, tags, path)))
+        matched = terms & set.union(*words)
+        if matched == terms:
+            matches = exact
+        elif len(terms & words[1]) >= 2:
+            matches = related
+        else:
+            continue
+        score = sum(weight * len(terms & field) for weight, field in zip((3, 2, 1), words))
+        matches.append((-len(matched), -score, problem.casefold(), path, _row(problem, tags, path)))
+    hits = exact or related
     output = '\n'.join(TABLE) + '\n'
     count = 0
-    for _, _, _, row in sorted(hits):
+    for _, _, _, _, row in sorted(hits):
         if len((output + row + '\n').encode()) <= MAX_OUTPUT_BYTES:
             output += row + '\n'
             count += 1

@@ -6,7 +6,7 @@ The index helper uses Python 3.11+ with safe local file access on macOS and Linu
 
 ## Find a solution
 
-Run the search helper directly with a few terms that distinguish the problem. It checks `docs/solutions/INDEX.md` even when the file is untracked or ignored by Git. Use the installed script path from this skill. It returns up to three matches by default. Use `--limit` for one to five matches, with a hard output cap of 1 KiB. Open the most relevant note only when it can change the next step. If the index is missing, continue with the repository's source unless the user requests an index refresh.
+Run the search helper directly with a few terms that distinguish the problem. It checks `docs/solutions/INDEX.md` even when the file is untracked or ignored by Git. Use the installed script path from this skill. Search prefers rows that match all terms. If none match, a related note must share at least two query terms with its tags. It returns up to three matches by default. Use `--limit` for one to five matches, with a hard output cap of 1 KiB. Open the most relevant note only when it can change the next step. If the index is missing, continue with the repository's source unless the user requests an index refresh.
 
 ```sh
 python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "retry after timeout"
@@ -29,7 +29,7 @@ Reuse the operation's idempotency key on retries. Verify that a retry returns th
 NOTE
 ```
 
-To edit or remove a note, or add one in a subdirectory of `docs/solutions/`, make the file change and run `index` to refresh the generated table. The table stores the problem, tags, and relative file path. Refresh skips linked directories and keeps the previous index if it cannot read a directory. Review the note and index together before staging them.
+To edit or remove a note, or add one in a subdirectory of `docs/solutions/`, make the file change and run `index` to refresh the generated table. The table stores the problem, tags, and relative file path. Refresh skips linked directories and keeps the previous index if it cannot read a directory. Use the capture summary to confirm the two outputs. Review them together before staging.
 
 ```sh
 python3 -B <installed-skill-dir>/scripts/solutions.py index --repo .

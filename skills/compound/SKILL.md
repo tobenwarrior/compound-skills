@@ -6,9 +6,13 @@ license: MIT
 
 # Compound
 
+`<installed-skill-dir>` is the directory containing this `SKILL.md`.
+
 For visual map requests, including `compound map`, or standalone Python citation requests, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
-For explicit `compound solutions` requests or requests to search the project solutions index, follow [Project solutions](references/solutions.md) and skip engineering startup.
+For `compound solutions search` or a request to search the project solutions index, run `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` directly. Open one relevant note if it can change the next step. Continue with source on a missing index or no match.
+
+For explicit `compound solutions` requests for help, capture, or index refresh, follow [Project solutions](references/solutions.md) and skip engineering startup.
 
 For a review-only Compound request, follow [Review](references/review.md) and skip engineering startup.
 
@@ -17,8 +21,6 @@ For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and 
 For `contribute` or when local conventions could change the patch, use [Existing repositories](references/design.md#existing-repositories). Bare `contribute` ends after read-only orientation.
 
 ## Start
-
-`<installed-skill-dir>` is the directory containing this `SKILL.md`.
 
 Use project instructions already supplied; check known repository instruction files only when missing. Use supplied code, named files and current context first. Run one focused map query only to locate unknown files or dependencies; skip it when the relevant files are known or an unchanged map already answers the question:
 
@@ -29,7 +31,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, use the project runner to run the nearest failing regression before source edits. Add a test if coverage is missing. Verify changed arguments against the receiving API before setting test expectations. Gate batched fixes on the expected failure. For a known pytest failure, start with `--tb=line` and expand when needed to confirm the failure. Limit searches and output to relevant evidence. Inspect dependencies or history only to answer a question that could change the fix. Run the full suite once after the last edit and check the diff when Git is available. Run the regression separately if the suite omits it.
+For local bugs, use the project runner to run the nearest failing regression before source edits. Add a regression when coverage is missing and retain existing test cases and assertions. Verify changed arguments against the receiving API before setting test expectations. Gate batched fixes on the expected failure. For a known pytest failure, start with `--tb=line` and expand when needed to confirm the failure. Limit searches and output to relevant evidence. Inspect dependencies or history only to answer a question that could change the fix. Run the full suite once after the last edit and check the diff when Git is available. Run the regression separately if the suite omits it.
 
 Open only the relevant guide.
 
