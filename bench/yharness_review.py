@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 
-SCHEMA = "yharness-review-offline-3"
+SCHEMA = "yharness-review-offline-4"
 EXPECTED_PARENT = "49943b5a94413a530761350f04e896f76e8d620e"
 EXPECTED_TREE = "719747b4621bddad647f0fbe89325ee1443b12d7"
 STATIC_FOLDERS_LINES = range(413, 443)
@@ -56,7 +56,7 @@ RULES: dict[str, dict[str, tuple[str, ...]]] = {
     "D3": {
         "section": (r"d3\b", r"path traversal", r"directory traversal", r"arbitrary file"),
         "trigger": (
-            r"send_file.{0,120}(os\.path\.join|path\.join|join)",
+            r"\bsend_file\b[^.!?]{0,120}\b(?:os\.path\.join|path\.join|join)",
             r"\bjoin(?:s|ed|ing)?\b[^.!?]{0,120}\bsend_file\b",
             r"(?:request|requested|untrusted|user)[^.!?]{0,100}(?:path|filename)[^.!?]{0,120}send_file",
             r"(os\.path\.join|path\.join|join)[^.!?]{0,120}\b(directory|filename)\b",
