@@ -30,3 +30,5 @@ The generator uses only Python's standard library. It writes every README SVG in
 `comparison_flask_v01645.json` records the upstream Flask sequence. It includes all four attempts, provider-reported usage, the frozen inputs and the cumulative grades. The generator applies the same checks and uses the two IPv6 tasks as labels.
 
 `comparison_codex_flask_luna.json` records the same two prompts in clean Git checkouts on GPT-6 Luna. It includes all four attempts, the native Codex token counts and the cumulative grades. The chart verifies both tasks passed and reconciles the per-attempt request counts.
+
+`comparison_codex_python_citations.json` records the controlled GPT-6 Luna comparison on Flask streaming and Django disconnect. Both modes used the same command for literal search and numbered excerpts. The Compound backend added enclosing symbols and line bounds through `--match`. The data retains the four initial attempts, both control repairs, citation checks, native usage and the control wrapper's Git warnings. Each task records a matching source-payload hash across modes. The chart verifies attempt order, complete citation grades and native request totals.

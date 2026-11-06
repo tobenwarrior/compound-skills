@@ -487,6 +487,23 @@ def two_change_comparison(source):
     return f'benchmark-{asset}-v{version}.svg', chart.svg()
 
 
+def codex_attempt_usage(attempts, receipts):
+    """Verify native token counts and sum all attempts in each mode."""
+    for attempt in attempts:
+        usage = attempt['usage']
+        if (type(attempt['requests']) is not int or attempt['requests'] < 1
+                or any(type(value) is not int or value < 0 for value in usage.values())
+                or usage['cached_input_tokens'] > usage['input_tokens']
+                or usage['total_tokens'] != usage['input_tokens'] + usage['output_tokens']
+                or usage['total_tokens'] == 0):
+            raise ValueError('Invalid Codex attempt usage')
+    modes = ('without', 'with')
+    requests = [sum(a['requests'] for a in attempts if a['mode'] == mode) for mode in modes]
+    if sum(requests) != receipts:
+        raise ValueError('Codex receipts do not match attempt totals')
+    return requests, [sum(a['usage']['total_tokens'] for a in attempts if a['mode'] == mode) for mode in modes]
+
+
 def codex_flask_comparison(source):
     """Render token usage from the four native Codex attempts."""
     data = json.loads(source.read_text())
@@ -501,23 +518,14 @@ def codex_flask_comparison(source):
             or data['conversation_and_checkout_carry_forward'] is not True):
         raise ValueError('Expected the pinned, cumulative Codex Flask comparison')
     for attempt in attempts:
-        grade, usage, stage = attempt['grade'], attempt['usage'], attempt['stage']
+        grade, stage = attempt['grade'], attempt['stage']
         if (attempt['accepted'] is not True
                 or grade['hidden_checks'] != dict.fromkeys(tasks[:stage + 1], 'pass')
                 or grade['retained_suites_passed'] is not True
                 or grade['final_tests'] != 492 + stage or grade['regression_witnesses'] < 1):
             raise ValueError('Codex Flask chart requires every fix and retained test suite to pass')
-        if (type(attempt['requests']) is not int or attempt['requests'] < 1
-                or any(type(value) is not int or value < 0 for value in usage.values())
-                or not 0 <= usage['cached_input_tokens'] <= usage['input_tokens']
-                or usage['total_tokens'] != usage['input_tokens'] + usage['output_tokens']
-                or usage['total_tokens'] == 0):
-            raise ValueError('Invalid Codex Flask usage')
-    requests = [sum(a['requests'] for a in attempts if a['mode'] == mode) for mode in modes]
-    if sum(requests) != data['native_receipts']:
-        raise ValueError('Codex Flask receipts do not match attempt totals')
+    requests, totals = codex_attempt_usage(attempts, data['native_receipts'])
     by_stage = {(a['stage'], a['mode']): a['usage']['total_tokens'] for a in attempts}
-    totals = [sum(by_stage[stage, mode] for stage in range(len(tasks))) for mode in modes]
     if totals[1] >= totals[0]:
         raise ValueError('Codex Flask chart requires lower total token usage with Compound')
     reduction = (1 - totals[1] / totals[0]) * 100
@@ -538,6 +546,53 @@ def codex_flask_comparison(source):
     chart.text(52, 873, 'Both final artifacts passed 493 tests. All four attempts are included.', 17, weight=650)
     chart.text(52, 899, 'Total tokens include cached input and output. All bars use the same scale.', 15, 'muted')
     return 'benchmark-flask-codex-luna.svg', chart.svg()
+
+
+def codex_citation_comparison(source):
+    """Render the bounded Python lookup comparison with both control repairs."""
+    data = json.loads(source.read_text())
+    tasks = data['tasks']
+    attempts = data['attempts']
+    order = [('without', 0, 0), ('without', 0, 1), ('with', 0, 0),
+             ('with', 1, 0), ('without', 1, 0), ('without', 1, 1)]
+    if (data['schema'] != 'compound-codex-python-citations-1' or data['model'] != 'gpt-6-luna'
+            or [(t['name'], t['citations_expected']) for t in tasks] != [('flask-streaming', 3), ('django-disconnect', 4)]
+            or [(a['mode'], a['stage'], a['attempt']) for a in attempts] != order
+            or data['fresh_session_per_task_and_mode'] is not True
+            or any(t['all_final_cited_lines_seen_in_lookup'] is not True for t in tasks)):
+        raise ValueError('Expected the complete Codex Python citation comparison')
+    final = {}
+    for a in attempts:
+        checks = a['citations_correct']
+        if (len(checks) != tasks[a['stage']]['citations_expected'] or any(type(c) is not bool for c in checks)
+                or a['accepted'] is not all(checks) or a['lookup_successes'] < 1):
+            raise ValueError('Invalid Codex citation grade or missing lookup')
+        key = a['mode'], a['stage']
+        if key in final and final[key]['accepted']:
+            raise ValueError('Codex citation repair follows an accepted attempt')
+        final[key] = a
+    requests, totals = codex_attempt_usage(attempts, data['native_receipts'])
+    citations = [sum(sum(final[mode, stage]['citations_correct']) for stage in range(2)) for mode in ('without', 'with')]
+    passed = [sum(final[mode, stage]['accepted'] for stage in range(2)) for mode in ('without', 'with')]
+    if totals[1] >= totals[0] or passed[1] != 2:
+        raise ValueError('Codex citation chart requires both Compound tasks to pass with lower total usage')
+    reduction = (1 - totals[1] / totals[0]) * 100
+    description = (f'Without Compound lookup {totals[0]:,} tokens and {citations[0]}/7 correct citations. '
+                   f'With Compound lookup {totals[1]:,} tokens and {citations[1]}/7 correct citations. '
+                   'All six attempts include two control repairs. Total tokens include cached input.')
+    chart = Canvas(682, f'Python citations, {reduction:.1f}% fewer tokens', 'MATCHED CODEX RUN', description,
+                   'Codex GPT-6 Luna · Flask streaming and Django disconnect · one pair per task')
+    labels = ('Without Compound lookup', 'With Compound lookup')
+    chart.card(24, 157, 992, 228)
+    chart.pair(196, totals, [f'{n:,}' for n in totals], max(totals) * 1.08,
+               'Total tokens · lower is better', labels)
+    chart.text(52, 365, f'{requests[0]} / {requests[1]} model requests without / with · 2 / 0 repairs', 16, 'muted')
+    chart.card(24, 405, 992, 211)
+    chart.pair(444, citations, [f'{n}/7' for n in citations], 7, 'Correct final citations · higher is better', labels)
+    chart.text(52, 596, f'{passed[0]}/2 tasks passed without the lookup · {passed[1]}/2 with the lookup', 16, 'muted')
+    chart.text(52, 648, 'Both modes received numbered excerpts. Compound also supplied the enclosing Python symbol.', 15, 'muted')
+    chart.text(52, 669, 'Totals include all attempts, repairs, cached input and output.', 15, 'muted')
+    return 'benchmark-python-citations-codex-luna.svg', chart.svg()
 
 
 def navigation_comparison(source):
@@ -620,6 +675,7 @@ def main():
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
     outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_luna.json')])
+    outputs.update([codex_citation_comparison(SOURCES / 'comparison_codex_python_citations.json')])
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))

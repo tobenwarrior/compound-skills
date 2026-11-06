@@ -1,0 +1,165 @@
+{
+  "schema": "compound-codex-python-citations-1",
+  "date": "2026-11-06",
+  "runner": "Codex CLI 0.162.1",
+  "model": "gpt-6-luna",
+  "reasoning": "medium",
+  "auth": "ChatGPT sign-in",
+  "compound_commit": "a196dd2536e2b3588fb1d052ed48b8eb60138b94",
+  "plan_sha256": "bea77538d0d76b8dd99405361484a1b286eb92537a6a6e9186c633932856776f",
+  "lookup_sha256": "544a20f458b6694d6365efd0e2836e14943c644f43be10dddbb144c607db2ce9",
+  "fresh_session_per_task_and_mode": true,
+  "cache_reset": false,
+  "native_receipts": 22,
+  "tasks": [
+    {
+      "name": "flask-streaming",
+      "fixture_head": "49943b5a94413a530761350f04e896f76e8d620e",
+      "fixture_sha256": "b7b43cf565eba9cc3ceef388094f76d4ae6bc0dda611afd33cac2e8fab4fade1",
+      "prompt_sha256": "26f0e8229c013907509adbdbab4bc047117c4fbca608e1eafc1412618856248c",
+      "citations_expected": 3,
+      "shared_source_payload_sha256": "aa929c87c5d16bf3b466febb4bdedca0ec38f59b376f2556702204195e03d8eb",
+      "all_final_cited_lines_seen_in_lookup": true
+    },
+    {
+      "name": "django-disconnect",
+      "fixture_head": "a05e16a7230fe33d3f43f4a3aaed103cebb42efc",
+      "fixture_sha256": "b97438c46c369a6485af0805380fabf286d0b184ce242d091793e09f553b2e90",
+      "prompt_sha256": "2df956465724db1c8f502b6a61313592c0a2a5b9e2dd2437abf1f240cf26b2f3",
+      "citations_expected": 4,
+      "shared_source_payload_sha256": "0d507c94559a2fc5fdb69217a1ad6c911095dbfdb4890aa56ddec6359e1ea35d",
+      "all_final_cited_lines_seen_in_lookup": true
+    }
+  ],
+  "attempts": [
+    {
+      "mode": "without",
+      "stage": 0,
+      "attempt": 0,
+      "accepted": false,
+      "requests": 4,
+      "usage": {
+        "input_tokens": 51938,
+        "cached_input_tokens": 46208,
+        "output_tokens": 307,
+        "total_tokens": 52245
+      },
+      "citations_correct": [
+        true,
+        true,
+        false
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 0,
+      "git_warning_bytes": 106
+    },
+    {
+      "mode": "without",
+      "stage": 0,
+      "attempt": 1,
+      "accepted": false,
+      "requests": 2,
+      "usage": {
+        "input_tokens": 29168,
+        "cached_input_tokens": 28288,
+        "output_tokens": 168,
+        "total_tokens": 29336
+      },
+      "citations_correct": [
+        true,
+        true,
+        false
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 0,
+      "git_warning_bytes": 106
+    },
+    {
+      "mode": "with",
+      "stage": 0,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 4,
+      "usage": {
+        "input_tokens": 55344,
+        "cached_input_tokens": 42880,
+        "output_tokens": 380,
+        "total_tokens": 55724
+      },
+      "citations_correct": [
+        true,
+        true,
+        true
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 0,
+      "git_warning_bytes": 0
+    },
+    {
+      "mode": "with",
+      "stage": 1,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 4,
+      "usage": {
+        "input_tokens": 67149,
+        "cached_input_tokens": 56064,
+        "output_tokens": 453,
+        "total_tokens": 67602
+      },
+      "citations_correct": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 0,
+      "git_warning_bytes": 0
+    },
+    {
+      "mode": "without",
+      "stage": 1,
+      "attempt": 0,
+      "accepted": false,
+      "requests": 5,
+      "usage": {
+        "input_tokens": 82573,
+        "cached_input_tokens": 54016,
+        "output_tokens": 702,
+        "total_tokens": 83275
+      },
+      "citations_correct": [
+        true,
+        false,
+        true,
+        true
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 1,
+      "git_warning_bytes": 106
+    },
+    {
+      "mode": "without",
+      "stage": 1,
+      "attempt": 1,
+      "accepted": false,
+      "requests": 3,
+      "usage": {
+        "input_tokens": 58563,
+        "cached_input_tokens": 55040,
+        "output_tokens": 491,
+        "total_tokens": 59054
+      },
+      "citations_correct": [
+        true,
+        false,
+        true,
+        true
+      ],
+      "lookup_successes": 1,
+      "lookup_failures": 0,
+      "git_warning_bytes": 106
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="682" viewBox="0 0 1040 682" role="img" aria-labelledby="title desc">
+  <title id="title">Python citations, 44.9% fewer tokens</title>
+  <desc id="desc">Without Compound lookup 223,910 tokens and 5/7 correct citations. With Compound lookup 123,326 tokens and 7/7 correct citations. All six attempts include two control repairs. Total tokens include cached input.</desc>
+  <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
+  <defs>
+    <linearGradient id="theme-wash" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbefd6" />
+      <stop offset=".6" stop-color="#fdf8ee" />
+      <stop offset="1" stop-color="#e5f3e9" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1040" height="682" rx="28" fill="url(#theme-wash)" />
+  <g fill="#14161c">
+    <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  MATCHED CODEX RUN</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Python citations, 44.9% fewer tokens</text>
+    <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Codex GPT-6 Luna · Flask streaming and Django disconnect · one pair per task</text>
+    <rect x="24" y="157" width="992" height="228" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="196" font-size="19" font-weight="650" fill="#14161c">Total tokens · lower is better</text>
+    <text x="52" y="256" font-size="17" font-weight="600" fill="#14161c">Without Compound lookup</text>
+    <rect x="286" y="234" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="234" width="472.2222222222222" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="258" font-size="23" font-weight="700" fill="#14161c">223,910</text>
+    <text x="52" y="318" font-size="17" font-weight="600" fill="#14161c">With Compound lookup</text>
+    <rect x="286" y="296" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="296" width="260.09234861228964" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="320" font-size="23" font-weight="700" fill="#147a43">123,326</text>
+    <text x="52" y="365" font-size="16" font-weight="400" fill="#6b6f78">14 / 8 model requests without / with · 2 / 0 repairs</text>
+    <rect x="24" y="405" width="992" height="211" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
+    <text x="52" y="444" font-size="19" font-weight="650" fill="#14161c">Correct final citations · higher is better</text>
+    <text x="52" y="504" font-size="17" font-weight="600" fill="#14161c">Without Compound lookup</text>
+    <rect x="286" y="482" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="482" width="364.2857142857143" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="506" font-size="23" font-weight="700" fill="#14161c">5/7</text>
+    <text x="52" y="566" font-size="17" font-weight="600" fill="#14161c">With Compound lookup</text>
+    <rect x="286" y="544" width="510" height="32" rx="16" fill="#f7f6f2" />
+    <rect x="286" y="544" width="510.0" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="568" font-size="23" font-weight="700" fill="#147a43">7/7</text>
+    <text x="52" y="596" font-size="16" font-weight="400" fill="#6b6f78">0/2 tasks passed without the lookup · 2/2 with the lookup</text>
+    <text x="52" y="648" font-size="15" font-weight="400" fill="#6b6f78">Both modes received numbered excerpts. Compound also supplied the enclosing Python symbol.</text>
+    <text x="52" y="669" font-size="15" font-weight="400" fill="#6b6f78">Totals include all attempts, repairs, cached input and output.</text>
+  </g>
+</svg>

@@ -268,6 +268,14 @@ Warm summaries took a median **110 ms on Flask** and **355 ms on Django** in a l
 
 Short summaries prioritize complete file paths before symbol detail. The map can spend part of its existing byte budget looking deeper when evidence is missing. [Summary coverage](bench/README.md#focused-summary-coverage) · [Source-only lookups](bench/README.md#source-only-map-lookups) · [Mixed-keyword lookups](bench/README.md#mixed-keyword-lookups)
 
+### Exact Python citations on Codex
+
+On two navigation tasks, GPT-6 Luna got **7/7 source citations** right with Compound’s Python lookup, versus **5/7** with source excerpts alone. The lookup run used **44.9% fewer total tokens** across all six attempts and two repairs.
+
+![Exact Python citations on Codex. Without Compound lookup used 223,910 tokens and got 5/7 citations right. With Compound lookup used 123,326 tokens and got 7/7 right. All six attempts and two control repairs are included.](.github/assets/benchmark-python-citations-codex-luna.svg)
+
+Both modes used the same pinned Flask and Django checkouts, prompts and read-only settings. They searched for the relevant files and used the same benchmark command to get numbered excerpts. The Compound backend used `--match` to also return the enclosing symbol and its line range. All cited lines appeared in lookup output. The control wrapper printed a Git warning, and one malformed control invocation needed a retry. The recorded totals include both. This was one fresh session per task and mode with normal caching. [Per-attempt data and grades](bench/diagram_sources/comparison_codex_python_citations.json) · [Lookup syntax](skills/compound/references/map.md#symbol-lookup)
+
 ### Navigation cost on Django and Flask
 
 Three tasks traced Django’s ASGI disconnect handling, Django’s row locks, and Flask’s request context during streaming. Each mode used the same pinned source, task prompt, read-only tools and DeepSeek V4.1 Flash settings in Y Harness. Each task started a fresh session. The treatment received the Compound 0.16.57 map summary alongside the prompt.
@@ -290,7 +298,7 @@ The earlier map ablation mostly used tasks that named the files to edit. Removin
 
 ## Limits
 
-- **Agent tasks are Python projects.** Historical rounds used headless Claude Code; the latest small pilot and workflow used DeepSeek through Y Harness. Codex and Cursor load the same skills but have not been benchmarked here. File-ranking checks also include TypeScript and Go.
+- **Agent tasks are Python projects.** Historical rounds used headless Claude Code; the latest small pilot and workflow used DeepSeek through Y Harness. Codex results cover the two Flask fixes and the controlled Python citation comparison. File-ranking checks also include TypeScript and Go.
 - **Small samples.** 2 runs per real bug, 5 per held-out refactor and 3 per review or question, for each arm and model, can miss small effects; the review and question cost multiples rest on 3 pairs each, and on 2 in the smaller second round.
 - **0.16.0 was chosen after seeing this round.** Its always-on rule was written after the first runs of these real bugs and refactors, then measured on the same tasks just after the other arms; the second round ran it beside them, on the same tasks, so neither is a held-out test of the rule. The refactor guide it loads was written before the held-out refactors.
 - **Three held-out refactors.** Stock and the rule failed only one of them, the slugs refactor, but failed it in all 20 of their runs; more refactor tasks would show how often such a trap comes up.
@@ -299,7 +307,7 @@ The earlier map ablation mostly used tasks that named the files to edit. Removin
 - **The habit measures are Compound's own checklist,** and the plain rule names them too; the outcomes are what tests and the judge measured.
 - **The judge** is Claude Opus 5.5, also one of the agents under test.
 - **Other plugins.** The historical comparisons used Compound 0.14.0. The newer pstack comparison covers one two-fix Flask sequence. Compound’s author selected the workloads and ran the comparisons.
-- **Map scope.** The metered result covers three read-only citation tasks with prepared map summaries. The earlier coding ablation showed little change. Ranking was tuned on other Flask, Click and Hono commits.
+- **Map scope.** The Y Harness result uses prepared map summaries. The Codex result measures the Python statement lookup through a shared benchmark command. The earlier coding ablation showed little change. Ranking was tuned on other Flask, Click and Hono commits.
 - **Instructions, not enforcement.** Compound asks the agent; it cannot force it.
 
 ## Reference
