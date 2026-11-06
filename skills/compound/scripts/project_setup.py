@@ -52,8 +52,8 @@ BLOCK_LINES = (
     "",
     "Review diffs first. Check caller edge cases. Verify changed lifecycle paths run in tests. "
     "Report findings promptly. Probe with permission. After denial, source only. Use required native Read. "
-    "Run failing regressions before bug fixes, then full suite and diff. "
-    "Batch bug steps when expected failure gates the fix. "
+    "For bugs, run a failing regression, fix, then one full suite and diff. "
+    "Batch when expected failure gates the fix. "
     "Keep scoped extractions here. Read named callers/tests, preserve policies/tests, cover gaps. "
     "Baseline before source edits. Batch extraction/removals, diff, retest. "
     "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "

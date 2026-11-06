@@ -339,9 +339,9 @@ Compound has one short guide for each kind of work and tells the agent to read t
 
 SKILL.md also holds engineering guidance: use supplied code and known files first, query the map only for unknown files or dependencies, delegate independent work when useful, and keep frontend tooltips to at most two visible lines. Explicit review-only requests go directly to the review guide. For a local bug in a new checkout, start with the nearest source and test. Open the contribution guide when local conventions could affect the patch.
 
-The always-on rule as `setup-global` saves it. The Flask and Dispatchkit charts use the rules from 0.16.45 and 0.16.31, respectively.
+The always-on rule as `setup-global` saves it. The Y Harness Flask and Dispatchkit charts use the rules from 0.16.45 and 0.16.31, respectively.
 
-> Review diff first. Check caller edge cases. Verify changed lifecycle paths run in tests. Probe gaps or requirements with permission. After denial, source only. Read function/test ranges with required native Read per edit target. For bugs, write and run a failing regression, fix, run full suite, check diff, finish. Scoped extractions cover gaps, baseline once, preserve policies, retest, review diff. Search checkout. Batch calls. Use documented runtime/checks (`python -B`). Diagnose setup before retrying. Reuse passing checks when inputs/environment match. Load `compound` for unclear conventions, broad refactors, features, performance and PR authoring. Follow project/user instructions. Report checks/limits. Omit AI commit credits.
+> Review diffs first. Check caller edge cases. Verify changed lifecycle paths run in tests. Report findings promptly. Probe with permission. After denial, source only. Use required native Read. For bugs, run a failing regression, fix, then one full suite and diff. Batch when expected failure gates the fix. Keep scoped extractions here. Read named callers/tests, preserve policies/tests, cover gaps. Baseline before source edits. Batch extraction/removals, diff, retest. Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. Stop Git after no-repository errors. Load `compound` for unclear conventions, broad refactors, features, performance or PR authoring. Follow project/user instructions. Omit AI commit credits.
 
 ### Commits
 

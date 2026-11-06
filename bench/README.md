@@ -102,6 +102,10 @@ The corrected-scope 0.16.72 rerun passed both fixes in both modes. Compound used
 
 An offline replay of the two accepted 0.16.72 Compound patches used the saved successful edits and source excerpts around their known locations. The excerpts totaled 3,315 bytes versus 19,165 bytes of native-read output in the trace. The replay omitted one edit rejected by the host before a native read, plus the discovery and duplicate checks outside the patch-and-grade sequence. It recreated both source and test trees byte-for-byte. The independent grader confirmed both regressions against their preceding sources and passed the cumulative checks and 493 final tests. The replay measures source excerpt size with edit locations supplied. It does not measure discovery, model behavior or billed savings.
 
+#### Final suite replay on the Codex Flask fixes
+
+In the [clean Git comparison](diagram_sources/comparison_codex_flask_luna.json), the Compound runs passed a 26-test module after the session fix and a 133-test module after the corrected server fix. Each was immediately followed by a passing full suite on the same code. In an offline replay, both added IPv6 regressions failed before their fixes, and the full suite caught the intermediate `localhost:0` regression. After correction, the full suites passed all 492 and 493 tests for the two stages. The updated rule asks for one final suite per edited state and a separate regression check when that suite omits it. The published token totals include both original module checks.
+
 ## Compare a change with main
 
 ```bash
