@@ -50,15 +50,14 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Read the diff first for reviews. Check caller edge cases. Verify changed lifecycle paths run in tests. "
-    "Report confirmed findings promptly. Probe gaps or requirements with permission. After denial, source only. "
-    "Use required native Read first on edit targets. For bugs, run a failing regression before source edits, "
-    "adding one if missing. Fix, then verify the regression in the full suite. Check diff only in a Git checkout. "
-    "Use this rule directly for scoped extractions. Read named callers and tests together. Preserve caller policies and original tests. Cover test gaps and run one passing baseline before source edits. Batch the extraction and removals, check diff, then retest. "
-    "Use project runner first. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup before retrying. "
-    "Batch checkout-local reads/edits. Skip further Git checks after a no-repository error. Finish after required checks. "
-    "Load `compound` for unclear conventions, broad refactors, features, performance and PR authoring. "
-    "Follow project/user instructions. Omit AI commit credits.",
+    "Reviews start with diffs. Check caller edge cases. Verify changed lifecycle paths run in tests. "
+    "Report findings promptly. Probe with permission. After denial, source only. Use required native Read. "
+    "For bugs, run failing regression before source edits, then full suite and diff. "
+    "Scoped extractions use this rule. Read named callers/tests. Preserve policies/tests. Cover gaps. "
+    "Run baseline tests before source edits. Batch extraction/removals. Check diff and rerun tests. "
+    "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "
+    "Stop Git after no-repository errors. Load `compound` for unclear conventions, broad refactors, features, "
+    "performance or PR authoring. Follow project/user instructions. Omit AI commit credits.",
     END_MARKER,
 )
 
