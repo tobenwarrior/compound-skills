@@ -10,6 +10,7 @@ returned.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import math
 import os
@@ -44,6 +45,7 @@ MAX_TOTAL_BYTES = 32 * 1024 * 1024
 DEFAULT_MAX_OUTPUT_BYTES = 12 * 1024
 MIN_OUTPUT_BYTES = 4 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024
+MAX_LOCATIONS = 12
 READ_CHUNK_BYTES = 64 * 1024
 
 # These are data/config formats, not source languages for the lexical scan.
@@ -150,6 +152,86 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
         return True
     candidate, reason = code_map._candidate(git_root, path, git_inventory=True)
     return candidate is None and code_map._exclusion_reason(path, reason) is not None
+
+
+def _lookup_locations(
+    repo: str | os.PathLike[str],
+    locations: list[str],
+    *,
+    max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
+    max_total_bytes: int = DEFAULT_MAX_TOTAL_BYTES,
+    max_seconds: float = DEFAULT_TIMEOUT,
+) -> list[dict[str, Any]]:
+    """Find each location's innermost Python scope, reading each source file once."""
+    if not 1 <= len(locations) <= MAX_LOCATIONS:
+        raise SymbolLookupError(f"provide between one and {MAX_LOCATIONS} source locations")
+    queries = []
+    for location in locations:
+        relative, _, raw_line = location.rpartition(":")
+        relative = relative.removeprefix("./")
+        if (
+            not re.fullmatch(r"[1-9][0-9]{0,8}", raw_line)
+            or any(part in {"", ".", ".."} for part in relative.split("/"))
+        ):
+            raise SymbolLookupError("location must be a repository-relative Python path and positive line")
+        queries.append((relative, int(raw_line)))
+    try:
+        root, _, paths, _ = code_map._git_context(code_map._repo_path(repo))
+    except code_map.CodeMapError as exc:
+        raise SymbolLookupError(str(exc)) from exc
+    if paths is None:
+        raise SymbolLookupError("Git inventory is unavailable")
+    limit = _bounded_int(max_file_bytes, 1, MAX_FILE_BYTES)
+    remaining = _bounded_int(max_total_bytes, 1, MAX_TOTAL_BYTES)
+    deadline = time.monotonic() + _bounded_timeout(max_seconds)
+    inventory = set(paths)
+
+    def enclosing(node, line):
+        for child in ast.iter_child_nodes(node):
+            start = getattr(child, "lineno", None)
+            end = getattr(child, "end_lineno", None)
+            if start is not None and end is not None and not start <= line <= end:
+                continue
+            inner = enclosing(child, line)
+            if isinstance(child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                return child, *inner
+            if inner:
+                return inner
+        return ()
+
+    parsed: dict[str, tuple[int, ast.Module]] = {}
+    result = []
+    for relative, line in queries:
+        if relative not in parsed:
+            if relative not in inventory:
+                raise SymbolLookupError("location is outside the available Git inventory")
+            candidate, _ = code_map._candidate(root, relative, git_inventory=True)
+            if candidate is None or candidate["language"] != "python":
+                raise SymbolLookupError("location must name an available Python source file")
+            source, consumed, note = _read_reference_text(
+                root, relative, candidate["fingerprint"], max_file_bytes=limit,
+                remaining_bytes=remaining, deadline=deadline,
+            )
+            if source is None:
+                raise SymbolLookupError(note or "source file could not be read")
+            remaining -= consumed
+            try:
+                parsed[relative] = len(split_lines(source)), ast.parse(source)
+            except (SyntaxError, ValueError, RecursionError, MemoryError) as exc:
+                raise SymbolLookupError("Python file could not be parsed") from exc
+        count, tree = parsed[relative]
+        if line > count:
+            raise SymbolLookupError("line is outside the source file")
+        try:
+            scopes = enclosing(tree, line)
+        except RecursionError as exc:
+            raise SymbolLookupError("Python scope nesting exceeds the lookup limit") from exc
+        scope = scopes[-1] if scopes else None
+        result.append({
+            "path": relative, "line": line, "symbol": ".".join(node.name for node in scopes) or None,
+            "start_line": scope.lineno if scope else None, "end_line": scope.end_lineno if scope else None,
+        })
+    return result
 
 
 def _coverage_partial(model_coverage: dict[str, Any]) -> bool:
@@ -609,7 +691,9 @@ def _parser() -> argparse.ArgumentParser:
         description="Look up exact code-map definitions and lexical occurrence locations (JSON; no source snippets)."
     )
     parser.add_argument("--repo", required=True, metavar="PATH")
-    parser.add_argument("--symbol", required=True, metavar="NAME")
+    lookup = parser.add_mutually_exclusive_group(required=True)
+    lookup.add_argument("--symbol", metavar="NAME")
+    lookup.add_argument("--location", action="append", metavar="FILE:LINE", help="find the enclosing Python class or function (repeatable)")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
     parser.add_argument("--max-results", type=int, default=DEFAULT_MAX_RESULTS)
     parser.add_argument(
@@ -639,7 +723,14 @@ def main(argv: list[str] | None = None) -> int:
             "max_seconds": args.timeout, "max_file_bytes": args.max_file_bytes,
             "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
         }
-        if args.service:
+        if args.location is not None:
+            if args.service:
+                raise SymbolLookupError("--service requires --symbol")
+            result = _lookup_locations(
+                args.repo, args.location,
+                max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
+            )
+        elif args.service:
             try:
                 try:
                     from . import map_server
@@ -651,10 +742,13 @@ def main(argv: list[str] | None = None) -> int:
                 result = lookup_symbols(args.repo, args.symbol, **options)
         else:
             result = lookup_symbols(args.repo, args.symbol, no_cache=args.no_cache, **options)
+        encoded = json.dumps(result, ensure_ascii=True, separators=(",", ":"))
+        if args.location is not None and len(encoded) > _bounded_int(args.max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES):
+            raise SymbolLookupError("locations exceed the output byte cap")
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2
-    sys.stdout.write(json.dumps(result, ensure_ascii=True, separators=(",", ":")) + "\n")
+    sys.stdout.write(encoded + "\n")
     return 0
 
 
