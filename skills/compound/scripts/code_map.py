@@ -51,6 +51,7 @@ except ImportError:  # direct script execution
 
 DEFAULT_MAX_CHARS = 2500
 MAX_CHARS = 12000
+TOPIC_DETAIL_ROWS = 4
 DEFAULT_MAX_FILES = 2000
 MAX_FILES = 20000
 MAX_FILE_BYTES = 1024 * 1024
@@ -1506,7 +1507,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     if exact_file:
         confirmation = "indexed outline; inspect source before edits."
     elif terms or literal_names:
-        confirmation = "metadata only. Search listed files, then read nearby lines."
+        confirmation = "metadata only. Read symbol lines first. Search other paths."
     lines = [
         f"Code map: {json.dumps(model['root_name'], ensure_ascii=True)}",
         f"Head: {model['head'] or '(unavailable)' }",
@@ -1520,6 +1521,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         summary = ", ".join(f"{count} {reason}" for reason, count in sorted(excluded_reasons.items()))
         lines.insert(3, "Excluded: " + summary)
     focused_query = bool(terms or literal_names) and "query_matches" in model
+    topic_query = exact_symbol is None and not exact_file
+    compact_topic = focused_query and topic_query and limit <= DEFAULT_MAX_CHARS
     if exact_symbol is not None:
         lines.append("Focus (exact indexed symbol):")
         focus = model["focus"]
@@ -1535,7 +1538,8 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
     header_count = len(lines)
     header = "\n".join(lines)
     compact: list[tuple[str, list[str]]] = []
-    for path in focus:
+    shorter_rows: dict[str, str] = {}
+    for index, path in enumerate(focus):
         file = by_path.get(path)
         if not file:
             continue
@@ -1566,27 +1570,30 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         symbols = ", ".join(declarations)
         if symbols and len(file["symbols"]) > len(symbol_values):
             symbols += f" (+{len(file['symbols']) - len(symbol_values)} more symbols)"
-        dependency_values = file["dependencies"][:12]
-        dependencies = ", ".join(json.dumps(dep, ensure_ascii=True) for dep in dependency_values)
-        if len(file["dependencies"]) > len(dependency_values):
-            dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
         line = f"- {json.dumps(path, ensure_ascii=True)} [{file['language']}]"
         if focused_query:
             hints = [f"{symbol.get('qualified_name', symbol['name'])} ({symbol['kind']}:{symbol['line']})" for symbol in symbol_values[:2]]
             compact.append((line, hints))
         if symbols:
             line += " symbols: " + symbols
-        if dependencies:
-            line += " deps: " + dependencies
+        if file["dependencies"]:
+            dependency_values = file["dependencies"][:12]
+            dependencies = ", ".join(json.dumps(dep, ensure_ascii=True) for dep in dependency_values)
+            if len(file["dependencies"]) > len(dependency_values):
+                dependencies += f" (+{len(file['dependencies']) - len(dependency_values)} more deps)"
+            detailed = line + " deps: " + dependencies
+            if compact_topic and index >= TOPIC_DETAIL_ROWS:
+                # Keep the budget selection stable before eliding import hints.
+                shorter_rows[detailed] = line
+            line = detailed
         lines.append(line)
     if notes:
         lines.append("Notes: " + "; ".join(notes))
     value = "\n".join(lines)
     if len(value) <= limit:
-        return value
+        return "\n".join(shorter_rows.get(line, line) for line in lines) if shorter_rows else value
     suffix = "\n[output truncated; inspect JSON or the live viewer for the bounded full map]"
     usable = limit - len(suffix)
-    topic_query = exact_symbol is None and not exact_file
     if compact and len(header) <= usable and (topic_query or len(header) + 1 + len(compact[0][0]) > usable):
         # Fit complete ranked paths first, then attach source line hints.
         remaining = usable - len(header)
@@ -1601,7 +1608,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             if not hints:
                 continue
             hint = " symbols: " + hints[0]
-            if topic_query and index < 4 and len(hints) > 1:
+            if topic_query and index < TOPIC_DETAIL_ROWS and len(hints) > 1:
                 second = ", " + hints[1]
                 if len(hint) + len(second) <= remaining:
                     hint += second
@@ -1614,7 +1621,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
                 if extra <= remaining:
                     visible[index] = rendered
                     remaining -= extra
-        return "\n".join([header, *visible]) + suffix
+        return "\n".join([header, *(shorter_rows.get(line, line) for line in visible)]) + suffix
     return (value[: max(0, limit - len(suffix))] + suffix)[-limit:]
 def _build_model(
     repo: str | os.PathLike[str], *, query: str, max_files: int, no_cache: bool = False,
