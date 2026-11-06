@@ -176,7 +176,10 @@ def check_workload(document, candidate, *, seen_responses=None):
             final[row['stage']] = row
     for row in final.values():
         if row['valid_usage'] and not row['grade']['success'] and not row['grade'].get('infrastructure_error'):
-            regressions.append(f"candidate failed {row['task']}")
+            if native and row['attempt'] < plan['protocol']['repair_limit']:
+                blockers.append(f"candidate repair pending for {row['task']}")
+            else:
+                regressions.append(f"candidate failed {row['task']}")
     status = 'fail' if regressions else 'blocked' if blockers else 'pass'
     return {'status': status, 'complete': not blockers, 'arms': arms,
             'issues': regressions + blockers, 'plan_sha256': digest}
