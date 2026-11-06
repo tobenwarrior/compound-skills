@@ -139,6 +139,7 @@ VARIANTS = {
          "Read references with your file-reading tool, not the shell. "),
         # Rules before 0.16.0 named the map query; 0.16.0's rule loads the skill only for some tasks and does not.
         ("skills/compound/scripts/project_setup.py", "Run its map query before searching. Reproduce", "Reproduce", "optional"),
+        ("skills/compound/scripts/project_setup.py", "Use `map` for exact Python citations. ", "", "optional"),
     ],
     # 0.16.0 without loading the skill for reviews: the rule and the skill's description leave reviews out.
     "noreview": [

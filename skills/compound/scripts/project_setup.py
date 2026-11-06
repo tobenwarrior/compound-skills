@@ -57,7 +57,8 @@ BLOCK_LINES = (
     "Keep scoped extractions here. Read named callers/tests, preserve policies/tests, cover gaps. "
     "Baseline before source edits. Batch extraction/removals, diff, retest. "
     "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "
-    "Stop Git after no-repository errors. Load `compound` for unclear conventions, broad refactors, features, "
+    "Stop Git after no-repository errors. Use `map` for exact Python citations. "
+    "Load `compound` for unclear conventions, broad refactors, features, "
     "performance or PR authoring. Follow project/user instructions. Omit AI commit credits.",
     END_MARKER,
 )

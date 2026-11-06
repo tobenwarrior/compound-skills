@@ -1,6 +1,6 @@
 ---
 name: map
-description: "View a repository in the live code map or verify exact Python source citations."
+description: "Trace Python code with exact file, symbol and line citations, or open the live repository map."
 license: MIT
 ---
 
@@ -8,13 +8,13 @@ license: MIT
 
 Resolve `<map-skill-dir>` to the directory containing this file.
 
-For exact Python citations, locate any unknown files with native search, then batch the lines or literal statements in one read-only lookup:
+For exact Python citations, find unknown files with native search. Before answering, batch candidate lines or literal statements in one read-only lookup:
 
 ```bash
 python3 -B <map-skill-dir>/../compound/scripts/symbol_lookup.py --repo <repo-root> --location "<file:line>" --match "<file>" "<statement>" --excerpt 0
 ```
 
-Use either option or mix them, up to 12 queries. Results follow query order and give the enclosing symbol. Omit `--excerpt` when you only need the locations. [Lookup details](../compound/references/map.md#symbol-lookup)
+Use either option or mix them, up to 12 queries. Results follow query order and give the enclosing symbol. Omit `--excerpt` when you only need the locations. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
 
 For a bare map invocation or a visual request, open the current repository's live viewer:
 

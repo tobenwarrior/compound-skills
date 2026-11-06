@@ -213,6 +213,8 @@ The [0.16.57 matched navigation comparison](diagram_sources/comparison_navigatio
 
 On Django disconnect handling, the map arm used fewer requests and tool calls but had 10,688 uncached input tokens versus 5,805 without the map. Its first three tool results retained 17,925 bytes of source excerpts. A keyless replay used the terms from its later scoped search across the 22 complete Python paths and import hints in the original map. The search returned 1,874 bytes and found all four cited lines, which passed the source grader. Compound 0.16.58 directs agents to search listed files and read nearby lines. The replay verifies the source evidence. Agent behavior and cost under the revised prompt remain unmeasured.
 
+In the saved eight-task GPT-6 Luna comparison, all six Flask streaming answers cited the teardown line under `RequestContext.pop`. The source defines it in `AppContext.pop`. Replaying the 15 saved navigation answers with one batch lookup per answer verified the enclosing symbols at their supplied paths and lines. The lookup corrected six Flask answers and four Django answers and preserved all four already-correct answers. One Django answer still failed with its supplied locations. The default rule now directs exact Python citations to the read-only map lookup. The replay measures citation verification on saved answers.
+
 Prepare the common task prompts and the treatment's initial map context from the pinned sources:
 
 ```sh
