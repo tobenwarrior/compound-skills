@@ -31,7 +31,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, use the project runner to run the nearest failing regression before source edits. Add a regression when coverage is missing and retain existing test cases and assertions. Verify changed arguments against the receiving API before setting test expectations. Gate batched fixes on the expected failure. For a known pytest failure, start with `--tb=line` and expand when needed to confirm the failure. Limit searches and output to relevant evidence. Inspect dependencies or history only to answer a question that could change the fix. Run the full suite once after the last edit and check the diff when Git is available. Run the regression separately if the suite omits it.
+For local bugs, verify changed arguments against the receiving API before setting expectations. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. After the last edit, batch the full suite and scoped diff check when supported. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
 
 Open only the relevant guide.
 
@@ -50,4 +50,4 @@ Preserve caller behavior and scope. Check ownership and retry behavior when stat
 
 At the commit/PR stage, reopen [Git and pull requests](references/git.md) and never add AI coauthors or generated-by credits.
 
-Finish when scope is covered and required checks pass. Report results and limits. Reuse passing checks while inputs and environment match.
+For a repair, identify the unmet requirement before choosing another check or edit. Finish when scope is covered and required checks pass. Report results and limits. Reuse passing checks while inputs and environment match.
