@@ -10,7 +10,7 @@ license: MIT
 
 For visual map requests, including `compound map`, or standalone Python citation requests, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
-For `compound solutions search` or a request to search the project solutions index, run `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` directly. Compose queries from the project or library name and a specific symptom. Add `--limit 1 --show-note` when one relevant note can change the next step. Continue with source on a missing index or no match.
+For project solution searches, let `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` read the index. Query the project or library name and a specific symptom. Add `--limit 1 --show-note` when one note could change the next step. Continue with source on a missing index or no match.
 
 For explicit `compound solutions` requests for help, capture, or index refresh, follow [Project solutions](references/solutions.md) and skip engineering startup.
 
@@ -31,7 +31,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, ground changed argument expectations in the real receiver, including in mocked tests. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. After the last edit, run the full suite and scoped diff in that batch when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
+For local bugs, ground changed argument expectations in the real receiver, including in mocked tests. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. After the final code or test edit, run the full suite and scoped diff in that batch when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
 
 Open only the relevant guide.
 
