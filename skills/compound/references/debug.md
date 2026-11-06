@@ -6,4 +6,6 @@ Form competing hypotheses and run checks that distinguish them. Follow the first
 
 Confirm the regression fails on the reported behavior. Reuse existing fixtures and make the smallest causal correction. For split paths, test the required property directly. One operation's success does not prove another's preconditions. Cover supported input categories and equivalent values across paths in both orders. Remove instrumentation and changes whose hypothesis was refuted.
 
+When the expected failure is known and tools can run dependent steps together, batch the test edit, failing run, source edit, final suite and diff. Match the failing test and failure reason before applying the fix. Stop before source edits if the check passes, fails unexpectedly or cannot run.
+
 Verify the correction on the same surface. If the final suite includes the regression, its passing result verifies the fix. Go straight to that suite and the diff check. Run a separate check only for a specific gap or project requirement. Reuse that result while checked inputs and environment are unchanged. If the original surface is unavailable, report the narrower evidence and unresolved limitation instead of declaring the defect gone.

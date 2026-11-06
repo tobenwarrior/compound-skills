@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for contributor orientation, unclear local conventions, new features, broader refactors, performance, PR authoring, or Compound guidance."
+description: "Use for unfamiliar repository conventions, new features, broader refactors, performance, PR authoring, or Compound guidance."
 license: MIT
 ---
 
@@ -29,7 +29,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, run the nearest failing regression before editing source. Add one if coverage is missing. Try the project test runner before inspecting its environment. Read dependency internals or history only for a question that could change the fix. Keep search and test output to relevant matches, failures and summaries. Verify the regression in the full suite after the fix. Check the diff when Git is available. When they pass, report results unless a specific gap or project requirement remains.
+For local bugs, run the nearest failing regression before editing source. Add one if coverage is missing. If the tools can batch dependent steps, check for the expected failure before applying the fix in that batch. Try the project test runner before inspecting its environment. Read dependency internals or history only for a question that could change the fix. Keep search and test output to relevant matches, failures and summaries. Verify in the full suite. Check the diff when Git is available. Report results when scope and required checks are covered.
 
 Open only the relevant guide.
 
