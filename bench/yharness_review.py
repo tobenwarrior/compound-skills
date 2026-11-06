@@ -29,7 +29,7 @@ RULES: dict[str, dict[str, tuple[str, ...]]] = {
             r"defined in the loop",
         ),
         "impact": (
-            r"last (folder|directory|path)",
+            r"(?:last|final) (folder|directory|path)",
             r"all (prefix|route|folder).{0,80}last",
             r"every (prefix|route).{0,80}(same|last)",
             r"serves?.{0,80}last (folder|directory)",
@@ -57,6 +57,7 @@ RULES: dict[str, dict[str, tuple[str, ...]]] = {
         "section": (r"d3\b", r"path traversal", r"directory traversal", r"arbitrary file"),
         "trigger": (
             r"send_file.{0,120}(os\.path\.join|path\.join|join)",
+            r"(?:request|requested|untrusted|user)[^.!?]{0,100}(?:path|filename)[^.!?]{0,120}send_file",
             r"(os\.path\.join|path\.join|join).{0,120}(directory|filename)",
             r"<path:filename>",
             r"\.\..{0,40}(segment|path|filename)",
@@ -96,17 +97,20 @@ def clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
+def _block_ranges(text: str) -> list[tuple[int, int, str]]:
+    """Return blank-line blocks with source offsets and normalized text."""
+    normalized = text.replace("\r\n", "\n")
+    result = []
+    for block in re.finditer(r"(?ms)(?:\A|\n\s*\n+)(.+?)(?=\n\s*\n+|\Z)", normalized):
+        lines = [line.strip() for line in block.group(1).splitlines() if line.strip()]
+        if lines:
+            result.append((block.start(1), block.end(1), clean(" ".join(lines))))
+    return result
+
+
 def blocks(text: str) -> list[str]:
     """Return blank-line blocks without joining separate findings."""
-    text = text.replace("\r\n", "\n").strip()
-    if not text:
-        return []
-    result = []
-    for raw in re.split(r"\n\s*\n+", text):
-        lines = [line.strip() for line in raw.splitlines() if line.strip()]
-        if lines:
-            result.append(clean(" ".join(lines)))
-    return result
+    return [block for _, _, block in _block_ranges(text)]
 
 
 def has_any(text: str, patterns: tuple[str, ...]) -> bool:
@@ -131,7 +135,7 @@ def _headings(text: str) -> list[tuple[int, str]]:
 
 
 def _section_category(label: str) -> str | None:
-    """Classify a finding from its heading or numbered-item lead only."""
+    """Classify a finding from its heading or numbered-item lead."""
     for name in ("D1", "D2", "D3"):
         if has_any(label, RULES[name]["section"]):
             return name
@@ -157,11 +161,25 @@ def _list_items(text: str) -> list[tuple[int, str]]:
     for index, start in enumerate(starts):
         ends = [offset for offset in (*starts[index + 1 :], *headings) if offset > start]
         end = min(ends, default=len(normalized))
+        item = normalized[start:end]
+        paragraph = re.search(r"\n[ \t]*\n(?![ \t])", item)
+        if paragraph is not None:
+            end = start + paragraph.start()
         items.append((start, normalized[start:end]))
     return items
 
 
-def finding_sections(text: str) -> list[tuple[str, str, list[str]]]:
+def _shared_context(text: str) -> str:
+    """Return the preamble before the first finding list for location checks."""
+    normalized = text.replace("\r\n", "\n")
+    starts = [start for start, _ in _list_items(normalized)]
+    if not starts:
+        starts = [offset for offset, _ in _headings(normalized)]
+    context = clean(normalized[:min(starts)]) if starts else ""
+    return context if has_any(context, (r"\badd_static_folders\b",)) and location(context) else ""
+
+
+def finding_sections(text: str, context: str | None = None) -> list[tuple[str, str, list[str]]]:
     """Extract finding-local sections and their normalized blocks.
 
     Headed reviews use the heading through the next heading. Plain numbered
@@ -169,6 +187,7 @@ def finding_sections(text: str) -> list[tuple[str, str, list[str]]]:
     later finding's text to classify an earlier finding.
     """
     normalized = text.replace("\r\n", "\n")
+    context = _shared_context(normalized) if context is None else clean(context)
     headings = _headings(normalized)
     headed: list[tuple[str, str, list[str]]] = []
     explicit_ranges: list[tuple[int, int]] = []
@@ -181,21 +200,46 @@ def finding_sections(text: str) -> list[tuple[str, str, list[str]]]:
             explicit_ranges.append((offset, end))
 
     listed: list[tuple[str, str, list[str]]] = []
+    seen = {(category, clean(raw)) for category, raw, _ in headed}
     for start, item in _list_items(normalized):
         if any(begin <= start < end for begin, end in explicit_ranges):
             continue
+        evidence = clean(item)
+        matches = [
+            name for name in RULES if all(_checks(name, evidence, context).values())
+        ]
         lead = clean(item.splitlines()[0])
         title = re.split(r":\s+", lead, maxsplit=1)[0]
-        category = _section_category(title) or _section_category(lead)
-        if category is not None:
-            listed.append((category, item, [clean(item)]))
+        lead_category = _section_category(title) or _section_category(lead)
+        if len(matches) > 1 or (matches and lead_category not in (None, matches[0])):
+            continue
+        category = matches[0] if matches else lead_category
+        if category is not None and (category, evidence) not in seen:
+            listed.append((category, item, [evidence]))
+            seen.add((category, evidence))
+
+    headed_blocks = {block for _, _, section_blocks in headed for block in section_blocks}
+    item_ranges = [(start, start + len(item)) for start, item in _list_items(normalized)]
+    heading_ranges = [
+        (offset, headings[index + 1][0] if index + 1 < len(headings) else len(normalized))
+        for index, (offset, _) in enumerate(headings)
+    ]
+    for block_start, block_end, block in _block_ranges(normalized):
+        if any(block_start < end and block_end > start for start, end in (*item_ranges, *heading_ranges)):
+            continue
+        if block in headed_blocks:
+            continue
+        matches = [name for name in RULES if all(_checks(name, block, context).values())]
+        if len(matches) == 1 and (matches[0], block) not in seen:
+            listed.append((matches[0], block, [block]))
+            seen.add((matches[0], block))
     return headed + listed
 
 
-def _checks(category: str, evidence: str) -> dict[str, bool]:
+def _checks(category: str, evidence: str, context: str = "") -> dict[str, bool]:
     rule = RULES[category]
     return {
-        "location": location(evidence),
+        "location": location(evidence) or (bool(context) and location(context)),
         "trigger": has_any(evidence, rule["trigger"]),
         "impact": has_any(evidence, rule["impact"]),
     }
@@ -203,15 +247,16 @@ def _checks(category: str, evidence: str) -> dict[str, bool]:
 
 def defect_checks(text: str) -> dict[str, dict[str, object]]:
     """Check one complete finding section per defect without cross-section joins."""
-    sections = finding_sections(text)
+    context = _shared_context(text)
+    sections = finding_sections(text, context)
     output: dict[str, dict[str, object]] = {}
     for category in RULES:
         candidates = [(raw, section_blocks) for name, raw, section_blocks in sections if name == category]
-        evaluated = [(raw, _checks(category, clean(raw))) for raw, _ in candidates]
+        evaluated = [(raw, _checks(category, clean(raw), context)) for raw, _ in candidates]
         complete = [(raw, checks) for raw, checks in evaluated if all(checks.values())]
         if not complete:
             evidence = clean(candidates[0][0]) if candidates else ""
-            checks = _checks(category, evidence) if evidence else {"location": False, "trigger": False, "impact": False}
+            checks = _checks(category, evidence, context) if evidence else {"location": False, "trigger": False, "impact": False}
             output[category] = {"met": False, "checks": checks, "evidence": evidence}
             continue
         raw, checks = complete[0]
