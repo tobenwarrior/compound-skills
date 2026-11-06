@@ -157,20 +157,22 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
     return candidate is None and code_map._exclusion_reason(path, reason) is not None
 
 
-def _grep_locations(data: bytes) -> list[str]:
-    """Decode the NUL-separated path and line fields from Git grep."""
+def _grep_locations(data: bytes) -> list[tuple[str, str]]:
+    """Decode Git grep locations and the text found at each location."""
     if len(data) > MAX_GREP_INPUT_BYTES:
         raise SymbolLookupError("grep input exceeds 64 KiB")
-    queries: list[str] = []
+    queries: list[tuple[str, str]] = []
     while data:
         if len(queries) == MAX_LOCATIONS:
             raise SymbolLookupError(f"grep input exceeds {MAX_LOCATIONS} matches")
         relative, _, rest = data.partition(b"\0")
         line, _, rest = rest.partition(b"\0")
-        _, newline, data = rest.partition(b"\n")
+        matched, newline, data = rest.partition(b"\n")
         if not relative or not newline or not re.fullmatch(rb"[1-9][0-9]{0,8}", line):
             raise SymbolLookupError("grep input requires git grep -n -z output")
-        queries.append(os.fsdecode(relative + b":" + line))
+        encoding = "utf-8-sig" if line == b"1" else "utf-8"
+        matched_text = matched.removesuffix(b"\r").decode(encoding)
+        queries.append((os.fsdecode(relative + b":" + line), matched_text))
     return queries
 
 
@@ -182,6 +184,7 @@ def _lookup_locations(
     max_total_bytes: int = DEFAULT_MAX_TOTAL_BYTES,
     max_seconds: float = DEFAULT_TIMEOUT,
     excerpt_radius: int | None = None,
+    grep_lines: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
@@ -196,7 +199,7 @@ def _lookup_locations(
         queries.append((relative, int(raw_line)))
     return _lookup_python(
         repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
-        max_seconds=max_seconds, excerpt_radius=excerpt_radius,
+        max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines,
     )
 
 
@@ -208,6 +211,7 @@ def _lookup_python(
     max_total_bytes: int,
     max_seconds: float,
     excerpt_radius: int | None,
+    grep_lines: Sequence[str] | None,
 ) -> list[dict[str, Any]]:
     """Resolve exact lines or literal matches from the same bounded source read."""
     if not 1 <= len(queries) <= MAX_LOCATIONS:
@@ -220,7 +224,8 @@ def _lookup_python(
             raise SymbolLookupError("lookup requires a repository-relative Python path")
         if isinstance(selector, str):
             _valid_symbol(selector)
-    retain_lines = excerpt_radius is not None or any(isinstance(selector, str) for _, selector in queries)
+    retain_lines = (excerpt_radius is not None or grep_lines is not None
+                    or any(isinstance(selector, str) for _, selector in queries))
     try:
         root, note = code_map._git_root(code_map._repo_path(repo))
     except code_map.CodeMapError as exc:
@@ -269,7 +274,7 @@ def _lookup_python(
 
     parsed: dict[str, tuple[int, ast.Module, list[str]]] = {}
     result = []
-    for relative, selector in queries:
+    for index, (relative, selector) in enumerate(queries):
         if relative not in parsed:
             if relative not in inventory:
                 raise SymbolLookupError("path is outside the available Git inventory")
@@ -292,6 +297,8 @@ def _lookup_python(
         if isinstance(selector, int):
             if selector > count:
                 raise SymbolLookupError("line is outside the source file")
+            if grep_lines is not None and lines[selector - 1] != grep_lines[index]:
+                raise SymbolLookupError("source line changed since grep; rerun the search and lookup")
             result.append({"path": relative, **location(selector, count, tree, lines)})
             continue
         matches = (number for number, text in enumerate(lines, 1) if selector in text)
@@ -811,12 +818,15 @@ def main(argv: list[str] | None = None) -> int:
         }
         if python_lookup:
             queries = args.source_queries
+            grep_lines = None
             if args.grep_input:
-                queries = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
+                matches = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
+                queries = [location for location, _ in matches]
+                grep_lines = [line for _, line in matches]
             result = _lookup_locations(
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
-                excerpt_radius=args.excerpt,
+                excerpt_radius=args.excerpt, grep_lines=grep_lines,
             )
         elif args.service:
             try:
