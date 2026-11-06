@@ -110,6 +110,8 @@ In the [clean Git comparison](diagram_sources/comparison_codex_flask_luna.json),
 
 Using those same saved Flask patches, an offline replay ran each added regression on its unfixed and fixed source. The default failing pytest reports totaled 9,358 bytes. With `--tb=line`, they totaled 1,012 bytes (89% less) and retained the selected tests, failure exit statuses, missing session key and invalid port conversion. The fixed suites passed 492 and 493 tests. The guidance uses the short traceback for a known failure and expands it when the result leaves a diagnostic question. This replay measures emitted test output.
 
+In the saved eight-task GPT-6 Luna comparison, Compound 0.16.75 edited source, reverted the fix, and reapplied it around the failing regression on each Flask task. An offline replay ran each saved test on the original source before applying the fix. Source edits fell from three to one per task. The final source and test trees matched the accepted artifacts, and the full suites passed 492 and 493 tests. The default rule puts the regression before source edits. The replay measures source edits and test outcomes.
+
 ## Compare a change with main
 
 ```bash

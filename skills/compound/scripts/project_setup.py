@@ -50,10 +50,10 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Review diffs first. Check caller edge cases. Verify changed lifecycle paths run in tests. "
+    "Reviews start with diffs. Check caller edge cases. Verify changed lifecycle paths run in tests. "
     "Report findings promptly. Probe with permission. After denial, source only. Use required native Read. "
-    "For bugs, run a failing regression, fix, then one full suite and diff. "
-    "Batch when expected failure gates the fix. "
+    "For bugs, run the regression before source edits. Gate batched fixes on the expected failure. "
+    "Run one final full suite and diff. "
     "Keep scoped extractions here. Read named callers/tests, preserve policies/tests, cover gaps. "
     "Baseline before source edits. Batch extraction/removals, diff, retest. "
     "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "
