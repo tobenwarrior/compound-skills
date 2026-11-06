@@ -487,7 +487,7 @@ def two_change_comparison(source):
     return f'benchmark-{asset}-v{version}.svg', chart.svg()
 
 
-def codex_attempt_usage(attempts, receipts):
+def codex_attempt_usage(attempts, receipts, modes=('without', 'with')):
     """Verify native token counts and sum all attempts in each mode."""
     for attempt in attempts:
         usage = attempt['usage']
@@ -497,7 +497,6 @@ def codex_attempt_usage(attempts, receipts):
                 or usage['total_tokens'] != usage['input_tokens'] + usage['output_tokens']
                 or usage['total_tokens'] == 0):
             raise ValueError('Invalid Codex attempt usage')
-    modes = ('without', 'with')
     requests = [sum(a['requests'] for a in attempts if a['mode'] == mode) for mode in modes]
     if sum(requests) != receipts:
         raise ValueError('Codex receipts do not match attempt totals')
@@ -505,13 +504,14 @@ def codex_attempt_usage(attempts, receipts):
 
 
 def codex_flask_comparison(source):
-    """Render token usage from the four native Codex attempts."""
+    """Render the stock and candidate pair after verifying all three arms."""
     data = json.loads(source.read_text())
     tasks = ('flask-ipv6-session', 'flask-ipv6-run')
     modes = ('without', 'with')
     attempts = data['attempts']
-    order = [('without', 0, 0), ('with', 0, 0), ('with', 1, 0), ('without', 1, 0)]
-    if (data['schema'] != 'compound-codex-flask-token-comparison-1'
+    order = [('last-good', 0, 0), ('with', 0, 0), ('without', 0, 0),
+             ('with', 1, 0), ('without', 1, 0), ('last-good', 1, 0)]
+    if (data['schema'] != 'compound-codex-flask-token-comparison-2'
             or data['model'] != 'gpt-6-luna'
             or tuple(task['name'] for task in data['tasks']) != tasks
             or [(a['mode'], a['stage'], a['attempt']) for a in attempts] != order
@@ -524,10 +524,11 @@ def codex_flask_comparison(source):
                 or grade['retained_suites_passed'] is not True
                 or grade['final_tests'] != 492 + stage or grade['regression_witnesses'] < 1):
             raise ValueError('Codex Flask chart requires every fix and retained test suite to pass')
-    requests, totals = codex_attempt_usage(attempts, data['native_receipts'])
+    requests, totals = codex_attempt_usage(attempts, data['native_receipts'], (*modes, 'last-good'))
+    if totals[1] >= min(totals[0], totals[2]):
+        raise ValueError('Codex Flask chart requires lower total token usage than both controls')
+    requests, totals = requests[:2], totals[:2]
     by_stage = {(a['stage'], a['mode']): a['usage']['total_tokens'] for a in attempts}
-    if totals[1] >= totals[0]:
-        raise ValueError('Codex Flask chart requires lower total token usage with Compound')
     reduction = (1 - totals[1] / totals[0]) * 100
     description = (f'Without Compound {totals[0]:,} tokens. With Compound {totals[1]:,} tokens. '
                    f'{reduction:.1f}% fewer total tokens. Both modes passed 2/2 fixes and 493 final tests. '
@@ -543,7 +544,7 @@ def codex_flask_comparison(source):
         chart.card(24, y, 992, 202)
         values = [by_stage[stage, mode] for mode in modes]
         chart.pair(y + 37, values, [f'{n:,}' for n in values], maximum, label)
-    chart.text(52, 873, 'Both final artifacts passed 493 tests. All four attempts are included.', 17, weight=650)
+    chart.text(52, 873, 'Both sequences passed all 493 final tests on their first attempts.', 17, weight=650)
     chart.text(52, 899, 'Total tokens include cached input and output. All bars use the same scale.', 15, 'muted')
     return 'benchmark-flask-codex-luna.svg', chart.svg()
 
@@ -674,7 +675,7 @@ def main():
     for family in ('dispatch', 'flask', 'pstack_flask'):
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
-    outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_luna.json')])
+    outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_receiver_luna.json')])
     outputs.update([codex_citation_comparison(SOURCES / 'comparison_codex_python_citations.json')])
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:

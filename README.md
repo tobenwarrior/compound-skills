@@ -127,11 +127,11 @@ The Codex, DeepSeek and historical Claude Code runs use different runtimes and m
 
 ### Two consecutive Flask fixes on Codex
 
-With GPT-6 Luna in Codex CLI 0.162.1, Compound used **8.4% fewer total tokens** across two consecutive upstream Flask fixes. Both modes passed **2/2 fixes on their first attempts**, including both hidden regressions and all 493 final tests.
+With GPT-6 Luna in Codex CLI 0.162.1, Compound used **9.5% fewer total tokens** across two consecutive upstream Flask fixes. Both modes passed **2/2 fixes on their first attempts**, including both hidden regressions and all 493 final tests.
 
-![Two consecutive Flask fixes on Codex. Without Compound used 380,420 tokens and 19 model requests. With Compound used 348,648 tokens and 16 requests. Both modes passed both fixes without repairs.](.github/assets/benchmark-flask-codex-luna.svg)
+![Two consecutive Flask fixes on Codex. Without Compound used 332,385 tokens and 16 model requests. With Compound used 300,739 tokens and 15 requests. Both modes passed both fixes without repairs.](.github/assets/benchmark-flask-codex-luna.svg)
 
-Both modes started in clean Git checkouts at Flask commit `514fc6b`, with identical prompts, tools and medium reasoning. Each carried its checkout and conversation into the second task. The Compound run used commit `78498c1`. This was one sequence per mode with normal provider caching. Total tokens include cached input and output. [All four attempts, usage and grades](bench/diagram_sources/comparison_codex_flask_luna.json)
+Both modes started in clean Git checkouts at Flask commit `514fc6b`, with identical prompts, tools and medium reasoning. Each carried its checkout and conversation into the second task. The Compound run used commit `937e38c`. This was one sequence per mode with normal provider caching. Total tokens include cached input and output. [Attempts, usage and grades](bench/diagram_sources/comparison_codex_flask_receiver_luna.json)
 
 ### Two consecutive Flask fixes
 

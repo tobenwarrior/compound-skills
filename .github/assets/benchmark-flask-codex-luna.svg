@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="921" viewBox="0 0 1040 921" role="img" aria-labelledby="title desc">
-  <title id="title">Two Flask fixes, 8.4% fewer tokens</title>
-  <desc id="desc">Without Compound 380,420 tokens. With Compound 348,648 tokens. 8.4% fewer total tokens. Both modes passed 2/2 fixes and 493 final tests. Model requests without and with were 19 and 16. Zero repairs.</desc>
+  <title id="title">Two Flask fixes, 9.5% fewer tokens</title>
+  <desc id="desc">Without Compound 332,385 tokens. With Compound 300,739 tokens. 9.5% fewer total tokens. Both modes passed 2/2 fixes and 493 final tests. Model requests without and with were 16 and 15. Zero repairs.</desc>
   <style>text{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
   <defs>
     <linearGradient id="theme-wash" x2="1" y2="1">
@@ -13,40 +13,40 @@
   <g fill="#14161c">
     <rect x="24" y="24" width="992" height="113" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
     <text x="52" y="58" font-size="13" font-weight="650" fill="#147a43">COMPOUND  /  MATCHED CODEX RUN</text>
-    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Two Flask fixes, 8.4% fewer tokens</text>
+    <text x="52" y="98" font-size="28" font-weight="750" fill="#14161c">Two Flask fixes, 9.5% fewer tokens</text>
     <text x="52" y="128" font-size="14" font-weight="400" fill="#6b6f78">Codex GPT-6 Luna · One cumulative sequence per mode · Flask 514fc6b</text>
     <rect x="24" y="157" width="992" height="234" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
     <text x="52" y="196" font-size="19" font-weight="650" fill="#14161c">Total tokens · lower is better</text>
     <text x="52" y="256" font-size="17" font-weight="600" fill="#14161c">Without Compound</text>
     <rect x="286" y="234" width="510" height="32" rx="16" fill="#f7f6f2" />
     <rect x="286" y="234" width="472.2222222222222" height="32" rx="16" fill="#9a9e95" />
-    <text x="820" y="258" font-size="23" font-weight="700" fill="#14161c">380,420</text>
+    <text x="820" y="258" font-size="23" font-weight="700" fill="#14161c">332,385</text>
     <text x="52" y="318" font-size="17" font-weight="600" fill="#14161c">With Compound</text>
     <rect x="286" y="296" width="510" height="32" rx="16" fill="#f7f6f2" />
-    <rect x="286" y="296" width="432.78306433240454" height="32" rx="16" fill="#147a43" />
-    <text x="820" y="320" font-size="23" font-weight="700" fill="#147a43">348,648</text>
-    <text x="52" y="371" font-size="16" font-weight="400" fill="#6b6f78">2/2 fixes passed in both modes · 19 / 16 requests without / with · 0 repairs</text>
+    <rect x="286" y="296" width="427.2624784177651" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="320" font-size="23" font-weight="700" fill="#147a43">300,739</text>
+    <text x="52" y="371" font-size="16" font-weight="400" fill="#6b6f78">2/2 fixes passed in both modes · 16 / 15 requests without / with · 0 repairs</text>
     <rect x="24" y="411" width="992" height="202" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
     <text x="52" y="448" font-size="19" font-weight="650" fill="#14161c">IPv6 test-client session</text>
     <text x="52" y="508" font-size="17" font-weight="600" fill="#14161c">Without Compound</text>
     <rect x="286" y="486" width="510" height="32" rx="16" fill="#f7f6f2" />
-    <rect x="286" y="486" width="240.60344122577968" height="32" rx="16" fill="#9a9e95" />
-    <text x="820" y="510" font-size="23" font-weight="700" fill="#14161c">193,829</text>
+    <rect x="286" y="486" width="266.1669115299694" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="510" font-size="23" font-weight="700" fill="#14161c">187,348</text>
     <text x="52" y="570" font-size="17" font-weight="600" fill="#14161c">With Compound</text>
     <rect x="286" y="548" width="510" height="32" rx="16" fill="#f7f6f2" />
-    <rect x="286" y="548" width="201.69680879028442" height="32" rx="16" fill="#147a43" />
-    <text x="820" y="572" font-size="23" font-weight="700" fill="#147a43">162,486</text>
+    <rect x="286" y="548" width="190.25845196249995" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="572" font-size="23" font-weight="700" fill="#147a43">133,918</text>
     <rect x="24" y="633" width="992" height="202" rx="28" fill="#fffdf8" stroke="#ece6d8" stroke-width="1" />
     <text x="52" y="670" font-size="19" font-weight="650" fill="#14161c">IPv6 development-server parsing</text>
     <text x="52" y="730" font-size="17" font-weight="600" fill="#14161c">Without Compound</text>
     <rect x="286" y="708" width="510" height="32" rx="16" fill="#f7f6f2" />
-    <rect x="286" y="708" width="231.6187809964425" height="32" rx="16" fill="#9a9e95" />
-    <text x="820" y="732" font-size="23" font-weight="700" fill="#14161c">186,591</text>
+    <rect x="286" y="708" width="206.0553106922528" height="32" rx="16" fill="#9a9e95" />
+    <text x="820" y="732" font-size="23" font-weight="700" fill="#14161c">145,037</text>
     <text x="52" y="792" font-size="17" font-weight="600" fill="#14161c">With Compound</text>
     <rect x="286" y="770" width="510" height="32" rx="16" fill="#f7f6f2" />
-    <rect x="286" y="770" width="231.08625554212009" height="32" rx="16" fill="#147a43" />
-    <text x="820" y="794" font-size="23" font-weight="700" fill="#147a43">186,162</text>
-    <text x="52" y="873" font-size="17" font-weight="650" fill="#14161c">Both final artifacts passed 493 tests. All four attempts are included.</text>
+    <rect x="286" y="770" width="237.00402645526518" height="32" rx="16" fill="#147a43" />
+    <text x="820" y="794" font-size="23" font-weight="700" fill="#147a43">166,821</text>
+    <text x="52" y="873" font-size="17" font-weight="650" fill="#14161c">Both sequences passed all 493 final tests on their first attempts.</text>
     <text x="52" y="899" font-size="15" font-weight="400" fill="#6b6f78">Total tokens include cached input and output. All bars use the same scale.</text>
   </g>
 </svg>
