@@ -82,13 +82,6 @@ def _record_acceptance(record: dict[str, Any], location: str) -> bool:
     return record["accepted"]
 
 
-def _totals(attempts):
-    return {
-        field: str(sum((attempt["costs"][field] for attempt in attempts), Decimal(0)))
-        for field in _COST_FIELDS
-    }
-
-
 def strictly_cheaper(candidate: dict[str, Decimal], baseline: dict[str, Decimal]) -> bool:
     """Require lower allowance and list cost with no cash increase."""
     return (candidate["allowance"] < baseline["allowance"]
@@ -96,15 +89,11 @@ def strictly_cheaper(candidate: dict[str, Decimal], baseline: dict[str, Decimal]
             and candidate["cost"] <= baseline["cost"])
 
 
-def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """Return a strict, decimal-exact verdict for a completed two-arm run.
+def summarize_attempts(plan, records, *, measure, fields):
+    """Validate the schedule and attempts, then sum known metered amounts per arm and stage."""
+    def totals(attempts):
+        return {field: sum(attempt["usage"][field] for attempt in attempts) for field in fields}
 
-    Every attempt contributes to the arm totals, including failed initial
-    attempts and one permitted follow-up.  ``claim`` is true only when both
-    arms completed every scheduled stage with accepted artifacts and the
-    Compound arm is strictly cheaper in allowance and list price with no cash
-    increase.
-    """
     expected = _expected_schedule(plan)
     plan_hash = plan.get("plan_sha256")
     by_index: dict[int, list[dict[str, Any]]] = defaultdict(list)
@@ -134,8 +123,8 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
             errors.append(f"schedule index {index}, attempt {attempt}: usage is unverified, so totals are lower bounds")
         if record["grade"].get("infrastructure_error") is True:
             errors.append(f"schedule index {index}, attempt {attempt}: independent grading did not finish")
-        costs = _record_costs(record, location)
-        by_index[index].append({"record": record, "accepted": accepted, "costs": costs})
+        usage = measure(record, location)
+        by_index[index].append({"record": record, "accepted": accepted, "usage": usage})
 
     for index, attempts in by_index.items():
         attempts.sort(key=lambda item: item["record"]["attempt"])
@@ -159,7 +148,7 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
             by_stage[str(stage)] = {
                 "attempts": len(attempts),
                 "accepted": attempts[-1]["accepted"],
-                "totals": _totals(attempts),
+                "totals": totals(attempts),
             }
         stages = sorted(int(stage) for stage in by_stage)
         accepted_stages = sorted(int(stage) for stage, item in by_stage.items() if item["accepted"])
@@ -168,7 +157,7 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
             "stages": stages,
             "accepted_stages": accepted_stages,
             "by_stage": by_stage,
-            "totals": _totals(arm_attempts),
+            "totals": totals(arm_attempts),
         }
 
     expected_by_arm = {
@@ -181,21 +170,26 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
     )
     if not accepted_all:
         errors.append("both arms must accept every scheduled stage")
-    complete = not errors
+    return {"complete": not errors, "errors": errors, "arms": arms}
 
+
+def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    """Return a strict, decimal-exact cost verdict for a completed two-arm run."""
+    summary = summarize_attempts(plan, records, measure=_record_costs, fields=_COST_FIELDS)
+    arms = summary["arms"]
     cheaper = False
-    if complete:
-        without = {field: Decimal(value) for field, value in arms["without"]["totals"].items()}
-        with_ = {field: Decimal(value) for field, value in arms["with"]["totals"].items()}
-        cheaper = strictly_cheaper(with_, without)
+    if summary["complete"]:
+        cheaper = strictly_cheaper(arms["with"]["totals"], arms["without"]["totals"])
         if not cheaper:
-            errors.append("Compound is not strictly cheaper in allowance and list cost without a cash increase")
-
+            summary["errors"].append("Compound is not strictly cheaper in allowance and list cost without a cash increase")
+    for arm in arms.values():
+        for scope in (arm, *arm["by_stage"].values()):
+            scope["totals"] = {field: str(value) for field, value in scope["totals"].items()}
     return {
         "valid": True,
         "claim": cheaper,
-        "complete": complete,
+        "complete": summary["complete"],
         "compound_cheaper": cheaper,
-        "errors": errors,
+        "errors": summary["errors"],
         "arms": arms,
     }

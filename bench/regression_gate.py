@@ -1,4 +1,4 @@
-"""Check saved three-arm correctness and completion cost without launching agents."""
+"""Check saved three-arm correctness and usage without launching agents."""
 from __future__ import annotations
 
 import argparse
@@ -8,9 +8,10 @@ import re
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from codex_receipts import USAGE_FIELDS, reconcile_receipts
 from cost_audit import RESULTS, read_records
 from cost_comparison import compare
-from yharness_verdict import evaluate, strictly_cheaper
+from yharness_verdict import evaluate, strictly_cheaper, summarize_attempts
 
 
 ROOT = Path(__file__).resolve().parent
@@ -19,6 +20,8 @@ LAST_GOOD = '3ab9db8a2e159a91a24aad006dee5e96c627c98a'
 ROLES = ('stock', 'last-good', 'candidate')
 WORKLOADS = ('small-edit', 'upstream-fix', 'refactor', 'review', 'navigation')
 COST_FIELDS = ('allowance', 'list_cost', 'cost')
+NATIVE_PROVIDER = 'codex-chatgpt'
+FOLLOWUP_PROMPTS = {'semantic_repair': 'repair_prompt_sha256', 'interruption_recovery': 'recovery_prompt_sha256'}
 
 
 def _digest(value, lengths=(64,)):
@@ -35,27 +38,39 @@ def _validate_plan(plan, candidate):
     if plan['builds'] != expected:
         raise ValueError('stock, pinned last-good and frozen candidate builds must match')
     protocol = plan['protocol']
-    if protocol['provider'] != 'opencode-go' or any(
+    provider = protocol['provider']
+    if provider not in ('opencode-go', NATIVE_PROVIDER) or any(
         not isinstance(protocol[key], str) or not protocol[key].strip()
         for key in ('runtime', 'model', 'reasoning_effort')
     ):
-        raise ValueError('expected a frozen OpenCode Go model, runtime and reasoning setting')
-    if any(type(protocol[key]) is not int or protocol[key] < 1 for key in ('output_cap', 'request_cap')):
-        raise ValueError('output and request caps must be positive integers')
-    if not isinstance(protocol['allowance_guard'], str):
-        raise ValueError('allowance guard must be a decimal string')
-    allowance = Decimal(protocol['allowance_guard'])
-    if not allowance.is_finite() or allowance <= 0 or type(protocol['repair_limit']) is not int or protocol['repair_limit'] != 1:
-        raise ValueError('expected a positive allowance guard and one repair opportunity per task')
+        raise ValueError('expected a supported provider with frozen model, runtime and reasoning setting')
+    if type(protocol['repair_limit']) is not int or protocol['repair_limit'] != 1:
+        raise ValueError('expected one repair opportunity per task')
+    if provider == NATIVE_PROVIDER:
+        timeout = protocol['wall_timeout_seconds']
+        guard = protocol['weekly_allowance_guard_percent']
+        if type(timeout) is not int or timeout < 1 or type(guard) is not int or not 1 <= guard <= 100:
+            raise ValueError('expected a positive Codex attempt timeout and weekly allowance guard')
+    else:
+        if any(type(protocol[key]) is not int or protocol[key] < 1 for key in ('output_cap', 'request_cap')):
+            raise ValueError('output and request caps must be positive integers')
+        if not isinstance(protocol['allowance_guard'], str):
+            raise ValueError('allowance guard must be a decimal string')
+        allowance = Decimal(protocol['allowance_guard'])
+        if not allowance.is_finite() or allowance <= 0:
+            raise ValueError('expected a positive allowance guard')
     sequences = plan['sequences']
     if len(sequences) != 1 or not sequences[0]['tasks']:
         raise ValueError('expected one nonempty task sequence per workload')
     tasks = sequences[0]['tasks']
     names = [task['name'] for task in tasks]
+    hashes = ('fixture_sha256', 'prompt_sha256', 'grader_sha256')
+    if provider == NATIVE_PROVIDER:
+        hashes += tuple(FOLLOWUP_PROMPTS.values())
     if (any(not isinstance(name, str) or not name.strip() for name in names)
             or len(set(names)) != len(names) or any(
                 not _digest(task[key]) for task in tasks
-                for key in ('fixture_sha256', 'prompt_sha256', 'grader_sha256')
+                for key in hashes
             )):
         raise ValueError('each named task needs unique identity and frozen fixture, prompt and grader hashes')
     expected_schedule = {(0, stage, arm) for stage in range(len(tasks)) for arm in ROLES}
@@ -64,10 +79,14 @@ def _validate_plan(plan, candidate):
         raise ValueError('schedule must include each task once for each arm')
     if any(type(row[0]) is not int or type(row[1]) is not int for row in schedule):
         raise ValueError('schedule sequence and stage indices must be integers')
-    return hashlib.sha256(json.dumps(plan, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+    return _hash(plan)
 
 
-def _pair(plan, attempts, baseline, digest):
+def _hash(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+
+
+def _pair(plan, attempts, baseline, digest, native):
     aliases = {baseline: 'without', 'candidate': 'with'}
     indices = {}
     schedule = []
@@ -76,8 +95,11 @@ def _pair(plan, attempts, baseline, digest):
             indices[index] = len(schedule)
             schedule.append([sequence, stage, aliases[arm]])
     pair = {'sequences': plan['sequences'], 'schedule': schedule, 'plan_sha256': digest}
-    return evaluate(pair, ({**row, 'index': indices[row['index']], 'arm': aliases[row['arm']],
-                            'known_costs': row['costs']} for row in attempts if row['arm'] in aliases))
+    rows = ({**row, 'index': indices[row['index']], 'arm': aliases[row['arm']]}
+            for row in attempts if row['arm'] in aliases)
+    if native:
+        return summarize_attempts(pair, rows, measure=lambda row, _: row['usage'], fields=USAGE_FIELDS)
+    return evaluate(pair, ({**row, 'known_costs': row['costs']} for row in rows))
 
 
 def _attempt_counts(attempts):
@@ -89,44 +111,64 @@ def _attempt_counts(attempts):
     }
 
 
-def check_workload(document, candidate):
-    """Evaluate one frozen workload with all three arms and every billed attempt."""
+def check_workload(document, candidate, *, seen_responses=None):
+    """Evaluate one frozen workload with all three arms and every attempt."""
     _candidate(candidate)
     if document['workload'] not in WORKLOADS:
         raise ValueError('unknown workload')
     plan = document['plan']
     digest = _validate_plan(plan, candidate)
-    attempts = document['attempts']
-    for row in attempts:
+    native = plan['protocol']['provider'] == NATIVE_PROVIDER
+    if seen_responses is None:
+        seen_responses = set()
+    rows = document['attempts']
+    thread_totals = {}
+    if native:
+        rows = sorted(rows, key=lambda row: (row['index'], row['attempt']))
+    attempts = []
+    for row in rows:
         arm = row['arm']
         index = row['index']
+        model = row['served_model']
+        model_unverified = native and model is None and row['valid_usage'] is False
         if (arm not in ROLES or type(index) is not int or not 0 <= index < len(plan['schedule'])
                 or plan['schedule'][index][2] != arm or row['build'] != plan['builds'][arm]
-                or row['served_model'] != plan['protocol']['model'] or row['plan_sha256'] != digest):
+                or (model != plan['protocol']['model'] and not model_unverified) or row['plan_sha256'] != digest):
             raise ValueError('attempt does not match the frozen schedule, build, model or plan')
         stage = plan['schedule'][index][1]
         task = plan['sequences'][0]['tasks'][stage]
-        if any(row[key] != task[key] for key in ('fixture_sha256', 'prompt_sha256', 'grader_sha256')):
+        prompt = FOLLOWUP_PROMPTS.get(row['attempt_kind'], 'prompt_sha256') if native else 'prompt_sha256'
+        if (row['prompt_sha256'] != task[prompt]
+                or any(row[key] != task[key] for key in ('fixture_sha256', 'grader_sha256'))):
             raise ValueError('attempt inputs differ from the frozen task')
-        if type(row['requests']) is not int or row['requests'] < 1 or not _digest(row['meter_sha256']):
-            raise ValueError('every attempt needs a positive request count and a meter digest')
+        if type(row['requests']) is not int or row['requests'] < (0 if native else 1) or not _digest(row['meter_sha256']):
+            raise ValueError('every attempt needs a valid request count and a meter digest')
+        if native:
+            if row['model_rerouted'] is not False:
+                raise ValueError('Codex rerouted the requested model')
+            if _hash(row['meter']) != row['meter_sha256']:
+                raise ValueError('saved receipt meter digest does not match')
+            row = {**row, 'usage': reconcile_receipts(row, seen_responses, thread_totals)}
+        attempts.append(row)
 
     arms = {}
     regressions = []
     blockers = []
+    compared_fields = ('total_tokens',) if native else COST_FIELDS
     for baseline in ROLES[:-1]:
-        result = _pair(plan, attempts, baseline, digest)
+        result = _pair(plan, attempts, baseline, digest, native)
         arms[baseline] = result['arms']['without']
         arms['candidate'] = result['arms']['with']
         if not result['complete']:
             blockers.extend(f'{baseline}: {error}' for error in result['errors'])
         elif any(Decimal(arms['candidate']['totals'][key]) > Decimal(arms[baseline]['totals'][key])
-                 for key in COST_FIELDS):
-            regressions.append(f'candidate completion cost exceeds {baseline}')
+                 for key in compared_fields):
+            metric = 'total token usage' if native else 'completion cost'
+            regressions.append(f'candidate {metric} exceeds {baseline}')
     for arm in ROLES:
         rows = [row for row in attempts if row['arm'] == arm]
         arms[arm].update(_attempt_counts(rows))
-        if arms[arm]['requests'] > plan['protocol']['request_cap']:
+        if not native and arms[arm]['requests'] > plan['protocol']['request_cap']:
             raise ValueError(f'{arm}: recorded requests exceed the frozen cap')
     final = {}
     for row in sorted(attempts, key=lambda row: row['attempt']):
@@ -143,27 +185,49 @@ def check_workload(document, candidate):
 def evaluate_gate(documents, candidate=None):
     """Report independent workload regressions and strict aggregate savings.
 
-    Ledgers must already be reconciled against their raw provider receipts.
-    A cost tie can pass the regression check. A savings claim requires every
-    workload to pass and strict aggregate savings against both controls.
+    A tie can pass. A usage or cost claim requires every workload to pass
+    and strict aggregate improvement against both controls.
     """
     if candidate is not None:
         _candidate(candidate)
     if set(documents) - set(WORKLOADS):
         raise ValueError('unknown workload evidence')
+    protocols = [document['plan']['protocol'] for document in documents.values()]
+    providers = {protocol['provider'] for protocol in protocols}
+    if len(providers) > 1:
+        raise ValueError('all workload evidence must use the same provider')
+    native = NATIVE_PROVIDER in providers
+    if native and any(
+        protocols[0][key] != protocol[key]
+        for protocol in protocols[1:]
+        for key in ('model', 'runtime', 'reasoning_effort')
+    ):
+        raise ValueError('all Codex workloads must use the same model, runtime and reasoning setting')
     workloads = {}
+    seen_responses = set()
     for name in WORKLOADS:
         if name not in documents:
             workloads[name] = {'status': 'blocked', 'issues': ['missing matched three-arm evidence']}
         else:
             if documents[name]['workload'] != name:
                 raise ValueError(f'{name}: workload label does not match its file')
-            workloads[name] = check_workload(documents[name], candidate)
+            workloads[name] = check_workload(documents[name], candidate, seen_responses=seen_responses)
     statuses = {result['status'] for result in workloads.values()}
     status = 'fail' if 'fail' in statuses else 'blocked' if 'blocked' in statuses else 'pass'
     complete = all(result.get('complete') for result in workloads.values())
     comparisons = dict.fromkeys(ROLES[:-1])
-    if complete:
+    if native:
+        available = [result['arms'] for result in workloads.values() if 'arms' in result]
+        known_usage = {
+            arm: {field: sum(arms[arm]['totals'][field] for arms in available) for field in USAGE_FIELDS}
+            for arm in ROLES
+        }
+        if complete:
+            comparisons = {
+                baseline: known_usage['candidate']['total_tokens'] < known_usage[baseline]['total_tokens']
+                for baseline in ROLES[:-1]
+            }
+    elif complete:
         totals = {
             arm: {
                 field: sum((Decimal(result['arms'][arm]['totals'][field]) for result in workloads.values()), Decimal(0))
@@ -172,9 +236,15 @@ def evaluate_gate(documents, candidate=None):
             for arm in ROLES
         }
         comparisons = {baseline: strictly_cheaper(totals['candidate'], totals[baseline]) for baseline in ROLES[:-1]}
-    return {'status': status, 'builds': {'stock': 'none', 'last-good': LAST_GOOD, 'candidate': candidate},
-            'workloads': workloads, 'candidate_strictly_cheaper_at_equal_correctness': comparisons,
-            'savings_claim_ready': status == 'pass' and all(comparisons.values())}
+    report = {'status': status, 'builds': {'stock': 'none', 'last-good': LAST_GOOD, 'candidate': candidate},
+              'workloads': workloads}
+    ready = status == 'pass' and all(comparisons.values())
+    if native:
+        return {**report, 'known_usage': known_usage,
+                'candidate_strictly_lower_usage_at_equal_correctness': comparisons,
+                'usage_claim_ready': ready, 'savings_claim_ready': False}
+    return {**report, 'candidate_strictly_cheaper_at_equal_correctness': comparisons,
+            'savings_claim_ready': ready}
 
 
 def _saved_comparison(filename):
