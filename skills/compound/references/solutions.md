@@ -14,7 +14,7 @@ python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "r
 
 ## Capture and index
 
-When authorized, capture a short note from the verified change and available check results. Reuse passing checks while their inputs are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
+When authorized, capture a short note after verification. Record the checks and the behavior they establish. Reuse passing checks while their inputs are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
 
 Use one command to create a note and refresh the index. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
 
