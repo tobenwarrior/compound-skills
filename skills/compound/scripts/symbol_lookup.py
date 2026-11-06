@@ -395,7 +395,10 @@ def lookup_symbols(
         if not isinstance(symbols, list):
             continue
         for item in symbols:
-            if not isinstance(item, dict) or item.get("name") != name:
+            if not isinstance(item, dict):
+                continue
+            qualified_name = item.get("qualified_name")
+            if item.get("name") != name and qualified_name != name:
                 continue
             definition: dict[str, Any] = {
                 "path": path,
@@ -404,6 +407,8 @@ def lookup_symbols(
             }
             if isinstance(item.get("signature"), str):
                 definition["signature"] = item["signature"]
+            if isinstance(qualified_name, str):
+                definition["qualified_name"] = qualified_name
             if len(definitions) == result_limit:
                 definitions_truncated = True
                 break
@@ -591,7 +596,7 @@ def lookup_symbols(
                 "model_timeout": "code_map's own bounded initialization; not included in reference timeout",
             },
             "semantics": {
-                "definitions": "exact symbol-name matches from code-map metadata; availability depends on indexed language outlines",
+                "definitions": "exact bare or qualified name matches from code-map metadata; availability depends on indexed language outlines",
                 "references": "lexical identifier-boundary occurrences, not semantic references; declarations, comments, and strings may match",
             },
         },
