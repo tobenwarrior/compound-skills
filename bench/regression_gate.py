@@ -8,7 +8,7 @@ import re
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from codex_receipts import USAGE_FIELDS, reconcile_receipts
+from codex_receipts import USAGE_FIELDS, audit_rollouts, reconcile_receipts
 from cost_audit import RESULTS, read_records
 from cost_comparison import compare
 from yharness_verdict import evaluate, strictly_cheaper, summarize_attempts
@@ -182,7 +182,7 @@ def check_workload(document, candidate, *, seen_responses=None):
             'issues': regressions + blockers, 'plan_sha256': digest}
 
 
-def evaluate_gate(documents, candidate=None):
+def evaluate_gate(documents, candidate=None, *, codex_rollouts=None):
     """Report independent workload regressions and strict aggregate savings.
 
     A tie can pass. A usage or cost claim requires every workload to pass
@@ -197,6 +197,8 @@ def evaluate_gate(documents, candidate=None):
     if len(providers) > 1:
         raise ValueError('all workload evidence must use the same provider')
     native = NATIVE_PROVIDER in providers
+    if codex_rollouts is not None and not native:
+        raise ValueError('Codex rollouts require native Codex workload evidence')
     if native and any(
         protocols[0][key] != protocol[key]
         for protocol in protocols[1:]
@@ -212,8 +214,12 @@ def evaluate_gate(documents, candidate=None):
             if documents[name]['workload'] != name:
                 raise ValueError(f'{name}: workload label does not match its file')
             workloads[name] = check_workload(documents[name], candidate, seen_responses=seen_responses)
+    raw_digest = audit_rollouts(documents, codex_rollouts, ROLES) if codex_rollouts is not None else None
+    raw_verified = raw_digest is not None
     statuses = {result['status'] for result in workloads.values()}
     status = 'fail' if 'fail' in statuses else 'blocked' if 'blocked' in statuses else 'pass'
+    if native and status == 'pass' and not raw_verified:
+        status = 'blocked'
     complete = all(result.get('complete') for result in workloads.values())
     comparisons = dict.fromkeys(ROLES[:-1])
     if native:
@@ -222,7 +228,7 @@ def evaluate_gate(documents, candidate=None):
             arm: {field: sum(arms[arm]['totals'][field] for arms in available) for field in USAGE_FIELDS}
             for arm in ROLES
         }
-        if complete:
+        if complete and raw_verified:
             comparisons = {
                 baseline: known_usage['candidate']['total_tokens'] < known_usage[baseline]['total_tokens']
                 for baseline in ROLES[:-1]
@@ -240,7 +246,9 @@ def evaluate_gate(documents, candidate=None):
               'workloads': workloads}
     ready = status == 'pass' and all(comparisons.values())
     if native:
-        return {**report, 'known_usage': known_usage,
+        issues = [] if raw_verified else ['complete Codex rollouts are required to verify native usage']
+        return {**report, 'known_usage': known_usage, 'raw_receipts_verified': raw_verified,
+                'raw_rollouts_sha256': raw_digest, 'issues': issues,
                 'candidate_strictly_lower_usage_at_equal_correctness': comparisons,
                 'usage_claim_ready': ready, 'savings_claim_ready': False}
     return {**report, 'candidate_strictly_cheaper_at_equal_correctness': comparisons,
@@ -298,6 +306,7 @@ def saved_evidence():
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--evidence', type=Path, help='directory containing one saved JSON ledger per workload')
+    parser.add_argument('--codex-rollouts', type=Path, help='complete native Codex session logs by arm')
     parser.add_argument('--candidate', help='frozen candidate commit or tree hash')
     parser.add_argument('--historical', action='store_true', help='include a separate saved-evidence audit')
     args = parser.parse_args(argv)
@@ -312,7 +321,7 @@ def main(argv=None):
                 ledger = args.evidence / f'{name}.json'
                 if ledger.is_file():
                     documents[name] = json.loads(ledger.read_text())
-        report = evaluate_gate(documents, args.candidate)
+        report = evaluate_gate(documents, args.candidate, codex_rollouts=args.codex_rollouts)
         if args.historical:
             report['historical'] = saved_evidence()
     except (KeyError, TypeError, ValueError, OSError, InvalidOperation) as exc:

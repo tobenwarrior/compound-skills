@@ -1,5 +1,9 @@
-"""Validate the saved Codex response receipts for one benchmark attempt."""
+"""Reconcile saved Codex response receipts with benchmark attempts and rollouts."""
 from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
 
 
 TOKEN_FIELDS = (
@@ -68,3 +72,105 @@ def reconcile_receipts(attempt, seen_responses, thread_totals):
     if session[1] is not None:
         thread_totals[session] = previous_thread if attempt["valid_usage"] else None
     return {**totals, "uncached_input_tokens": totals["input_tokens"] - totals["cached_input_tokens"]}
+
+
+
+def _audit_rollout(path, pending, arm):
+    session = None
+    cli_version = None
+    turn = None
+    attempt = None
+    receipt_count = prompt_count = context_count = completed = 0
+    receipt_fields = ("response_id", "session_id", "turn_id", "usage", "turn_token_usage", "thread_token_usage")
+
+    def finish_turn():
+        if attempt is None:
+            return
+        if receipt_count != len(attempt["meter"]["receipts"]):
+            raise ValueError(f"{arm}: saved rollout is missing a ledger receipt")
+        if attempt["valid_usage"]:
+            if completed != 1:
+                raise ValueError(f"{arm}: saved rollout needs one completed turn event")
+            if prompt_count != 1:
+                raise ValueError(f"{arm}: saved rollout does not match the delivered prompt")
+            if context_count != 1:
+                raise ValueError(f"{arm}: saved rollout needs one served model context")
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for line in handle:
+            digest.update(line)
+            if not line.strip():
+                continue
+            event = json.loads(line)
+            if (not isinstance(event, dict) or not isinstance(event.get("type"), str)
+                    or not isinstance(event.get("payload"), dict)):
+                raise ValueError(f"{arm}: invalid saved rollout event")
+            kind, payload = event["type"], event["payload"]
+            if kind == "session_meta":
+                if session is not None or not isinstance(payload["id"], str) or not payload["id"]:
+                    raise ValueError(f"{arm}: invalid rollout session identity")
+                session, cli_version = payload["id"], payload["cli_version"]
+            elif kind == "event_msg" and payload["type"] == "task_started":
+                finish_turn()
+                turn = payload["turn_id"]
+                if (session, turn) not in pending:
+                    raise ValueError(f"{arm}: saved rollout contains an unrecorded turn")
+                attempt, protocol = pending.pop((session, turn))
+                if f"Codex CLI {cli_version}" != protocol["runtime"]:
+                    raise ValueError(f"{arm}: saved rollout does not match the frozen runtime")
+                receipt_count = prompt_count = context_count = completed = 0
+            elif kind == "token_usage_record":
+                receipt = {key: payload[key] for key in receipt_fields}
+                if (attempt is None or receipt_count >= len(attempt["meter"]["receipts"])
+                        or receipt != attempt["meter"]["receipts"][receipt_count]):
+                    raise ValueError(f"{arm}: saved rollout receipt does not match the ledger")
+                receipt_count += 1
+            elif kind == "turn_context":
+                if (attempt is None or payload["turn_id"] != turn or payload["model"] != protocol["model"]
+                        or payload["effort"] != protocol["reasoning_effort"]):
+                    raise ValueError(f"{arm}: saved rollout does not match the served model and reasoning setting")
+                context_count += 1
+            elif kind == "event_msg" and payload["type"] == "task_complete":
+                if attempt is None or payload["turn_id"] != turn:
+                    raise ValueError(f"{arm}: saved rollout has an unrecorded completed turn")
+                completed += 1
+            elif kind == "event_msg" and "rerout" in payload["type"]:
+                raise ValueError(f"{arm}: saved rollout contains a model reroute")
+            elif (attempt is not None and kind == "response_item" and payload.get("type") == "message"
+                  and payload.get("role") == "user"):
+                prompt_count += sum(
+                    hashlib.sha256(part["text"].encode()).hexdigest() == attempt["prompt_sha256"]
+                    for part in payload["content"]
+                    if isinstance(part, dict) and part.get("type") == "input_text"
+                    and isinstance(part.get("text"), str)
+                )
+    finish_turn()
+    return digest.hexdigest()
+
+
+def audit_rollouts(documents, root, roles):
+    """Match all native turn starts and receipts from isolated arm profiles to the ledgers."""
+    pending = {arm: {} for arm in roles}
+    for document in documents.values():
+        for attempt in document["attempts"]:
+            session, turn = attempt.get("session_id"), attempt.get("turn_id")
+            if not session or not turn:
+                continue
+            turns = pending[attempt["arm"]]
+            if (session, turn) in turns:
+                raise ValueError("multiple ledger attempts name the same Codex turn")
+            turns[session, turn] = attempt, document["plan"]["protocol"]
+
+    directories = {arm: (Path(root) / arm).resolve() for arm in roles}
+    if len(set(directories.values())) != len(directories):
+        raise ValueError("Codex rollouts need a separate directory for each arm")
+    files = {}
+    for arm, directory in directories.items():
+        if not directory.is_dir():
+            raise ValueError(f"{arm}: missing Codex rollout directory")
+        files[arm] = sorted(_audit_rollout(path, pending[arm], arm)
+                            for path in sorted(directory.rglob("rollout-*.jsonl")))
+        if pending[arm]:
+            raise ValueError(f"{arm}: saved rollouts are missing a ledger turn")
+    return hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
