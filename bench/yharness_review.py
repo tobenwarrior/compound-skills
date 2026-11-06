@@ -3,7 +3,8 @@
 
 The answer is checked as three finding-local sections. Evidence from separate
 findings is never combined, and the project is checked against the source pin
-before any answer evidence is accepted.
+before any answer evidence is accepted. Source-check additional claims in
+free-form answers before publishing a review comparison.
 """
 from __future__ import annotations
 
@@ -156,7 +157,7 @@ def _list_items(text: str) -> list[tuple[int, str]]:
     for index, start in enumerate(starts):
         ends = [offset for offset in (*starts[index + 1 :], *headings) if offset > start]
         end = min(ends, default=len(normalized))
-        items.append((start, clean(normalized[start:end])))
+        items.append((start, normalized[start:end]))
     return items
 
 
@@ -183,9 +184,11 @@ def finding_sections(text: str) -> list[tuple[str, str, list[str]]]:
     for start, item in _list_items(normalized):
         if any(begin <= start < end for begin, end in explicit_ranges):
             continue
-        category = _section_category(item)
+        lead = clean(item.splitlines()[0])
+        title = re.split(r":\s+", lead, maxsplit=1)[0]
+        category = _section_category(title) or _section_category(lead)
         if category is not None:
-            listed.append((category, item, [item]))
+            listed.append((category, item, [clean(item)]))
     return headed + listed
 
 

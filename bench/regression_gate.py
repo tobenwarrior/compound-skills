@@ -10,7 +10,7 @@ from pathlib import Path
 
 from cost_audit import RESULTS, read_records
 from cost_comparison import compare
-from yharness_verdict import evaluate
+from yharness_verdict import evaluate, strictly_cheaper
 
 
 ROOT = Path(__file__).resolve().parent
@@ -136,11 +136,17 @@ def check_workload(document, candidate):
         if row['valid_usage'] and not row['grade']['success'] and not row['grade'].get('infrastructure_error'):
             regressions.append(f"candidate failed {row['task']}")
     status = 'fail' if regressions else 'blocked' if blockers else 'pass'
-    return {'status': status, 'arms': arms, 'issues': regressions + blockers, 'plan_sha256': digest}
+    return {'status': status, 'complete': not blockers, 'arms': arms,
+            'issues': regressions + blockers, 'plan_sha256': digest}
 
 
 def evaluate_gate(documents, candidate=None):
-    """Require every workload to pass independently before approving a candidate."""
+    """Report independent workload regressions and strict aggregate savings.
+
+    Ledgers must already be reconciled against their raw provider receipts.
+    A cost tie can pass the regression check. Strict savings are unknown until
+    every scheduled task has been accepted with complete usage in every arm.
+    """
     if candidate is not None:
         _candidate(candidate)
     if set(documents) - set(WORKLOADS):
@@ -155,8 +161,19 @@ def evaluate_gate(documents, candidate=None):
             workloads[name] = check_workload(documents[name], candidate)
     statuses = {result['status'] for result in workloads.values()}
     status = 'fail' if 'fail' in statuses else 'blocked' if 'blocked' in statuses else 'pass'
+    complete = all(result.get('complete') for result in workloads.values())
+    comparisons = dict.fromkeys(ROLES[:-1])
+    if complete:
+        totals = {
+            arm: {
+                field: sum((Decimal(result['arms'][arm]['totals'][field]) for result in workloads.values()), Decimal(0))
+                for field in COST_FIELDS
+            }
+            for arm in ROLES
+        }
+        comparisons = {baseline: strictly_cheaper(totals['candidate'], totals[baseline]) for baseline in ROLES[:-1]}
     return {'status': status, 'builds': {'stock': 'none', 'last-good': LAST_GOOD, 'candidate': candidate},
-            'workloads': workloads}
+            'workloads': workloads, 'candidate_strictly_cheaper_at_equal_correctness': comparisons}
 
 
 def _saved_comparison(filename):

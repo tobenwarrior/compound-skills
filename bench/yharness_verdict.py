@@ -89,6 +89,13 @@ def _totals(attempts):
     }
 
 
+def strictly_cheaper(candidate: dict[str, Decimal], baseline: dict[str, Decimal]) -> bool:
+    """Require lower allowance and list cost with no cash increase."""
+    return (candidate["allowance"] < baseline["allowance"]
+            and candidate["list_cost"] < baseline["list_cost"]
+            and candidate["cost"] <= baseline["cost"])
+
+
 def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     """Return a strict, decimal-exact verdict for a completed two-arm run.
 
@@ -180,11 +187,7 @@ def evaluate(plan: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
     if complete:
         without = {field: Decimal(value) for field, value in arms["without"]["totals"].items()}
         with_ = {field: Decimal(value) for field, value in arms["with"]["totals"].items()}
-        cheaper = (
-            with_["allowance"] < without["allowance"]
-            and with_["list_cost"] < without["list_cost"]
-            and with_["cost"] <= without["cost"]
-        )
+        cheaper = strictly_cheaper(with_, without)
         if not cheaper:
             errors.append("Compound is not strictly cheaper in allowance and list cost without a cash increase")
 
