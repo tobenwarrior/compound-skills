@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Bounded, read-only exact symbol and lexical occurrence lookup for Compound.
+"""Bounded, read-only code-map symbol and Python location lookup.
 
-Definitions come only from the existing code-map symbol metadata. Occurrences are
-plain lexical identifier-boundary matches; they are not semantic references and
-may include declarations, comments, and string literals. No source text is
-returned.
+Definitions use existing code-map symbol metadata. Lexical occurrences match
+identifier boundaries in source, including declarations, comments, and strings.
+Python location lookups include source lines only when --excerpt is supplied.
 """
 
 from __future__ import annotations
@@ -46,6 +45,7 @@ DEFAULT_MAX_OUTPUT_BYTES = 12 * 1024
 MIN_OUTPUT_BYTES = 4 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024
 MAX_LOCATIONS = 12
+MAX_EXCERPT_RADIUS = 8
 READ_CHUNK_BYTES = 64 * 1024
 
 # These are data/config formats, not source languages for the lexical scan.
@@ -161,10 +161,13 @@ def _lookup_locations(
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
     max_total_bytes: int = DEFAULT_MAX_TOTAL_BYTES,
     max_seconds: float = DEFAULT_TIMEOUT,
+    excerpt_radius: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Find each location's innermost Python scope, reading each source file once."""
+    """Find Python scopes and any requested excerpts, reading each source file once."""
     if not 1 <= len(locations) <= MAX_LOCATIONS:
         raise SymbolLookupError(f"provide between one and {MAX_LOCATIONS} source locations")
+    if excerpt_radius is not None and not 0 <= excerpt_radius <= MAX_EXCERPT_RADIUS:
+        raise SymbolLookupError(f"--excerpt must be between 0 and {MAX_EXCERPT_RADIUS}")
     queries = []
     for location in locations:
         relative, _, raw_line = location.rpartition(":")
@@ -199,7 +202,7 @@ def _lookup_locations(
                 return inner
         return ()
 
-    parsed: dict[str, tuple[int, ast.Module]] = {}
+    parsed: dict[str, tuple[int, ast.Module, list[str]]] = {}
     result = []
     for relative, line in queries:
         if relative not in parsed:
@@ -216,10 +219,11 @@ def _lookup_locations(
                 raise SymbolLookupError(note or "source file could not be read")
             remaining -= consumed
             try:
-                parsed[relative] = len(split_lines(source)), ast.parse(source)
+                lines = split_lines(source)
+                parsed[relative] = len(lines), ast.parse(source), lines if excerpt_radius is not None else []
             except (SyntaxError, ValueError, RecursionError, MemoryError) as exc:
                 raise SymbolLookupError("Python file could not be parsed") from exc
-        count, tree = parsed[relative]
+        count, tree, lines = parsed[relative]
         if line > count:
             raise SymbolLookupError("line is outside the source file")
         try:
@@ -227,10 +231,15 @@ def _lookup_locations(
         except RecursionError as exc:
             raise SymbolLookupError("Python scope nesting exceeds the lookup limit") from exc
         scope = scopes[-1] if scopes else None
-        result.append({
+        entry = {
             "path": relative, "line": line, "symbol": ".".join(node.name for node in scopes) or None,
             "start_line": scope.lineno if scope else None, "end_line": scope.end_lineno if scope else None,
-        })
+        }
+        if excerpt_radius is not None:
+            first = max(1, line - excerpt_radius)
+            last = min(count, line + excerpt_radius)
+            entry["excerpt"] = [{"line": n, "text": lines[n - 1]} for n in range(first, last + 1)]
+        result.append(entry)
     return result
 
 
@@ -688,12 +697,13 @@ def lookup_symbols(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Look up exact code-map definitions and lexical occurrence locations (JSON; no source snippets)."
+        description="Look up definitions, lexical occurrences and Python source locations. Use --excerpt to include source lines."
     )
     parser.add_argument("--repo", required=True, metavar="PATH")
     lookup = parser.add_mutually_exclusive_group(required=True)
     lookup.add_argument("--symbol", metavar="NAME")
     lookup.add_argument("--location", action="append", metavar="FILE:LINE", help="find the enclosing Python class or function (repeatable)")
+    parser.add_argument("--excerpt", type=int, metavar="LINES", help="include the cited line and up to 8 lines on each side (requires --location)")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
     parser.add_argument("--max-results", type=int, default=DEFAULT_MAX_RESULTS)
     parser.add_argument(
@@ -718,6 +728,8 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
+        if args.excerpt is not None and args.location is None:
+            raise SymbolLookupError("--excerpt requires --location")
         options = {
             "max_files": args.max_files, "max_results": args.max_results,
             "max_seconds": args.timeout, "max_file_bytes": args.max_file_bytes,
@@ -729,6 +741,7 @@ def main(argv: list[str] | None = None) -> int:
             result = _lookup_locations(
                 args.repo, args.location,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
+                excerpt_radius=args.excerpt,
             )
         elif args.service:
             try:
