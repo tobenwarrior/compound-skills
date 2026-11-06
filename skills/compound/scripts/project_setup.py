@@ -567,8 +567,14 @@ def _claude_permission_rules() -> list[str]:
     """Allow rules that let Claude Code run this install's map query and read its guides without asking each task."""
     skill_dir = Path(__file__).resolve().parent.parent
     code_map = skill_dir / "scripts" / "code_map.py"
+    map_script = skill_dir.parent / "map" / "scripts" / "map.py"
     # A leading // marks an absolute path in a Claude Code Read rule.
-    return [f"Bash(python3 -B {code_map}:*)", f"Bash(python3 {code_map}:*)", f"Read(/{skill_dir}/**)"]
+    return [
+        f"Bash(python3 -B {code_map}:*)",
+        f"Bash(python3 {code_map}:*)",
+        f"Bash(python3 -B {map_script} query:*)",
+        f"Read(/{skill_dir}/**)",
+    ]
 
 
 MAX_CLAUDE_SETTINGS_BYTES = 1024 * 1024

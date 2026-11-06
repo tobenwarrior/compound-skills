@@ -178,9 +178,17 @@ def check_host(host, executable, package, scratch, *, fresh_chat=False):
 
     run("git", "init", "-q")
     (project / "demo.py").write_text("def demo():\n    return 42\n")
-    query = (sys.executable, "-B", str(scripts / "code_map.py"), "--repo", str(project),
-             "--format", "json", "--query", "demo.py", "--max-files", "1")
-    service = (sys.executable, "-B", str(scripts / "map_server.py"))
+    query_args = ("--repo", str(project), "--format", "json", "--query", "demo.py", "--max-files", "1")
+    query = (sys.executable, "-B", str(scripts / "code_map.py"), *query_args)
+    launcher = cache / "skills" / "map" / "scripts" / "map.py"
+    if launcher.is_file():
+        service = (sys.executable, "-B", str(launcher))
+        read_only_query = (*service, "query", *query_args)
+        result, = json.loads(run(*service, "lookup", "--repo", str(project), "--location", "demo.py:2"))
+        assert result["symbol"] == "demo" and result["line"] == 2
+    else:
+        service = (sys.executable, "-B", str(scripts / "map_server.py"))
+        read_only_query = (*query, "--cache-read-only")
     try:
         assert json.loads(run(*query))["focus"] == ["demo.py"]
     finally:
@@ -192,7 +200,7 @@ def check_host(host, executable, package, scratch, *, fresh_chat=False):
     for path in (cached, directory / "runtime.json", directory / "registry.json"):
         path.write_bytes(invalid)
         path.chmod(0o600)
-    model = json.loads(run(*query, "--cache-read-only"))
+    model = json.loads(run(*read_only_query))
     assert model["focus"] == ["demo.py"]
     assert "invalid cache entries were reparsed" in model["coverage"]["notes"]
     assert cached.read_bytes() == invalid
