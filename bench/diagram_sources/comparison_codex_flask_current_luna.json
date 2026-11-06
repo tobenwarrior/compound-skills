@@ -1,0 +1,170 @@
+{
+  "schema": "compound-codex-flask-token-comparison-2",
+  "date": "2026-11-07",
+  "runner": "Codex CLI 0.162.1",
+  "model": "gpt-6-luna",
+  "reasoning": "medium",
+  "auth": "ChatGPT sign-in",
+  "compound_commit": "dc0f525ac50c42cbf3668be0b3e75de16fc8d081",
+  "last_good_commit": "3ab9db8a2e159a91a24aad006dee5e96c627c98a",
+  "fixture_head": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b",
+  "fixture_sha256": "d88fb47d13be15623f56a6ab7cf21c525b4007d926fd94da6153d1289f0a7029",
+  "plan_sha256": "f5f978b4d7cf2638106d994e5819cecfa31a833dc340885d179f9b2ea81e0df0",
+  "raw_rollouts_sha256": "bcc757ce2a0b9b52e67db2a6dc8b221df5bac6ec656d546661468af92075489c",
+  "tasks": [
+    {
+      "name": "flask-ipv6-session",
+      "prompt_sha256": "a2fd73dd7146fa3a47f9be05e1824daf0ac345e85a88f8ca8cdb8c54cea463a0"
+    },
+    {
+      "name": "flask-ipv6-run",
+      "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47"
+    }
+  ],
+  "conversation_and_checkout_carry_forward": true,
+  "cache_reset": false,
+  "native_receipts": 53,
+  "attempts": [
+    {
+      "mode": "last-good",
+      "stage": 0,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 11,
+      "usage": {
+        "input_tokens": 203397,
+        "cached_input_tokens": 168960,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1811,
+        "reasoning_output_tokens": 508,
+        "total_tokens": 205208
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "final_tests": 492,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    },
+    {
+      "mode": "with",
+      "stage": 0,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 8,
+      "usage": {
+        "input_tokens": 130833,
+        "cached_input_tokens": 111488,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1103,
+        "reasoning_output_tokens": 66,
+        "total_tokens": 131936
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "final_tests": 492,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    },
+    {
+      "mode": "without",
+      "stage": 0,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 9,
+      "usage": {
+        "input_tokens": 145956,
+        "cached_input_tokens": 127232,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1459,
+        "reasoning_output_tokens": 237,
+        "total_tokens": 147415
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "final_tests": 492,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    },
+    {
+      "mode": "with",
+      "stage": 1,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 8,
+      "usage": {
+        "input_tokens": 173622,
+        "cached_input_tokens": 162816,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1015,
+        "reasoning_output_tokens": 135,
+        "total_tokens": 174637
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "final_tests": 493,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    },
+    {
+      "mode": "without",
+      "stage": 1,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 9,
+      "usage": {
+        "input_tokens": 197090,
+        "cached_input_tokens": 189568,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1481,
+        "reasoning_output_tokens": 409,
+        "total_tokens": 198571
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "final_tests": 493,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    },
+    {
+      "mode": "last-good",
+      "stage": 1,
+      "attempt": 0,
+      "accepted": true,
+      "requests": 8,
+      "usage": {
+        "input_tokens": 207743,
+        "cached_input_tokens": 181888,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1283,
+        "reasoning_output_tokens": 321,
+        "total_tokens": 209026
+      },
+      "grade": {
+        "hidden_checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "final_tests": 493,
+        "regression_witnesses": 1,
+        "retained_suites_passed": true
+      }
+    }
+  ]
+}

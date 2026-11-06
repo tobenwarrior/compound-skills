@@ -675,7 +675,7 @@ def main():
     for family in ('dispatch', 'flask', 'pstack_flask'):
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
-    outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_receiver_luna.json')])
+    outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_current_luna.json')])
     outputs.update([codex_citation_comparison(SOURCES / 'comparison_codex_python_citations.json')])
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
