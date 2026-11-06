@@ -204,7 +204,7 @@ def search_repository(root: Path, query: str, limit: int) -> str:
         with os.fdopen(open_regular_nofollow(root, relative), 'rb') as source:
             text = _bounded_read(source, MAX_INDEX_BYTES).decode('utf-8')
     except FileNotFoundError:
-        raise ValueError('docs/solutions/INDEX.md is missing; run index to create it') from None
+        raise ValueError('docs/solutions/INDEX.md is missing') from None
     return _search_rows(text, query, limit)
 
 

@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for unfamiliar repository conventions, new features, broader refactors, performance, PR authoring, or Compound setup, status, and guidance."
+description: "Use for unfamiliar repository conventions, new features, broader refactors, performance, PR authoring, project solution lookup or capture, or Compound setup, status, and guidance."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 For visual map requests, including `compound map`, or standalone Python citation requests, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
-For explicit `compound solutions` requests, follow [Project solutions](references/solutions.md) and skip engineering startup.
+For explicit `compound solutions` requests or requests to search the project solutions index, follow [Project solutions](references/solutions.md) and skip engineering startup.
 
 For a review-only Compound request, follow [Review](references/review.md) and skip engineering startup.
 
