@@ -18,7 +18,7 @@ For a review-only Compound request, follow [Review](references/review.md) and sk
 
 For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md). Only explicit project `setup` opens [repository assessment](references/onboarding.md).
 
-For `contribute` or when local conventions could change the patch, use [Existing repositories](references/design.md#existing-repositories). Bare `contribute` ends after read-only orientation.
+Bare `contribute` follows [Existing repositories](references/design.md#existing-repositories) and ends after read-only orientation. For a scoped edit in an unfamiliar repo, reuse supplied instructions, working-tree status, and the nearest implementation and test. Check missing rules and status with the first relevant read. Open that guide when an unresolved convention or design decision could change the patch.
 
 ## Start
 
@@ -31,7 +31,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, verify changed arguments against the receiving API before setting expectations. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. After the last edit, batch the full suite and scoped diff check when supported. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
+For local bugs, verify changed arguments against the receiving API before setting expectations. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. After the last edit, run the full suite and scoped diff in that batch when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
 
 Open only the relevant guide.
 
