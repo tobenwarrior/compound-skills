@@ -144,8 +144,8 @@ def evaluate_gate(documents, candidate=None):
     """Report independent workload regressions and strict aggregate savings.
 
     Ledgers must already be reconciled against their raw provider receipts.
-    A cost tie can pass the regression check. Strict savings are unknown until
-    every scheduled task has been accepted with complete usage in every arm.
+    A cost tie can pass the regression check. A savings claim requires every
+    workload to pass and strict aggregate savings against both controls.
     """
     if candidate is not None:
         _candidate(candidate)
@@ -173,7 +173,8 @@ def evaluate_gate(documents, candidate=None):
         }
         comparisons = {baseline: strictly_cheaper(totals['candidate'], totals[baseline]) for baseline in ROLES[:-1]}
     return {'status': status, 'builds': {'stock': 'none', 'last-good': LAST_GOOD, 'candidate': candidate},
-            'workloads': workloads, 'candidate_strictly_cheaper_at_equal_correctness': comparisons}
+            'workloads': workloads, 'candidate_strictly_cheaper_at_equal_correctness': comparisons,
+            'savings_claim_ready': status == 'pass' and all(comparisons.values())}
 
 
 def _saved_comparison(filename):
