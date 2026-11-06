@@ -50,7 +50,7 @@ BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Review requested diff once. Check caller edge cases. Verify changed lifecycle paths run in tests. "
+    "Review requested diff once. Trace each changed caller. Verify changed lifecycle paths run in tests. "
     "Report findings promptly. Probe with permission. After denial, source only. Use available readers. Honor host-required first reads for edit targets. "
     "Check receivers and falsy defaults. Confirm bug regressions fail on unchanged source. "
     "Batch final full suite and scoped diff. Extractions preserve caller tests/policies. Baseline, batch, retest. "
