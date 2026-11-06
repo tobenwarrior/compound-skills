@@ -87,12 +87,11 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
             "-c", f'{provider}.wire_api="responses"',
             "-c", f"{provider}.request_max_retries=0",
             "-c", f"{provider}.stream_max_retries=0",
-            prompt,
         ]
 
-        def fresh_request():
+        def fresh_request(text=prompt):
             start = len(requests)
-            subprocess.run(command, cwd=project, env={**env, "COMPOUND_SMOKE_KEY": "offline-placeholder"},
+            subprocess.run([*command, text], cwd=project, env={**env, "COMPOUND_SMOKE_KEY": "offline-placeholder"},
                            input="", text=True, capture_output=True, timeout=40, check=True)
             assert len(requests) == start + 1
             messages = "\n".join(part.get("text", "") for item in requests[-1]["input"]
@@ -115,13 +114,17 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
             assert enabled.count(marker) == 1 and enabled.count(rule) == 1
             core = (cache / "skills/compound/SKILL.md").read_text().split("---", 2)[-1].strip()
             assert core not in enabled
+            guide = (cache / "skills/map/SKILL.md").read_text().split("---", 2)[-1].strip()
+            assert guide not in enabled
+            assert guide in fresh_request(f"$compound-skills:map {prompt}")
         finally:
             routing("disable")
             server.shutdown()
             thread.join()
 
     return {"saved_rule_delivery": "pass", "installed_skill_discovery": "pass",
-            "disabled_rule_control": "pass", "scripted_provider_requests": len(requests),
+            "disabled_rule_control": "pass", "explicit_map_delivery": "pass",
+            "scripted_provider_requests": len(requests),
             "routine_visible_skills": sorted(routine_entrypoints)}
 
 

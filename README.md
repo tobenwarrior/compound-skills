@@ -270,7 +270,13 @@ Short summaries prioritize complete file paths before symbol detail. The map can
 
 ### Exact Python citations on Codex
 
-Ask `map` to verify an exact Python citation when you need the file, line and enclosing symbol. It can check known lines and literal statements together in one read-only lookup. [Lookup syntax](skills/compound/references/map.md#symbol-lookup)
+Select the `map` skill and ask for the file, enclosing symbol, and line. From a Python repository in `codex exec`, use the qualified skill name.
+
+```sh
+codex exec --sandbox read-only '$compound-skills:map Trace request teardown. Cite the file, enclosing symbol, and line.'
+```
+
+The lookup can check known lines and literal statements together in one read-only command. [Lookup syntax](skills/compound/references/map.md#symbol-lookup)
 
 On two navigation tasks, GPT-6 Luna got **7/7 source citations** right with Compound’s Python lookup, versus **5/7** with source excerpts alone. The lookup run used **44.9% fewer total tokens** across all six attempts and two repairs.
 
