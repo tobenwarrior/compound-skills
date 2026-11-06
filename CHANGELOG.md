@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.76 (2026-11-07)
+
+- Route Python file, symbol, and line requests to a batched lookup that verifies the enclosing definitions from source.
+- Save a project solution and refresh its index in one command. Search prefers exact matches and can recover related notes from matching tags.
+- Shorten saved guidance. Review a compact diff, retain existing regression cases, and batch the final suite with the scoped diff check.
+
 ## 0.16.75 (2026-11-06)
 
 - Deliver the updated skill through normal plugin upgrades. Refresh saved defaults after updating to load the revised rule.
