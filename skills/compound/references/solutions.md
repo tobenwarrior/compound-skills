@@ -14,9 +14,9 @@ python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "r
 
 ## Capture and index
 
-When authorized, capture a short note after verification. Record the checks and the behavior they establish. After capture, check the note and index. Reuse passing tests when their inputs and environment are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
+When authorized, capture a short note after verification. Record the checks and the behavior they establish. Reuse passing tests when their inputs and environment are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
 
-Use one command to create a note and refresh the index. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
+Use one command to create a note and refresh the index. The success message confirms both outputs. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
 
 ```sh
 python3 -B <installed-skill-dir>/scripts/solutions.py capture --repo . --name retry-timeout.md <<'NOTE'
@@ -29,7 +29,7 @@ Reuse the operation's idempotency key on retries. Verify that a retry returns th
 NOTE
 ```
 
-To edit or remove a note, or add one in a subdirectory of `docs/solutions/`, make the file change and run `index` to refresh the generated table. The table stores the problem, tags, and relative file path. Refresh skips linked directories and keeps the previous index if it cannot read a directory. Use the capture summary to confirm the two outputs.
+The generated table stores the problem, tags, and relative file path. Saving a body-only edit leaves the index current. Run `index` after changes to indexed fields or after adding or removing notes manually. Refresh skips linked directories and keeps the previous index if it cannot read a directory.
 
 ```sh
 python3 -B <installed-skill-dir>/scripts/solutions.py index --repo .

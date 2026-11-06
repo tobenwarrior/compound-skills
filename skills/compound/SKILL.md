@@ -10,7 +10,7 @@ license: MIT
 
 For visual map requests, including `compound map`, or standalone Python citation requests, follow the [map utility](../map/SKILL.md) and skip engineering startup.
 
-For project solution searches, let `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` read the index. Query the project or library name and a specific symptom. Add `--limit 1 --show-note` when one note could change the next step. Continue with source on a missing index or no match.
+For project solution searches, run `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` directly, in parallel with the first source or diff read when possible. Query the project or library name and a specific symptom. Add `--limit 1 --show-note` when one note could change the next step. Continue with source on a missing index or no match.
 
 For explicit `compound solutions` requests for help, capture, or index refresh, follow [Project solutions](references/solutions.md) and skip engineering startup.
 
