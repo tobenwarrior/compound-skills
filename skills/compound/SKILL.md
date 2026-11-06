@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for unfamiliar repository conventions, new features, broader refactors, performance, PR authoring, or Compound guidance."
+description: "Use for unfamiliar repository conventions, new features, broader refactors, performance, PR authoring, or Compound setup, status, and guidance."
 license: MIT
 ---
 

@@ -31,6 +31,11 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
               "Cite file paths and lines. Leave files unchanged.")
     marker = "<!-- compound-skills:global-setup:start -->"
     installed_skills = str(cache / "skills")
+    routine_entrypoints = set(ENTRYPOINTS)
+    for name in ENTRYPOINTS:
+        metadata = cache / "skills" / name / "agents" / "openai.yaml"
+        if metadata.is_file() and "  allow_implicit_invocation: false" in metadata.read_text().splitlines():
+            routine_entrypoints.remove(name)
     requests = []
 
     class LocalProvider(BaseHTTPRequestHandler):
@@ -94,7 +99,8 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
                                  for part in item.get("content", []))
             assert messages.count(prompt) == 1
             assert installed_skills in messages
-            assert all(f"compound-skills:{name}:" in messages for name in ENTRYPOINTS)
+            visible = {name for name in ENTRYPOINTS if f"compound-skills:{name}:" in messages}
+            assert visible == routine_entrypoints
             return messages
 
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -115,7 +121,8 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
             thread.join()
 
     return {"saved_rule_delivery": "pass", "installed_skill_discovery": "pass",
-            "disabled_rule_control": "pass", "scripted_provider_requests": len(requests)}
+            "disabled_rule_control": "pass", "scripted_provider_requests": len(requests),
+            "routine_visible_skills": sorted(routine_entrypoints)}
 
 
 def check_host(host, executable, package, scratch, *, fresh_chat=False):
