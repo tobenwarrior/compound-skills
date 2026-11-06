@@ -212,8 +212,28 @@ def repository_name(root: Path) -> str:
 def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
+
+
+def _has_exact_parents(root: Path, relative: str, checked: set[str]) -> bool:
+    """Check a path's parent spellings before handing it to a Git pathspec."""
+    parent = root
+    for part in relative.split("/")[:-1]:
+        directory = parent / part
+        spelling = str(directory)
+        if spelling not in checked:
+            try:
+                with os.scandir(parent) as entries:
+                    if not any(entry.name == part and entry.is_dir(follow_symlinks=False) for entry in entries):
+                        return False
+            except OSError:
+                return False
+            checked.add(spelling)
+        parent = directory
+    return True
+
+
 def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes | None, list[str]]:
-    """Return bounded NUL-terminated paths, optionally scoping the tracked inventory."""
+    """Return bounded NUL-terminated paths, scoping exact lookup paths where possible."""
     if paths == []:
         return b"", []
     command = ["ls-files"] if paths is None else ["--literal-pathspecs", "ls-files"]
@@ -231,14 +251,20 @@ def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes
         return None, []
     if paths is not None and len(tracked) <= MAX_GIT_INVENTORY_BYTES:
         tracked_names = set(tracked.split(b"\0")[:-1])
-        if all(os.fsencode(path) in tracked_names for path in paths):
+        paths = [path for path in paths if os.fsencode(path) not in tracked_names]
+        if not paths:
             return tracked, []
+        scope = ["--", *paths]
     # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
     # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
     reserve = max(MAX_GIT_INVENTORY_BYTES - len(tracked), MAX_GIT_INVENTORY_BYTES // 4)
-    # An untracked pathspec can echo a differently cased parent directory on case-insensitive filesystems.
+    # Git can echo a pathspec's parent spelling on case-insensitive volumes. Keep Git's canonical
+    # inventory when an exact parent cannot be confirmed or Unicode normalization may differ.
+    checked: set[str] = set()
+    if paths is None or not all(path.isascii() and _has_exact_parents(root, path, checked) for path in paths):
+        command, scope = ["ls-files"], []
     others = _bounded_git_output(
-        root, ["ls-files", "--others", "--exclude-standard", "-z"], reserve, keep_prefix=True, env=env,
+        root, [*command, "--others", "--exclude-standard", "-z", *scope], reserve, keep_prefix=True, env=env,
     )
     notes = []
     if others is None:
