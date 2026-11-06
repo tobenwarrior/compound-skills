@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.75 (2026-11-06)
+
+- Deliver the updated skill through normal plugin upgrades. Refresh saved defaults after updating to load the revised rule.
+- Try the project test runner first, batch related edits, and finish after required checks pass. Deliver source-backed review findings promptly.
+- Report strict benchmark savings separately from cost ties and keep each review finding attached to its evidence.
+
 ## 0.16.74 (2026-11-05)
 
 - Route local bug fixes through the saved rule when local conventions are clear. Shorten the core skill and use relevant source ranges and concise check output. [Saved Flask trace](bench/README.md#consecutive-upstream-flask-fixes)
