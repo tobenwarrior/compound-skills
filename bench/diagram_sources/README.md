@@ -28,3 +28,5 @@ The generator uses only Python's standard library. It writes every README SVG in
 `comparison_dispatch_v01615.json` records the fresh two-change Dispatchkit sequence. It includes every attempt, exact provider-reported charges, input-cache counts and the independent cumulative grades. The generated cost chart recomputes the verdict from every attempt and checks the saved stage and arm totals. It requires complete usage, both tasks accepted in both modes and lower overall cost with Compound. This was one sequence per mode on a synthetic repository.
 
 `comparison_flask_v01645.json` records the upstream Flask sequence. It includes all four attempts, provider-reported usage, the frozen inputs and the cumulative grades. The generator applies the same checks and uses the two IPv6 tasks as labels.
+
+`comparison_codex_flask_luna.json` records the same two prompts in clean Git checkouts on GPT-6 Luna. It includes all four attempts, the native Codex token counts and the cumulative grades. The chart verifies both tasks passed and reconciles the per-attempt request counts.

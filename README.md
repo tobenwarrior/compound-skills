@@ -123,7 +123,15 @@ For the bug-fix habits alone, a small user rule is also a reasonable option; its
 
 ## Benchmark
 
-The DeepSeek workflows and larger historical rounds below use different runtimes and models; compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#reproduce-and-inspect) rerun the Claude Code rounds. The tasks are Python projects.
+The Codex, DeepSeek and historical Claude Code runs use different runtimes and models. Compare modes within a round. The historical harness in [bench/](bench/README.md) runs headless Claude Code in isolated sandboxes, one CPU per run, and grades what each run did and left behind. Run records stay local because they hold full transcripts; the commands [below](#reproduce-and-inspect) rerun the Claude Code rounds. The tasks are Python projects.
+
+### Two consecutive Flask fixes on Codex
+
+With GPT-6 Luna in Codex CLI 0.162.1, Compound used **8.4% fewer total tokens** across two consecutive upstream Flask fixes. Both modes passed **2/2 fixes on their first attempts**, including both hidden regressions and all 493 final tests.
+
+![Two consecutive Flask fixes on Codex. Without Compound used 380,420 tokens and 19 model requests. With Compound used 348,648 tokens and 16 requests. Both modes passed both fixes without repairs.](.github/assets/benchmark-flask-codex-luna.svg)
+
+Both modes started in clean Git checkouts at Flask commit `514fc6b`, with identical prompts, tools and medium reasoning. Each carried its checkout and conversation into the second task. The Compound run used commit `78498c1`. This was one sequence per mode with normal provider caching. Total tokens include cached input and output. [All four attempts, usage and grades](bench/diagram_sources/comparison_codex_flask_luna.json)
 
 ### Two consecutive Flask fixes
 

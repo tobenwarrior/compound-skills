@@ -487,6 +487,59 @@ def two_change_comparison(source):
     return f'benchmark-{asset}-v{version}.svg', chart.svg()
 
 
+def codex_flask_comparison(source):
+    """Render token usage from the four native Codex attempts."""
+    data = json.loads(source.read_text())
+    tasks = ('flask-ipv6-session', 'flask-ipv6-run')
+    modes = ('without', 'with')
+    attempts = data['attempts']
+    order = [('without', 0, 0), ('with', 0, 0), ('with', 1, 0), ('without', 1, 0)]
+    if (data['schema'] != 'compound-codex-flask-token-comparison-1'
+            or data['model'] != 'gpt-6-luna'
+            or tuple(task['name'] for task in data['tasks']) != tasks
+            or [(a['mode'], a['stage'], a['attempt']) for a in attempts] != order
+            or data['conversation_and_checkout_carry_forward'] is not True):
+        raise ValueError('Expected the pinned, cumulative Codex Flask comparison')
+    for attempt in attempts:
+        grade, usage, stage = attempt['grade'], attempt['usage'], attempt['stage']
+        if (attempt['accepted'] is not True
+                or grade['hidden_checks'] != dict.fromkeys(tasks[:stage + 1], 'pass')
+                or grade['retained_suites_passed'] is not True
+                or grade['final_tests'] != 492 + stage or grade['regression_witnesses'] < 1):
+            raise ValueError('Codex Flask chart requires every fix and retained test suite to pass')
+        if (type(attempt['requests']) is not int or attempt['requests'] < 1
+                or any(type(value) is not int or value < 0 for value in usage.values())
+                or not 0 <= usage['cached_input_tokens'] <= usage['input_tokens']
+                or usage['total_tokens'] != usage['input_tokens'] + usage['output_tokens']
+                or usage['total_tokens'] == 0):
+            raise ValueError('Invalid Codex Flask usage')
+    requests = [sum(a['requests'] for a in attempts if a['mode'] == mode) for mode in modes]
+    if sum(requests) != data['native_receipts']:
+        raise ValueError('Codex Flask receipts do not match attempt totals')
+    by_stage = {(a['stage'], a['mode']): a['usage']['total_tokens'] for a in attempts}
+    totals = [sum(by_stage[stage, mode] for stage in range(len(tasks))) for mode in modes]
+    if totals[1] >= totals[0]:
+        raise ValueError('Codex Flask chart requires lower total token usage with Compound')
+    reduction = (1 - totals[1] / totals[0]) * 100
+    description = (f'Without Compound {totals[0]:,} tokens. With Compound {totals[1]:,} tokens. '
+                   f'{reduction:.1f}% fewer total tokens. Both modes passed 2/2 fixes and 493 final tests. '
+                   f'Model requests without and with were {requests[0]} and {requests[1]}. Zero repairs.')
+    chart = Canvas(921, f'Two Flask fixes, {reduction:.1f}% fewer tokens', 'MATCHED CODEX RUN',
+                   description, 'Codex GPT-6 Luna · One cumulative sequence per mode · Flask 514fc6b')
+    maximum = max(totals) * 1.08
+    chart.card(24, 157, 992, 234)
+    chart.pair(196, totals, [f'{n:,}' for n in totals], maximum, 'Total tokens · lower is better')
+    chart.text(52, 371, f'2/2 fixes passed in both modes · {requests[0]} / {requests[1]} requests without / with · 0 repairs', 16, 'muted')
+    for stage, label in enumerate(('IPv6 test-client session', 'IPv6 development-server parsing')):
+        y = 411 + stage * 222
+        chart.card(24, y, 992, 202)
+        values = [by_stage[stage, mode] for mode in modes]
+        chart.pair(y + 37, values, [f'{n:,}' for n in values], maximum, label)
+    chart.text(52, 873, 'Both final artifacts passed 493 tests. All four attempts are included.', 17, weight=650)
+    chart.text(52, 899, 'Total tokens include cached input and output. All bars use the same scale.', 15, 'muted')
+    return 'benchmark-flask-codex-luna.svg', chart.svg()
+
+
 def navigation_comparison(source):
     """Render source-graded navigation only when the matched cost ledger qualifies."""
     data = json.loads(source.read_text())
@@ -566,6 +619,7 @@ def main():
     for family in ('dispatch', 'flask', 'pstack_flask'):
         outputs.update(two_change_comparison(source) for source in sorted(SOURCES.glob(f'comparison_{family}_v*.json')))
     outputs.update(navigation_comparison(source) for source in sorted(SOURCES.glob('comparison_navigation_v*.json')))
+    outputs.update([codex_flask_comparison(SOURCES / 'comparison_codex_flask_luna.json')])
     outputs.update(comparisons())
     for name in ['benchmark-heldout', 'benchmark-real16', 'map-retrieval']:
         outputs[name + '-controls.svg'] = historical(SOURCES / 'scenes' / (name + '.json'))
