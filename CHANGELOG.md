@@ -2,6 +2,12 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.16.77 (2026-11-07)
+
+- Start scoped upstream fixes with the nearest implementation and test. Open the design guide when an unresolved decision could change the patch.
+- Use the available file readers and honor the host's first-read requirements for edit targets.
+- When both patches are ready, batch the test edit and expected failure, then apply the source fix and run the full suite and scoped diff.
+
 ## 0.16.76 (2026-11-07)
 
 - Route Python file, symbol, and line requests to a batched lookup that verifies the enclosing definitions from source.
