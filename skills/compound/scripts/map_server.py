@@ -11,6 +11,7 @@ import codecs
 import contextlib
 import dataclasses
 import datetime as dt
+import functools
 import hashlib
 import http.client
 import http.server
@@ -113,7 +114,15 @@ def _build_assets() -> tuple[dict[str, bytes], str]:
     return assets, digest.hexdigest()[:24]
 
 
-_CLIENT_ASSETS, BUILD_SIGNATURE = _build_assets()
+@functools.cache
+def _client_bundle() -> tuple[dict[str, bytes], str]:
+    return _build_assets()
+
+
+def __getattr__(name: str) -> Any:
+    if name == "BUILD_SIGNATURE":
+        return _client_bundle()[1]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _inventory_fingerprint(
@@ -592,6 +601,7 @@ def _prepare_log(directory: Path) -> Path:
 
 
 def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
+    build = _client_bundle()[1]
     log_path = _prepare_log(runtime_path.parent)
     command = [sys.executable, "-B", str(Path(__file__).resolve()), "serve", "--port", str(port)]
     handoff = _json({"repo": str(root)})
@@ -619,7 +629,7 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
         runtime, _ = _read_runtime(runtime_path)
         if runtime:
             health = _health(runtime)
-            if health and health.get("protocol") == PROTOCOL and health.get("build") == BUILD_SIGNATURE and health.get("pid") == runtime["pid"]:
+            if health and health.get("protocol") == PROTOCOL and health.get("build") == build and health.get("pid") == runtime["pid"]:
                 return runtime
         if process.poll() is not None:
             break
@@ -638,7 +648,7 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
         runtime, _ = _read_runtime(runtime_path)
         if runtime and other.get("pid") == runtime["pid"]:
             # This state directory's own service answered only after the startup probes gave up.
-            if other.get("protocol") == PROTOCOL and other.get("build") == BUILD_SIGNATURE:
+            if other.get("protocol") == PROTOCOL and other.get("build") == build:
                 return runtime
             raise MapServerError(f"map service (pid {runtime['pid']}) is busy; retry")
         raise MapServerError(f"another map service (pid {other.get('pid')}) holds port {port}, but this state directory has no usable record of it; stop it or set COMPOUND_MAP_PORT")
@@ -648,11 +658,12 @@ def _spawn(root: Path, runtime_path: Path, port: int) -> dict[str, Any]:
 def _ensure_service(root: Path) -> dict[str, Any]:
     runtime_path = _runtime_for_repo(root, True)
     with _startup_lock(runtime_path.parent):
+        build = _client_bundle()[1]
         runtime, _ = _read_runtime(runtime_path)
         if runtime:
             health = _health(runtime)
             if health and health.get("pid") == runtime["pid"] and health.get("port") == runtime["port"]:
-                if health.get("protocol") == PROTOCOL and health.get("build") == BUILD_SIGNATURE and runtime.get("build_signature") == BUILD_SIGNATURE:
+                if health.get("protocol") == PROTOCOL and health.get("build") == build and runtime.get("build_signature") == build:
                     return runtime
                 if not _shutdown_owned(runtime):
                     raise MapServerError("an incompatible map service owns the configured port")
@@ -1248,11 +1259,11 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             return
         parsed = urllib.parse.urlsplit(self.path)
         if parsed.path == "/api/health":
-            self._respond(200, _json({"service": SERVICE, "protocol": PROTOCOL, "build": BUILD_SIGNATURE, "pid": os.getpid(), "port": self.server.server_port}))
+            self._respond(200, _json({"service": SERVICE, "protocol": PROTOCOL, "build": _client_bundle()[1], "pid": os.getpid(), "port": self.server.server_port}))
             return
         if parsed.path == "/api/projects":
             projects = self.service.project_list()
-            self._respond(200, _json({"projects": projects, "version": BUILD_SIGNATURE}))
+            self._respond(200, _json({"projects": projects, "version": _client_bundle()[1]}))
             return
         if parsed.path == "/api/file":
             # Indexed paths keep undecodable name bytes as surrogate escapes, so a percent-encoded byte must decode to one.
@@ -1434,7 +1445,7 @@ def _serve(repo: str | None, port: int) -> int:
         repo = _read_handoff()
     root = _canonical_repo(repo)
     runtime_path = _runtime_for_repo(root, True)
-    assets, _ = _build_assets()
+    assets, build = _client_bundle()
     token = secrets.token_urlsafe(32)
     try:
         httpd = MapHTTPServer(("127.0.0.1", port), MapHandler)
@@ -1444,7 +1455,7 @@ def _serve(repo: str | None, port: int) -> int:
     service = MapService(token, actual_port, assets)
     httpd.service = service  # type: ignore[attr-defined]
     service.httpd = httpd
-    runtime = {"pid": os.getpid(), "port": actual_port, "token": token, "build_signature": BUILD_SIGNATURE, "build": BUILD_SIGNATURE}
+    runtime = {"pid": os.getpid(), "port": actual_port, "token": token, "build_signature": build, "build": build}
 
     def keep_runtime() -> None:
         # The CLI finds this service only through its runtime file, so restore it after a cache cleanup.
