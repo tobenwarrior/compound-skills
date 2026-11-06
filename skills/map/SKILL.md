@@ -1,6 +1,6 @@
 ---
 name: map
-description: "Trace Python code with exact file, symbol and line citations, or open the live repository map."
+description: "Use for Python answers that require file, symbol and line citations, or to open the live repository map."
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 Use the directory containing this SKILL.md as `<map-skill-dir>`.
 
-For exact Python citations, find unknown files with native search. Use one query per citation. Locate a literal statement with `--match "<file>" "<statement>"` or get the enclosing symbol for a known line with `--location "<file:line>"`.
+For Python file, symbol and line answers, locate the statements with narrow native search. Verify the enclosing definitions in one batched lookup. Locate a literal statement with `--match "<file>" "<statement>"` or get the enclosing symbol for a known line with `--location "<file:line>"`.
 
 ```bash
 python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --match "<file>" "<statement>" --excerpt 0
