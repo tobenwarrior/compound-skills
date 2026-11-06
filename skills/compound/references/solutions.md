@@ -14,7 +14,7 @@ python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "r
 
 ## Capture and index
 
-When authorized, save a short Markdown note under `docs/solutions/` or one of its subdirectories. Describe the symptom, cause, verified fix, and when the fix applies. Keep secrets and private paths out of notes. Start with TOML metadata containing a problem and tags.
+When authorized, save a short Markdown note under `docs/solutions/` or one of its subdirectories. Use the verified change and available check results. Reuse passing checks while their inputs are unchanged. Describe the symptom, cause, verified fix, and when the fix applies. Keep secrets and private paths out of notes. Start with TOML metadata containing a problem and tags.
 
 ```markdown
 +++
