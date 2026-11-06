@@ -52,7 +52,8 @@ BLOCK_LINES = (
     "",
     "Reviews start with diffs. Check caller edge cases. Verify changed lifecycle paths run in tests. "
     "Report findings promptly. Probe with permission. After denial, source only. Use required native Read. "
-    "For bugs, run the regression before source edits. Gate batched fixes on the expected failure. "
+    "For bugs, verify changed arguments against the receiving API before setting test expectations. "
+    "Run the regression before source edits. Gate batched fixes on the expected failure. "
     "Run one final full suite and diff. "
     "Keep scoped extractions here. Read named callers/tests, preserve policies/tests, cover gaps. "
     "Baseline before source edits. Batch extraction/removals, diff, retest. "

@@ -112,6 +112,8 @@ Using those same saved Flask patches, an offline replay ran each added regressio
 
 In the saved eight-task GPT-6 Luna comparison, Compound 0.16.75 edited source, reverted the fix, and reapplied it around the failing regression on each Flask task. An offline replay ran each saved test on the original source before applying the fix. Source edits fell from three to one per task. The final source and test trees matched the accepted artifacts, and the full suites passed 492 and 493 tests. The default rule puts the regression before source edits. The replay measures source edits and test outcomes.
 
+In the clean Git eight-task GPT-6 Luna run, the candidate Flask server fix sent `[::1]` to the server and added a test that expected the same value. All 493 visible tests passed, while the independent check expected `::1`. The saved repair used six model responses and 158,754 reported tokens. An offline replay of both patches checked numeric address resolution at the receiver and reproduced the rejection of `[::1]`. The repair passed that check, the explicit-host and port-zero controls, and all 493 visible tests. The default rule asks agents to verify changed arguments against the receiving API before setting test expectations.
+
 ## Compare a change with main
 
 ```bash

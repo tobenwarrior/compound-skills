@@ -29,7 +29,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, use the project runner to run the nearest failing regression before source edits. Add a test if coverage is missing. Gate batched fixes on the expected failure. For a known pytest failure, start with `--tb=line` and expand when needed to confirm the failure. Limit searches and output to relevant evidence. Inspect dependencies or history only to answer a question that could change the fix. Run the full suite once after the last edit and check the diff when Git is available. Run the regression separately if the suite omits it.
+For local bugs, use the project runner to run the nearest failing regression before source edits. Add a test if coverage is missing. Verify changed arguments against the receiving API before setting test expectations. Gate batched fixes on the expected failure. For a known pytest failure, start with `--tb=line` and expand when needed to confirm the failure. Limit searches and output to relevant evidence. Inspect dependencies or history only to answer a question that could change the fix. Run the full suite once after the last edit and check the diff when Git is available. Run the regression separately if the suite omits it.
 
 Open only the relevant guide.
 

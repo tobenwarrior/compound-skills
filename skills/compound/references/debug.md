@@ -1,6 +1,6 @@
 # Debug
 
-Capture the failing input, expected result, actual result, and execution surface. Reproduce with the nearest regression and project runner before exploring dependencies, history, or alternative fixes. Add coverage if missing. Diagnose setup failures before retrying. Use the same environment for probes and prevent Python bytecode with `PYTHONDONTWRITEBYTECODE=1`.
+Capture the failing input, expected result, actual result, and execution surface. Start with the nearest regression and project runner. Check the receiving API’s source or tests before setting expectations for changed arguments. Add coverage if missing. Reproduce before exploring other dependencies, history, or alternative fixes. Diagnose setup failures before retrying. Use the same environment for probes and prevent Python bytecode with `PYTHONDONTWRITEBYTECODE=1`.
 
 For a known pytest failure, start with `--tb=line`. Confirm the selected test, exit status and expected failure before editing source. Expand the traceback only when the report leaves that check unresolved. For an intermittent failure, record conditions and instrument the narrowest uncertain boundary within the authorized environment.
 
