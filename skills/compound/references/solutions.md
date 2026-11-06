@@ -6,15 +6,15 @@ The index helper uses Python 3.11+ with safe local file access on macOS and Linu
 
 ## Find a solution
 
-Run the search helper directly with a few terms that distinguish the problem. It checks `docs/solutions/INDEX.md` even when the file is untracked or ignored by Git. Use the installed script path from this skill. Search prefers rows that match all terms. If none match, a related note must share at least two query terms with its tags. It returns up to three matches by default. Use `--limit` for one to five matches, with a hard output cap of 1 KiB. Open the most relevant note only when it can change the next step. If the index is missing, continue with the repository's source unless the user requests an index refresh.
+Run the installed search helper with the project or library name and a specific symptom. It checks `docs/solutions/INDEX.md` even when the file is untracked or ignored by Git. Use the installed script path from this skill. Search prefers rows that match all terms. If none match, a related note must share at least two query terms with its tags. It returns up to three matches by default. Use `--limit` for one to five matches, with a hard output cap of 1 KiB. Use `--limit 1 --show-note` to include one matching note when it could change the next step. The combined output is capped at 2 KiB. If the note is unavailable or too long, the helper returns the matching index row and a short notice. If the index is missing, continue with the repository's source unless the user requests an index refresh.
 
 ```sh
-python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "retry after timeout"
+python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "retries idempotency" --limit 1 --show-note
 ```
 
 ## Capture and index
 
-When authorized, capture a short note from the verified change and available check results. Reuse passing checks while their inputs are unchanged. Describe the symptom, cause, verified fix, and when it applies. Keep secrets and private paths out of notes.
+When authorized, capture a short note from the verified change and available check results. Reuse passing checks while their inputs are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
 
 Use one command to create a note and refresh the index. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
 

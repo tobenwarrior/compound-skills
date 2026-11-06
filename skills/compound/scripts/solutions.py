@@ -30,6 +30,7 @@ MAX_DEPTH = 16
 MAX_RESULTS = 5
 DEFAULT_LIMIT = 3
 MAX_OUTPUT_BYTES = 1024
+MAX_NOTE_OUTPUT_BYTES = 2048
 WORD = re.compile(r'[^\W_]+')
 CAPTURE_NAME = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*\.md')
 
@@ -216,7 +217,7 @@ def capture_repository(root: Path, name: str, data: bytes) -> int:
     return len(rows)
 
 
-def _search_rows(text: str, query: str, limit: int) -> str:
+def _search_rows(text: str, query: str, limit: int) -> tuple[str, str | None]:
     if not 1 <= limit <= MAX_RESULTS:
         raise ValueError('search limit must be between 1 and 5')
     if len(query) > 256:
@@ -248,25 +249,41 @@ def _search_rows(text: str, query: str, limit: int) -> str:
     hits = exact or related
     output = '\n'.join(TABLE) + '\n'
     count = 0
-    for _, _, _, _, row in sorted(hits):
+    first = None
+    for _, _, _, path, row in sorted(hits):
         if len((output + row + '\n').encode()) <= MAX_OUTPUT_BYTES:
             output += row + '\n'
+            if first is None:
+                first = path
             count += 1
             if count == limit:
                 break
-    if not count:
-        return 'No matches fit the output limit.\n' if hits else 'No matching solutions.\n'
-    return output
+    if first is None:
+        message = 'No matches fit the output limit.\n' if hits else 'No matching solutions.\n'
+        return message, None
+    return output, first
 
 
-def search_repository(root: Path, query: str, limit: int) -> str:
+def search_repository(root: Path, query: str, limit: int, *, show_note: bool = False) -> str:
     relative = (SOLUTIONS / INDEX).as_posix()
     try:
         with os.fdopen(open_regular_nofollow(root, relative), 'rb') as source:
             text = _bounded_read(source, MAX_INDEX_BYTES).decode('utf-8')
     except FileNotFoundError:
         raise ValueError('docs/solutions/INDEX.md is missing') from None
-    return _search_rows(text, query, limit)
+    output, first = _search_rows(text, query, limit)
+    if not show_note or first is None:
+        return output
+    header = f'{output}\nNote: {first}\n\n'
+    remaining = MAX_NOTE_OUTPUT_BYTES - len(header.encode())
+    try:
+        with os.fdopen(open_regular_nofollow(root, first), 'rb') as source:
+            data = source.read(remaining + 1)
+        if len(data) > remaining:
+            return output + '\nMatching note exceeds the output limit.\n'
+        return header + data.decode('utf-8')
+    except (OSError, UnicodeError):
+        return output + '\nMatching note unavailable.\n'
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -279,6 +296,7 @@ def main(argv: list[str] | None = None) -> int:
         command.add_argument('--repo', type=Path, default=Path('.'))
     capture.add_argument('--name', required=True)
     search.add_argument('--query', required=True)
+    search.add_argument('--show-note', action='store_true', help='include the first matching note if it fits')
     search.add_argument('--limit', type=int, choices=range(1, MAX_RESULTS + 1), default=DEFAULT_LIMIT)
     args = parser.parse_args(argv)
     try:
@@ -290,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
             unit = 'note' if count == 1 else 'notes'
             print(f'Saved docs/solutions/{args.name} and refreshed docs/solutions/INDEX.md ({count} {unit}).')
         else:
-            sys.stdout.write(search_repository(root, args.query, args.limit))
+            sys.stdout.write(search_repository(root, args.query, args.limit, show_note=args.show_note))
     except (OSError, ValueError, RuntimeError) as error:
         print(f'Solutions index unavailable. {error}', file=sys.stderr)
         return 2
