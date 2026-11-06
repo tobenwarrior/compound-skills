@@ -55,7 +55,7 @@ BLOCK_LINES = (
     "Check receivers and falsy defaults. Confirm bug regressions fail on unchanged source. "
     "Batch final full suite and scoped diff. Extractions preserve caller tests/policies. Baseline, batch, retest. "
     "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "
-    "Stop Git after no-repository errors. Verify Python file/symbol/line citations with `map` lookup. "
+    "Stop Git after no-repository errors. Use `map` lookup for unverified Python citations. "
     "Load `compound` for unclear conventions, broad refactors, features, performance, PR authoring. "
     "Follow project/user instructions. Omit AI commit credits.",
     END_MARKER,

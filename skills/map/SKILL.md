@@ -8,7 +8,7 @@ license: MIT
 
 Use the directory containing this SKILL.md as `<map-skill-dir>`.
 
-For Python file, symbol and line answers, locate the statements with narrow native search. Follow the requested call path when a statement has several matches. Before answering, verify the enclosing definitions in one batched lookup. Locate a literal statement with `--match "<file>" "<statement>"` or get the enclosing symbol for a known line with `--location "<file:line>"`.
+For Python file, symbol and line answers, reuse verified evidence that gives the statement and its enclosing symbol. Locate missing statements with narrow native search and verify missing owners in one batched lookup. Follow the requested call path when a statement has several matches. Locate a literal statement with `--match "<file>" "<statement>"` or get the enclosing symbol for a known line with `--location "<file:line>"`.
 
 ```bash
 python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --match "<file>" "<statement>" --excerpt 0
