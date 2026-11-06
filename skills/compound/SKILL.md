@@ -29,7 +29,7 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, write and run the nearest failing regression before editing source. Try the project test runner before inspecting its environment. Read dependency internals or history only for a question that could change the fix. Keep search and test output to relevant matches, failures and summaries. Run the full suite and diff check after the fix. When they pass, report results unless a specific gap or project requirement remains.
+For local bugs, run the nearest failing regression before editing source. Add one if coverage is missing. Try the project test runner before inspecting its environment. Read dependency internals or history only for a question that could change the fix. Keep search and test output to relevant matches, failures and summaries. Verify the regression in the full suite after the fix. Check the diff when Git is available. When they pass, report results unless a specific gap or project requirement remains.
 
 Open only the relevant guide.
 

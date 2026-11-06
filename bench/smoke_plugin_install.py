@@ -104,7 +104,7 @@ def check_codex_fresh_chat(executable, project, env, cache, routing):
             assert routing("enable")["hosts"]["codex"]["configured"]
             saved = (Path(env["CODEX_HOME"]) / "AGENTS.md").read_text()
             _, managed = saved.split(marker)
-            rule = next(line for line in managed.splitlines() if line.startswith("Review diff first."))
+            rule = next(line for line in managed.splitlines() if line and not line.startswith(("## ", "<!-- ")))
             enabled = fresh_request()
             assert enabled.count(marker) == 1 and enabled.count(rule) == 1
             core = (cache / "skills/compound/SKILL.md").read_text().split("---", 2)[-1].strip()
