@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Offline grader for the pinned Flask review fixture.
 
-The answer is checked as three finding-local sections. Evidence from separate
-findings is never combined, and the project is checked against the source pin
-before any answer evidence is accepted. Source-check additional claims in
-free-form answers before publishing a review comparison.
+Check triggers and impacts within individual findings. A shared file citation
+can supply the path for a finding's line reference. Verify the source pin before
+accepting any answer. Source-check additional claims before publishing results.
 """
 from __future__ import annotations
 
@@ -15,9 +14,10 @@ import subprocess
 from pathlib import Path
 
 
-SCHEMA = "yharness-review-offline-2"
+SCHEMA = "yharness-review-offline-3"
 EXPECTED_PARENT = "49943b5a94413a530761350f04e896f76e8d620e"
 EXPECTED_TREE = "719747b4621bddad647f0fbe89325ee1443b12d7"
+STATIC_FOLDERS_LINES = range(413, 443)
 
 
 RULES: dict[str, dict[str, tuple[str, ...]]] = {
@@ -57,8 +57,9 @@ RULES: dict[str, dict[str, tuple[str, ...]]] = {
         "section": (r"d3\b", r"path traversal", r"directory traversal", r"arbitrary file"),
         "trigger": (
             r"send_file.{0,120}(os\.path\.join|path\.join|join)",
+            r"\bjoin(?:s|ed|ing)?\b[^.!?]{0,120}\bsend_file\b",
             r"(?:request|requested|untrusted|user)[^.!?]{0,100}(?:path|filename)[^.!?]{0,120}send_file",
-            r"(os\.path\.join|path\.join|join).{0,120}(directory|filename)",
+            r"(os\.path\.join|path\.join|join)[^.!?]{0,120}\b(directory|filename)\b",
             r"<path:filename>",
             r"\.\..{0,40}(segment|path|filename)",
         ),
@@ -175,8 +176,7 @@ def _shared_context(text: str) -> str:
     starts = [start for start, _ in _list_items(normalized)]
     if not starts:
         starts = [offset for offset, _ in _headings(normalized)]
-    context = clean(normalized[:min(starts)]) if starts else ""
-    return context if has_any(context, (r"\badd_static_folders\b",)) and location(context) else ""
+    return clean(normalized[:min(starts)]) if starts else ""
 
 
 def finding_sections(text: str, context: str | None = None) -> list[tuple[str, str, list[str]]]:
@@ -236,10 +236,23 @@ def finding_sections(text: str, context: str | None = None) -> list[tuple[str, s
     return headed + listed
 
 
+def _finding_location(evidence: str, context: str) -> bool:
+    """Check a finding's source citation or combine a shared path with its local line."""
+    if location(evidence):
+        return True
+    if not location(context):
+        return False
+    if has_any(context, (r"\badd_static_folders\b",)):
+        return True
+    if not has_any(context, (r"\bflask/app\.py\b",)):
+        return False
+    return any(int(line) in STATIC_FOLDERS_LINES for line in re.findall(r"\blines?\s+(\d{1,4})\b", evidence))
+
+
 def _checks(category: str, evidence: str, context: str = "") -> dict[str, bool]:
     rule = RULES[category]
     return {
-        "location": location(evidence) or (bool(context) and location(context)),
+        "location": _finding_location(evidence, context),
         "trigger": has_any(evidence, rule["trigger"]),
         "impact": has_any(evidence, rule["impact"]),
     }
