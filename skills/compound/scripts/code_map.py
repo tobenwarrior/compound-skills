@@ -213,7 +213,7 @@ def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
 def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes | None, list[str]]:
-    """Return bounded NUL-terminated paths, optionally limited to literal pathspecs."""
+    """Return bounded NUL-terminated paths, optionally scoping the tracked inventory."""
     if paths == []:
         return b"", []
     command = ["ls-files"] if paths is None else ["--literal-pathspecs", "ls-files"]
@@ -229,11 +229,16 @@ def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes
     )
     if tracked is None:
         return None, []
+    if paths is not None and len(tracked) <= MAX_GIT_INVENTORY_BYTES:
+        tracked_names = set(tracked.split(b"\0")[:-1])
+        if all(os.fsencode(path) in tracked_names for path in paths):
+            return tracked, []
     # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
     # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
     reserve = max(MAX_GIT_INVENTORY_BYTES - len(tracked), MAX_GIT_INVENTORY_BYTES // 4)
+    # An untracked pathspec can echo a differently cased parent directory on case-insensitive filesystems.
     others = _bounded_git_output(
-        root, [*command, "--others", "--exclude-standard", "-z", *scope], reserve, keep_prefix=True, env=env,
+        root, ["ls-files", "--others", "--exclude-standard", "-z"], reserve, keep_prefix=True, env=env,
     )
     notes = []
     if others is None:
