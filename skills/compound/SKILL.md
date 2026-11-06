@@ -31,16 +31,16 @@ Run the map query as a single command on its own, with the full script path and 
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.
 
-For local bugs, ground changed argument expectations in the real receiver, including in mocked tests. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. After the final code or test edit, run the full suite and scoped diff in that batch when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
+For local bugs, verify the receiver's outcome for the exact arguments the caller will send, even when the regression mocks that receiver. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. After the final code or test edit, run the full suite and scoped diff in that batch when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
 
-Open only the relevant guide.
+For a scoped extraction with known callers and behavior, cover gaps, baseline once, preserve each caller's policy and compatibility, then check retired names in the diff and run required checks. Open Refactor when callers, behavior, or verification are unclear. Otherwise, open only the guide needed for the task below.
 
 | Task | Reference |
 | --- | --- |
 | Explain behavior | [Investigate](references/investigate.md) |
 | Add behavior or design a contract | [Design](references/design.md) |
 | Resolve a bug's cause or a verification gap | [Debug](references/debug.md) |
-| Preserve behavior through a structural change | [Refactor](references/refactor.md) |
+| Resolve a structural change's caller, behavior, or verification questions | [Refactor](references/refactor.md) |
 | Measure performance | [Performance](references/performance.md) |
 | Review a design or diff | [Review](references/review.md) |
 | Verify independently or resolve an evidence gap | [Verify](references/verify.md) |
