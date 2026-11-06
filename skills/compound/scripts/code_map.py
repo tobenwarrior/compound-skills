@@ -212,15 +212,29 @@ def repository_name(root: Path) -> str:
 def _safe_relative(value: str) -> bool:
     path = PurePosixPath(value)
     return bool(value) and not path.is_absolute() and ".." not in path.parts
-def _git_inventory(root: Path) -> tuple[bytes | None, list[str]]:
-    """Return bounded whole NUL-terminated paths, tracked first, with any inventory gaps."""
-    tracked = _bounded_git_output(root, ["ls-files", "--cached", "-z"], MAX_GIT_INVENTORY_BYTES, keep_prefix=True)
+def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes | None, list[str]]:
+    """Return bounded NUL-terminated paths, optionally limited to literal pathspecs."""
+    if paths == []:
+        return b"", []
+    command = ["ls-files"] if paths is None else ["--literal-pathspecs", "ls-files"]
+    scope = [] if paths is None else ["--", *paths]
+    env = None
+    if paths is not None:
+        # Global Git pathspec settings can conflict with --literal-pathspecs.
+        env = os.environ.copy()
+        for name in ("GIT_GLOB_PATHSPECS", "GIT_ICASE_PATHSPECS", "GIT_NOGLOB_PATHSPECS"):
+            env.pop(name, None)
+    tracked = _bounded_git_output(
+        root, [*command, "--cached", "-z", *scope], MAX_GIT_INVENTORY_BYTES, keep_prefix=True, env=env,
+    )
     if tracked is None:
         return None, []
     # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
     # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
     reserve = max(MAX_GIT_INVENTORY_BYTES - len(tracked), MAX_GIT_INVENTORY_BYTES // 4)
-    others = _bounded_git_output(root, ["ls-files", "--others", "--exclude-standard", "-z"], reserve, keep_prefix=True)
+    others = _bounded_git_output(
+        root, [*command, "--others", "--exclude-standard", "-z", *scope], reserve, keep_prefix=True, env=env,
+    )
     notes = []
     if others is None:
         others = b""
@@ -672,7 +686,9 @@ def _python_import_spec(module: str, level: int, imported: str | None) -> str:
     return module or imported or ""
 
 
-def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False) -> bytes | None:
+def _bounded_git_output(
+    root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *, env: dict[str, str] | None = None,
+) -> bytes | None:
     """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
     process: subprocess.Popen[bytes] | None = None
     selector: selectors.BaseSelector | None = None
@@ -681,6 +697,7 @@ def _bounded_git_output(root: Path, arguments: list[str], max_bytes: int, keep_p
             ["git", "--no-optional-locks", "-C", str(root), *arguments],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
+            env=env,
         )
         assert process.stdout is not None
         selector = selectors.DefaultSelector()

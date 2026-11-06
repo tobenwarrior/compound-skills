@@ -200,15 +200,19 @@ def _lookup_python(
             _valid_symbol(selector)
     retain_lines = excerpt_radius is not None or any(isinstance(selector, str) for _, selector in queries)
     try:
-        root, _, paths, _ = code_map._git_context(code_map._repo_path(repo))
+        root, note = code_map._git_root(code_map._repo_path(repo))
     except code_map.CodeMapError as exc:
         raise SymbolLookupError(str(exc)) from exc
-    if paths is None:
+    if note is not None:
+        raise SymbolLookupError("Git inventory is unavailable")
+    requested = sorted({relative for relative, _ in queries})
+    raw_paths, _ = code_map._git_inventory(root, paths=requested)
+    if raw_paths is None:
         raise SymbolLookupError("Git inventory is unavailable")
     limit = _bounded_int(max_file_bytes, 1, MAX_FILE_BYTES)
     remaining = _bounded_int(max_total_bytes, 1, MAX_TOTAL_BYTES)
     deadline = time.monotonic() + _bounded_timeout(max_seconds)
-    inventory = set(paths)
+    inventory = {os.fsdecode(path) for path in raw_paths.split(b"\0") if path}
 
     def enclosing(node, line):
         for child in ast.iter_child_nodes(node):
