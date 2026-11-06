@@ -46,6 +46,7 @@ DEFAULT_MAX_OUTPUT_BYTES = 12 * 1024
 MIN_OUTPUT_BYTES = 4 * 1024
 MAX_OUTPUT_BYTES = 64 * 1024
 MAX_LOCATIONS = 12
+MAX_GREP_INPUT_BYTES = 64 * 1024
 MAX_MATCH_LINES = 3
 MAX_EXCERPT_RADIUS = 8
 READ_CHUNK_BYTES = 64 * 1024
@@ -154,6 +155,23 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
         return True
     candidate, reason = code_map._candidate(git_root, path, git_inventory=True)
     return candidate is None and code_map._exclusion_reason(path, reason) is not None
+
+
+def _grep_locations(data: bytes) -> list[str]:
+    """Decode the NUL-separated path and line fields from Git grep."""
+    if len(data) > MAX_GREP_INPUT_BYTES:
+        raise SymbolLookupError("grep input exceeds 64 KiB")
+    queries: list[str] = []
+    while data:
+        if len(queries) == MAX_LOCATIONS:
+            raise SymbolLookupError(f"grep input exceeds {MAX_LOCATIONS} matches")
+        relative, _, rest = data.partition(b"\0")
+        line, _, rest = rest.partition(b"\0")
+        _, newline, data = rest.partition(b"\n")
+        if not relative or not newline or not re.fullmatch(rb"[1-9][0-9]{0,8}", line):
+            raise SymbolLookupError("grep input requires git grep -n -z output")
+        queries.append(os.fsdecode(relative + b":" + line))
+    return queries
 
 
 def _lookup_locations(
@@ -750,8 +768,10 @@ def _parser() -> argparse.ArgumentParser:
                         help="find the enclosing Python class or function (repeatable)")
     parser.add_argument("--match", dest="source_queries", action="append", nargs=2, metavar=("FILE", "LITERAL"),
                         help="find literal text and its enclosing Python symbol (can be mixed with --location)")
+    parser.add_argument("--grep-input", action="store_true",
+                        help="read up to 12 Git grep -n -z matches from standard input")
     parser.add_argument("--excerpt", type=int, metavar="LINES",
-                        help="include the selected line and up to 8 lines on each side (requires --location or --match)")
+                        help="include the selected line and up to 8 lines on each side of a Python location")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
     parser.add_argument("--max-results", type=int, default=DEFAULT_MAX_RESULTS)
     parser.add_argument(
@@ -776,12 +796,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
-    python_lookup = args.source_queries is not None
-    if python_lookup == (args.symbol is not None):
-        parser.error("provide --symbol or at least one --location or --match query")
+    python_lookup = args.source_queries is not None or args.grep_input
+    if python_lookup == (args.symbol is not None) or (args.grep_input and args.source_queries is not None):
+        parser.error("use one of --symbol, --grep-input, or a batch of --location and --match queries")
     try:
         if args.excerpt is not None and not python_lookup:
-            raise SymbolLookupError("--excerpt requires --location or --match")
+            raise SymbolLookupError("--excerpt requires --location, --match, or --grep-input")
         if args.service and python_lookup:
             raise SymbolLookupError("--service requires --symbol")
         options = {
@@ -790,8 +810,11 @@ def main(argv: list[str] | None = None) -> int:
             "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
         }
         if python_lookup:
+            queries = args.source_queries
+            if args.grep_input:
+                queries = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
             result = _lookup_locations(
-                args.repo, args.source_queries,
+                args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=args.excerpt,
             )
