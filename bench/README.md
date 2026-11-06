@@ -106,6 +106,8 @@ An offline replay of the two accepted 0.16.72 Compound patches used the saved su
 
 In the [clean Git comparison](diagram_sources/comparison_codex_flask_luna.json), the Compound runs passed a 26-test module after the session fix and a 133-test module after the corrected server fix. Each was immediately followed by a passing full suite on the same code. In an offline replay, both added IPv6 regressions failed before their fixes, and the full suite caught the intermediate `localhost:0` regression. After correction, the full suites passed all 492 and 493 tests for the two stages. The updated rule asks for one final suite per edited state and a separate regression check when that suite omits it. The published token totals include both original module checks.
 
+Using those same saved Flask patches, an offline replay ran each added regression on its unfixed and fixed source. The default failing pytest reports totaled 9,358 bytes. With `--tb=line`, they totaled 1,012 bytes (89% less) and retained the selected tests, failure exit statuses, missing session key and invalid port conversion. The fixed suites passed 492 and 493 tests. The guidance uses the short traceback for a known failure and expands it when the result leaves a diagnostic question. This replay measures emitted test output.
+
 ## Compare a change with main
 
 ```bash
