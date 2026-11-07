@@ -736,7 +736,7 @@ def _python_import_spec(module: str, level: int, imported: str | None) -> str:
 
 def _bounded_git_output(
     root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *,
-    env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,),
+    env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,), timeout: float = GIT_TIMEOUT,
 ) -> bytes | None:
     """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
     process: subprocess.Popen[bytes] | None = None
@@ -753,13 +753,13 @@ def _bounded_git_output(
         selector.register(process.stdout, selectors.EVENT_READ)
         chunks: list[bytes] = []
         size = 0
-        deadline = time.monotonic() + GIT_TIMEOUT
+        deadline = time.monotonic() + timeout
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                raise subprocess.TimeoutExpired("git log", GIT_TIMEOUT)
+                raise subprocess.TimeoutExpired("git output", timeout)
             if not selector.select(remaining):
-                raise subprocess.TimeoutExpired("git log", GIT_TIMEOUT)
+                raise subprocess.TimeoutExpired("git output", timeout)
             block = os.read(process.stdout.fileno(), min(65536, max_bytes + 1 - size))
             if not block:
                 break

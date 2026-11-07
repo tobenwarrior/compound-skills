@@ -176,33 +176,70 @@ def _grep_locations(data: bytes) -> list[tuple[str, str]]:
     return queries
 
 
-def _find_grep_matches(repo: str, literals: list[str], paths: list[str]) -> list[tuple[str, str]]:
+def _find_grep_matches(
+    root: Path, literals: list[str], scopes: list[str], *,
+    byte_limit: int = MAX_GREP_INPUT_BYTES, timeout: float = code_map.GIT_TIMEOUT,
+) -> tuple[list[tuple[str, str]], int]:
     """Search tracked Python files and return the same evidence as --grep-input."""
     if len(literals) > MAX_LOCATIONS or any(
         not literal.strip() or len(literal) > 256 or any(char in literal for char in "\x00\r\n")
         for literal in literals
     ):
         raise SymbolLookupError("provide up to 12 nonempty literals of at most 256 characters")
-    paths = [path.removeprefix("./") for path in paths]
-    if len(paths) > MAX_LOCATIONS or any(
-        not path.lower().endswith(".py") or "\x00" in path
-        or any(part in {"", ".", ".."} for part in path.split("/"))
-        for path in paths
-    ):
-        raise SymbolLookupError("--path requires up to 12 repository-relative Python files")
-    scopes = [f":(top,literal){path}" for path in paths] or [":(top,glob)**/*.py"]
     patterns = [argument for literal in literals for argument in ("-e", literal)]
     env = os.environ.copy()
     for key in ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS"):
         env.pop(key, None)
     data = code_map._bounded_git_output(
-        code_map._repo_path(repo), ["grep", "-n", "-z", "-I", "-F", "--no-color", "--full-name",
-                                    *patterns, "--", *scopes],
-        MAX_GREP_INPUT_BYTES, keep_prefix=True, env=env, ok_statuses=(0, 1),
+        root, ["grep", "-n", "-z", "-I", "-F", "--no-color", "--full-name", *patterns, "--", *scopes],
+        byte_limit, keep_prefix=True, env=env, ok_statuses=(0, 1), timeout=timeout,
     )
     if data is None:
         raise SymbolLookupError("Git search failed or timed out")
-    return _grep_locations(data)
+    if len(data) > byte_limit:
+        raise SymbolLookupError("Git search exceeds 64 KiB of matches")
+    return _grep_locations(data), len(data)
+
+
+def _grep_scope(raw: str, *, allow_directory: bool = False) -> str:
+    path = raw.removeprefix("./")
+    is_file = path.lower().endswith(".py")
+    if allow_directory and not is_file:
+        path = path.removesuffix("/")
+    if ("\x00" in path or any(part in {"", ".", ".."} for part in path.split("/"))
+            or (not allow_directory and not is_file)):
+        label = "--find-in" if allow_directory else "--path"
+        kind = "Python file or directory" if allow_directory else "Python file"
+        raise SymbolLookupError(f"{label} requires a repository-relative {kind}")
+    if is_file:
+        return f":(top,literal){path}"
+    escaped = re.sub(r"([\\*?\[\]])", r"\\\1", path)
+    return f":(top,glob){escaped}/**/*.py"
+
+
+def _scoped_grep_matches(root: Path, pairs: list[list[str]]) -> list[tuple[str, str]]:
+    if len(pairs) > MAX_LOCATIONS:
+        raise SymbolLookupError(f"--find-in accepts up to {MAX_LOCATIONS} pairs")
+    groups: dict[str, list[str]] = {}
+    for path, literal in pairs:
+        groups.setdefault(_grep_scope(path, allow_directory=True), []).append(literal)
+    matches: dict[str, str] = {}
+    remaining_bytes = MAX_GREP_INPUT_BYTES
+    deadline = time.monotonic() + code_map.GIT_TIMEOUT
+    for scope, literals in groups.items():
+        remaining_time = deadline - time.monotonic()
+        if remaining_time <= 0:
+            raise SymbolLookupError("Git search timed out")
+        found, used_bytes = _find_grep_matches(
+            root, literals, [scope], byte_limit=remaining_bytes, timeout=remaining_time,
+        )
+        remaining_bytes -= used_bytes
+        for location, line in found:
+            if matches.setdefault(location, line) != line:
+                raise SymbolLookupError("source changed between scoped searches")
+        if len(matches) > MAX_LOCATIONS:
+            raise SymbolLookupError(f"scoped search exceeds {MAX_LOCATIONS} matches")
+    return list(matches.items())
 
 
 def _lookup_locations(
@@ -808,6 +845,8 @@ def _parser() -> argparse.ArgumentParser:
                         help="read up to 12 Git grep -n -z matches from standard input")
     parser.add_argument("--find", action="append", metavar="LITERAL",
                         help="find exact text in tracked Python files and verify its enclosing symbol (repeatable)")
+    parser.add_argument("--find-in", action="append", nargs=2, metavar=("PATH", "LITERAL"),
+                        help="search one Python file or directory for a literal (repeatable)")
     parser.add_argument("--path", action="append", default=[], metavar="FILE",
                         help="restrict --find to an exact repository-relative Python file (repeatable)")
     parser.add_argument("--excerpt", type=int, metavar="LINES",
@@ -836,8 +875,10 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
-    if sum((args.symbol is not None, args.source_queries is not None, args.grep_input, args.find is not None)) != 1:
-        parser.error("use one of --symbol, --find, --grep-input, or a batch of --location and --match queries")
+    search = args.find is not None or args.find_in is not None
+    if sum((args.symbol is not None, args.source_queries is not None, args.grep_input,
+            args.find is not None, args.find_in is not None)) != 1:
+        parser.error("use one of --symbol, --find, --find-in, --grep-input, or a batch of --location and --match queries")
     if args.path and args.find is None:
         parser.error("--path requires --find")
     python_lookup = args.symbol is None
@@ -857,16 +898,23 @@ def main(argv: list[str] | None = None) -> int:
             queries = args.source_queries
             grep_lines = None
             excerpt = args.excerpt
-            if args.find is not None or args.grep_input:
-                if args.find is not None:
-                    matches = _find_grep_matches(args.repo, args.find, args.path)
+            if search or args.grep_input:
+                if search:
+                    root = code_map._repo_path(args.repo)
+                    if args.find_in is not None:
+                        matches = _scoped_grep_matches(root, args.find_in)
+                    else:
+                        if len(args.path) > MAX_LOCATIONS:
+                            raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
+                        scopes = [_grep_scope(path) for path in args.path] or [":(top,glob)**/*.py"]
+                        matches, _ = _find_grep_matches(root, args.find, scopes)
                     if excerpt is None:
                         excerpt = 0
                 else:
                     matches = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
                 queries = [location for location, _ in matches]
                 grep_lines = [line for _, line in matches]
-            result = [] if args.find is not None and not queries else _lookup_locations(
+            result = [] if search and not queries else _lookup_locations(
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=excerpt, grep_lines=grep_lines,

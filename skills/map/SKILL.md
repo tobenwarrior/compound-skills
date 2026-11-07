@@ -14,7 +14,7 @@ For Python file, symbol and line answers, reuse evidence that gives the statemen
 python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --find "<statement>" --path "<file>"
 ```
 
-Repeat `--find` and `--path` to batch up to 12 matches. Omit `--path` to search all tracked Python files. For existing Git search output use `--grep-input`. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
+Repeat `--find` and `--path` for shared scopes, or omit `--path` to search all tracked Python files. When statements have different scopes, batch `--find-in "<file-or-directory>" "<statement>"` pairs. Both modes return up to 12 matches. For existing Git search output use `--grep-input`. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
 
 For a focused read-only map, query the repository. The query reuses existing cache entries without starting a service or writing state.
 

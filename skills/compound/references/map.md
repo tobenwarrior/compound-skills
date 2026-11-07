@@ -18,6 +18,8 @@ For an exact statement in a known Python file, use `--match <relative-file> <lit
 
 Use `lookup --find <literal>` to search tracked Python files and verify the enclosing symbols in one command. Repeat `--find` for several statements and `--path <file>` for exact repository-relative files. The result includes the matching line by default. Narrow the paths or literals when the search exceeds 12 matches or 64 KiB. With no matches, the command returns an empty list.
 
+Use `lookup --find-in <file-or-directory> <literal>` when each statement needs its own scope. Repeat for up to 12 pairs. A directory searches its tracked Python files, and a repeated source line appears once. The same match and byte limits apply to the whole batch.
+
 To reuse an existing scoped Git search, pass its `git grep -n -z` output to `lookup --grep-input`. Both modes verify each matched line against the current source. If a line changed, rerun the lookup.
 
 ```bash
