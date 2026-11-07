@@ -158,14 +158,16 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
     return candidate is None and code_map._exclusion_reason(path, reason) is not None
 
 
-def _grep_locations(data: bytes, *, unmatched: set[bytes] | None = None) -> list[tuple[str, str]]:
+def _grep_locations(
+    data: bytes, *, unmatched: set[bytes] | None = None, match_limit: int | None = MAX_LOCATIONS,
+) -> list[tuple[str, str]]:
     """Decode Git grep matches and remove literals found in their raw text from unmatched."""
     if len(data) > MAX_GREP_INPUT_BYTES:
         raise SymbolLookupError("grep input exceeds 64 KiB")
     queries: list[tuple[str, str]] = []
     while data:
-        if len(queries) == MAX_LOCATIONS:
-            raise SymbolLookupError(f"grep input exceeds {MAX_LOCATIONS} matches")
+        if match_limit is not None and len(queries) == match_limit:
+            raise SymbolLookupError(f"grep input exceeds {match_limit} matches")
         relative, _, rest = data.partition(b"\0")
         line, _, rest = rest.partition(b"\0")
         matched, newline, data = rest.partition(b"\n")
@@ -207,7 +209,33 @@ def _find_grep_matches(
         raise SymbolLookupError("Git search failed or timed out")
     if len(data) > byte_limit:
         raise SymbolLookupError("Git search exceeds 64 KiB of matches")
-    return _grep_locations(data, unmatched=unmatched), len(data)
+    return _grep_locations(data, unmatched=unmatched, match_limit=None), len(data)
+
+
+def _first_search_hits(matches: list[tuple[str, str]], literals: list[str]) -> list[tuple[str, str]]:
+    """Keep the first line for each literal, sharing a line across terms."""
+    remaining = set(literals)
+    first = []
+    for location, line in matches:
+        found = {literal for literal in remaining if literal in line}
+        if found:
+            first.append((location, line))
+            remaining.difference_update(found)
+        if not remaining:
+            break
+    return first
+
+
+def _limit_search_matches(
+    matches: list[tuple[str, str]], first: list[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    """Fill the location limit after reserving the first matches."""
+    selected = dict(first)
+    for location, line in matches:
+        if len(selected) == MAX_LOCATIONS:
+            break
+        selected.setdefault(location, line)
+    return list(selected.items())
 
 
 def _python_glob_scopes(prefix: str = "") -> tuple[str, ...]:
@@ -224,7 +252,8 @@ def _grep_scopes(raw: str, *, directory_root: Path | None = None) -> tuple[str, 
             or (not allow_directory and not is_file)):
         label = "--find-in" if allow_directory else "--path"
         kind = "Python file or directory" if allow_directory else "Python file"
-        raise SymbolLookupError(f"{label} requires a repository-relative {kind}")
+        hint = "" if allow_directory else ". Use --find-in for a directory."
+        raise SymbolLookupError(f"{label} requires a repository-relative {kind}{hint}")
     if is_file and directory_root is not None:
         try:
             is_file = not stat.S_ISDIR((directory_root / path).lstat().st_mode)
@@ -238,8 +267,8 @@ def _grep_scopes(raw: str, *, directory_root: Path | None = None) -> tuple[str, 
 
 def _scoped_grep_matches(
     root: Path, pairs: list[list[str]],
-) -> tuple[list[tuple[str, str]], list[int], Path]:
-    """Search tracked statements and return the Git root used for their citations."""
+) -> tuple[list[tuple[str, str]], list[int], Path, bool]:
+    """Search scoped statements and report when the citation list is limited."""
     if len(pairs) > MAX_LOCATIONS:
         raise SymbolLookupError(f"--find-in accepts up to {MAX_LOCATIONS} pairs")
     git_root, note = code_map._git_root(root)
@@ -249,6 +278,7 @@ def _scoped_grep_matches(
     for index, (path, literal) in enumerate(pairs, start=1):
         groups.setdefault(_grep_scopes(path, directory_root=git_root), []).append((index, literal))
     matches: dict[str, str] = {}
+    first: list[tuple[str, str]] = []
     missing_pairs: list[int] = []
     remaining_bytes = MAX_GREP_INPUT_BYTES
     deadline = time.monotonic() + code_map.GIT_TIMEOUT
@@ -262,13 +292,16 @@ def _scoped_grep_matches(
             git_root, literals, scopes, byte_limit=remaining_bytes, timeout=remaining_time, unmatched=unmatched,
         )
         missing_pairs.extend(index for index, literal in queries if os.fsencode(literal) in unmatched)
+        first.extend(_first_search_hits(found, literals))
         remaining_bytes -= used_bytes
         for location, line in found:
             if matches.setdefault(location, line) != line:
                 raise SymbolLookupError("source changed between scoped searches")
-        if len(matches) > MAX_LOCATIONS:
-            raise SymbolLookupError(f"scoped search exceeds {MAX_LOCATIONS} matches")
-    return list(matches.items()), sorted(missing_pairs), git_root
+    selected = list(matches.items())
+    truncated = len(selected) > MAX_LOCATIONS
+    if truncated:
+        selected = _limit_search_matches(selected, first)
+    return selected, sorted(missing_pairs), git_root, truncated
 
 
 def _lookup_locations(
@@ -951,6 +984,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--path requires --find")
     python_lookup = args.symbol is None
     missing = []
+    search_truncated = False
     try:
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires a Python source lookup")
@@ -972,7 +1006,7 @@ def main(argv: list[str] | None = None) -> int:
                 if search:
                     root = code_map._repo_path(args.repo)
                     if args.find_in is not None:
-                        matches, missing, git_root = _scoped_grep_matches(root, args.find_in)
+                        matches, missing, git_root, search_truncated = _scoped_grep_matches(root, args.find_in)
                     else:
                         if len(args.path) > MAX_LOCATIONS:
                             raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
@@ -983,6 +1017,9 @@ def main(argv: list[str] | None = None) -> int:
                         matches, _ = _find_grep_matches(root, args.find, scopes, unmatched=unmatched)
                         if unmatched:
                             missing = [index for index, literal in enumerate(literals, start=1) if literal in unmatched]
+                        search_truncated = len(matches) > MAX_LOCATIONS
+                        if search_truncated:
+                            matches = _limit_search_matches(matches, _first_search_hits(matches, args.find))
                     if excerpt is None:
                         excerpt = 0
                 else:
@@ -1012,6 +1049,9 @@ def main(argv: list[str] | None = None) -> int:
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2
+    if search_truncated:
+        print(f"symbol-lookup: showing {MAX_LOCATIONS} matches. Narrow the literals or scopes for more specific results.",
+              file=sys.stderr)
     if missing:
         label = "--find-in pairs" if args.find_in else "--find terms"
         indices = ", ".join(map(str, missing))
