@@ -290,11 +290,28 @@ def _git_context(
     supplied: Path, inventory_result: tuple[bytes | None, list[str]] | None = None,
 ) -> tuple[Path, str, list[str] | None, list[str]]:
     """Return None for an unavailable inventory and an empty list for a completed empty one."""
-    root, note = _git_root(supplied)
-    if note is not None:
-        return root, "", None, [note]
-    head_result = _git(root, "rev-parse", "HEAD")
-    head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
+    result = _git(supplied, "rev-parse", "--show-toplevel", "--quiet", "--verify", "HEAD")
+    if result is not None and not result.stdout:
+        return supplied, "", None, ["Git inventory unavailable; use native search to inspect this repository"]
+    raw_root = raw_head = b""
+    if result and result.returncode == 0:
+        # Split from the end because a worktree name can contain newlines.
+        raw_root, _, raw_head = result.stdout.removesuffix(b"\n").rpartition(b"\n")
+    elif result and result.returncode == 1:
+        # A worktree with no commits still prints its root.
+        raw_root = result.stdout.removesuffix(b"\n")
+    if raw_root:
+        try:
+            root = Path(os.fsdecode(raw_root)).resolve(strict=True)
+        except OSError:
+            return supplied, "", None, ["Git root unavailable; use native search to inspect this repository"]
+        head = os.fsdecode(raw_head)
+    else:
+        root, note = _git_root(supplied)
+        if note is not None:
+            return root, "", None, [note]
+        head_result = _git(root, "rev-parse", "HEAD")
+        head = os.fsdecode(head_result.stdout.strip()) if head_result and head_result.returncode == 0 else ""
     inventory_data, notes = _git_inventory(root) if inventory_result is None or root != supplied else inventory_result
     if inventory_data is None:
         return root, head, None, ["Git inventory unavailable; inspect with native search"]
