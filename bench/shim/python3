@@ -44,16 +44,42 @@ def native_trace(root, log, args):
 
 
 def run_unittest(args):
-    """Forward stderr while retaining the discovery count printed by unittest."""
-    count = None
+    """Forward stderr and record unittest assertion failures and errors separately."""
+    evidence = {"failed_tests": [], "test_errors": []}
     with subprocess.Popen([sys.executable, *args], stderr=subprocess.PIPE) as child:
         for line in child.stderr:
             sys.stderr.buffer.write(line)
             sys.stderr.buffer.flush()
-            match = re.fullmatch(rb"Ran ([0-9]{1,9}) tests? in [0-9]+(?:\.[0-9]+)?s\r?\n", line)
-            if match:
-                count = int(match[1])
-        return child.wait(), count
+            count = re.fullmatch(rb"Ran ([0-9]{1,9}) tests? in [0-9]+(?:\.[0-9]+)?s\r?\n", line)
+            if count:
+                evidence["tests_run"] = int(count[1])
+            if line.startswith((b"FAIL:", b"ERROR:")):
+                key = "failed_tests" if line.startswith(b"FAIL:") else "test_errors"
+                outcome = re.match(rb"^(?:FAIL|ERROR): (\S+) \(([^)]+)\)", line)
+                name = line.strip()
+                if outcome:
+                    method, name = outcome.groups()
+                    if name.rsplit(b".", 1)[-1] != method:
+                        name += b"." + method
+                evidence[key].append(name.decode("utf-8", "replace"))
+        return child.wait(), evidence
+
+
+def run_pytest(args):
+    """Forward stdout and record pytest node IDs and the passing suite count."""
+    evidence = {"failed_tests": []}
+    with subprocess.Popen([sys.executable, *args], stdout=subprocess.PIPE) as child:
+        for line in child.stdout:
+            sys.stdout.buffer.write(line)
+            sys.stdout.buffer.flush()
+            plain = re.sub(rb"\x1b\[[0-9;]*m", b"", line).strip()
+            failed = re.fullmatch(rb"FAILED (tests/.*?::[^\s\[]+(?:\[.*?\])?)(?: - .*)?", plain)
+            if failed:
+                evidence["failed_tests"].append(failed[1].decode("utf-8", "replace"))
+            count = re.search(rb"\b([0-9]{1,9}) passed(?:, [^=]+)? in [0-9]+(?:\.[0-9]+)?s(?:\s*=+)?$", plain)
+            if count:
+                evidence["tests_run"] = int(count[1])
+        return child.wait(), evidence
 
 
 args = ["-m", "pytest", *sys.argv[1:]] if Path(sys.argv[0]).name in ("pytest", "py.test") else sys.argv[1:]
@@ -73,10 +99,12 @@ else:
     repo = projects[0] if len(projects) == 1 else None
 before = snapshot(repo, exact=exact)
 started = time.time()
-tests_run = None
+test_evidence = {}
 try:
     if module == "unittest" and sys.stderr is not None:
-        code, tests_run = run_unittest(args)
+        code, test_evidence = run_unittest(args)
+    elif module == "pytest" and sys.stdout is not None:
+        code, test_evidence = run_pytest(args)
     else:
         code = subprocess.call([sys.executable, *args])
 except KeyboardInterrupt:
@@ -87,8 +115,7 @@ if before is not None and after is not None:
               "src0": before[0], "tests0": before[1], "src1": after[0], "tests1": after[1]}
     if exact:
         record["source_digest"] = "bytes"
-    if tests_run is not None:
-        record["tests_run"] = tests_run
+    record.update(test_evidence)
     try:
         with log.open("a") as stream:
             stream.write(json.dumps(record) + "\n")
