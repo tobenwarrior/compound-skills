@@ -228,7 +228,8 @@ def _grep_scope(raw: str, *, directory_root: Path | None = None) -> str:
 
 def _scoped_grep_matches(
     root: Path, pairs: list[list[str]],
-) -> tuple[list[tuple[str, str]], list[int]]:
+) -> tuple[list[tuple[str, str]], list[int], Path]:
+    """Search tracked statements and return the Git root used for their citations."""
     if len(pairs) > MAX_LOCATIONS:
         raise SymbolLookupError(f"--find-in accepts up to {MAX_LOCATIONS} pairs")
     git_root, note = code_map._git_root(root)
@@ -257,7 +258,7 @@ def _scoped_grep_matches(
                 raise SymbolLookupError("source changed between scoped searches")
         if len(matches) > MAX_LOCATIONS:
             raise SymbolLookupError(f"scoped search exceeds {MAX_LOCATIONS} matches")
-    return list(matches.items()), sorted(missing_pairs)
+    return list(matches.items()), sorted(missing_pairs), git_root
 
 
 def _lookup_locations(
@@ -269,6 +270,7 @@ def _lookup_locations(
     max_seconds: float = DEFAULT_TIMEOUT,
     excerpt_radius: int | None = None,
     grep_lines: Sequence[str] | None = None,
+    git_root: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
@@ -283,7 +285,7 @@ def _lookup_locations(
         queries.append((relative, int(raw_line)))
     return _lookup_python(
         repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
-        max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines,
+        max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines, git_root=git_root,
     )
 
 
@@ -296,6 +298,7 @@ def _lookup_python(
     max_seconds: float,
     excerpt_radius: int | None,
     grep_lines: Sequence[str] | None,
+    git_root: Path | None,
 ) -> list[dict[str, Any]]:
     """Resolve exact lines or literal matches from the same bounded source read."""
     if not 1 <= len(queries) <= MAX_LOCATIONS:
@@ -310,12 +313,14 @@ def _lookup_python(
             _valid_symbol(selector)
     retain_lines = (excerpt_radius is not None or grep_lines is not None
                     or any(isinstance(selector, str) for _, selector in queries))
-    try:
-        root, note = code_map._git_root(code_map._repo_path(repo))
-    except code_map.CodeMapError as exc:
-        raise SymbolLookupError(str(exc)) from exc
-    if note is not None:
-        raise SymbolLookupError("Git inventory is unavailable")
+    if git_root is None:
+        try:
+            git_root, note = code_map._git_root(code_map._repo_path(repo))
+        except code_map.CodeMapError as exc:
+            raise SymbolLookupError(str(exc)) from exc
+        if note is not None:
+            raise SymbolLookupError("Git inventory is unavailable")
+    root = git_root
     requested = sorted({relative for relative, _ in queries})
     raw_paths, _ = code_map._git_inventory(root, paths=requested)
     if raw_paths is None:
@@ -916,12 +921,13 @@ def main(argv: list[str] | None = None) -> int:
         if python_lookup:
             queries = args.source_queries
             grep_lines = None
+            git_root = None
             excerpt = args.excerpt
             if search or args.grep_input:
                 if search:
                     root = code_map._repo_path(args.repo)
                     if args.find_in is not None:
-                        matches, missing_pairs = _scoped_grep_matches(root, args.find_in)
+                        matches, missing_pairs, git_root = _scoped_grep_matches(root, args.find_in)
                     else:
                         if len(args.path) > MAX_LOCATIONS:
                             raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
@@ -936,7 +942,7 @@ def main(argv: list[str] | None = None) -> int:
             result = [] if search and not queries else _lookup_locations(
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
-                excerpt_radius=excerpt, grep_lines=grep_lines,
+                excerpt_radius=excerpt, grep_lines=grep_lines, git_root=git_root,
             )
         elif args.service:
             try:
