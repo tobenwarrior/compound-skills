@@ -207,7 +207,8 @@ def refactor(project: Path, record: dict, prep: dict) -> dict:
                    "tests_catch_naive_refactor": any(status == "fail" for status in pins.values()),
                    **_mutant_kills(final, "refactor", scratch, final_info),
                    **_diff(project, prep["fixture_head"]), **_commits(project, prep["fixture_head"])}
-        outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"] and not record["harness"]["timed_out"])
+        outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"]
+                                  and not removed and not weakened and not record["harness"]["timed_out"])
         return outcome
 
 
@@ -262,7 +263,7 @@ def heldout_refactor(task: str):
                        **_mutant_kills(final, task, scratch, final_info),
                        **_diff(project, prep["fixture_head"]), **_commits(project, prep["fixture_head"])}
             outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"]
-                                      and not record["harness"]["timed_out"])
+                                      and not removed and not weakened and not record["harness"]["timed_out"])
             return outcome
     return grade
 
