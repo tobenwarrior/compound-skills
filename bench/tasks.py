@@ -240,7 +240,8 @@ def refactor(project: Path, record: dict, prep: dict) -> dict:
 SHOPKIT = FIXTURES / "shopkit"
 
 
-def _shared_helper(package: Path, shared: str, function: str, callers: tuple[str, ...], forbidden=(), no_loops=False) -> bool:
+def _shared_helper(package: Path, shared: str, function: str, callers: tuple[str, ...], forbidden=(),
+                   no_retry_loops=False) -> bool:
     """The task's shared function exists, both callers use it, and their own copies of the logic are gone."""
     import ast
     module = package / f"{shared}.py"
@@ -253,15 +254,20 @@ def _shared_helper(package: Path, shared: str, function: str, callers: tuple[str
         text = path.read_text()
         if function not in text or any(token in text for token in forbidden):
             return False
-        if no_loops and any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(ast.parse(text))):
-            return False
+        if no_retry_loops:
+            for loop in ast.walk(ast.parse(text)):
+                if isinstance(loop, (ast.For, ast.While)) and any(
+                    isinstance(node, ast.ExceptHandler) for node in ast.walk(loop)
+                ):
+                    return False
     return True
 
 
 SHOP_DUPLICATION = {
     "refactor-slugs": lambda package: _shared_helper(package, "text", "slugify", ("catalog.py", "search.py"),
                                                      forbidden=("re.sub(", "unicodedata")),
-    "refactor-retry": lambda package: _shared_helper(package, "retrying", "retry", ("payments.py", "webhooks.py"), no_loops=True),
+    "refactor-retry": lambda package: _shared_helper(package, "retrying", "retry", ("payments.py", "webhooks.py"),
+                                                     no_retry_loops=True),
     "refactor-money": lambda package: _shared_helper(package, "money", "parse_money", ("importing.py", "api.py"),
                                                      forbidden=("quantize(",)),
 }
