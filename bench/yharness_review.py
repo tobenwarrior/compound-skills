@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 
-SCHEMA = "yharness-review-offline-5"
+SCHEMA = "yharness-review-offline-6"
 EXPECTED_PARENT = "49943b5a94413a530761350f04e896f76e8d620e"
 EXPECTED_TREE = "719747b4621bddad647f0fbe89325ee1443b12d7"
 STATIC_FOLDERS_LINES = range(413, 443)
@@ -49,6 +49,7 @@ RULES: dict[str, dict[str, tuple[str, ...]]] = {
             r"does not disable cach",
             r"cannot disable cach",
             r"falls? through.{0,80}(default|config|cache)",
+            r"\b(?:0|zero)\b.{0,40}\bis (?:discarded|ignored)\b.{0,90}\bdefault cach(?:e|ing)(?: policy)? is (?:used|applied)\b",
             r"cache-control.{0,100}(public|max-age)",
             r"never works",
         ),
