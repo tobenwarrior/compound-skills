@@ -28,7 +28,7 @@ After routing succeeds, configure optional map access for the selected hosts. Re
 
 - Codex: `sandbox_workspace_write.writable_roots` in `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`); if a named permission profile is active, use its existing filesystem rules. See [official configuration](https://developers.openai.com/codex/config-reference).
 - Cursor: `additionalReadwritePaths` in `~/.cursor/sandbox.json`. See [native sandbox configuration](https://cursor.com/docs/reference/sandbox).
-- Claude Code: after enabling, merge the helper's `hosts.claude.permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`), so the map query and guide reads need no approval in each task. They name this install's path, so they come only from Claude Code's own copy: run from another app's copy, the helper reports none and says so. Setup again after a plugin update replaces them.
+- Claude Code: from Claude's installed copy on macOS or Linux, run `python3 -IB <installed-skill-dir>/scripts/claude_map_launcher.py install`. After it succeeds, merge its `permission_rules` into `permissions.allow` in `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`). Remove old Compound-generated rules for versioned map commands and guide directories under its own Claude plugin cache. Preserve other rules. The launcher follows Claude's enabled user installation across updates. For unsupported installs or a denied bootstrap, use the bundled commands with normal host permissions.
 
 Preserve existing entries, modes, approvals, networking, and unrelated settings. Back up and validate config before writing. Skip symlinked, malformed or inaccessible config paths and report the affected host. If state access is denied, skip its write-path setup and report that the live map and project assessment state may be unavailable. Routing stays enabled where the helper succeeded.
 
@@ -48,7 +48,7 @@ python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <pr
 
 Project setup manages `AGENTS.md`, an existing nonempty root `AGENTS.override.md`, and a project Claude rule when legacy Claude instructions shadow `AGENTS.md`. It changes no global defaults. Both project and global setup stop when the helper detects that an instruction file changed before its update. Report any already-applied paths and rerun against the latest text.
 
-Read the JSON result. After a successful enable, prepare the local map once:
+Read the JSON result. After a successful enable, prepare the local map once. Use the Claude command prefix in the core guide when its launcher is configured:
 
 ```bash
 python3 -B <installed-skill-dir>/scripts/code_map.py --repo <project-root> --max-chars 500
@@ -66,7 +66,7 @@ For an explicit `compound refresh`, resolve the project root and update its exis
 python3 <installed-skill-dir>/scripts/project_setup.py refresh --project-root <project-root>
 ```
 
-For `compound refresh global`, use `refresh --global` and preserve any requested host selection. Refresh updates only existing marked blocks. Skip map startup, assessment and permission setup. Report changed paths, status, and warnings. Open a fresh chat to load the refreshed instructions. Use `setup-global` from Claude Code when its map permissions need to be refreshed for the new install path.
+For `compound refresh global`, use `refresh --global` and preserve any requested host selection. Refresh updates only existing marked blocks. Skip map startup, assessment and permission setup. Report changed paths, status, and warnings. Open a fresh chat to load the refreshed instructions. Use `setup-global` from Claude Code once to migrate old version-specific map permissions.
 
 ## Inspect or remove defaults
 
@@ -78,4 +78,4 @@ For a Claude Code map permission check, run this from Claude Code's installed co
 python3 -B <installed-skill-dir>/scripts/project_setup.py status --global --host claude --check-claude-permissions
 ```
 
-Report `hosts.claude.permission_check` separately from saved routing. It checks whether the exact expected entries are present in user `settings.json`. Effective access also depends on Claude Code's other permission settings. If entries are missing, run `setup-global` in Claude Code when the user asks to repair them. Unavailable settings leave routing status intact.
+Report `hosts.claude.permission_check` separately from saved routing. It checks the stable launcher and expected entries in user `settings.json`. Effective access also depends on Claude Code's other permission settings. If entries are missing, run `setup-global` in Claude Code when the user asks to repair them. Unavailable settings leave routing status intact.

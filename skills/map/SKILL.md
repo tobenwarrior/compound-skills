@@ -24,6 +24,8 @@ For a focused read-only map, query the repository. The query reuses existing cac
 python3 -B "<map-skill-dir>/scripts/map.py" query --repo "<repo-root>" --query "<task terms>"
 ```
 
+In Claude Code with saved global guidance, use `python3 -IB ${CLAUDE_PLUGIN_DATA}/claude_map_launcher.py query --cache-read-only` as the focused query prefix. Single-quote the launcher path if it contains spaces. If it is unavailable, use the bundled command with normal host permissions.
+
 For a bare map invocation or a visual request, open the current repository's live viewer.
 
 ```bash

@@ -29,6 +29,8 @@ Use project instructions already supplied; check known repository instruction fi
 - **Edits authorized:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>"`. This starts or reuses the local service and incremental cache.
 - **Read-only explanation/review:** `python3 -B <installed-skill-dir>/scripts/code_map.py --repo <repo-root> --query "<task terms>" --cache-read-only`. This validates and reuses any existing cache without writing or starting a service; missing or changed files are scanned in memory. Use `--no-cache` to bypass existing caches entirely.
 
+In Claude Code with saved global guidance, replace the bundled query prefix with `python3 -IB ${CLAUDE_PLUGIN_DATA}/claude_map_launcher.py query`. Single-quote the launcher path if it contains spaces. If the launcher is unavailable, use the bundled command with normal host permissions.
+
 Run the map query as a single command on its own, with the full script path and no `cd`, `;`, `&&` or shell variables, so one permission rule can allow it; read references with your file-reading tool, not the shell. Change only what the request covers.
 
 Read known files before searching. Search from the repository root or a known subdirectory. Locate the symbol and nearest test, then read their line ranges. Use native Read for the first read of edit targets when required. Batch reads. Patch each file together when supported. Order dependent replacements. Follow only relevant map links. See [code maps](references/map.md) for coverage.

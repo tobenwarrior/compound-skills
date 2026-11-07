@@ -563,17 +563,21 @@ def _other_app_holding_this_install() -> str | None:
 
 
 def _claude_permission_rules() -> list[str]:
-    """Allow rules that let Claude Code run this install's map query and read its guides without asking each task."""
-    skill_dir = Path(__file__).resolve().parent.parent
-    code_map = skill_dir / "scripts" / "code_map.py"
-    map_script = skill_dir.parent / "map" / "scripts" / "map.py"
-    # A leading // marks an absolute path in a Claude Code Read rule.
-    return [
-        f"Bash(python3 -B {code_map}:*)",
-        f"Bash(python3 {code_map}:*)",
-        f"Bash(python3 -B {map_script} query:*)",
-        f"Read(/{skill_dir}/**)",
-    ]
+    """Offer stable rules only from Claude's installed Compound copy."""
+    try:
+        try:
+            from .claude_map_launcher import CACHE, SCRIPT, config_home, permission_rules
+        except ImportError:
+            from claude_map_launcher import CACHE, SCRIPT, config_home, permission_rules
+        base = config_home()
+        path = Path(__file__).resolve().with_name(SCRIPT.name)
+        if os.name == "posix" and path.is_relative_to(base / CACHE):
+            relative = path.relative_to(base / CACHE)
+            if Path(*relative.parts[1:]) == SCRIPT:
+                return permission_rules(base)
+    except (ImportError, OSError, ValueError, RuntimeError):
+        pass
+    return []
 
 
 MAX_CLAUDE_SETTINGS_BYTES = 1024 * 1024
@@ -612,6 +616,17 @@ def _claude_permission_check(rules: Sequence[str]) -> dict[str, object]:
             "missing_rules": missing,
             "message": "Run setup-global in Claude Code to add the missing rules for this installation.",
         }
+    try:
+        try:
+            from .claude_map_launcher import LAUNCHER, _read_owned, current_install
+        except ImportError:
+            from claude_map_launcher import LAUNCHER, _read_owned, current_install
+        current_install(canonical)
+        if not _read_owned(canonical, LAUNCHER):
+            raise ValueError("launcher is empty")
+    except (OSError, ValueError, TypeError, AttributeError, RuntimeError):
+        return {"status": "missing", "missing_rules": [],
+                "message": "Run setup-global in Claude Code to prepare the stable map launcher."}
     return {"status": "present", "missing_rules": []}
 
 
