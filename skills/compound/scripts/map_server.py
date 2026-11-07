@@ -955,19 +955,23 @@ class MapService:
         try:
             inventory_result = engine._git_inventory(project.root)
             before = _inventory_fingerprint(project.root, inventory_result)
-            display_name = engine.repository_name(project.root)
             with project.lock:
                 pending = project.model.get("coverage", {}).get("pending", 0) if project.model else 0
                 unchanged = bool(before) and project.model is not None and project.inventory_fingerprint == before
                 # Files deferred by the read budget force another pass only while passes parse more of them.
-                if not force and unchanged and (not pending or project.stalled) and not project.error:
+                reuse = not force and unchanged and (not pending or project.stalled) and not project.error
+                if not reuse:
+                    refresh, project.reparse = project.reparse, False
+            if reuse:
+                # Rebuilds already obtain the display name in the engine.
+                display_name = engine.repository_name(project.root)
+                with project.lock:
                     if project.name != display_name or project.model.get("root_name") != display_name:
                         project.model = {**project.model, "root_name": display_name}
                         project.name = display_name
                         project.revision += 1
                         project.updated_at = _now()
-                    return
-                refresh, project.reparse = project.reparse, False
+                return
             model = engine._build_model(
                 project.root, query="", max_files=INDEX_MAX_FILES, refresh=refresh,
                 inventory_result=inventory_result if before else None,
@@ -993,7 +997,7 @@ class MapService:
                 project.stalled = not refresh and unchanged and bool(pending) and model.get("coverage", {}).get("pending", 0) >= pending
                 if git_state is not None:
                     project.git_fingerprint = git_state
-                project.name = model.get("root_name", display_name)
+                project.name = model.get("root_name", project.name)
                 project.error = None
                 project.updated_at = _now()
         except Exception as exc:
