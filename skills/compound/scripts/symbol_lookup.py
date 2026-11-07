@@ -171,6 +171,10 @@ def _grep_locations(data: bytes, *, unmatched: set[bytes] | None = None) -> list
         matched, newline, data = rest.partition(b"\n")
         if not relative or not newline or not re.fullmatch(rb"[1-9][0-9]{0,8}", line):
             raise SymbolLookupError("grep input requires git grep -n -z output")
+        if b"\0" in matched:
+            column, _, matched = matched.partition(b"\0")
+            if not re.fullmatch(rb"[1-9][0-9]{0,8}", column) or b"\0" in matched:
+                raise SymbolLookupError("grep input has an invalid column field")
         if unmatched:
             unmatched.difference_update([literal for literal in unmatched if literal in matched])
         encoding = "utf-8-sig" if line == b"1" else "utf-8"

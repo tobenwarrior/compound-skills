@@ -20,7 +20,7 @@ Use `lookup --find <literal>` to search tracked Python files and verify the encl
 
 Use `lookup --find-in <file-or-directory> <literal>` when each statement needs its own scope. Repeat for up to 12 pairs. A directory searches its tracked Python files, and a repeated source line appears once. The same match and byte limits apply to the whole batch. Unmatched pairs are reported by their 1-based argument order on stderr. Stdout contains the JSON matches.
 
-To reuse an existing scoped Git search, pass its `git grep -n -z` output to `lookup --grep-input`. Both modes verify each matched line against the current source. If a line changed, rerun the lookup.
+To reuse an existing scoped Git search, pass its `git grep -n -z` output to `lookup --grep-input`. Optional Git column numbers are accepted. The lookup verifies each matched line against the current source. If a line changed, rerun the lookup.
 
 ```bash
 git -C "<repo-root>" grep -n -z -I -F --no-color -e "<statement>" -- "<python-file>" |
