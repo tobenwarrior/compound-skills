@@ -33,7 +33,7 @@ Read known files before searching. Search from the repository root or a known su
 
 For local bugs, verify the receiver's outcome for the exact arguments the caller will send, even when the regression mocks that receiver. For parsing or default changes, cover valid inputs with omitted fields and meaningful falsy values. Add a regression if coverage is missing and retain existing test cases and assertions. Run the failing case before source edits and confirm the expected failure. For pytest, start with `--tb=line`. When both patches are ready, batch the test edit, regression, and source edit if supported. Apply source only after the expected failure. Once source, tests, and formatting are final, batch the full suite and scoped diff when possible. Run a separate focused check only for a gap in the suite, diagnosis, or a project requirement.
 
-For a scoped extraction with known callers and behavior, cover gaps, baseline once, preserve each caller's policy and compatibility, then check retired names in the diff and run required checks. Open Refactor when callers, behavior, or verification are unclear. Otherwise, open only the guide needed for the task below.
+For a scoped extraction with known callers and behavior, batch caller and test reads. Cover missing input and failure boundaries through existing callers and pass the baseline before editing source. Preserve each caller's policy and compatibility, then check retired names in the final diff and run required checks. Open Refactor when callers, behavior, or verification are unclear. Otherwise, open only the guide needed for the task below.
 
 | Task | Reference |
 | --- | --- |
