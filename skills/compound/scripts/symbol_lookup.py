@@ -160,7 +160,7 @@ def _budget_exempt(git_root: Path, path: str) -> bool:
 
 def _grep_locations(
     data: bytes, *, unmatched: set[bytes] | None = None, match_limit: int | None = MAX_LOCATIONS,
-    allow_partial: bool = False,
+    allow_partial: bool = False, excluded_paths: set[str] | None = None,
 ) -> list[tuple[str, str]]:
     """Decode Git grep matches and remove literals found in their raw text from unmatched."""
     if len(data) > MAX_GREP_INPUT_BYTES:
@@ -180,16 +180,23 @@ def _grep_locations(
             column, _, matched = matched.partition(b"\0")
             if not re.fullmatch(rb"[1-9][0-9]{0,8}", column) or b"\0" in matched:
                 raise SymbolLookupError("grep input has an invalid column field")
+        relative_path = os.fsdecode(relative)
+        if excluded_paths is not None and (
+            code_map._private(relative_path) or code_map._skip_dir(relative_path, git_inventory=True)
+        ):
+            excluded_paths.add(relative_path)
+            continue
         if unmatched:
             unmatched.difference_update([literal for literal in unmatched if literal in matched])
         encoding = "utf-8-sig" if line == b"1" else "utf-8"
         matched_text = matched.removesuffix(b"\r").decode(encoding)
-        queries.append((os.fsdecode(relative + b":" + line), matched_text))
+        queries.append((f"{relative_path}:{line.decode('ascii')}", matched_text))
     return queries
 
 
 def _find_grep_matches(
     root: Path, literals: list[str], scopes: Sequence[str], *,
+    excluded_paths: set[str],
     byte_limit: int = MAX_GREP_INPUT_BYTES, timeout: float = code_map.GIT_TIMEOUT,
     unmatched: set[bytes] | None = None,
 ) -> tuple[list[tuple[str, str]], int, bool]:
@@ -212,12 +219,14 @@ def _find_grep_matches(
         raise SymbolLookupError("Git search failed or timed out")
     truncated = len(data) > byte_limit
     prefix = data[:byte_limit]
-    matches = _grep_locations(prefix, unmatched=unmatched, match_limit=None, allow_partial=truncated)
+    matches = _grep_locations(prefix, unmatched=unmatched, match_limit=None, allow_partial=truncated,
+                              excluded_paths=excluded_paths)
     return matches, len(prefix), truncated
 
 
 def _search_literals(
     root: Path, literals: list[str], scopes: Sequence[str], byte_limit: int, timeout: float,
+    excluded_paths: set[str],
 ) -> tuple[list[tuple[str, str]], set[bytes], int, bool]:
     """Reserve room for literals that a capped combined search did not reach."""
     deadline = time.monotonic() + timeout
@@ -225,6 +234,7 @@ def _search_literals(
     reserve = byte_limit // 4 if len(unmatched) > 1 else 0
     matches, used, truncated = _find_grep_matches(
         root, literals, scopes, byte_limit=byte_limit - reserve, timeout=timeout, unmatched=unmatched,
+        excluded_paths=excluded_paths,
     )
     if not truncated:
         return matches, unmatched, used, False
@@ -238,6 +248,7 @@ def _search_literals(
             break
         found, consumed, partial = _find_grep_matches(
             root, [literal], scopes, byte_limit=share, timeout=remaining_time,
+            excluded_paths=excluded_paths,
         )
         matches.extend(found)
         used += consumed
@@ -300,7 +311,7 @@ def _grep_scopes(raw: str, *, directory_root: Path | None = None) -> tuple[str, 
 
 
 def _scoped_grep_matches(
-    root: Path, pairs: list[list[str]],
+    root: Path, pairs: list[list[str]], excluded_paths: set[str],
 ) -> tuple[list[tuple[str, str]], list[int], Path, bool]:
     """Search scoped statements and report when the citation list is limited."""
     if len(pairs) > MAX_LOCATIONS:
@@ -324,7 +335,7 @@ def _scoped_grep_matches(
         literals = [literal for _, literal in queries]
         share = remaining_bytes // (len(groups) - count)
         found, unmatched, used_bytes, partial = _search_literals(
-            git_root, literals, scopes, share, remaining_time,
+            git_root, literals, scopes, share, remaining_time, excluded_paths,
         )
         truncated |= partial
         missing_pairs.extend(index for index, literal in queries if os.fsencode(literal) in unmatched)
@@ -1021,6 +1032,7 @@ def main(argv: list[str] | None = None) -> int:
     python_lookup = args.symbol is None
     missing = []
     search_truncated = False
+    excluded_paths: set[str] = set()
     try:
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires a Python source lookup")
@@ -1042,7 +1054,9 @@ def main(argv: list[str] | None = None) -> int:
                 if search:
                     root = code_map._repo_path(args.repo)
                     if args.find_in is not None:
-                        matches, missing, git_root, search_truncated = _scoped_grep_matches(root, args.find_in)
+                        matches, missing, git_root, search_truncated = _scoped_grep_matches(
+                            root, args.find_in, excluded_paths,
+                        )
                     else:
                         if len(args.path) > MAX_LOCATIONS:
                             raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
@@ -1050,7 +1064,7 @@ def main(argv: list[str] | None = None) -> int:
                         scopes = scopes or _python_glob_scopes()
                         literals = [os.fsencode(literal) for literal in args.find]
                         matches, unmatched, _, search_truncated = _search_literals(
-                            root, args.find, scopes, MAX_GREP_INPUT_BYTES, code_map.GIT_TIMEOUT,
+                            root, args.find, scopes, MAX_GREP_INPUT_BYTES, code_map.GIT_TIMEOUT, excluded_paths,
                         )
                         if len(literals) > 1 and unmatched:
                             missing = [index for index, literal in enumerate(literals, start=1) if literal in unmatched]
@@ -1089,6 +1103,8 @@ def main(argv: list[str] | None = None) -> int:
     if search_truncated:
         print(f"symbol-lookup: showing {len(result)} matches. Narrow the literals or scopes for more specific results.",
               file=sys.stderr)
+    if excluded_paths:
+        print(f"symbol-lookup: skipped {len(excluded_paths)} excluded source paths.", file=sys.stderr)
     if missing:
         label = "--find-in pairs" if args.find_in else "--find terms"
         indices = ", ".join(map(str, missing))
