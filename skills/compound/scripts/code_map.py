@@ -70,6 +70,7 @@ MAX_COCHANGE_COMMITS = 30
 MAX_COCHANGE_FILES = 60
 MAX_COCHANGE_RESULTS = 6
 MAX_GIT_LOG_BYTES = 1024 * 1024
+MAX_GIT_FILTER_CONFIG_BYTES = 16 * 1024
 MAX_GIT_INVENTORY_BYTES = 4 * 1024 * 1024
 INVENTORY_CAP_NOTE = "Git inventory capped at 4 MiB of paths; later files are not indexed"
 UNTRACKED_INVENTORY_NOTE = "Git untracked inventory unavailable. Showing tracked paths only."
@@ -338,15 +339,31 @@ def _git_branch(root: Path) -> str:
     return branch[:256]
 
 
+def _git_status(root: Path, options: list[str], max_bytes: int) -> bytes | None:
+    """Read status with external clean filters disabled for the effective Git configuration."""
+    keys = _bounded_git_output(
+        root, ["config", "--null", "--name-only", "--get-regexp", r"^filter\..*\.(clean|process|required)$"],
+        MAX_GIT_FILTER_CONFIG_BYTES, ok_statuses=(0, 1),
+    )
+    if keys is None:
+        return None
+    drivers = sorted({os.fsdecode(key).rsplit(".", 1)[0] for key in keys.split(b"\0") if key})
+    if any("=" in driver or not driver.isprintable() for driver in drivers):
+        return None
+    overrides = []
+    for driver in drivers:
+        overrides.extend(("-c", f"{driver}.clean=", "-c", f"{driver}.process=", "-c", f"{driver}.required=false"))
+    return _bounded_git_output(root, ["status", "--ignore-submodules=dirty", *options], max_bytes,
+                               config_options=overrides)
+
+
 def _git_changes_result(root: Path) -> tuple[dict[str, str], str | None]:
     """Return bounded porcelain statuses keyed by the current path.
 
     The inventory remains authoritative for which files enter the model, so a
     deleted path can never become a metadata-only ghost in the result.
     """
-    raw_status = _bounded_git_output(
-        root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"], MAX_GIT_LOG_BYTES
-    )
+    raw_status = _git_status(root, ["--porcelain=v1", "-z", "--untracked-files=all"], MAX_GIT_LOG_BYTES)
     if raw_status is None:
         return {}, "Git status unavailable or exceeded the bounded output limit; changed-file metadata is unavailable"
     changes: dict[str, str] = {}
@@ -739,13 +756,14 @@ def _python_import_spec(module: str, level: int, imported: str | None) -> str:
 def _bounded_git_output(
     root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *,
     env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,), timeout: float = GIT_TIMEOUT,
+    config_options: list[str] | None = None,
 ) -> bytes | None:
     """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
     process: subprocess.Popen[bytes] | None = None
     selector: selectors.BaseSelector | None = None
     try:
         process = subprocess.Popen(
-            [*GIT_READ, "-C", str(root), *arguments],
+            [*GIT_READ, *(config_options or ()), "-C", str(root), *arguments],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             env=env,

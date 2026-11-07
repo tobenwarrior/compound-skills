@@ -137,8 +137,7 @@ def _inventory_fingerprint(
     # A complete inventory already covers untracked paths and their metadata.
     capped = engine.INVENTORY_CAP_NOTE in notes
     untracked = "--untracked-files=all" if capped else "--untracked-files=no"
-    status = engine._bounded_git_output(root, ["status", "--porcelain=v2", "--branch", "-z", untracked],
-                                        engine.MAX_GIT_INVENTORY_BYTES)
+    status = engine._git_status(root, ["--porcelain=v2", "--branch", "-z", untracked], engine.MAX_GIT_INVENTORY_BYTES)
     if status is None:
         return ""
     digest = hashlib.sha256(status)
