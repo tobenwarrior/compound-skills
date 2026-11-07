@@ -16,7 +16,7 @@ To verify the enclosing symbol of a Python citation, run `python3 -B <installed-
 
 For an exact statement in a known Python file, use `--match <relative-file> <literal-text>`. Results follow query order across both options. Each result lists up to three matching lines with their enclosing symbols and reports whether more matched. Matches are case-sensitive substrings, including in comments and strings. Use `--excerpt 0` to return the matching line itself, or a larger radius for context. A file used by several pairs is read and parsed once.
 
-Use `lookup --find <literal>` to search tracked Python files and verify the enclosing symbols in one command. Repeat `--find` for several statements and `--path <file>` for exact repository-relative files. The result includes the matching line by default. Narrow the paths or literals when the search exceeds 12 matches or 64 KiB. With no matches, the command returns an empty list.
+Use `lookup --find <literal>` to search tracked Python files and verify the enclosing symbols in one command. Searches cover `.py` and `.pyw` files with any extension casing. Repeat `--find` for several statements and `--path <file>` for exact repository-relative files. The result includes the matching line by default. Narrow the paths or literals when the search exceeds 12 matches or 64 KiB. With no matches, the command returns an empty list.
 
 Use `lookup --find-in <file-or-directory> <literal>` when each statement needs its own scope. Repeat for up to 12 pairs. A directory searches its tracked Python files, and a repeated source line appears once. The same match and byte limits apply to the whole batch. Unmatched pairs are reported by their 1-based argument order on stderr. Stdout contains the JSON matches.
 

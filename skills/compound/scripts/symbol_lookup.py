@@ -180,7 +180,7 @@ def _grep_locations(data: bytes, *, unmatched: set[bytes] | None = None) -> list
 
 
 def _find_grep_matches(
-    root: Path, literals: list[str], scopes: list[str], *,
+    root: Path, literals: list[str], scopes: Sequence[str], *,
     byte_limit: int = MAX_GREP_INPUT_BYTES, timeout: float = code_map.GIT_TIMEOUT,
     unmatched: set[bytes] | None = None,
 ) -> tuple[list[tuple[str, str]], int]:
@@ -205,10 +205,14 @@ def _find_grep_matches(
     return _grep_locations(data, unmatched=unmatched), len(data)
 
 
-def _grep_scope(raw: str, *, directory_root: Path | None = None) -> str:
+def _python_glob_scopes(prefix: str = "") -> tuple[str, ...]:
+    return (f":(top,glob){prefix}**/*.[pP][yY]", f":(top,glob){prefix}**/*.[pP][yY][wW]")
+
+
+def _grep_scopes(raw: str, *, directory_root: Path | None = None) -> tuple[str, ...]:
     path = raw.removeprefix("./")
     allow_directory = directory_root is not None
-    is_file = path.lower().endswith(".py")
+    is_file = code_map._language(path) == "python"
     if allow_directory and not is_file:
         path = path.removesuffix("/")
     if ("\x00" in path or any(part in {"", ".", ".."} for part in path.split("/"))
@@ -222,9 +226,9 @@ def _grep_scope(raw: str, *, directory_root: Path | None = None) -> str:
         except (FileNotFoundError, NotADirectoryError):
             pass  # Git can report no matches for a missing scope.
     if is_file:
-        return f":(top,literal){path}"
+        return (f":(top,literal){path}",)
     escaped = re.sub(r"([\\*?\[\]])", r"\\\1", path)
-    return f":(top,glob){escaped}/**/*.py"
+    return _python_glob_scopes(f"{escaped}/")
 
 
 def _scoped_grep_matches(
@@ -236,21 +240,21 @@ def _scoped_grep_matches(
     git_root, note = code_map._git_root(root)
     if note is not None:
         raise SymbolLookupError("Git inventory is unavailable")
-    groups: dict[str, list[tuple[int, str]]] = {}
+    groups: dict[tuple[str, ...], list[tuple[int, str]]] = {}
     for index, (path, literal) in enumerate(pairs, start=1):
-        groups.setdefault(_grep_scope(path, directory_root=git_root), []).append((index, literal))
+        groups.setdefault(_grep_scopes(path, directory_root=git_root), []).append((index, literal))
     matches: dict[str, str] = {}
     missing_pairs: list[int] = []
     remaining_bytes = MAX_GREP_INPUT_BYTES
     deadline = time.monotonic() + code_map.GIT_TIMEOUT
-    for scope, queries in groups.items():
+    for scopes, queries in groups.items():
         remaining_time = deadline - time.monotonic()
         if remaining_time <= 0:
             raise SymbolLookupError("Git search timed out")
         literals = [literal for _, literal in queries]
         unmatched = {os.fsencode(literal) for literal in literals}
         found, used_bytes = _find_grep_matches(
-            git_root, literals, [scope], byte_limit=remaining_bytes, timeout=remaining_time, unmatched=unmatched,
+            git_root, literals, scopes, byte_limit=remaining_bytes, timeout=remaining_time, unmatched=unmatched,
         )
         missing_pairs.extend(index for index, literal in queries if os.fsencode(literal) in unmatched)
         remaining_bytes -= used_bytes
@@ -945,7 +949,8 @@ def main(argv: list[str] | None = None) -> int:
                     else:
                         if len(args.path) > MAX_LOCATIONS:
                             raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
-                        scopes = [_grep_scope(path) for path in args.path] or [":(top,glob)**/*.py"]
+                        scopes = [scope for path in args.path for scope in _grep_scopes(path)]
+                        scopes = scopes or _python_glob_scopes()
                         matches, _ = _find_grep_matches(root, args.find, scopes)
                     if excerpt is None:
                         excerpt = 0
