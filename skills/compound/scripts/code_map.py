@@ -63,6 +63,7 @@ MAX_DEPS = 256
 MAX_IMPORTS = MAX_DEPS * 2
 MAX_PARSE_NOTE_CHARS = 160
 GIT_TIMEOUT = 5
+GIT_READ = ("git", "--no-optional-locks", "-c", "core.fsmonitor=false")
 CACHE_VERSION = 16
 ANALYSIS_KINDS = {"python-ast", "javascript-outline", "heuristic-outline", "metadata"}
 MAX_COCHANGE_COMMITS = 30
@@ -162,7 +163,7 @@ def _repo_path(raw: str | os.PathLike[str]) -> Path:
 def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
     try:
         return subprocess.run(
-            ["git", "--no-optional-locks", "-C", str(path), *args], capture_output=True, check=False, timeout=GIT_TIMEOUT
+            [*GIT_READ, "-C", str(path), *args], capture_output=True, check=False, timeout=GIT_TIMEOUT
         )
     except (OSError, subprocess.TimeoutExpired):
         return None
@@ -744,7 +745,7 @@ def _bounded_git_output(
     selector: selectors.BaseSelector | None = None
     try:
         process = subprocess.Popen(
-            ["git", "--no-optional-locks", "-C", str(root), *arguments],
+            [*GIT_READ, "-C", str(root), *arguments],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             env=env,
