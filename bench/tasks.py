@@ -8,6 +8,7 @@ A task is a dict in TASKS:
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -71,8 +72,19 @@ def _hidden(tree: Path, name: str) -> bool:
 
 
 def _diff(project: Path, base: str) -> dict:
-    subprocess.run(["git", "-C", str(project), "add", "-A", "-N", "."], capture_output=True)
-    numstat = _git(project, "diff", base, "--numstat")
+    git = ["git", "-C", str(project)]
+    index_path = subprocess.check_output(
+        [*git, "rev-parse", "--path-format=absolute", "--git-path", "index"],
+    ).removesuffix(b"\n")
+    source_index = Path(os.fsdecode(index_path))
+    # Intent-to-add includes new files in the diff. Keep those entries in a temporary index.
+    with tempfile.TemporaryDirectory(prefix="bench-diff-") as folder:
+        index = Path(folder) / "index"
+        if source_index.is_file():
+            shutil.copyfile(source_index, index)
+        env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        subprocess.run([*git, "add", "-A", "-N", "--", "."], env=env, capture_output=True, check=True)
+        numstat = subprocess.check_output([*git, "diff", base, "--numstat"], env=env, text=True)
     files, src, tests, other = [], 0, 0, []
     for line in numstat.splitlines():
         added, removed, name = line.split("\t", 2)
@@ -84,7 +96,6 @@ def _diff(project: Path, base: str) -> dict:
             tests += lines
         else:
             other.append(name)
-    subprocess.run(["git", "-C", str(project), "reset", "-q"], capture_output=True)
     return {"files": files, "src_lines": src, "test_lines": tests, "other_files": other}
 
 
