@@ -22,7 +22,7 @@ WORKLOADS = ('small-edit', 'upstream-fix', 'refactor', 'review', 'navigation')
 COST_FIELDS = ('allowance', 'list_cost', 'cost')
 NATIVE_PROVIDER = 'codex-chatgpt'
 FOLLOWUP_PROMPTS = {'semantic_repair': 'repair_prompt_sha256', 'interruption_recovery': 'recovery_prompt_sha256'}
-REFACTOR_SUITE = ['-m', 'unittest', 'discover', '-s', 'tests']
+UNITTEST_SUITE = ['-m', 'unittest', 'discover', '-s', 'tests']
 PYTEST_SUITE_ARGS = {'-q', '-v', '-vv', '-ra', '-rA', '-x', '--disable-warnings', '--tb=line',
                      '--tb=short', '--tb=auto', '--tb=no', 'tests', 'tests/', '.', '-p', 'no:cacheprovider'}
 
@@ -153,7 +153,7 @@ def _verified_refactor(original_source, attempts):
     state, count = final
     baseline_end = None
     for run in _stable_test_runs(state, attempts):
-        if (run.get('argv') not in (REFACTOR_SUITE, ['-B', *REFACTOR_SUITE])
+        if (run.get('argv') not in (UNITTEST_SUITE, ['-B', *UNITTEST_SUITE])
                 or type(run.get('exit')) is not int or run['exit'] != 0
                 or type(run.get('tests_run')) is not int or run['tests_run'] != count):
             continue
@@ -165,7 +165,7 @@ def _verified_refactor(original_source, attempts):
     return False
 
 
-def _verified_bugfix(original_source, original_tests, attempts):
+def _verified_bugfix(original_source, original_tests, attempts, runner):
     """Find the expected regression on original source before the final suite."""
     if not _digest(original_source, (16,)) or not _digest(original_tests, (16,)):
         return False
@@ -177,20 +177,26 @@ def _verified_bugfix(original_source, original_tests, attempts):
     if not regressions or state['tests'] == original_tests:
         return False
     baseline_end = None
+    pytest = runner == 'pytest'
+    module = 'pytest' if pytest else 'unittest'
     for run in _stable_test_runs(state, attempts):
         argv = run.get('argv') or []
         if argv[:1] == ['-B']:
             argv = argv[1:]
-        if argv[:2] != ['-m', 'pytest'] or type(run.get('exit')) is not int:
+        if argv[:2] != ['-m', module] or type(run.get('exit')) is not int:
             continue
-        if (run['src0'] == original_source and run['exit'] == 1
-                and regressions.intersection(run.get('failed_tests', []))):
-            end = run['t1']
-            baseline_end = end if baseline_end is None else min(baseline_end, end)
+        if run['src0'] == original_source and run['exit'] == 1:
+            failed = set(run.get('failed_tests', []))
+            expected = (regressions.intersection(failed) if pytest
+                        else failed and failed <= regressions and run.get('test_errors') == [])
+            if expected:
+                end = run['t1']
+                baseline_end = end if baseline_end is None else min(baseline_end, end)
         elif (run['src0'] == state['src'] and run['exit'] == 0
                 and type(run.get('tests_run')) is int and run['tests_run'] == count
-                and set(argv[2:]) <= PYTEST_SUITE_ARGS and baseline_end is not None and baseline_end <= run['t0']):
-            return True
+                and baseline_end is not None and baseline_end <= run['t0']):
+            if (set(argv[2:]) <= PYTEST_SUITE_ARGS if pytest else argv == UNITTEST_SUITE):
+                return True
     return False
 
 
@@ -219,9 +225,10 @@ def check_workload(document, candidate, *, seen_responses=None):
                             or any(not _digest(task.get('original_source_digest'), (16,)) for task in tasks)):
         raise ValueError('refactor verification requires unittest discovery and frozen original source digests')
     verify_bugfix = 'bugfix_verification' in plan['protocol']
+    bugfix_runner = plan['protocol'].get('bugfix_verification')
     if verify_bugfix:
-        if document['workload'] not in ('small-edit', 'upstream-fix') or plan['protocol']['bugfix_verification'] != 'pytest':
-            raise ValueError('bug-fix verification requires a pytest edit workload')
+        if document['workload'] not in ('small-edit', 'upstream-fix') or bugfix_runner not in ('pytest', 'unittest-discover'):
+            raise ValueError('bug-fix verification requires a pytest or unittest discovery edit workload')
         for stage, task in enumerate(tasks):
             continuation = task.get('continuation', False)
             if (type(continuation) is not bool or (continuation and stage == 0)
@@ -290,9 +297,10 @@ def check_workload(document, candidate, *, seen_responses=None):
                     observed = _verified_refactor(task['original_source_digest'], history)
                 elif task.get('continuation'):
                     before = accepted.get(stage - 1, {})
-                    observed = _verified_bugfix(before.get('src'), before.get('tests'), history)
+                    observed = _verified_bugfix(before.get('src'), before.get('tests'), history, bugfix_runner)
                 else:
-                    observed = _verified_bugfix(task['original_source_digest'], task['original_tests_digest'], history)
+                    observed = _verified_bugfix(task['original_source_digest'], task['original_tests_digest'],
+                                                history, bugfix_runner)
                 if observed:
                     verified.append(stage)
                 else:
