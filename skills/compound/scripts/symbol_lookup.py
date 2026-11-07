@@ -362,6 +362,7 @@ def _lookup_locations(
     grep_lines: Sequence[str] | None = None,
     git_root: Path | None = None,
     definitions: bool = False,
+    unparseable_paths: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
@@ -377,7 +378,7 @@ def _lookup_locations(
     return _lookup_python(
         repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
         max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines, git_root=git_root,
-        definitions=definitions,
+        definitions=definitions, unparseable_paths=unparseable_paths,
     )
 
 
@@ -392,6 +393,7 @@ def _lookup_python(
     grep_lines: Sequence[str] | None,
     git_root: Path | None,
     definitions: bool = False,
+    unparseable_paths: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve names, exact lines or literal matches from a bounded source read."""
     if not 1 <= len(queries) <= MAX_LOCATIONS:
@@ -470,6 +472,8 @@ def _lookup_python(
     parsed: dict[str, tuple[int, ast.Module, list[str], list[int]]] = {}
     result = []
     for index, (relative, selector) in enumerate(queries):
+        if unparseable_paths is not None and relative in unparseable_paths:
+            continue
         if relative not in parsed:
             if relative not in inventory:
                 raise SymbolLookupError("path is outside the available Git inventory")
@@ -488,7 +492,12 @@ def _lookup_python(
                 decorator_lines = [number for number, text in enumerate(lines, 1)
                                    if text.lstrip().startswith("@")] if "@" in source else []
                 parsed[relative] = len(lines), ast.parse(source), lines if retain_lines else [], decorator_lines
-            except (SyntaxError, ValueError, RecursionError, MemoryError) as exc:
+            except SyntaxError as exc:
+                if unparseable_paths is None:
+                    raise SymbolLookupError("Python file could not be parsed") from exc
+                unparseable_paths.add(relative)
+                continue
+            except (ValueError, RecursionError, MemoryError) as exc:
                 raise SymbolLookupError("Python file could not be parsed") from exc
         count, tree, lines, decorator_lines = parsed[relative]
         if isinstance(selector, int):
@@ -1033,6 +1042,7 @@ def main(argv: list[str] | None = None) -> int:
     missing = []
     search_truncated = False
     excluded_paths: set[str] = set()
+    unparseable_paths: set[str] = set()
     try:
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires a Python source lookup")
@@ -1081,7 +1091,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=excerpt, grep_lines=grep_lines, git_root=git_root, definitions=args.definition is not None,
+                unparseable_paths=unparseable_paths if search else None,
             )
+            if unparseable_paths and not result:
+                raise SymbolLookupError("matching Python files could not be parsed")
         elif args.service:
             try:
                 try:
@@ -1105,6 +1118,9 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
     if excluded_paths:
         print(f"symbol-lookup: skipped {len(excluded_paths)} excluded source paths.", file=sys.stderr)
+    if unparseable_paths:
+        print(f"symbol-lookup: skipped source files with Python syntax errors ({len(unparseable_paths)}).",
+              file=sys.stderr)
     if missing:
         label = "--find-in pairs" if args.find_in else "--find terms"
         indices = ", ".join(map(str, missing))
