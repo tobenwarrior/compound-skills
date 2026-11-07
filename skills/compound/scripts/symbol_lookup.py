@@ -17,6 +17,7 @@ import re
 import stat
 import sys
 import time
+from bisect import bisect_right
 from itertools import islice
 from pathlib import Path
 from typing import Any, Sequence
@@ -330,30 +331,41 @@ def _lookup_python(
     deadline = time.monotonic() + _bounded_timeout(max_seconds)
     inventory = {os.fsdecode(path) for path in raw_paths.split(b"\0") if path}
 
-    def enclosing(node, line):
+    def span_start(node, decorator_lines):
+        decorators = getattr(node, "decorator_list", ())
+        if not decorators:
+            return getattr(node, "lineno", None)
+        first = decorators[0].lineno
+        # A parenthesized decorator expression can start after its @ line.
+        index = bisect_right(decorator_lines, first)
+        return decorator_lines[index - 1] if index else first
+
+    def enclosing(node, line, decorator_lines):
         for child in ast.iter_child_nodes(node):
-            start = getattr(child, "lineno", None)
+            start = span_start(child, decorator_lines)
             end = getattr(child, "end_lineno", None)
             if start is not None and end is not None and not start <= line <= end:
                 continue
-            inner = enclosing(child, line)
+            inner = enclosing(child, line, decorator_lines)
             if isinstance(child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
                 return child, *inner
             if inner:
                 return inner
         return ()
 
-    def location(line: int, count: int, tree: ast.Module, lines: list[str]) -> dict[str, Any]:
+    def location(
+        line: int, count: int, tree: ast.Module, lines: list[str], decorator_lines: list[int],
+    ) -> dict[str, Any]:
         if time.monotonic() >= deadline:
             raise SymbolLookupError("Python source lookup timed out")
         try:
-            scopes = enclosing(tree, line)
+            scopes = enclosing(tree, line, decorator_lines)
         except RecursionError as exc:
             raise SymbolLookupError("Python scope nesting exceeds the lookup limit") from exc
         scope = scopes[-1] if scopes else None
         entry = {
             "line": line, "symbol": ".".join(node.name for node in scopes) or None,
-            "start_line": scope.lineno if scope else None, "end_line": scope.end_lineno if scope else None,
+            "start_line": span_start(scope, decorator_lines) if scope else None, "end_line": scope.end_lineno if scope else None,
         }
         if excerpt_radius is not None:
             first = max(1, line - excerpt_radius)
@@ -361,7 +373,7 @@ def _lookup_python(
             entry["excerpt"] = [{"line": n, "text": lines[n - 1]} for n in range(first, last + 1)]
         return entry
 
-    parsed: dict[str, tuple[int, ast.Module, list[str]]] = {}
+    parsed: dict[str, tuple[int, ast.Module, list[str], list[int]]] = {}
     result = []
     for index, (relative, selector) in enumerate(queries):
         if relative not in parsed:
@@ -379,16 +391,18 @@ def _lookup_python(
             remaining -= consumed
             try:
                 lines = split_lines(source)
-                parsed[relative] = len(lines), ast.parse(source), lines if retain_lines else []
+                decorator_lines = [number for number, text in enumerate(lines, 1)
+                                   if text.lstrip().startswith("@")] if "@" in source else []
+                parsed[relative] = len(lines), ast.parse(source), lines if retain_lines else [], decorator_lines
             except (SyntaxError, ValueError, RecursionError, MemoryError) as exc:
                 raise SymbolLookupError("Python file could not be parsed") from exc
-        count, tree, lines = parsed[relative]
+        count, tree, lines, decorator_lines = parsed[relative]
         if isinstance(selector, int):
             if selector > count:
                 raise SymbolLookupError("line is outside the source file")
             if grep_lines is not None and lines[selector - 1] != grep_lines[index]:
                 raise SymbolLookupError("source line changed since grep; rerun the search and lookup")
-            result.append({"path": relative, **location(selector, count, tree, lines)})
+            result.append({"path": relative, **location(selector, count, tree, lines, decorator_lines)})
             continue
         matches = (number for number, text in enumerate(lines, 1) if selector in text)
         matching_lines = list(islice(matches, MAX_MATCH_LINES + 1))
@@ -396,7 +410,7 @@ def _lookup_python(
             raise SymbolLookupError("Python source lookup timed out")
         result.append({
             "path": relative, "literal": selector,
-            "locations": [location(line, count, tree, lines) for line in matching_lines[:MAX_MATCH_LINES]],
+            "locations": [location(line, count, tree, lines, decorator_lines) for line in matching_lines[:MAX_MATCH_LINES]],
             "truncated": len(matching_lines) > MAX_MATCH_LINES,
         })
     return result
