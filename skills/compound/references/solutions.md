@@ -16,7 +16,7 @@ python3 -B <installed-skill-dir>/scripts/solutions.py search --repo . --query "r
 
 When authorized, capture a short note after verification. Record the checks and the behavior they establish. Reuse passing tests when their inputs and environment are unchanged. Describe the symptom, cause, verified fix, and when it applies. Tag the reusable cause and its symptoms. Keep secrets and private paths out of notes.
 
-Use one command to create a note and refresh the index. The success message confirms both outputs. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
+Use one command to create a note and refresh the index. Use its success message for both paths, the note word count, and the indexed tags. Reuse the reviewed source and test diff. Check the final changed paths with `git status --short` when needed. The helper accepts up to 8 KiB of UTF-8 Markdown, preserves existing notes and hand-written indexes, and can retry with identical input after a failed refresh.
 
 ```sh
 python3 -B <installed-skill-dir>/scripts/solutions.py capture --repo . --name retry-timeout.md <<'NOTE'
