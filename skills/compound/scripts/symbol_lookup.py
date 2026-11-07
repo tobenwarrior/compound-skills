@@ -18,6 +18,7 @@ import stat
 import sys
 import time
 from bisect import bisect_right
+from collections import Counter
 from itertools import islice
 from pathlib import Path
 from typing import Any, Sequence
@@ -51,6 +52,9 @@ MAX_GREP_INPUT_BYTES = 64 * 1024
 MAX_MATCH_LINES = 3
 MAX_EXCERPT_RADIUS = 8
 READ_CHUNK_BYTES = 64 * 1024
+_FILE_BYTE_CAP = "file byte cap reached"
+_TOTAL_BYTE_CAP = "total reference byte cap reached"
+_PYTHON_SYNTAX_ERROR = "Python syntax errors"
 
 # These are data/config formats, not source languages for the lexical scan.
 _NON_SOURCE_LANGUAGES = {"config", "json", "yaml", "toml", "xml", "ini", "properties"}
@@ -104,9 +108,9 @@ def _read_reference_text(
     """Read one checked source file, returning text only to the scanner."""
     path = root / relative
     if fingerprint["size"] > max_file_bytes:
-        return None, 0, "file byte cap reached"
+        return None, 0, _FILE_BYTE_CAP
     if fingerprint["size"] > remaining_bytes:
-        return None, 0, "total reference byte cap reached"
+        return None, 0, _TOTAL_BYTE_CAP
     try:
         file_fd = _open_regular_nofollow(root, relative)
         with os.fdopen(file_fd, "rb") as source:
@@ -362,7 +366,7 @@ def _lookup_locations(
     grep_lines: Sequence[str] | None = None,
     git_root: Path | None = None,
     definitions: bool = False,
-    unparseable_paths: set[str] | None = None,
+    skipped_paths: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
@@ -378,7 +382,7 @@ def _lookup_locations(
     return _lookup_python(
         repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
         max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines, git_root=git_root,
-        definitions=definitions, unparseable_paths=unparseable_paths,
+        definitions=definitions, skipped_paths=skipped_paths,
     )
 
 
@@ -393,7 +397,7 @@ def _lookup_python(
     grep_lines: Sequence[str] | None,
     git_root: Path | None,
     definitions: bool = False,
-    unparseable_paths: set[str] | None = None,
+    skipped_paths: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve names, exact lines or literal matches from a bounded source read."""
     if not 1 <= len(queries) <= MAX_LOCATIONS:
@@ -472,7 +476,7 @@ def _lookup_python(
     parsed: dict[str, tuple[int, ast.Module, list[str], list[int]]] = {}
     result = []
     for index, (relative, selector) in enumerate(queries):
-        if unparseable_paths is not None and relative in unparseable_paths:
+        if skipped_paths is not None and relative in skipped_paths:
             continue
         if relative not in parsed:
             if relative not in inventory:
@@ -485,6 +489,9 @@ def _lookup_python(
                 remaining_bytes=remaining, deadline=deadline,
             )
             if source is None:
+                if skipped_paths is not None and note in (_FILE_BYTE_CAP, _TOTAL_BYTE_CAP):
+                    skipped_paths[relative] = note
+                    continue
                 raise SymbolLookupError(note or "source file could not be read")
             remaining -= consumed
             try:
@@ -493,9 +500,9 @@ def _lookup_python(
                                    if text.lstrip().startswith("@")] if "@" in source else []
                 parsed[relative] = len(lines), ast.parse(source), lines if retain_lines else [], decorator_lines
             except SyntaxError as exc:
-                if unparseable_paths is None:
+                if skipped_paths is None:
                     raise SymbolLookupError("Python file could not be parsed") from exc
-                unparseable_paths.add(relative)
+                skipped_paths[relative] = _PYTHON_SYNTAX_ERROR
                 continue
             except (ValueError, RecursionError, MemoryError) as exc:
                 raise SymbolLookupError("Python file could not be parsed") from exc
@@ -1065,7 +1072,7 @@ def main(argv: list[str] | None = None) -> int:
     search_truncated = False
     limited_excerpts = False
     excluded_paths: set[str] = set()
-    unparseable_paths: set[str] = set()
+    skipped_paths: dict[str, str] = {}
     try:
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires a Python source lookup")
@@ -1114,10 +1121,14 @@ def main(argv: list[str] | None = None) -> int:
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
                 excerpt_radius=excerpt, grep_lines=grep_lines, git_root=git_root, definitions=args.definition is not None,
-                unparseable_paths=unparseable_paths if search else None,
+                skipped_paths=skipped_paths if search else None,
             )
-            if unparseable_paths and not result:
-                raise SymbolLookupError("matching Python files could not be parsed")
+            if skipped_paths and not result:
+                reasons = dict.fromkeys(
+                    "matching Python files could not be parsed" if reason == _PYTHON_SYNTAX_ERROR else reason
+                    for reason in skipped_paths.values()
+                )
+                raise SymbolLookupError("; ".join(reasons))
         elif args.service:
             try:
                 try:
@@ -1150,9 +1161,12 @@ def main(argv: list[str] | None = None) -> int:
         print("symbol-lookup: limited source excerpts to fit the output byte cap.", file=sys.stderr)
     if excluded_paths:
         print(f"symbol-lookup: skipped {len(excluded_paths)} excluded source paths.", file=sys.stderr)
-    if unparseable_paths:
-        print(f"symbol-lookup: skipped source files with Python syntax errors ({len(unparseable_paths)}).",
-              file=sys.stderr)
+    skipped_counts = Counter(skipped_paths.values())
+    syntax_errors = skipped_counts.pop(_PYTHON_SYNTAX_ERROR, 0)
+    if syntax_errors:
+        print(f"symbol-lookup: skipped source files with Python syntax errors ({syntax_errors}).", file=sys.stderr)
+    for reason, count in skipped_counts.items():
+        print(f"symbol-lookup: skipped {count} source file(s): {reason}.", file=sys.stderr)
     if missing:
         label = "--find-in pairs" if args.find_in else "--find terms"
         indices = ", ".join(map(str, missing))
