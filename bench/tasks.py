@@ -370,8 +370,8 @@ JUDGE_KEYS = {
                    "punctuation such as + or & into hyphens and caps keys at 50 characters, where _facet_key only lowercased the "
                    "label and hyphenated whitespace and underscores, so existing filter URLs no longer match."),
             "D2": ("Card charges are now retried after a lost connection: payments.charge uses the webhook retry loop, which "
-                   "retries on ConnectionLost as well as GatewayTimeout, where _retry_charge retried only gateway timeouts. A "
-                   "charge whose connection dropped may already have gone through, so retrying it risks charging the card twice."),
+                   "retries on ConnectionLost as well as GatewayTimeout, where _retry_charge retried only gateway timeouts. "
+                   "The caller resends the same charge request and idempotency key after an error it previously propagated."),
             "D3": ("The refunds API now parses amounts with the importer's rules: refund_amount in api.py uses parse_money, which "
                    "accepts input _parse_amount rejected (a $ sign, commas in any position, a leading +, exponents such as 1e3) "
                    "and rounds half up instead of half to even, so \"0.125\" refunds 13 cents instead of 12."),
