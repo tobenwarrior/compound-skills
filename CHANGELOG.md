@@ -2,6 +2,13 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.17.0 (2026-11-07)
+
+- Project `/setup` saves guidance and prepares the local map. Use `compound tidy` when you want an assessment and cleanup pass.
+- Run `setup-global` once in Claude Code to migrate old map permissions. The stable launcher then follows the enabled plugin across upgrades.
+- The loopback viewer requires authentication for maps, project metadata and source previews. `map` opens a private browser link. Reopen the map after a service restart.
+- The README leads with a saved refactor example and the with/without Compound results. The release does not change which benchmark versions produced those measurements.
+
 ## 0.16.77 (2026-11-07)
 
 - Start scoped upstream fixes with the nearest implementation and test. Open the design guide when an unresolved decision could change the patch.
