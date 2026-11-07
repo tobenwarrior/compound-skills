@@ -100,8 +100,11 @@ def _activation_markers(role, text):
     end = "<!-- compound-skills:global-setup:end -->"
     markers = {"rule"} if start in lines or end in lines else set()
     if lines.count(start) == lines.count(end) == 1:
-        if any(line.strip() for line in lines[lines.index(start) + 1:lines.index(end)]):
-            markers.add("complete-rule")
+        start_line, end_line = lines.index(start), lines.index(end)
+        if any(line.strip() for line in lines[start_line + 1:end_line]):
+            block = "\n".join(lines[start_line:end_line + 1])
+            fingerprint = hashlib.sha256(block.encode()).hexdigest()
+            markers.update(("complete-rule", f"rule-sha256:{fingerprint}"))
     return markers
 
 
@@ -158,8 +161,14 @@ def _audit_rollout(path, pending, arm, catalogues):
                 if (attempt is None or receipt_count >= len(attempt["meter"]["receipts"])
                         or receipt != attempt["meter"]["receipts"][receipt_count]):
                     raise ValueError(f"{arm}: saved rollout receipt does not match the ledger")
-                if not activation_checked and arm != "stock" and not {"core", "complete-rule"} <= activation:
-                    raise ValueError(f"{arm}: missing Compound activation in startup context")
+                if not activation_checked and arm != "stock":
+                    if not {"core", "complete-rule"} <= activation:
+                        raise ValueError(f"{arm}: missing Compound activation in startup context")
+                    expected = protocol.get("compound_rule_sha256", {}).get(arm)
+                    if expected and {item for item in activation if item.startswith("rule-sha256:")} != {
+                        f"rule-sha256:{expected}"
+                    }:
+                        raise ValueError(f"{arm}: saved rule does not match the frozen startup rule")
                 if catalogues.setdefault(task, default_skills) != default_skills:
                     raise ValueError(f"{arm}: default skill catalogue changed for {attempt['task']}")
                 activation_checked = True

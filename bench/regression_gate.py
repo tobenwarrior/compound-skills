@@ -54,6 +54,11 @@ def _validate_plan(plan, candidate):
         guard = protocol['weekly_allowance_guard_percent']
         if type(timeout) is not int or timeout < 1 or type(guard) is not int or not 1 <= guard <= 100:
             raise ValueError('expected a positive Codex attempt timeout and weekly allowance guard')
+        if 'compound_rule_sha256' in protocol:
+            rules = protocol['compound_rule_sha256']
+            if (not isinstance(rules, dict) or set(rules) != set(ROLES[1:])
+                    or any(not _digest(value) for value in rules.values())):
+                raise ValueError('expected frozen Codex rule hashes for last-good and candidate')
     else:
         if any(type(protocol[key]) is not int or protocol[key] < 1 for key in ('output_cap', 'request_cap')):
             raise ValueError('output and request caps must be positive integers')
@@ -350,11 +355,11 @@ def evaluate_gate(documents, candidate=None, *, codex_rollouts=None):
     if codex_rollouts is not None and not native:
         raise ValueError('Codex rollouts require native Codex workload evidence')
     if native and any(
-        protocols[0][key] != protocol[key]
+        protocols[0].get(key) != protocol.get(key)
         for protocol in protocols[1:]
-        for key in ('model', 'runtime', 'reasoning_effort')
+        for key in ('model', 'runtime', 'reasoning_effort', 'compound_rule_sha256')
     ):
-        raise ValueError('all Codex workloads must use the same model, runtime and reasoning setting')
+        raise ValueError('all Codex workloads must use the same model, runtime, reasoning setting and frozen rules')
     workloads = {}
     seen_responses = set()
     for name in WORKLOADS:
