@@ -32,6 +32,6 @@ For a bare map invocation or a visual request, open the current repository's liv
 python3 -B "<map-skill-dir>/scripts/map.py" open --repo "<repo-root>"
 ```
 
-Add `--query "<focus>"` for a requested file or topic. Use `--no-open` when opening is unwanted. If browser launch fails, give the user the localhost URL printed by the command. Repeated opens reuse the service and index. Do not generate HTML snapshots or run onboarding cleanup for a viewing request.
+Add `--query "<focus>"` for a requested file or topic. Use `--link` to print a private browser launch link without opening it. If launch fails, give the user that link. `--no-open` prints the service URL for authenticated clients. Repeated opens reuse the service and index. Do not generate HTML snapshots or run onboarding cleanup for a viewing request.
 
 For `map status` or `map stop`, use the corresponding subcommand without `--repo`. Stopping closes the shared viewer service for all registered projects. Report the observed result. [Coverage and limits](../compound/references/map.md)

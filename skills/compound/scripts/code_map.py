@@ -1801,7 +1801,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         if args.format == "html":
-            url = _server_api().open_map(args.repo, query=args.query, open_browser=args.open_html)
+            url = _server_api().open_map(args.repo, query=args.query, open_browser=args.open_html,
+                                         private_link=not args.open_html)
             sys.stdout.write(url + "\n")
             return 0
         if args.no_cache or args.cache_read_only:

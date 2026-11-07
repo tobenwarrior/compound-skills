@@ -23,6 +23,20 @@ const make = (tag, content, className) => {
   if (className) node.className = className;
   return node;
 };
+// An embedded viewer uses its host's authenticated proxy. The standalone page gets a read-only launch credential.
+const viewerAccess = (() => {
+  if (location.protocol !== "http:" || location.hostname !== "127.0.0.1" || !["/", "/index.html", "/code-map.html"].includes(location.pathname)) return "";
+  const key = "compound-map-access";
+  const grant = new URLSearchParams(location.hash.slice(1)).get("access");
+  if (grant !== null) {
+    history.replaceState(null, "", location.pathname + location.search);
+    if (/^[0-9a-f]{64}$/.test(grant)) {
+      try { sessionStorage.setItem(key, grant); } catch { /* The current page still has its credential. */ }
+      return grant;
+    }
+  }
+  try { return sessionStorage.getItem(key) || ""; } catch { return ""; }
+})();
 const params = new URLSearchParams(location.search);
 const state = {
   projects: [], project: params.get("project") || "", name: "", model: null, lookup: new Map(), reverse: new Map(), edges: [],
@@ -93,7 +107,10 @@ function updateUrl() {
   history.replaceState(null, "", location.pathname + (next.size ? "?" + next : ""));
 }
 async function fetchJson(url, signal) {
-  const response = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal });
+  const headers = { Accept: "application/json" };
+  if (viewerAccess) headers.Authorization = "Bearer " + viewerAccess;
+  const response = await fetch(url, { headers, cache: "no-store", signal });
+  if (response.status === 401) throw new Error("Open the map again from your project to authorize this viewer.");
   let value;
   try { value = await response.json(); } catch { throw new Error("The local service returned an unreadable response."); }
   if (!response.ok) throw new Error(str(value.error, "Local service error (" + response.status + ")"));

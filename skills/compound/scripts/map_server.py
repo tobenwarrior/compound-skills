@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Loopback-only service for the Compound code-map viewer.
 
-Control calls require the runtime token; reads are limited to the loopback host.
+Project reads require a local credential. Control calls require the runtime token.
 """
 
 from __future__ import annotations
@@ -38,12 +38,14 @@ except ImportError:  # pragma: no cover - Windows has no fcntl
 
 try:
     from . import code_map as engine
+    from . import viewer_access
     from .onboarding import _reject_symlink, _state_paths
     from .safe_open import open_regular_nofollow
     from .reference_cache import IdentifierPostingsCache
     from . import symbol_lookup as lookup_engine
 except ImportError:  # direct script execution
     import code_map as engine
+    import viewer_access
     from onboarding import _reject_symlink, _state_paths
     from safe_open import open_regular_nofollow
     from reference_cache import IdentifierPostingsCache
@@ -51,7 +53,7 @@ except ImportError:  # direct script execution
 
 
 SERVICE = "compound-code-map"
-PROTOCOL = 1
+PROTOCOL = 2
 DEFAULT_PORT = 43127
 MAX_BODY = 64 * 1024
 MAX_RESPONSE = 8 * 1024 * 1024
@@ -97,7 +99,7 @@ def _json(value: Any) -> bytes:
 def _build_assets() -> tuple[dict[str, bytes], str]:
     assets: dict[str, bytes] = {}
     digest = hashlib.sha256()
-    modules = ("workspace_imports", "language_outlines", "language_imports", "safe_open", "symbol_lookup", "reference_cache")
+    modules = ("workspace_imports", "language_outlines", "language_imports", "safe_open", "symbol_lookup", "reference_cache", "viewer_access")
     for script in (Path(__file__), Path(engine.__file__), *(Path(engine.__file__).with_name(f"{name}.py") for name in modules)):
         try:
             digest.update(script.read_bytes())
@@ -332,6 +334,8 @@ def _read_source_preview(root: Path, relative: str, language: str) -> dict[str, 
 def _runtime_for_repo(root: Path, write: bool) -> Path:
     try:
         directory, _ = engine._cache_location(root, write)
+        if directory.exists():
+            viewer_access.require_private_state(directory)
         return directory / "runtime.json"
     except (OSError, ValueError) as exc:
         raise MapServerError(str(exc)) from exc
@@ -343,6 +347,8 @@ def _runtime_without_repo() -> Path:
     directory = state / "code-map"
     if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
         raise MapServerError(f"refusing unsafe code-map runtime directory: {directory}")
+    if directory.exists():
+        viewer_access.require_private_state(directory)
     return directory / "runtime.json"
 
 
@@ -690,18 +696,23 @@ def _open_registered(repo: str | os.PathLike[str], query: str, max_files: int, r
     return url, runtime, root
 
 
-def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool = True) -> str:
-    """Register a repository and return its stable loopback viewer URL."""
-    url, _, _ = _open_registered(repo, query, 5000, requery=True)
+def open_map(repo: str | os.PathLike[str], query: str = "", open_browser: bool = True, *, private_link: bool = False) -> str:
+    """Register a repository. Browser launches use a private local redirect."""
+    url, runtime, root = _open_registered(repo, query, 5000, requery=True)
+    if not open_browser and not private_link:
+        return url
+    try:
+        opener = viewer_access.launch_link(_runtime_for_repo(root, False).parent, _project_id(root), url, runtime["token"])
+    except (OSError, ValueError) as exc:
+        raise MapServerError(f"could not prepare the private browser link: {exc}") from exc
     if open_browser:
         try:
-            opened = webbrowser.open(url)
+            opened = webbrowser.open(opener)
         except Exception as exc:
-            raise MapServerError(f"browser launch failed for {url}: {exc}", url=url) from exc
+            raise MapServerError(f"browser launch failed for {opener}: {exc}", url=opener) from exc
         if not opened:
-            raise MapServerError(f"browser launch failed for {url}", url=url)
-    return url
-
+            raise MapServerError(f"browser launch failed for {opener}", url=opener)
+    return opener if private_link else url
 
 def _wait_for_index(runtime: dict[str, Any], project: str) -> dict[str, Any]:
     deadline = time.monotonic() + MODEL_WAIT
@@ -848,6 +859,7 @@ def _mark_response_cap(model: dict[str, Any]) -> dict[str, Any]:
 class MapService:
     def __init__(self, token: str, port: int, assets: dict[str, bytes]):
         self.token = token
+        self.viewer_token = viewer_access.read_token(token)
         self.instance = secrets.token_hex(8)
         self.port = port
         self.assets = assets
@@ -1235,8 +1247,11 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
             return True
         return origin == f"http://127.0.0.1:{self.server.server_port}"
 
-    def _authorized(self) -> bool:
-        return self.headers.get("Authorization", "") == f"Bearer {self.service.token}"
+    def _authorized(self, *, read: bool = False) -> bool:
+        header = self.headers.get("Authorization", "")
+        return viewer_access.bearer_matches(header, self.service.token) or (
+            read and viewer_access.bearer_matches(header, self.service.viewer_token)
+        )
 
     def _headers(self, content_type: str) -> None:
         self.send_header("Content-Type", content_type)
@@ -1244,6 +1259,7 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
         if self.close_connection:
             self.send_header("Connection", "close")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'")
 
@@ -1269,6 +1285,9 @@ class MapHandler(http.server.BaseHTTPRequestHandler):
         parsed = urllib.parse.urlsplit(self.path)
         if parsed.path == "/api/health":
             self._respond(200, _json({"service": SERVICE, "protocol": PROTOCOL, "build": _client_bundle()[1], "pid": os.getpid(), "port": self.server.server_port}))
+            return
+        if parsed.path.startswith("/api/") and not self._authorized(read=True):
+            self._error(401, "authorization required")
             return
         if parsed.path == "/api/projects":
             projects = self.service.project_list()
@@ -1537,7 +1556,9 @@ def _parser() -> argparse.ArgumentParser:
     opening = commands.add_parser("open", help="start or reuse the viewer and print its URL")
     opening.add_argument("--repo", required=True)
     opening.add_argument("--query", default="")
-    opening.add_argument("--no-open", action="store_true")
+    launch = opening.add_mutually_exclusive_group()
+    launch.add_argument("--no-open", action="store_true", help="print only the loopback service URL")
+    launch.add_argument("--link", action="store_true", help="print a private browser launch link without opening it")
     commands.add_parser("status", help="report whether the shared viewer service is running")
     commands.add_parser("stop", help="stop the shared viewer service for every project")
     # Internal: `open` launches the service with this subcommand.
@@ -1551,11 +1572,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "open":
             try:
-                url = open_map(args.repo, args.query, not args.no_open)
+                if args.link:
+                    url = open_map(args.repo, args.query, False, private_link=True)
+                else:
+                    url = open_map(args.repo, args.query, not args.no_open)
             except MapServerError as exc:
                 if exc.url is None:
                     raise
-                print("browser launch failed. Open the URL manually.", file=sys.stderr)
+                print("browser launch failed. Open the private launch link manually.", file=sys.stderr)
                 url = exc.url
             print(url)
             return 0

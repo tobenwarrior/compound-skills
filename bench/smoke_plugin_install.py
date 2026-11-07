@@ -12,8 +12,9 @@ import subprocess
 import sys
 import threading
 from tempfile import TemporaryDirectory
-from urllib.parse import urljoin, urlsplit
-from urllib.request import ProxyHandler, build_opener
+from urllib.error import HTTPError
+from urllib.parse import unquote, urljoin, urlsplit
+from urllib.request import ProxyHandler, Request, build_opener
 
 from common import REPO, git
 
@@ -205,6 +206,7 @@ def check_host(host, executable, package, scratch, *, fresh_chat=False):
     assert "invalid cache entries were reparsed" in model["coverage"]["notes"]
     assert cached.read_bytes() == invalid
 
+    authenticated_map_reads = "not supported by this revision"
     try:
         url = run(*service, "open", "--repo", str(project), "--query", "demo.py", "--no-open")
         assert json.loads(run(*query))["focus"] == ["demo.py"]
@@ -215,6 +217,26 @@ def check_host(host, executable, package, scratch, *, fresh_chat=False):
             assert response.status == 200 and b'id="graph"' in response.read()
         with opener.open(urljoin(url, "code-map.css"), timeout=5) as response:
             assert response.status == 200 and response.headers.get_content_type() == "text/css"
+        with opener.open(urljoin(url, "/api/health"), timeout=5) as response:
+            protocol = json.load(response)["protocol"]
+        if protocol >= 2:
+            projects_url = urljoin(url, "/api/projects")
+            try:
+                opener.open(projects_url, timeout=5).close()
+            except HTTPError as error:
+                assert error.code == 401
+            else:
+                raise AssertionError("anonymous project listing succeeded")
+            token = json.loads((directory / "runtime.json").read_text())["token"]
+            request = Request(projects_url, headers={"Authorization": f"Bearer {token}"})
+            with opener.open(request, timeout=5) as response:
+                assert [row["name"] for row in json.load(response)["projects"]] == [project.name]
+            link = urlsplit(run(*service, "open", "--repo", str(project), "--link"))
+            launch_file = Path(unquote(link.path))
+            assert link.scheme == "file" and not link.fragment and launch_file.is_relative_to(directory)
+            assert os.name != "posix" or launch_file.stat().st_mode & 0o077 == 0
+            assert "#access=" in launch_file.read_text() and token not in launch_file.read_text()
+            authenticated_map_reads = "pass"
     finally:
         run(*service, "stop")
 
@@ -225,7 +247,8 @@ def check_host(host, executable, package, scratch, *, fresh_chat=False):
     return {"host": host, "host_version": version, "installed_version": installed["version"],
             "fresh_chat_activation": chat,
             "skills": sorted(ENTRYPOINTS), "global_enable_status_disable": "pass",
-            "read_only_map": "pass", "invalid_state_recovery": "pass", "local_viewer_html_and_css": "pass"}
+            "read_only_map": "pass", "invalid_state_recovery": "pass", "local_viewer_html_and_css": "pass",
+            "authenticated_map_reads": authenticated_map_reads}
 
 
 def smoke(ref, hosts, *, fresh_chat=False):

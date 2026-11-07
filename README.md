@@ -76,7 +76,7 @@ The install smoke test checks saved guidance, a local map and map state recovery
 - **Claude Code permissions:** On macOS and Linux, `setup-global` can install a stable map-query launcher and scope guide reads to Compound's own plugin cache. Those approvals follow the enabled user installation across updates. If you previously approved versioned paths, run `setup-global` once in Claude Code to migrate them. Ask `status-global` to check map permissions and the launcher.
 - **Cursor:** the plugin carries its own `compound-default` rule; `setup-global` writes no Cursor rule.
 - **Optional map access:** `~/.cache/compound-skills` (`COMPOUND_SKILLS_STATE_DIR` moves it) holds the map's cache and a record of repository assessments. After saving routing, the agent can add this folder to Codex's `sandbox_workspace_write.writable_roots` in `config.toml` and to Cursor's `additionalReadwritePaths` in `~/.cursor/sandbox.json`, following the [activation guide](skills/compound/references/activation.md): back up and validate each file, and keep every other setting. If access is blocked, the agent reports it separately and the saved guidance still applies.
-- **The map service** listens on `127.0.0.1:43127` (`COMPOUND_MAP_PORT` changes the port). It starts on the first map query of a task that may edit files, or on `map`, and runs until `map stop` or you log out. Web pages from other sites cannot query it, but any program or user on your machine can read its maps and source previews while it runs; on a shared machine, run `map stop` when you are done.
+- **The map service** listens on `127.0.0.1:43127` (`COMPOUND_MAP_PORT` changes the port). It starts on the first map query of a task that may edit files, or on `map`, and runs until `map stop` or you log out. Project lists, maps and source previews require a local credential. The browser opens through a private launch file in your user cache. Access expires when the service restarts.
 - **A project `setup`** adds a marked section to that project's `AGENTS.md`, a file you would commit, and the same section to a nonempty `AGENTS.override.md` or, when a `CLAUDE.md` would hide `AGENTS.md` from Claude Code, to `.claude/rules/compound.md`. It prepares the local map and limits repository writes to the managed guidance files. Request `compound tidy` separately for assessment and verified cleanup.
 - **Not included:** hooks, MCP servers, other background processes, or network access. Compound's scripts connect to nothing but 127.0.0.1, and the map page loads nothing from elsewhere. Your code still goes to your model provider, as with any coding agent.
 
@@ -262,7 +262,7 @@ python3 bench/bench.py report --label check
 
 The viewer and README charts share the hey.trading cream-and-green theme, including source previews and mobile panels. After updating the plugin, reopen `map` to refresh the service’s assets and reload any existing browser tab.
 
-The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache, outside the repository. If the browser cannot launch, `map` prints the working URL. Coverage and limits: [code maps](skills/compound/references/map.md).
+The map opens at `http://127.0.0.1:43127/` and keeps its data in your user cache, outside the repository. If the browser cannot launch, `map` prints a private launch link. Reopen `map` after a service restart. Coverage and limits: [code maps](skills/compound/references/map.md).
 
 ### Query overhead
 
