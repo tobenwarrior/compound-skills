@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 
-SCHEMA = "yharness-review-offline-4"
+SCHEMA = "yharness-review-offline-5"
 EXPECTED_PARENT = "49943b5a94413a530761350f04e896f76e8d620e"
 EXPECTED_TREE = "719747b4621bddad647f0fbe89325ee1443b12d7"
 STATIC_FOLDERS_LINES = range(413, 443)
@@ -171,12 +171,27 @@ def _list_items(text: str) -> list[tuple[int, str]]:
 
 
 def _shared_context(text: str) -> str:
-    """Return the preamble before the first finding list for location checks."""
+    """Return a shared source citation without joining finding evidence."""
     normalized = text.replace("\r\n", "\n")
     starts = [start for start, _ in _list_items(normalized)]
     if not starts:
         starts = [offset for offset, _ in _headings(normalized)]
-    return clean(normalized[:min(starts)]) if starts else ""
+    preamble = clean(normalized[:min(starts)]) if starts else ""
+    if location(preamble):
+        return preamble
+
+    citations = re.findall(r"([\w./-]+\.[a-zA-Z]\w*)[:#]L?(\d{1,4})\b", normalized)
+    paths = {path for path, _ in citations}
+    flask_paths = {
+        path for path in paths
+        if path in {"flask/app.py", "src/flask/app.py"} or path.endswith("/src/flask/app.py")
+    }
+    if paths - flask_paths - {"app.py"} or len(flask_paths - {"flask/app.py", "src/flask/app.py"}) > 1:
+        return preamble
+    for path, line in citations:
+        if path in flask_paths and int(line) in STATIC_FOLDERS_LINES:
+            return f"{preamble} {path}:{line}"
+    return preamble
 
 
 def finding_sections(text: str, context: str | None = None) -> list[tuple[str, str, list[str]]]:
