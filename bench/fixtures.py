@@ -218,6 +218,8 @@ SHOP_MUTANTS = {
     "refactor-money": {
         "api-rounds-half-up": ("api.py", [("rounding=ROUND_HALF_EVEN, accounting=False", "accounting=False")]),
         "api-accepts-dollar-sign": ("api.py", [('re.compile(r"^-?(', 're.compile(r"^-?\\$?(')]),
+        "api-leaks-raw-invalid-amount": ("api.py", [
+            ("raise InvalidAmount(value)", 'raise InvalidAmount(payload["amount"])')]),
         "import-drops-accounting-negatives": ("importing.py", [('parse_money(row["price"])',
                                                                 'parse_money(row["price"], accounting=False)')]),
     },

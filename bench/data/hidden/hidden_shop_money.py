@@ -17,3 +17,17 @@ class HiddenMoneyTests(unittest.TestCase):
         for value in ("$5.00", "(5.00)", "1,23.00", "5.00 USD"):
             with self.subTest(value=value), self.assertRaises(InvalidAmount):
                 refund_amount({"amount": value})
+
+    def test_api_invalid_amount_preserves_error_payload(self):
+        for value, expected in (
+            (None, "None"),
+            (True, "True"),
+            (["5.00"], "['5.00']"),
+            ("  5.00 USD  ", "  5.00 USD  "),
+            (0, 0),
+            (-5, -5),
+        ):
+            with self.subTest(value=value):
+                with self.assertRaises(InvalidAmount) as error:
+                    refund_amount({"amount": value})
+                self.assertEqual(error.exception.args, (expected,))

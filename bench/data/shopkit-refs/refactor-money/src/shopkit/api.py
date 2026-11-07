@@ -16,9 +16,10 @@ class InvalidAmount(ValueError):
 
 def refund_amount(payload: dict) -> int:
     """The refund in cents from an API payload such as {"amount": "12.50"}."""
-    text = str(payload["amount"]).strip()
+    value = str(payload["amount"])
+    text = value.strip()
     if not _AMOUNT.match(text):
-        raise InvalidAmount(payload["amount"])
+        raise InvalidAmount(value)
     cents = parse_money(text, rounding=ROUND_HALF_EVEN, accounting=False)
     if cents <= 0:
         raise InvalidAmount(payload["amount"])
