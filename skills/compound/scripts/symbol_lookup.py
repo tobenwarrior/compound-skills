@@ -281,6 +281,7 @@ def _lookup_locations(
     excerpt_radius: int | None = None,
     grep_lines: Sequence[str] | None = None,
     git_root: Path | None = None,
+    definitions: bool = False,
 ) -> list[dict[str, Any]]:
     """Resolve an ordered batch of file:line strings and file/literal pairs."""
     queries = []
@@ -296,6 +297,7 @@ def _lookup_locations(
     return _lookup_python(
         repo, queries, max_file_bytes=max_file_bytes, max_total_bytes=max_total_bytes,
         max_seconds=max_seconds, excerpt_radius=excerpt_radius, grep_lines=grep_lines, git_root=git_root,
+        definitions=definitions,
     )
 
 
@@ -309,8 +311,9 @@ def _lookup_python(
     excerpt_radius: int | None,
     grep_lines: Sequence[str] | None,
     git_root: Path | None,
+    definitions: bool = False,
 ) -> list[dict[str, Any]]:
-    """Resolve exact lines or literal matches from the same bounded source read."""
+    """Resolve names, exact lines or literal matches from a bounded source read."""
     if not 1 <= len(queries) <= MAX_LOCATIONS:
         raise SymbolLookupError(f"provide between one and {MAX_LOCATIONS} source queries")
     if excerpt_radius is not None and not 0 <= excerpt_radius <= MAX_EXCERPT_RADIUS:
@@ -321,6 +324,8 @@ def _lookup_python(
             raise SymbolLookupError("lookup requires a repository-relative Python path")
         if isinstance(selector, str):
             _valid_symbol(selector)
+            if definitions and not all(part.isidentifier() for part in selector.split(".")):
+                raise SymbolLookupError("definition requires an exact dotted Python name")
     retain_lines = (excerpt_radius is not None or grep_lines is not None
                     or any(isinstance(selector, str) for _, selector in queries))
     if git_root is None:
@@ -413,15 +418,30 @@ def _lookup_python(
                 raise SymbolLookupError("source line changed since grep; rerun the search and lookup")
             result.append({"path": relative, **location(selector, count, tree, lines, decorator_lines)})
             continue
-        matches = (number for number, text in enumerate(lines, 1) if selector in text)
-        matching_lines = list(islice(matches, MAX_MATCH_LINES + 1))
+        if definitions:
+            bare_name = selector.rsplit(".", 1)[-1]
+            candidates = sorted(node.lineno for node in ast.walk(tree)
+                                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                                and node.name == bare_name)
+            found = []
+            for line in candidates:
+                entry = location(line, count, tree, lines, decorator_lines)
+                if entry["symbol"] == selector:
+                    found.append(entry)
+                    if len(found) > MAX_MATCH_LINES:
+                        break
+            result.append({"path": relative, "definition": selector, "locations": found[:MAX_MATCH_LINES],
+                           "truncated": len(found) > MAX_MATCH_LINES})
+        else:
+            matches = (number for number, text in enumerate(lines, 1) if selector in text)
+            matching_lines = list(islice(matches, MAX_MATCH_LINES + 1))
+            result.append({
+                "path": relative, "literal": selector,
+                "locations": [location(line, count, tree, lines, decorator_lines) for line in matching_lines[:MAX_MATCH_LINES]],
+                "truncated": len(matching_lines) > MAX_MATCH_LINES,
+            })
         if time.monotonic() >= deadline:
             raise SymbolLookupError("Python source lookup timed out")
-        result.append({
-            "path": relative, "literal": selector,
-            "locations": [location(line, count, tree, lines, decorator_lines) for line in matching_lines[:MAX_MATCH_LINES]],
-            "truncated": len(matching_lines) > MAX_MATCH_LINES,
-        })
     return result
 
 
@@ -887,6 +907,8 @@ def _parser() -> argparse.ArgumentParser:
                         help="find the enclosing Python class or function (repeatable)")
     parser.add_argument("--match", dest="source_queries", action="append", nargs=2, metavar=("FILE", "LITERAL"),
                         help="find literal text and its enclosing Python symbol (can be mixed with --location)")
+    parser.add_argument("--definition", action="append", nargs=2, metavar=("FILE", "NAME"),
+                        help="find an exact qualified Python definition in a named file (repeatable)")
     parser.add_argument("--grep-input", action="store_true",
                         help="read up to 12 Git grep -n -z matches from standard input")
     parser.add_argument("--find", action="append", metavar="LITERAL",
@@ -922,9 +944,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     search = args.find is not None or args.find_in is not None
-    if sum((args.symbol is not None, args.source_queries is not None, args.grep_input,
+    if sum((args.symbol is not None, args.source_queries is not None, args.definition is not None, args.grep_input,
             args.find is not None, args.find_in is not None)) != 1:
-        parser.error("use one of --symbol, --find, --find-in, --grep-input, or a batch of --location and --match queries")
+        parser.error("use --symbol, --definition, --find, --find-in, --grep-input, or a batch of --location and --match queries")
     if args.path and args.find is None:
         parser.error("--path requires --find")
     python_lookup = args.symbol is None
@@ -942,7 +964,7 @@ def main(argv: list[str] | None = None) -> int:
             "max_total_bytes": args.max_total_bytes, "max_output_bytes": args.max_output_bytes,
         }
         if python_lookup:
-            queries = args.source_queries
+            queries = args.definition or args.source_queries
             grep_lines = None
             git_root = None
             excerpt = args.excerpt
@@ -970,7 +992,7 @@ def main(argv: list[str] | None = None) -> int:
             result = [] if search and not queries else _lookup_locations(
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
-                excerpt_radius=excerpt, grep_lines=grep_lines, git_root=git_root,
+                excerpt_radius=excerpt, grep_lines=grep_lines, git_root=git_root, definitions=args.definition is not None,
             )
         elif args.service:
             try:

@@ -16,6 +16,8 @@ python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --find "
 
 Repeat `--find` and `--path` for shared scopes, or omit `--path` to search all tracked Python files. When statements have different scopes, batch `--find-in "<file-or-directory>" "<statement>"` pairs. Both modes return up to 12 matches. For existing Git search output use `--grep-input`. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
 
+If you know the file and exact Python name, use `--definition <file> <qualified-name>`. Repeat it for related definitions and add `--excerpt 8` for nearby source.
+
 For a focused read-only map, query the repository. The query reuses existing cache entries without starting a service or writing state.
 
 ```bash
