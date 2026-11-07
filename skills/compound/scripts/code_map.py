@@ -237,8 +237,14 @@ def _has_exact_parents(root: Path, relative: str, checked: set[str]) -> bool:
 
 def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes | None, list[str]]:
     """Return bounded NUL-terminated paths, scoping exact lookup paths where possible."""
+    tracked, untracked, notes = _git_inventory_parts(root, paths=paths)
+    return (None if tracked is None else tracked + untracked), notes
+
+
+def _git_inventory_parts(root: Path, *, paths: list[str] | None = None) -> tuple[bytes | None, bytes, list[str]]:
+    """Keep the tracked and untracked paths separate for the viewer's change labels."""
     if paths == []:
-        return b"", []
+        return b"", b"", []
     command = ["ls-files"] if paths is None else ["--literal-pathspecs", "ls-files"]
     scope = [] if paths is None else ["--", *paths]
     env = None
@@ -251,12 +257,12 @@ def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes
         root, [*command, "--cached", "-z", *scope], MAX_GIT_INVENTORY_BYTES, keep_prefix=True, env=env,
     )
     if tracked is None:
-        return None, []
+        return None, b"", []
     if paths is not None and len(tracked) <= MAX_GIT_INVENTORY_BYTES:
         tracked_names = set(tracked.split(b"\0")[:-1])
         paths = [path for path in paths if os.fsencode(path) not in tracked_names]
         if not paths:
-            return tracked, []
+            return tracked, b"", []
         scope = ["--", *paths]
     # Untracked paths get what tracked ones leave but at least a quarter, so an unignored dependency folder cannot
     # crowd out tracked source and a tracked tree past the cap cannot hide the files just created.
@@ -277,7 +283,7 @@ def _git_inventory(root: Path, *, paths: list[str] | None = None) -> tuple[bytes
         notes.append(INVENTORY_CAP_NOTE)
     # Keep the complete entries read so far.
     others = others[:others.rfind(b"\0", 0, reserve) + 1]
-    return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1] + others, notes
+    return tracked[:tracked.rfind(b"\0", 0, MAX_GIT_INVENTORY_BYTES - len(others)) + 1], others, notes
 def _git_root(supplied: Path) -> tuple[Path, str | None]:
     root_result = _git(supplied, "rev-parse", "--show-toplevel")
     if root_result is None or root_result.returncode != 0:
@@ -350,62 +356,68 @@ def _git_status(root: Path, options: list[str], max_bytes: int) -> bytes | None:
     drivers = sorted({os.fsdecode(key).rsplit(".", 1)[0] for key in keys.split(b"\0") if key})
     if any("=" in driver or not driver.isprintable() for driver in drivers):
         return None
-    overrides = []
+    overrides = ["-c", "status.aheadBehind=false"]
     for driver in drivers:
         overrides.extend(("-c", f"{driver}.clean=", "-c", f"{driver}.process=", "-c", f"{driver}.required=false"))
     return _bounded_git_output(root, ["status", "--ignore-submodules=dirty", *options], max_bytes,
                                config_options=overrides)
 
 
-def _git_changes_result(root: Path) -> tuple[dict[str, str], str | None]:
-    """Return bounded porcelain statuses keyed by the current path.
+def _git_status_snapshot(root: Path, *, untracked: bool) -> bytes | None:
+    mode = "all" if untracked else "no"
+    return _git_status(root, ["--porcelain=v2", "--branch", "-z", f"--untracked-files={mode}"],
+                       MAX_GIT_INVENTORY_BYTES)
 
-    The inventory remains authoritative for which files enter the model, so a
-    deleted path can never become a metadata-only ghost in the result.
-    """
-    raw_status = _git_status(root, ["--porcelain=v1", "-z", "--untracked-files=all"], MAX_GIT_LOG_BYTES)
-    if raw_status is None:
-        return {}, "Git status unavailable or exceeded the bounded output limit; changed-file metadata is unavailable"
+
+def _parse_git_state(root: Path, raw_status: bytes, untracked: bytes = b"") -> tuple[str, dict[str, str], str | None]:
+    """Read the branch and current paths from a complete NUL-delimited status."""
+    branch = ""
     changes: dict[str, str] = {}
-    parts = raw_status.split(b"\0")
-    index = 0
-    while index < len(parts):
-        raw = parts[index]
-        index += 1
-        if not raw:
+    path_fields = {b"1 ": 8, b"2 ": 9, b"u ": 10}
+    records = iter(raw_status.split(b"\0"))
+    for raw in records:
+        if raw.startswith(b"# branch.head "):
+            name = os.fsdecode(raw.removeprefix(b"# branch.head "))
+            # The detached marker can also be a real branch name.
+            branch = _git_branch(root) if name == "(detached)" else name[:256]
             continue
-        try:
-            record = os.fsdecode(raw)
-        except (UnicodeDecodeError, ValueError):
-            continue
-        if len(record) < 3:
-            continue
-        status = record[:2]
-        path = PurePosixPath(record[3:]).as_posix()
-        if not _safe_relative(path):
-            continue
-        if "R" in status:
-            # In NUL-delimited porcelain output the second path is the old
-            # name. The first path is the current destination.
-            if index < len(parts):
-                index += 1
-            kind = "renamed"
-        elif "C" in status:
-            if index < len(parts):
-                index += 1
-            kind = "added"
-        elif "?" in status:
+        if raw.startswith(b"? "):
+            name = raw[2:]
             kind = "untracked"
-        elif "A" in status:
-            kind = "added"
-        elif "D" in status:
-            kind = "deleted"
-        elif any(character in status for character in "MTUX"):
-            kind = "modified"
         else:
-            continue
-        changes[path] = kind
-    return changes, None
+            path_field = path_fields.get(raw[:2])
+            if path_field is None:
+                continue
+            if path_field == 9:
+                # The next record is the original path, even if it looks like a status record.
+                next(records, None)
+            parts = raw.split(b" ", path_field)
+            if len(parts) != path_field + 1:
+                continue
+            name, status = parts[-1], parts[1]
+            if b"R" in status:
+                kind = "renamed"
+            elif b"C" in status or b"A" in status:
+                kind = "added"
+            elif b"D" in status:
+                kind = "deleted"
+            elif any(flag in status for flag in b"MTUX"):
+                kind = "modified"
+            else:
+                continue
+        path = PurePosixPath(os.fsdecode(name)).as_posix()
+        if name and _safe_relative(path):
+            changes[path] = kind
+    for raw in untracked.split(b"\0"):
+        path = PurePosixPath(os.fsdecode(raw)).as_posix()
+        if raw and _safe_relative(path):
+            changes.setdefault(path, "untracked")
+    return branch, changes, None
+
+
+def _git_changes_result(root: Path) -> tuple[dict[str, str], str | None]:
+    _, changes, note = _git_state(root)
+    return changes, note
 
 
 def _git_changes(root: Path) -> dict[str, str]:
@@ -413,8 +425,10 @@ def _git_changes(root: Path) -> dict[str, str]:
 
 
 def _git_state(root: Path) -> tuple[str, dict[str, str], str | None]:
-    changes, note = _git_changes_result(root)
-    return _git_branch(root), changes, note
+    raw_status = _git_status_snapshot(root, untracked=True)
+    if raw_status is None:
+        return _git_branch(root), {}, "Git status unavailable or exceeded the bounded output limit; changed-file metadata is unavailable"
+    return _parse_git_state(root, raw_status)
 
 
 def _fingerprint(path: Path) -> dict[str, int] | None:
@@ -1429,7 +1443,8 @@ def _summary_target(
     return defining_file, name if defining_file is not None else None
 
 
-def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False, rank_focus: bool = True) -> dict[str, Any]:
+def _build(root: Path, head: str, inventory: list[str], notes: list[str], query: str, max_files: int, use_cache: bool, refresh: bool, write_cache: bool = True, *, exact_summary: bool = False, rank_focus: bool = True,
+           git_state: tuple[str, dict[str, str], str | None] | None = None) -> dict[str, Any]:
     candidates: dict[str, dict[str, Any]] = {}
     skipped = 0
     excluded = 0
@@ -1509,7 +1524,7 @@ def _build(root: Path, head: str, inventory: list[str], notes: list[str], query:
     packages = load_workspace_packages(root, candidates)
     if sum(PurePosixPath(rel).name == "package.json" and "node_modules" not in rel.split("/") for rel in candidates) > MAX_PACKAGE_FILES:
         _note(notes, f"workspace package limit reached at {MAX_PACKAGE_FILES} manifests; some package imports stay unresolved")
-    branch, changes, git_state_note = _git_state(root)
+    branch, changes, git_state_note = _git_state(root) if git_state is None else git_state
     if git_state_note:
         _note(notes, git_state_note)
     cochanges = _cochanges(root, head, known)
@@ -1719,12 +1734,14 @@ def _build_model(
     repo: str | os.PathLike[str], *, query: str, max_files: int, no_cache: bool = False,
     cache_read_only: bool = False, refresh: bool = False, exact_summary: bool = False,
     inventory_result: tuple[bytes | None, list[str]] | None = None,
+    git_state: tuple[str, dict[str, str], str | None] | None = None,
 ) -> dict[str, Any]:
     root_input = _repo_path(repo)
     root, head, inventory, notes = _git_context(root_input, inventory_result)
     model = _build(root, head, inventory or [], notes, query, _clamp(int(max_files), 1, MAX_FILES),
                    not no_cache and inventory is not None, refresh,
-                   write_cache=not cache_read_only, exact_summary=exact_summary)
+                   write_cache=not cache_read_only, exact_summary=exact_summary,
+                   git_state=git_state if root == root_input else None)
     if inventory is None:
         model["coverage"]["inventory_available"] = False
     return model

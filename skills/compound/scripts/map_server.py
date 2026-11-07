@@ -126,7 +126,7 @@ def __getattr__(name: str) -> Any:
 
 
 def _inventory_fingerprint(
-    root: Path, inventory_result: tuple[bytes | None, list[str]] | None = None,
+    root: Path, inventory_result: tuple[bytes | None, list[str]] | None = None, *, status: bytes | None = None,
 ) -> str:
     """The engine's capped Git inventory, a bounded Git status and worktree metadata, or "" (never a cache hit) when Git fails."""
     if inventory_result is None:
@@ -136,9 +136,9 @@ def _inventory_fingerprint(
         return ""
     # A complete inventory already covers untracked paths and their metadata.
     capped = engine.INVENTORY_CAP_NOTE in notes
-    untracked = "--untracked-files=all" if capped else "--untracked-files=no"
-    status = engine._git_status(root, ["--porcelain=v2", "--branch", "-z", untracked], engine.MAX_GIT_INVENTORY_BYTES)
     if status is None:
+        status = engine._git_status_snapshot(root, untracked=capped)
+    if not status:
         return ""
     digest = hashlib.sha256(status)
     digest.update(inventory)
@@ -952,8 +952,13 @@ class MapService:
     def _index_once(self, project: Project, force: bool) -> None:
         self._index_slots.acquire()
         try:
-            inventory_result = engine._git_inventory(project.root)
-            before = _inventory_fingerprint(project.root, inventory_result)
+            tracked, untracked, notes = engine._git_inventory_parts(project.root)
+            inventory_result = (None if tracked is None else tracked + untracked), notes
+            capped = engine.INVENTORY_CAP_NOTE in notes
+            status = None
+            if tracked is not None and engine.UNTRACKED_INVENTORY_NOTE not in notes:
+                status = engine._git_status_snapshot(project.root, untracked=capped)
+            before = _inventory_fingerprint(project.root, inventory_result, status=status or b"")
             with project.lock:
                 pending = project.model.get("coverage", {}).get("pending", 0) if project.model else 0
                 unchanged = bool(before) and project.model is not None and project.inventory_fingerprint == before
@@ -971,9 +976,10 @@ class MapService:
                         project.revision += 1
                         project.updated_at = _now()
                 return
+            git_snapshot = engine._parse_git_state(project.root, status, b"" if capped else untracked) if status else None
             model = engine._build_model(
                 project.root, query="", max_files=INDEX_MAX_FILES, refresh=refresh,
-                inventory_result=inventory_result if before else None,
+                inventory_result=inventory_result if before else None, git_state=git_snapshot,
             )
             if model["coverage"].get("inventory_available") is False:
                 raise MapServerError(model["coverage"]["notes"][0])

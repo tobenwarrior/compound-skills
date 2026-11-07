@@ -301,6 +301,8 @@ The replay selects 12 evenly spaced names with one indexed defining file per rep
 
 ## Warm map query work
 
+Compare against `c83939a` with `python3 -B bench/map_warm_work.py --baseline-ref c83939a` to measure reuse of the viewer's initial Git status. On both pinned checkouts, a cold query used 14 Git processes instead of 17 and two directory walks instead of three. Warm queries used seven Git processes in each build. All focused summaries matched byte for byte. The final freshness check still detects source or index changes during the build.
+
 From 0.16.53, the live freshness check uses the complete Git inventory to cover untracked paths and asks Git status for tracked changes only. Reproduce the change with:
 
 ```sh

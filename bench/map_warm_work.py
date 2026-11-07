@@ -1,4 +1,4 @@
-"""Count Git work for repeated focused map queries on pinned local snapshots."""
+"""Count cold and warm Git work for focused map queries on pinned local snapshots."""
 from __future__ import annotations
 
 import argparse
@@ -34,31 +34,37 @@ def measure(scripts, nested, query, state):
             raise RuntimeError(result.stderr.decode(errors="replace"))
         return hashlib.sha256(result.stdout).hexdigest()
 
+    def git_work():
+        commands = Counter()
+        directory_walks = Counter()
+        sessions = {}
+        for line in trace.read_text().splitlines():
+            event = json.loads(line)
+            if event["event"] == "start":
+                argv = event["argv"]
+                if argv[1] != "--no-optional-locks" or "-C" not in argv:
+                    raise RuntimeError("Unexpected Git invocation in the map trace")
+                args = argv[argv.index("-C") + 2:]
+                name = args[1] if args[0] == "--literal-pathspecs" else args[0]
+                commands[name] += 1
+                sessions[event["sid"]] = name
+            elif event["event"] == "region_enter" and event.get("category") == "dir" and event.get("label") == "read_directory":
+                directory_walks[sessions[event["sid"]]] += 1
+        if not commands:
+            raise RuntimeError("No Git commands recorded")
+        return {"git_processes": sum(commands.values()), "git_commands": dict(sorted(commands.items())),
+                "directory_walks": dict(sorted(directory_walks.items()))}
+
     try:
         expected = run_query()
+        cold = git_work()
         rows = []
         for _ in range(REPETITIONS):
             trace.write_text("")
             if run_query() != expected:
                 raise RuntimeError("Query output changed on an unchanged checkout")
-            commands = Counter()
-            directory_walks = Counter()
-            sessions = {}
-            for line in trace.read_text().splitlines():
-                event = json.loads(line)
-                if event["event"] == "start":
-                    argv = event["argv"]
-                    if argv[1:3] != ["--no-optional-locks", "-C"]:
-                        raise RuntimeError("Unexpected Git invocation in the map trace")
-                    commands[argv[4]] += 1
-                    sessions[event["sid"]] = argv[4]
-                elif event["event"] == "region_enter" and event.get("category") == "dir" and event.get("label") == "read_directory":
-                    directory_walks[sessions[event["sid"]]] += 1
-            if not commands:
-                raise RuntimeError("No Git commands recorded")
-            rows.append({"git_processes": sum(commands.values()), "git_commands": dict(sorted(commands.items())),
-                         "directory_walks": dict(sorted(directory_walks.items()))})
-        return expected, rows
+            rows.append(git_work())
+        return expected, cold, rows
     finally:
         subprocess.run([sys.executable, "-B", str(scripts / "map_server.py"), "stop"],
                        env=env, check=True, stdout=subprocess.DEVNULL, timeout=15)
@@ -75,13 +81,14 @@ def compare(baseline_ref):
             root = SOURCES / name
             if git(root, "rev-parse", "HEAD", check=True).strip() != head or git(root, "status", "--porcelain", check=True).strip():
                 raise ValueError(f"{name}: checkout must be clean at {head}")
-            before_digest, before = measure(temp / SCRIPTS, root / subdir, query, temp / (name + "-before"))
-            after_digest, after = measure(REPO / SCRIPTS, root / subdir, query, temp / (name + "-after"))
+            before_digest, before_cold, before = measure(temp / SCRIPTS, root / subdir, query, temp / (name + "-before"))
+            after_digest, after_cold, after = measure(REPO / SCRIPTS, root / subdir, query, temp / (name + "-after"))
             if before_digest != after_digest:
                 raise RuntimeError(f"{name}: focused summaries differ")
             rows.append({"repository": name, "source_head": head, "subdir": subdir, "query": query,
-                         "summary_sha256": after_digest, "before": before, "after": after})
-    return {"scope": "Live focused CLI queries after one warmup per version and checkout. Zero model calls.",
+                         "summary_sha256": after_digest, "before_cold": before_cold, "after_cold": after_cold,
+                         "before": before, "after": after})
+    return {"scope": "Cold and warm focused CLI queries in isolated local services. Zero model calls.",
             "baseline_ref": baseline, "candidate_sha256": {
                 name: hashlib.sha256((REPO / SCRIPTS / name).read_bytes()).hexdigest()
                 for name in ("code_map.py", "map_server.py")
