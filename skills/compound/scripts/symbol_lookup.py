@@ -201,8 +201,9 @@ def _find_grep_matches(
     return _grep_locations(data), len(data)
 
 
-def _grep_scope(raw: str, *, allow_directory: bool = False) -> str:
+def _grep_scope(raw: str, *, directory_root: Path | None = None) -> str:
     path = raw.removeprefix("./")
+    allow_directory = directory_root is not None
     is_file = path.lower().endswith(".py")
     if allow_directory and not is_file:
         path = path.removesuffix("/")
@@ -211,6 +212,11 @@ def _grep_scope(raw: str, *, allow_directory: bool = False) -> str:
         label = "--find-in" if allow_directory else "--path"
         kind = "Python file or directory" if allow_directory else "Python file"
         raise SymbolLookupError(f"{label} requires a repository-relative {kind}")
+    if is_file and directory_root is not None:
+        try:
+            is_file = not stat.S_ISDIR((directory_root / path).lstat().st_mode)
+        except (FileNotFoundError, NotADirectoryError):
+            pass  # Git can report no matches for a missing scope.
     if is_file:
         return f":(top,literal){path}"
     escaped = re.sub(r"([\\*?\[\]])", r"\\\1", path)
@@ -220,9 +226,12 @@ def _grep_scope(raw: str, *, allow_directory: bool = False) -> str:
 def _scoped_grep_matches(root: Path, pairs: list[list[str]]) -> list[tuple[str, str]]:
     if len(pairs) > MAX_LOCATIONS:
         raise SymbolLookupError(f"--find-in accepts up to {MAX_LOCATIONS} pairs")
+    git_root, note = code_map._git_root(root)
+    if note is not None:
+        raise SymbolLookupError("Git inventory is unavailable")
     groups: dict[str, list[str]] = {}
     for path, literal in pairs:
-        groups.setdefault(_grep_scope(path, allow_directory=True), []).append(literal)
+        groups.setdefault(_grep_scope(path, directory_root=git_root), []).append(literal)
     matches: dict[str, str] = {}
     remaining_bytes = MAX_GREP_INPUT_BYTES
     deadline = time.monotonic() + code_map.GIT_TIMEOUT
@@ -231,7 +240,7 @@ def _scoped_grep_matches(root: Path, pairs: list[list[str]]) -> list[tuple[str, 
         if remaining_time <= 0:
             raise SymbolLookupError("Git search timed out")
         found, used_bytes = _find_grep_matches(
-            root, literals, [scope], byte_limit=remaining_bytes, timeout=remaining_time,
+            git_root, literals, [scope], byte_limit=remaining_bytes, timeout=remaining_time,
         )
         remaining_bytes -= used_bytes
         for location, line in found:
