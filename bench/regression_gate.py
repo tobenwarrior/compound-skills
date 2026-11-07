@@ -23,6 +23,8 @@ COST_FIELDS = ('allowance', 'list_cost', 'cost')
 NATIVE_PROVIDER = 'codex-chatgpt'
 FOLLOWUP_PROMPTS = {'semantic_repair': 'repair_prompt_sha256', 'interruption_recovery': 'recovery_prompt_sha256'}
 REFACTOR_SUITE = ['-m', 'unittest', 'discover', '-s', 'tests']
+PYTEST_SUITE_ARGS = {'-q', '-v', '-vv', '-ra', '-rA', '-x', '--disable-warnings', '--tb=line',
+                     '--tb=short', '--tb=auto', '--tb=no', 'tests', 'tests/', '.', '-p', 'no:cacheprovider'}
 
 
 def _digest(value, lengths=(64,)):
@@ -112,10 +114,9 @@ def _attempt_counts(attempts):
     }
 
 
-def _verified_refactor(original_source, attempts):
-    """Find passing original and final suite runs with the same final tests."""
+def _final_test_state(original_source, attempts):
     if not attempts or not attempts[-1]['accepted']:
-        return False
+        return None
     grade = attempts[-1]['grade']
     state = grade.get('verification_state') or {}
     cwd, source, tests = (state.get(key) for key in ('cwd', 'src', 'tests'))
@@ -123,23 +124,68 @@ def _verified_refactor(original_source, attempts):
     if (not isinstance(cwd, str) or not Path(cwd).is_absolute() or source == original_source
             or not _digest(source, (16,)) or not _digest(tests, (16,))
             or type(count) is not int or count <= 0):
-        return False
-    baseline_end = None
+        return None
+    return state, count
+
+
+def _stable_test_runs(state, attempts):
+    """Yield observations from the same checkout and unchanged final test bytes."""
     for attempt in attempts:
         for run in attempt.get('test_observations', []):
             start, end = run.get('t0'), run.get('t1')
-            if (run.get('source_digest') != 'bytes' or run.get('cwd') != cwd
-                    or run.get('argv') not in (REFACTOR_SUITE, ['-B', *REFACTOR_SUITE])
-                    or type(run.get('exit')) is not int or run['exit'] != 0
-                    or type(run.get('tests_run')) is not int or run['tests_run'] != count
-                    or run.get('src0') != run.get('src1') or run.get('tests0') != tests or run.get('tests1') != tests
-                    or type(start) not in (int, float) or type(end) not in (int, float)
-                    or not 0 < start <= end < float('inf')):
-                continue
-            if run['src0'] == original_source:
-                baseline_end = end if baseline_end is None else min(baseline_end, end)
-            elif run['src0'] == source and baseline_end is not None and baseline_end <= start:
-                return True
+            if (run.get('source_digest') == 'bytes' and run.get('cwd') == state['cwd']
+                    and _digest(run.get('src0'), (16,)) and run['src0'] == run.get('src1')
+                    and run.get('tests0') == run.get('tests1') == state['tests']
+                    and type(start) in (int, float) and type(end) in (int, float) and 0 < start <= end < float('inf')):
+                yield run
+
+
+def _verified_refactor(original_source, attempts):
+    """Find passing original and final suite runs with the same final tests."""
+    final = _final_test_state(original_source, attempts)
+    if final is None:
+        return False
+    state, count = final
+    baseline_end = None
+    for run in _stable_test_runs(state, attempts):
+        if (run.get('argv') not in (REFACTOR_SUITE, ['-B', *REFACTOR_SUITE])
+                or type(run.get('exit')) is not int or run['exit'] != 0
+                or type(run.get('tests_run')) is not int or run['tests_run'] != count):
+            continue
+        if run['src0'] == original_source:
+            end = run['t1']
+            baseline_end = end if baseline_end is None else min(baseline_end, end)
+        elif run['src0'] == state['src'] and baseline_end is not None and baseline_end <= run['t0']:
+            return True
+    return False
+
+
+def _verified_bugfix(original_source, original_tests, attempts):
+    """Find the expected regression on original source before the final suite."""
+    if not _digest(original_source, (16,)) or not _digest(original_tests, (16,)):
+        return False
+    final = _final_test_state(original_source, attempts)
+    if final is None:
+        return False
+    state, count = final
+    regressions = set(attempts[-1]['grade'].get('regression_tests', []))
+    if not regressions or state['tests'] == original_tests:
+        return False
+    baseline_end = None
+    for run in _stable_test_runs(state, attempts):
+        argv = run.get('argv') or []
+        if argv[:1] == ['-B']:
+            argv = argv[1:]
+        if argv[:2] != ['-m', 'pytest'] or type(run.get('exit')) is not int:
+            continue
+        if (run['src0'] == original_source and run['exit'] == 1
+                and regressions.intersection(run.get('failed_tests', []))):
+            end = run['t1']
+            baseline_end = end if baseline_end is None else min(baseline_end, end)
+        elif (run['src0'] == state['src'] and run['exit'] == 0
+                and type(run.get('tests_run')) is int and run['tests_run'] == count
+                and set(argv[2:]) <= PYTEST_SUITE_ARGS and baseline_end is not None and baseline_end <= run['t0']):
+            return True
     return False
 
 
@@ -157,6 +203,16 @@ def check_workload(document, candidate, *, seen_responses=None):
                             or plan['protocol']['refactor_verification'] != 'unittest-discover'
                             or any(not _digest(task.get('original_source_digest'), (16,)) for task in tasks)):
         raise ValueError('refactor verification requires unittest discovery and frozen original source digests')
+    verify_bugfix = 'bugfix_verification' in plan['protocol']
+    if verify_bugfix:
+        if document['workload'] not in ('small-edit', 'upstream-fix') or plan['protocol']['bugfix_verification'] != 'pytest':
+            raise ValueError('bug-fix verification requires a pytest edit workload')
+        for stage, task in enumerate(tasks):
+            continuation = task.get('continuation', False)
+            if (type(continuation) is not bool or (continuation and stage == 0)
+                    or (not continuation and any(not _digest(task.get(key), (16,))
+                                                 for key in ('original_source_digest', 'original_tests_digest')))):
+                raise ValueError('bug-fix verification requires frozen original digests or a preceding stage')
     if seen_responses is None:
         seen_responses = set()
     rows = document['attempts']
@@ -208,16 +264,26 @@ def check_workload(document, candidate, *, seen_responses=None):
         arms[arm].update(_attempt_counts(rows))
         if not native and arms[arm]['requests'] > plan['protocol']['request_cap']:
             raise ValueError(f'{arm}: recorded requests exceed the frozen cap')
-        if verify_refactor:
+        if verify_refactor or verify_bugfix:
             verified = []
+            accepted = {}
             for stage in arms[arm]['accepted_stages']:
                 task = tasks[stage]
                 history = sorted((row for row in rows if row['stage'] == stage), key=lambda row: row['attempt'])
-                if _verified_refactor(task['original_source_digest'], history):
+                accepted[stage] = history[-1]['grade'].get('verification_state') or {}
+                if verify_refactor:
+                    observed = _verified_refactor(task['original_source_digest'], history)
+                elif task.get('continuation'):
+                    before = accepted.get(stage - 1, {})
+                    observed = _verified_bugfix(before.get('src'), before.get('tests'), history)
+                else:
+                    observed = _verified_bugfix(task['original_source_digest'], task['original_tests_digest'], history)
+                if observed:
                     verified.append(stage)
                 else:
                     blockers.append(f"{arm}: missing matched original and final test runs for {task['name']}")
-            arms[arm]['verified_refactor_stages'] = verified
+            key = 'verified_refactor_stages' if verify_refactor else 'verified_bugfix_stages'
+            arms[arm][key] = verified
     final = {}
     for row in sorted(attempts, key=lambda row: row['attempt']):
         if row['arm'] == 'candidate':
