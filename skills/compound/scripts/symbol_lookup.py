@@ -928,7 +928,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.path and args.find is None:
         parser.error("--path requires --find")
     python_lookup = args.symbol is None
-    missing_pairs = []
+    missing = []
     try:
         if args.excerpt is not None and not python_lookup:
             raise SymbolLookupError("--excerpt requires a Python source lookup")
@@ -950,13 +950,17 @@ def main(argv: list[str] | None = None) -> int:
                 if search:
                     root = code_map._repo_path(args.repo)
                     if args.find_in is not None:
-                        matches, missing_pairs, git_root = _scoped_grep_matches(root, args.find_in)
+                        matches, missing, git_root = _scoped_grep_matches(root, args.find_in)
                     else:
                         if len(args.path) > MAX_LOCATIONS:
                             raise SymbolLookupError(f"--path accepts up to {MAX_LOCATIONS} files")
                         scopes = [scope for path in args.path for scope in _grep_scopes(path)]
                         scopes = scopes or _python_glob_scopes()
-                        matches, _ = _find_grep_matches(root, args.find, scopes)
+                        literals = [os.fsencode(literal) for literal in args.find]
+                        unmatched = set(literals) if len(literals) > 1 else None
+                        matches, _ = _find_grep_matches(root, args.find, scopes, unmatched=unmatched)
+                        if unmatched:
+                            missing = [index for index, literal in enumerate(literals, start=1) if literal in unmatched]
                     if excerpt is None:
                         excerpt = 0
                 else:
@@ -986,9 +990,10 @@ def main(argv: list[str] | None = None) -> int:
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2
-    if missing_pairs:
-        indices = ", ".join(map(str, missing_pairs))
-        print(f"symbol-lookup: no matches for --find-in pairs {indices}", file=sys.stderr)
+    if missing:
+        label = "--find-in pairs" if args.find_in else "--find terms"
+        indices = ", ".join(map(str, missing))
+        print(f"symbol-lookup: no matches for {label} {indices}", file=sys.stderr)
     sys.stdout.write(encoded + "\n")
     return 0
 
