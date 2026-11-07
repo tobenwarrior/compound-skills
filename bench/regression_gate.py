@@ -198,6 +198,16 @@ def check_workload(document, candidate, *, seen_responses=None):
     digest = _validate_plan(plan, candidate)
     native = plan['protocol']['provider'] == NATIVE_PROVIDER
     tasks = plan['sequences'][0]['tasks']
+    refactor_mutants = {}
+    for stage, task in enumerate(tasks):
+        if 'refactor_mutants' not in task:
+            continue
+        names = task['refactor_mutants']
+        if (document['workload'] != 'refactor' or not isinstance(names, list) or not names
+                or any(not isinstance(name, str) or not name.strip() for name in names)
+                or len(set(names)) != len(names)):
+            raise ValueError('refactor mutation verification requires a unique frozen list of mutant names')
+        refactor_mutants[stage] = set(names)
     verify_refactor = 'refactor_verification' in plan['protocol']
     if verify_refactor and (document['workload'] != 'refactor'
                             or plan['protocol']['refactor_verification'] != 'unittest-discover'
@@ -284,6 +294,29 @@ def check_workload(document, candidate, *, seen_responses=None):
                     blockers.append(f"{arm}: missing matched original and final test runs for {task['name']}")
             key = 'verified_refactor_stages' if verify_refactor else 'verified_bugfix_stages'
             arms[arm][key] = verified
+        if refactor_mutants:
+            covered = {}
+            for row in rows:
+                stage = row['stage']
+                if not row['accepted'] or stage not in refactor_mutants:
+                    continue
+                name = tasks[stage]['name']
+                mutants = row['grade'].get('mutants')
+                if (not isinstance(mutants, dict) or set(mutants) != refactor_mutants[stage]
+                        or any(type(caught) is not bool for caught in mutants.values())):
+                    blockers.append(f'{arm}: missing or invalid refactor mutation results for {name}')
+                    continue
+                covered[name] = sorted(mutant for mutant, caught in mutants.items() if caught)
+            arms[arm]['covered_refactor_mutants'] = covered
+    if refactor_mutants:
+        for baseline in ROLES[:-1]:
+            baseline_coverage = arms[baseline]['covered_refactor_mutants']
+            for name, covered in arms['candidate']['covered_refactor_mutants'].items():
+                lost = sorted(set(baseline_coverage.get(name, ())).difference(covered))
+                if lost:
+                    regressions.append(
+                        f"candidate lost refactor mutation coverage versus {baseline} for {name}: {', '.join(lost)}"
+                    )
     final = {}
     for row in sorted(attempts, key=lambda row: row['attempt']):
         if row['arm'] == 'candidate':
