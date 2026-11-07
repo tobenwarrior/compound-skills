@@ -75,12 +75,37 @@ def reconcile_receipts(attempt, seen_responses, thread_totals):
 
 
 
+def _activation_markers(role, text):
+    lines = text.splitlines()
+    if role == "developer":
+        entries = {
+            line.partition(": ")[0] for line in lines
+            if line.startswith("- compound-skills:") and " (file: " in line and line.endswith("/SKILL.md)")
+        }
+        if "- compound-skills:compound" in entries:
+            return {"plugin", "core"}
+        return {"plugin"} if entries else set()
+    if role != "user" or not lines or not (
+        lines[0] == "# AGENTS.md instructions" or lines[0].startswith("# AGENTS.md instructions for ")
+    ):
+        return set()
+    start = "<!-- compound-skills:global-setup:start -->"
+    end = "<!-- compound-skills:global-setup:end -->"
+    markers = {"rule"} if start in lines or end in lines else set()
+    if lines.count(start) == lines.count(end) == 1:
+        if any(line.strip() for line in lines[lines.index(start) + 1:lines.index(end)]):
+            markers.add("complete-rule")
+    return markers
+
+
 def _audit_rollout(path, pending, arm):
     session = None
     cli_version = None
     turn = None
     attempt = None
     receipt_count = prompt_count = context_count = completed = 0
+    activation = set()
+    activation_checked = False
     receipt_fields = ("response_id", "session_id", "turn_id", "usage", "turn_token_usage", "thread_token_usage")
 
     def finish_turn():
@@ -125,6 +150,9 @@ def _audit_rollout(path, pending, arm):
                 if (attempt is None or receipt_count >= len(attempt["meter"]["receipts"])
                         or receipt != attempt["meter"]["receipts"][receipt_count]):
                     raise ValueError(f"{arm}: saved rollout receipt does not match the ledger")
+                if not activation_checked and arm != "stock" and not {"core", "complete-rule"} <= activation:
+                    raise ValueError(f"{arm}: missing Compound activation in startup context")
+                activation_checked = True
                 receipt_count += 1
             elif kind == "turn_context":
                 if (attempt is None or payload["turn_id"] != turn or payload["model"] != protocol["model"]
@@ -137,14 +165,20 @@ def _audit_rollout(path, pending, arm):
                 completed += 1
             elif kind == "event_msg" and "rerout" in payload["type"]:
                 raise ValueError(f"{arm}: saved rollout contains a model reroute")
-            elif (attempt is not None and kind == "response_item" and payload.get("type") == "message"
-                  and payload.get("role") == "user"):
-                prompt_count += sum(
-                    hashlib.sha256(part["text"].encode()).hexdigest() == attempt["prompt_sha256"]
-                    for part in payload["content"]
-                    if isinstance(part, dict) and part.get("type") == "input_text"
-                    and isinstance(part.get("text"), str)
-                )
+            elif attempt is not None and kind == "response_item" and payload.get("type") == "message":
+                role = payload.get("role")
+                for part in payload["content"]:
+                    if (not isinstance(part, dict) or part.get("type") != "input_text"
+                            or not isinstance(part.get("text"), str)):
+                        continue
+                    text = part["text"]
+                    if role == "user" and hashlib.sha256(text.encode()).hexdigest() == attempt["prompt_sha256"]:
+                        prompt_count += 1
+                    elif arm == "stock":
+                        if _activation_markers(role, text):
+                            raise ValueError(f"{arm}: Compound activation found in stock context")
+                    elif not activation_checked and prompt_count == 0:
+                        activation.update(_activation_markers(role, text))
     finish_turn()
     return digest.hexdigest()
 
