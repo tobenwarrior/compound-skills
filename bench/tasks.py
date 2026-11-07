@@ -197,6 +197,22 @@ def bugfix(bug: str):
     return grade
 
 
+def _tests_catch_naive_refactor(original: Path, final: Path, naive: Path, scratch: Path, targets: list[str]) -> bool:
+    """Check that an unchanged test passes on both preserving versions and fails on the naive one."""
+    if not targets:
+        return False
+    naive_results = _probe(_tree(naive, final, scratch / "naive"), "run", *targets)
+    failing = [test for test in targets if naive_results.get(test) == "fail"]
+    if not failing:
+        return False
+    baseline = _probe(_tree(original, final, scratch / "before-extraction"), "run", *failing)
+    passing = [test for test in failing if baseline.get(test) == "pass"]
+    if not passing:
+        return False
+    after = _probe(final, "run", *passing)
+    return any(after.get(test) == "pass" for test in passing)
+
+
 def refactor(project: Path, record: dict, prep: dict) -> dict:
     with tempfile.TemporaryDirectory(prefix="grade-") as folder:
         scratch = Path(folder)
@@ -209,13 +225,11 @@ def refactor(project: Path, record: dict, prep: dict) -> dict:
         package = final / "src" / "invoicekit"
         duplication_removed = not any(".quantize(" in (package / name).read_text() for name in ("tax.py", "invoice.py") if (package / name).exists())
         targets, removed, weakened = _test_changes(final, fixture_info, final_info)
-        pins = {}
-        if targets:
-            pins = _probe(_tree(REFS / "refactor-naive", final, scratch / "naive"), "run", *targets)
         outcome = {"behaviour_preserved": behaviour, "duplication_removed": duplication_removed,
                    "original_suite_pass": original["ok"], "own_suite_pass": own["ok"], "own_suite_tests": own["tests"],
                    "test_ids": targets, "removed_existing": removed, "weakened_existing": weakened,
-                   "tests_catch_naive_refactor": any(status == "fail" for status in pins.values()),
+                   "tests_catch_naive_refactor": _tests_catch_naive_refactor(
+                       FIXTURE, final, REFS / "refactor-naive", scratch, targets),
                    **_mutant_kills(final, "refactor", scratch, final_info),
                    **_diff(project, prep["fixture_head"]), **_commits(project, prep["fixture_head"])}
         outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"]
@@ -266,11 +280,11 @@ def heldout_refactor(task: str):
             own = _unittest(final, "discover", "-s", "tests")
             duplication_removed = SHOP_DUPLICATION[task](final / "src" / "shopkit")
             targets, removed, weakened = _test_changes(final, fixture_info, final_info)
-            pins = _probe(_tree(REFS / f"{task}-naive", final, scratch / "naive"), "run", *targets) if targets else {}
             outcome = {"behaviour_preserved": behaviour, "duplication_removed": duplication_removed,
                        "original_suite_pass": original["ok"], "own_suite_pass": own["ok"], "own_suite_tests": own["tests"],
                        "test_ids": targets, "removed_existing": removed, "weakened_existing": weakened,
-                       "tests_catch_naive_refactor": any(status == "fail" for status in pins.values()),
+                       "tests_catch_naive_refactor": _tests_catch_naive_refactor(
+                           SHOPKIT, final, REFS / f"{task}-naive", scratch, targets),
                        **_mutant_kills(final, task, scratch, final_info),
                        **_diff(project, prep["fixture_head"]), **_commits(project, prep["fixture_head"])}
             outcome["success"] = bool(behaviour and duplication_removed and original["ok"] and own["ok"]

@@ -54,7 +54,7 @@ class Recorder(unittest.TestResult):
         self.status[test.id()] = "skip"
 
     def addExpectedFailure(self, test, err):
-        self.status[test.id()] = "pass"
+        self.status[test.id()] = "skip"
 
     def addUnexpectedSuccess(self, test):
         self.status[test.id()] = "fail"
