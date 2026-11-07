@@ -221,7 +221,21 @@ def capture_repository(root: Path, name: str, data: bytes) -> tuple[int, int, st
     return len(rows), len(text.split()), _row(*row)
 
 
-def _search_rows(text: str, query: str, limit: int) -> tuple[str, str | None]:
+def _project_terms(root: Path) -> set[str]:
+    """Read an optional project name from bounded local Python metadata."""
+    try:
+        with os.fdopen(open_regular_nofollow(root, 'pyproject.toml'), 'rb') as source:
+            data = source.read(MAX_METADATA_BYTES + 1)
+        if len(data) > MAX_METADATA_BYTES:
+            return set()
+        project = tomllib.loads(data.decode('utf-8')).get('project')
+    except (OSError, ValueError, RecursionError):
+        return set()
+    name = project.get('name') if isinstance(project, dict) else None
+    return set(WORD.findall(name.casefold())) if _valid_cell(name, 96) else set()
+
+
+def _search_rows(text: str, query: str, limit: int, root: Path) -> tuple[str, str | None]:
     if not 1 <= limit <= MAX_RESULTS:
         raise ValueError('search limit must be between 1 and 5')
     if len(query) > 256:
@@ -232,7 +246,7 @@ def _search_rows(text: str, query: str, limit: int) -> tuple[str, str | None]:
     lines = text.splitlines()
     if lines[:3] != [MARKER, *TABLE]:
         raise ValueError('INDEX.md is not a generated solutions index')
-    exact, related = [], []
+    exact, related, contextual = [], [], []
     for line in lines[3:]:
         cells = line.split('|')
         if len(cells) != 5 or cells[0] or cells[-1]:
@@ -242,15 +256,23 @@ def _search_rows(text: str, query: str, limit: int) -> tuple[str, str | None]:
             raise ValueError('unsafe metadata or path in INDEX.md')
         words = [set(WORD.findall(cell.casefold())) for cell in (problem, tags, path)]
         matched = terms & set.union(*words)
-        if matched == terms:
-            matches = exact
-        elif len(terms & words[1]) >= 2:
-            matches = related
-        else:
+        tag_matches = terms & words[1]
+        symptoms = tag_matches & words[0]
+        if matched != terms and len(tag_matches) < 2 and not symptoms:
             continue
         score = sum(weight * len(terms & field) for weight, field in zip((3, 2, 1), words))
-        matches.append((-len(matched), -score, problem.casefold(), path, _row(problem, tags, path)))
+        row = (-len(matched), -score, problem.casefold(), path, _row(problem, tags, path))
+        if matched == terms:
+            exact.append(row)
+        elif len(tag_matches) >= 2:
+            related.append(row)
+        elif symptoms:
+            contextual.append((words[1], symptoms, row))
     hits = exact or related
+    if not hits and contextual:
+        project = _project_terms(root)
+        if project:
+            hits = [row for tags, symptoms, row in contextual if project <= tags and symptoms - project]
     output = '\n'.join(TABLE) + '\n'
     count = 0
     first = None
@@ -275,7 +297,7 @@ def search_repository(root: Path, query: str, limit: int, *, show_note: bool = F
             text = _bounded_read(source, MAX_INDEX_BYTES).decode('utf-8')
     except FileNotFoundError:
         raise ValueError('docs/solutions/INDEX.md is missing') from None
-    output, first = _search_rows(text, query, limit)
+    output, first = _search_rows(text, query, limit, root)
     if not show_note or first is None:
         return output
     header = f'{output}\nNote: {first}\n\n'
