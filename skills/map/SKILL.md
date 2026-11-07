@@ -1,6 +1,6 @@
 ---
 name: map
-description: "Use for Python answers that require file, symbol and line citations, or to open the live repository map."
+description: "Use for Python file, symbol and line citations with scripts/map.py lookup --find, or to open the live repository map."
 license: MIT
 ---
 
@@ -8,13 +8,13 @@ license: MIT
 
 Use the directory containing this SKILL.md as `<map-skill-dir>`.
 
-For Python file, symbol and line answers, reuse verified evidence that gives the statement and its enclosing symbol. Locate missing statements with narrow native search and verify missing owners in one batched lookup. Follow the requested call path when a statement has several matches. Locate a literal statement with `--match "<file>" "<statement>"` or get the enclosing symbol for a known line with `--location "<file:line>"`.
+For Python file, symbol and line answers, reuse evidence that gives the statement and its enclosing symbol. Search for missing statements and verify their owners in one lookup with `--find`. Follow the requested call path when a statement has several matches. Use `--match "<file>" "<statement>"` for a known file or `--location "<file:line>"` for a known line.
 
 ```bash
-python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --match "<file>" "<statement>" --excerpt 0
+python3 -B "<map-skill-dir>/scripts/map.py" lookup --repo "<repo-root>" --find "<statement>" --path "<file>"
 ```
 
-Batch up to 12 queries in one call. For statement citations, use `--excerpt 0` to check the exact text. For a scoped Git search followed by a lookup in one call, use `--grep-input`. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
+Repeat `--find` and `--path` to batch up to 12 matches. Omit `--path` to search all tracked Python files. For existing Git search output use `--grep-input`. If lookup is unavailable, verify the enclosing definition in source. [Lookup details](../compound/references/map.md#symbol-lookup)
 
 For a focused read-only map, query the repository. The query reuses existing cache entries without starting a service or writing state.
 

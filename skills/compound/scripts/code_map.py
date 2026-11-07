@@ -735,7 +735,8 @@ def _python_import_spec(module: str, level: int, imported: str | None) -> str:
 
 
 def _bounded_git_output(
-    root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *, env: dict[str, str] | None = None,
+    root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *,
+    env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,),
 ) -> bytes | None:
     """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
     process: subprocess.Popen[bytes] | None = None
@@ -770,7 +771,7 @@ def _bounded_git_output(
                 return b"".join(chunks) if keep_prefix else None
         data = b"".join(chunks)
         process.wait(timeout=max(0.0, deadline - time.monotonic()))
-        return data if process.returncode == 0 else None
+        return data if process.returncode in ok_statuses else None
     except (OSError, subprocess.TimeoutExpired):
         if process is not None:
             try:

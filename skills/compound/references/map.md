@@ -16,7 +16,9 @@ To verify the enclosing symbol of a Python citation, run `python3 -B <installed-
 
 For an exact statement in a known Python file, use `--match <relative-file> <literal-text>`. Results follow query order across both options. Each result lists up to three matching lines with their enclosing symbols and reports whether more matched. Matches are case-sensitive substrings, including in comments and strings. Use `--excerpt 0` to return the matching line itself, or a larger radius for context. A file used by several pairs is read and parsed once.
 
-For a scoped Python search, pipe `git grep -n -z` output to `lookup --grep-input`. It verifies each matched line against the current source. If a line changed, rerun the search and lookup. Use up to 12 matches and 64 KiB of input. Narrow the paths or literals if the command exceeds a limit.
+Use `lookup --find <literal>` to search tracked Python files and verify the enclosing symbols in one command. Repeat `--find` for several statements and `--path <file>` for exact repository-relative files. The result includes the matching line by default. Narrow the paths or literals when the search exceeds 12 matches or 64 KiB. With no matches, the command returns an empty list.
+
+To reuse an existing scoped Git search, pass its `git grep -n -z` output to `lookup --grep-input`. Both modes verify each matched line against the current source. If a line changed, rerun the lookup.
 
 ```bash
 git -C "<repo-root>" grep -n -z -I -F --no-color -e "<statement>" -- "<python-file>" |

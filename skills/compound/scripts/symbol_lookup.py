@@ -176,6 +176,35 @@ def _grep_locations(data: bytes) -> list[tuple[str, str]]:
     return queries
 
 
+def _find_grep_matches(repo: str, literals: list[str], paths: list[str]) -> list[tuple[str, str]]:
+    """Search tracked Python files and return the same evidence as --grep-input."""
+    if len(literals) > MAX_LOCATIONS or any(
+        not literal.strip() or len(literal) > 256 or any(char in literal for char in "\x00\r\n")
+        for literal in literals
+    ):
+        raise SymbolLookupError("provide up to 12 nonempty literals of at most 256 characters")
+    paths = [path.removeprefix("./") for path in paths]
+    if len(paths) > MAX_LOCATIONS or any(
+        not path.lower().endswith(".py") or "\x00" in path
+        or any(part in {"", ".", ".."} for part in path.split("/"))
+        for path in paths
+    ):
+        raise SymbolLookupError("--path requires up to 12 repository-relative Python files")
+    scopes = [f":(top,literal){path}" for path in paths] or [":(top,glob)**/*.py"]
+    patterns = [argument for literal in literals for argument in ("-e", literal)]
+    env = os.environ.copy()
+    for key in ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS"):
+        env.pop(key, None)
+    data = code_map._bounded_git_output(
+        code_map._repo_path(repo), ["grep", "-n", "-z", "-I", "-F", "--no-color", "--full-name",
+                                    *patterns, "--", *scopes],
+        MAX_GREP_INPUT_BYTES, keep_prefix=True, env=env, ok_statuses=(0, 1),
+    )
+    if data is None:
+        raise SymbolLookupError("Git search failed or timed out")
+    return _grep_locations(data)
+
+
 def _lookup_locations(
     repo: str | os.PathLike[str],
     locations: Sequence[str | Sequence[str]],
@@ -777,6 +806,10 @@ def _parser() -> argparse.ArgumentParser:
                         help="find literal text and its enclosing Python symbol (can be mixed with --location)")
     parser.add_argument("--grep-input", action="store_true",
                         help="read up to 12 Git grep -n -z matches from standard input")
+    parser.add_argument("--find", action="append", metavar="LITERAL",
+                        help="find exact text in tracked Python files and verify its enclosing symbol (repeatable)")
+    parser.add_argument("--path", action="append", default=[], metavar="FILE",
+                        help="restrict --find to an exact repository-relative Python file (repeatable)")
     parser.add_argument("--excerpt", type=int, metavar="LINES",
                         help="include the selected line and up to 8 lines on each side of a Python location")
     parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
@@ -803,12 +836,16 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
-    python_lookup = args.source_queries is not None or args.grep_input
-    if python_lookup == (args.symbol is not None) or (args.grep_input and args.source_queries is not None):
-        parser.error("use one of --symbol, --grep-input, or a batch of --location and --match queries")
+    if sum((args.symbol is not None, args.source_queries is not None, args.grep_input, args.find is not None)) != 1:
+        parser.error("use one of --symbol, --find, --grep-input, or a batch of --location and --match queries")
+    if args.path and args.find is None:
+        parser.error("--path requires --find")
+    python_lookup = args.symbol is None
     try:
         if args.excerpt is not None and not python_lookup:
-            raise SymbolLookupError("--excerpt requires --location, --match, or --grep-input")
+            raise SymbolLookupError("--excerpt requires a Python source lookup")
+        if args.excerpt is not None and not 0 <= args.excerpt <= MAX_EXCERPT_RADIUS:
+            raise SymbolLookupError(f"--excerpt must be between 0 and {MAX_EXCERPT_RADIUS}")
         if args.service and python_lookup:
             raise SymbolLookupError("--service requires --symbol")
         options = {
@@ -819,14 +856,20 @@ def main(argv: list[str] | None = None) -> int:
         if python_lookup:
             queries = args.source_queries
             grep_lines = None
-            if args.grep_input:
-                matches = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
+            excerpt = args.excerpt
+            if args.find is not None or args.grep_input:
+                if args.find is not None:
+                    matches = _find_grep_matches(args.repo, args.find, args.path)
+                    if excerpt is None:
+                        excerpt = 0
+                else:
+                    matches = _grep_locations(sys.stdin.buffer.read(MAX_GREP_INPUT_BYTES + 1))
                 queries = [location for location, _ in matches]
                 grep_lines = [line for _, line in matches]
-            result = _lookup_locations(
+            result = [] if args.find is not None and not queries else _lookup_locations(
                 args.repo, queries,
                 max_file_bytes=args.max_file_bytes, max_total_bytes=args.max_total_bytes, max_seconds=args.timeout,
-                excerpt_radius=args.excerpt, grep_lines=grep_lines,
+                excerpt_radius=excerpt, grep_lines=grep_lines,
             )
         elif args.service:
             try:
