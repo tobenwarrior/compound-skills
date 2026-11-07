@@ -545,6 +545,28 @@ def _coverage_partial(model_coverage: dict[str, Any]) -> bool:
     )
 
 
+def _fit_search_output(matches: list[dict[str, Any]], byte_limit: int) -> tuple[str, int]:
+    """Prioritize complete verified locations over surrounding source text."""
+    exact_lines = [
+        {**match, "excerpt": [line for line in match["excerpt"] if line["line"] == match["line"]]}
+        for match in matches
+    ]
+    encoded = json.dumps(exact_lines, ensure_ascii=True, separators=(",", ":"))
+    if len(encoded) <= byte_limit:
+        return encoded, len(matches)
+
+    rows = []
+    remaining = byte_limit - 2  # JSON array brackets.
+    for match in matches:
+        location = {key: value for key, value in match.items() if key != "excerpt"}
+        row = json.dumps(location, ensure_ascii=True, separators=(",", ":"))
+        size = len(row) + bool(rows)  # Include the comma between rows.
+        if size <= remaining:
+            rows.append(row)
+            remaining -= size
+    return "[" + ",".join(rows) + "]", len(rows)
+
+
 def _serialized_size(result: dict[str, Any]) -> int:
     """Measure JSON including a stable, exact coverage byte count."""
     output = result["coverage"]["output"]
@@ -1041,6 +1063,7 @@ def main(argv: list[str] | None = None) -> int:
     python_lookup = args.symbol is None
     missing = []
     search_truncated = False
+    limited_excerpts = False
     excluded_paths: set[str] = set()
     unparseable_paths: set[str] = set()
     try:
@@ -1108,14 +1131,23 @@ def main(argv: list[str] | None = None) -> int:
         else:
             result = lookup_symbols(args.repo, args.symbol, no_cache=args.no_cache, **options)
         encoded = json.dumps(result, ensure_ascii=True, separators=(",", ":"))
-        if python_lookup and len(encoded) > _bounded_int(args.max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES):
-            raise SymbolLookupError("Python source lookup exceeds the output byte cap")
+        visible_matches = len(result)
+        byte_limit = _bounded_int(args.max_output_bytes, MIN_OUTPUT_BYTES, MAX_OUTPUT_BYTES)
+        if python_lookup and len(encoded) > byte_limit:
+            if search:
+                encoded, visible_matches = _fit_search_output(result, byte_limit)
+                limited_excerpts = True
+                search_truncated |= visible_matches < len(result)
+            if not search or not visible_matches:
+                raise SymbolLookupError("Python source lookup exceeds the output byte cap")
     except (SymbolLookupError, OSError, ValueError) as exc:
         print(f"symbol-lookup error: {exc}", file=sys.stderr)
         return 2
     if search_truncated:
-        print(f"symbol-lookup: showing {len(result)} matches. Narrow the literals or scopes for more specific results.",
+        print(f"symbol-lookup: showing {visible_matches} matches. Narrow the literals or scopes for more specific results.",
               file=sys.stderr)
+    if limited_excerpts:
+        print("symbol-lookup: limited source excerpts to fit the output byte cap.", file=sys.stderr)
     if excluded_paths:
         print(f"symbol-lookup: skipped {len(excluded_paths)} excluded source paths.", file=sys.stderr)
     if unparseable_paths:
