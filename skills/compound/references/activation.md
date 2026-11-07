@@ -1,6 +1,6 @@
 # Activation
 
-These modes choose when Compound guides engineering work. Explicit project `setup` also requests a fresh assessment and verified cleanup.
+These modes choose when Compound guides engineering work.
 
 ## Current chat
 
@@ -38,7 +38,9 @@ For global setup, finish with the saved routing result per selected host, then t
 
 For recovery, give the exact status command for the host in use. Use `/compound-skills:status-global` in Claude Code, `$status-global` in Codex, or `/status-global` in Cursor. For missing or outdated defaults, give that host's setup command. Use `/compound-skills:setup-global`, `$setup-global`, or `/setup-global`. For Cursor, also point to the Always setting above when the rule status is unknown.
 
-`setup` alone enables guidance and assesses the intended project, including previously completed projects. Establish its root from the task and repository; ask only if ambiguous. Read project instructions and record existing changed and untracked paths before writes:
+## Project setup
+
+`setup` enables guidance for the intended project. Establish the root from the task and repository, and ask only if ambiguous. Read project instructions before running:
 
 ```bash
 python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <project-root>
@@ -46,7 +48,13 @@ python3 <installed-skill-dir>/scripts/project_setup.py enable --project-root <pr
 
 Project setup manages `AGENTS.md`, an existing nonempty root `AGENTS.override.md`, and a project Claude rule when legacy Claude instructions shadow `AGENTS.md`. It changes no global defaults. Both project and global setup stop when the helper detects that an instruction file changed before its update. Report any already-applied paths and rerun against the latest text.
 
-Read the JSON result. After successful project enable, even when routing was already enabled, run the core code-map startup and follow [repository assessment](onboarding.md) in explicit setup mode (`claim --refresh`). Reserve that assessment for explicit project setup. Preserve unrelated instructions; stop cleanup on routing errors or partial results. Report routing, assessment, changes, checks, and deferred findings separately; a busy lease means assessment is deferred. Enable the current chat preference too.
+Read the JSON result. After a successful enable, prepare the local map once:
+
+```bash
+python3 -B <installed-skill-dir>/scripts/code_map.py --repo <project-root> --max-chars 500
+```
+
+Limit repository writes to the managed guidance files. Enable the current chat preference and report saved guidance and map availability separately. If map access is unavailable, report it and finish setup. Repository assessment and cleanup require an explicit `compound tidy` request.
 
 The plugin must be installed and enabled at user scope in each app for global use. Setup does not install plugins or verify native runtime loading. New chats load defaults under normal host settings; project guidance and explicit user choices take priority. Saved Codex and Claude rules are machine-local; Cursor follows the plugin installation scope. These are model instructions, not guaranteed enforcement or background refactoring.
 
@@ -62,7 +70,7 @@ For `compound refresh global`, use `refresh --global` and preserve any requested
 
 ## Inspect or remove defaults
 
-For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report whether a project `setup` assessed it; global status checks saved routing for the same installed apps as global setup and directs users with outdated rules to refresh. Use `--host all` to inspect every supported host. Inspect native cache-path entries and Claude Code permission rules only when the user also asks about map access. Disable removes only the helper's managed sections in that scope, deletes files left empty, and ends the current chat preference. Global disable leaves independent project defaults intact; also remove the Claude Code permission rules that global setup added. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
+For `status` or `disable`, replace `enable` in the corresponding command; preserve `--global` when requested and any host selection. Status is read-only. For project status, also run `onboarding.py status --repo <project-root>` from the installed scripts directory to report the last recorded assessment; global status checks saved routing for the same installed apps as global setup and directs users with outdated rules to refresh. Use `--host all` to inspect every supported host. Inspect native cache-path entries and Claude Code permission rules only when the user also asks about map access. Disable removes only the helper's managed sections in that scope, deletes files left empty, and ends the current chat preference. Global disable leaves independent project defaults intact; also remove the Claude Code permission rules that global setup added. To stop the Cursor default, change its rule to Manual or disable it in Customize; report that host-managed step separately. Report the actual helper result; existing chats may need a new session to rebuild their instruction context.
 
 For a Claude Code map permission check, run this from Claude Code's installed copy:
 

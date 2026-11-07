@@ -1,12 +1,12 @@
-# Repository assessment and onboarding
+# Repository assessment and cleanup
 
-Only an explicit project `setup` requests this assessment and verified cleanup, every time it is asked, even when previously completed. Other requests never run it and change only what they cover. Respect project instructions and user opt-outs; global setup and activation-only modes do not request cleanup.
+Only an explicit `compound tidy` requests this assessment and verified cleanup. Apply any scope the user gives. Respect project instructions and opt-outs.
 
 Use the installed [state helper](../scripts/onboarding.py) with the intended repository root. Its canonical checkout identity shares completion across Codex, Cursor, and Claude Code through machine-local state, without a project marker, so `status` can report when a repository was last assessed.
 
 ## One pass
 
-1. Read project instructions and record changed and untracked paths before writes. Preserve those paths during cleanup and keep unknown untracked content visible to Git; explicit setup may update only its managed routing sections within existing instruction files. Use the core code-map startup before broad reads, then inspect layout, entrypoints, build/test configuration, and project conventions.
+1. Read project instructions and record changed and untracked paths before writes. Preserve those paths during cleanup and keep unknown untracked content visible to Git. Use the core code-map startup before broad reads, then inspect layout, entrypoints, build/test configuration, and project conventions.
 2. Claim the pass atomically:
 
    ```bash

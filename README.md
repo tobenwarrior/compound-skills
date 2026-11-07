@@ -4,7 +4,9 @@
 
 <p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.16.77 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
-<p align="center"><a href="#quick-start">Quick start</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
+<p align="center"><a href="#quick-start">Quick start</a> · <a href="#at-a-glance">Results</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
+
+![Two saved Sonnet runs of the same Shopkit refactor. Without Compound the original tests passed, but Café became cafe and the hidden check failed. With Compound the key stayed café and the added tests caught all three planted regressions.](.github/assets/refactor-proof.svg)
 
 ## Quick start
 
@@ -28,7 +30,19 @@ If the checkout is clean, replace [feature] with a behavior you recognize and se
 
 Look for a trace through source files and the nearest tests, with gaps called out. Setup reports saved guidance and optional map access separately. Use the status command above to check saved guidance if the first task behaves unexpectedly.
 
-Day to day, ask for the task in your own words. Project `setup` is optional and is for assessing and tidying one project.
+Day to day, ask for the task in your own words. Project `setup` is optional. It saves guidance for the checkout and prepares the local map.
+
+## At a glance
+
+| Measured outcome | Without Compound | With Compound |
+| --- | ---: | ---: |
+| [Held-out refactors completed correctly](#refactor-correctness) | 20/30 | 30/30 |
+| [Planted refactor regressions caught by the tests](#refactor-correctness) | 6/90 | 90/90 |
+| [Bug-fix runs that showed the regression fail before the edit](#real-bugs) | 1/48 | 48/48 |
+| [Three Django and Flask navigation tasks](#navigation-cost-on-django-and-flask) | 10/10 citations | 10/10 citations · 8.6% less Go allowance |
+| [Two consecutive upstream Flask fixes](#two-consecutive-flask-fixes) | 2/2 fixes | 2/2 fixes · 7.5% less Go allowance |
+
+The refactor and bug-fix counts come from Compound 0.16.0 on Claude Code. The navigation and Flask comparisons used DeepSeek V4.1 Flash through Y Harness on 0.16.57 and 0.16.45, respectively. [Full results and costs](#benchmark)
 
 ## Install
 
@@ -54,19 +68,23 @@ codex plugin add compound-skills@compound-skills
 
 The install smoke test checks saved guidance, a local map and map state recovery in temporary Codex and Claude Code homes. It uses the installed helpers directly. A separate offline Codex check verifies that a fresh chat receives the saved rule. The first task above lets you check how your model applies it. [Install smoke test](bench/README.md#installed-plugin-smoke-test)
 
-### What it changes on your machine
+<a id="what-it-changes-on-your-machine"></a>
+<details>
+<summary>What it changes on your machine</summary>
 
 - **Claude Code and Codex:** `setup-global` sets up each of them whose configuration folder exists, from whichever app you run it, and names any it skipped: the rule `~/.claude/rules/compound-skills.md` (it respects `CLAUDE_CONFIG_DIR`), and a marked section in `$CODEX_HOME/AGENTS.md` and in an existing nonempty `AGENTS.override.md`. To set up one app only, or an app whose folder does not exist yet, say so when you run it.
 - **Claude Code permissions:** `setup-global` also has the agent add allow rules to `~/.claude/settings.json`, so the map query and Compound's guides need no approval in each task: `Bash(python3 -B <skill folder>/scripts/code_map.py:*)`, the same without `-B`, and `Read(//<skill folder>/**)`. They name the installed folder, which changes on upgrade. Ask `status-global` in Claude Code to check map permissions, and use `setup-global` there to refresh missing entries.
 - **Cursor:** the plugin carries its own `compound-default` rule; `setup-global` writes no Cursor rule.
-- **Optional map access:** `~/.cache/compound-skills` (`COMPOUND_SKILLS_STATE_DIR` moves it) holds the map's cache and a record of which repositories a project `setup` assessed. After saving routing, the agent can add this folder to Codex's `sandbox_workspace_write.writable_roots` in `config.toml` and to Cursor's `additionalReadwritePaths` in `~/.cursor/sandbox.json`, following the [activation guide](skills/compound/references/activation.md): back up and validate each file, and keep every other setting. If access is blocked, the agent reports it separately and the saved guidance still applies.
+- **Optional map access:** `~/.cache/compound-skills` (`COMPOUND_SKILLS_STATE_DIR` moves it) holds the map's cache and a record of repository assessments. After saving routing, the agent can add this folder to Codex's `sandbox_workspace_write.writable_roots` in `config.toml` and to Cursor's `additionalReadwritePaths` in `~/.cursor/sandbox.json`, following the [activation guide](skills/compound/references/activation.md): back up and validate each file, and keep every other setting. If access is blocked, the agent reports it separately and the saved guidance still applies.
 - **The map service** listens on `127.0.0.1:43127` (`COMPOUND_MAP_PORT` changes the port). It starts on the first map query of a task that may edit files, or on `map`, and runs until `map stop` or you log out. Web pages from other sites cannot query it, but any program or user on your machine can read its maps and source previews while it runs; on a shared machine, run `map stop` when you are done.
-- **A project `setup`** adds a marked section to that project's `AGENTS.md`, a file you would commit, and the same section to a nonempty `AGENTS.override.md` or, when a `CLAUDE.md` would hide `AGENTS.md` from Claude Code, to `.claude/rules/compound.md`. It then assesses the project and may simplify or remove files it judges obsolete or redundant, tests included, as uncommitted changes for you to review; each deletion goes through your app's normal approval.
+- **A project `setup`** adds a marked section to that project's `AGENTS.md`, a file you would commit, and the same section to a nonempty `AGENTS.override.md` or, when a `CLAUDE.md` would hide `AGENTS.md` from Claude Code, to `.claude/rules/compound.md`. It prepares the local map and limits repository writes to the managed guidance files. Request `compound tidy` separately for assessment and verified cleanup.
 - **Not included:** hooks, MCP servers, other background processes, or network access. Compound's scripts connect to nothing but 127.0.0.1, and the map page loads nothing from elsewhere. Your code still goes to your model provider, as with any coding agent.
 
 After updating, use `compound refresh` in a configured project or `compound refresh global` for saved defaults. Refresh updates marked rules only. Start a fresh chat to load them.
 
 These are instructions to the agent, not enforcement; project instructions and your explicit requests take priority ([activation](skills/compound/references/activation.md)).
+
+</details>
 
 ### Remove it
 
@@ -75,7 +93,7 @@ These are instructions to the agent, not enforcement; project instructions and y
 3. Run `map stop` if the map service is running.
 4. Uninstall the plugin in each app (in Claude Code, `/plugin uninstall compound-skills@compound-skills`).
 5. Delete `~/.cache/compound-skills`, and its entry in Codex's `writable_roots` and Cursor's `additionalReadwritePaths` if you want them gone too.
-6. In a project where you ran `setup`, run `compound disable` there to remove its sections; its cleanup was ordinary file changes, which Git can show and revert.
+6. In a project where you ran `setup`, run `compound disable` there to remove the managed guidance sections.
 
 ## Use it
 
@@ -88,7 +106,8 @@ To try Compound for one chat before saving settings, use the `compound` command 
 | --- | --- | --- | --- |
 | Turn it on for every project (once, from any app) | `/compound-skills:setup-global` | `$setup-global` | `/setup-global` |
 | Check saved global guidance | `/compound-skills:status-global` | `$status-global` | `/status-global` |
-| Assess and tidy the current project | `/compound-skills:setup` | `$setup` | `/setup` |
+| Initialize the current project | `/compound-skills:setup` | `$setup` | `/setup` |
+| Assess and clean up the current project | `/compound-skills:compound tidy` | `$compound tidy` | `/compound tidy` |
 | Open the code map | `/compound-skills:map` | `$map` | `/map` |
 | Check or stop the map | `/compound-skills:map status` or `/compound-skills:map stop` | `$map status` or `$map stop` | `/map status` or `/map stop` |
 | Refresh saved guidance | `/compound-skills:compound refresh global` | `$compound refresh global` | `/compound refresh global` |
@@ -105,21 +124,6 @@ Run `compound contribute` by itself for a read-only orientation. Add a task, suc
 Ask `compound solutions search <terms>` to find a saved diagnosis or fix in the project's generated index. Lookup returns a capped shortlist. When a reusable lesson is worth saving, capture a short note and refresh the index. [Note format and commands](skills/compound/references/solutions.md)
 
 Opt in to a short reminder during Compound PR authoring with `git config --local compound.prReminder true`. It prompts you to consider a reusable lesson and leaves the PR workflow unblocked. [Reminder details](skills/compound/references/git.md#optional-pr-reminder)
-
-## Should you use it?
-
-Use Compound when a change needs evidence that behavior is preserved: a failing regression before a bug fix, caller comparisons before a refactor, and final checks that cover the edited code. Its map helps when you do not yet know where a feature lives or how files connect. Named files and known symbols go straight to the source or native navigation, so a map query does not become a mandatory extra step.
-
-- **Refactors:** 30/30 correct across two models, versus 20/30 without Compound, in the historical held-out tasks. Tests caught 90/90 planted wrong refactors, versus 6/90. [Correctness and cost](#refactor-correctness).
-- **Bug fixes:** nearly the same number fixed, with a new test shown failing before source edits in 48/48 runs, versus 1/48 without Compound. [Real bugs](#real-bugs).
-- **Code navigation:** Compound’s map used **8.6% less Go allowance** on three read-only Django and Flask tasks, with all ten citations correct in both modes. [Matched navigation results](#navigation-cost-on-django-and-flask).
-- **Cost.** Two upstream Flask fixes used 7.5% less Go allowance overall with Compound. The earlier Dispatchkit sequence used 10.3% less overall, and the invoicekit bug-fix sequence used 15.5% less. Historical refactors cost more, and the six-change workflow has unreported charges. [All workload results](#benchmark).
-
-The larger historical runs used Compound 0.16.0 in Claude Code on Python projects. The DeepSeek results shown here used Compound 0.16.7, 0.16.31, 0.16.45 and 0.16.57 through Y Harness. Prompt and code changes since those runs are distinguished from measured outcomes. [Limits](#limits).
-
-**What changes on your machine:** `setup-global` installs Compound's default routing in supported hosts and Claude Code allow rules for its own guides and map query. The map uses a user cache outside your repository and a service on `127.0.0.1:43127`; its scripts connect only to loopback. Project cleanup runs only when you explicitly request `setup`. Commits follow project conventions and omit AI co-author/generated-by lines. [Installation and removal details](#what-it-changes-on-your-machine).
-
-For the bug-fix habits alone, a small user rule is also a reasonable option; its measured results and the exact rule remain in the [historical controls](bench/historical-comparisons.md#isnt-this-just-a-rule-in-claudemd). Every's Compound Engineering and pstack provide larger planning and orchestration workflows; their separately measured results remain in the [historical comparison](bench/historical-comparisons.md#compared-with-other-plugins).
 
 ## Benchmark
 

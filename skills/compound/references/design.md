@@ -20,4 +20,4 @@ For edits, check working-tree status and use applicable project instructions, in
 
 Use the smallest patch that fits the local design and preserves existing behavior outside the request. Reuse its extension points, helpers, and test style. Expand scope only for a requirement or compatibility need. Keep unrelated cleanup, formatting, moves, and dependency changes out of the diff.
 
-Check your hunks against the task and preserve pre-existing edits. Run the relevant documented checks. Open another guide only for an unresolved decision. Setup, repository-wide assessment, and publication require separate user requests.
+Check your hunks against the task and preserve pre-existing edits. Run the relevant documented checks. Open another guide only for an unresolved decision. Setup, `compound tidy`, and publication require separate user requests.

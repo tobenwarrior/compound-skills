@@ -16,7 +16,9 @@ For explicit `compound solutions` requests for help, capture, or index refresh, 
 
 For review-only Compound work, bypass engineering startup. Use the supplied diff or read it from Git at `-U3`. Follow [Review](references/review.md) for targeted checks.
 
-For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md). Only explicit project `setup` opens [repository assessment](references/onboarding.md).
+For a bare invocation, or Compound `session`, `setup`, `refresh`, `status`, and `disable` requests, read [activation](references/activation.md).
+
+Only explicit `compound tidy` opens [repository assessment and cleanup](references/onboarding.md).
 
 Bare `contribute` follows [Existing repositories](references/design.md#existing-repositories) and ends after read-only orientation. For a scoped edit in an unfamiliar repo, reuse supplied instructions, working-tree status, and the nearest implementation and test. Check missing rules and status with the first relevant read. Open that guide when an unresolved convention or design decision could change the patch.
 

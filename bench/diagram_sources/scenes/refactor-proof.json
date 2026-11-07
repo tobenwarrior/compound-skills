@@ -1,0 +1,153 @@
+{
+  "title": "Same refactor. Different caller behavior.",
+  "label": "Saved refactor example",
+  "viewBox": "0 0 944 274",
+  "description": "Saved Shopkit slug refactor runs 64978b6b and 1e5d07d8 with Claude Sonnet on the same fixture and prompt. Without Compound, 13 tests passed but the facet key changed and the independent check failed. With Compound 0.16.0, 15 tests passed, the key was preserved, and the tests caught all three planted wrong refactors.",
+  "nodes": [
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "14",
+        "y": "10",
+        "width": "448",
+        "height": "214",
+        "rx": "18",
+        "fill": "#f7f6f2"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "34",
+        "y": "43",
+        "font-size": "20",
+        "font-weight": "700",
+        "fill": "#14161c"
+      },
+      "text": "Without Compound"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "34",
+        "y": "83",
+        "font-size": "19",
+        "font-weight": "650",
+        "fill": "#14161c",
+        "class": "mono"
+      },
+      "text": "Facet(\"Café\", 1).key  →  \"cafe\""
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "34",
+        "y": "120",
+        "font-size": "17",
+        "font-weight": "400",
+        "fill": "#14161c"
+      },
+      "text": "13 tests passed after the edit"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "34",
+        "y": "151",
+        "font-size": "16",
+        "font-weight": "400",
+        "fill": "#c2412d"
+      },
+      "text": "Hidden check failed. The facet key changed."
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "34",
+        "y": "193",
+        "font-size": "19",
+        "font-weight": "700",
+        "fill": "#c2412d"
+      },
+      "text": "0/3 planted regressions caught"
+    },
+    {
+      "tag": "rect",
+      "attrs": {
+        "x": "482",
+        "y": "10",
+        "width": "448",
+        "height": "214",
+        "rx": "18",
+        "fill": "#e5f3e9"
+      }
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "502",
+        "y": "43",
+        "font-size": "20",
+        "font-weight": "700",
+        "fill": "#14161c"
+      },
+      "text": "With Compound"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "502",
+        "y": "83",
+        "font-size": "19",
+        "font-weight": "650",
+        "fill": "#14161c",
+        "class": "mono"
+      },
+      "text": "Facet(\"Café\", 1).key  →  \"café\""
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "502",
+        "y": "120",
+        "font-size": "17",
+        "font-weight": "400",
+        "fill": "#14161c"
+      },
+      "text": "15 tests passed with caller checks"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "502",
+        "y": "151",
+        "font-size": "16",
+        "font-weight": "400",
+        "fill": "#147a43"
+      },
+      "text": "Hidden check passed. The facet key stayed stable."
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "502",
+        "y": "193",
+        "font-size": "19",
+        "font-weight": "700",
+        "fill": "#147a43"
+      },
+      "text": "3/3 planted regressions caught"
+    },
+    {
+      "tag": "text",
+      "attrs": {
+        "x": "14",
+        "y": "260",
+        "font-size": "16",
+        "font-weight": "400",
+        "fill": "#6b6f78"
+      },
+      "text": "Same prompt and Shopkit revision · Two historical Claude Sonnet runs · Compound 0.16.0"
+    }
+  ]
+}
