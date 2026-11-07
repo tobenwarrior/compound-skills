@@ -185,7 +185,7 @@ def index_repository(root: Path) -> int:
 
 
 def capture_repository(root: Path, name: str, data: bytes) -> tuple[int, int, str]:
-    """Save a note and return the index count, note word count, and indexed tags."""
+    """Save a note and return the index count, note word count, and index row."""
     if len(name) > 96 or not CAPTURE_NAME.fullmatch(name) or name == 'index.md':
         raise ValueError('use a lowercase note name such as retry-timeout.md')
     if len(data) > MAX_CAPTURE_BYTES:
@@ -193,6 +193,7 @@ def capture_repository(root: Path, name: str, data: bytes) -> tuple[int, int, st
     text = data.decode('utf-8')
     problem, tags = _metadata(data, name)
     path = (SOLUTIONS / name).as_posix()
+    row = (problem, tags, path)
     with _solutions_directory(root, create=True) as directory:
         existing = _current_index(directory)
         try:
@@ -204,12 +205,12 @@ def capture_repository(root: Path, name: str, data: bytes) -> tuple[int, int, st
             create = True
         rows = _note_rows(directory, reserved_entries=int(create) + int(existing is None))
         if create:
-            rows.append((problem, tags, path))
+            rows.append(row)
         else:
             existing_row = next((row for row in rows if row[2] == path), None)
             if existing_row is None:
                 raise ValueError(f'{path} already exists with different casing')
-            tags = existing_row[1]
+            row = existing_row
         index = _index_data(rows)
         if create:
             _publish_file(directory, name, data)
@@ -217,7 +218,7 @@ def capture_repository(root: Path, name: str, data: bytes) -> tuple[int, int, st
             _publish_file(directory, INDEX, index, existing)
         except (OSError, ValueError) as error:
             raise ValueError(f'{path} is saved; index refresh failed: {error}') from error
-    return len(rows), len(text.split()), tags
+    return len(rows), len(text.split()), _row(*row)
 
 
 def _search_rows(text: str, query: str, limit: int) -> tuple[str, str | None]:
@@ -307,11 +308,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == 'index':
             print(f'docs/solutions/INDEX.md ({index_repository(root)} notes)')
         elif args.command == 'capture':
-            count, words, tags = capture_repository(root, args.name, sys.stdin.buffer.read(MAX_CAPTURE_BYTES + 1))
+            count, words, row = capture_repository(root, args.name, sys.stdin.buffer.read(MAX_CAPTURE_BYTES + 1))
             unit = 'note' if count == 1 else 'notes'
             print(f'Saved docs/solutions/{args.name} and refreshed docs/solutions/INDEX.md ({count} {unit}).')
-            tag_summary = f'Indexed tags are {tags}.' if tags else 'No indexed tags.'
-            print(f'Captured note has {words} words. {tag_summary}')
+            print(f'Captured note has {words} words. Indexed entry:\n{row}')
         else:
             sys.stdout.write(search_repository(root, args.query, args.limit, show_note=args.show_note))
     except (OSError, ValueError, RuntimeError) as error:
