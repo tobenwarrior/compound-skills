@@ -22,6 +22,7 @@ WORKLOADS = ('small-edit', 'upstream-fix', 'refactor', 'review', 'navigation')
 COST_FIELDS = ('allowance', 'list_cost', 'cost')
 NATIVE_PROVIDER = 'codex-chatgpt'
 FOLLOWUP_PROMPTS = {'semantic_repair': 'repair_prompt_sha256', 'interruption_recovery': 'recovery_prompt_sha256'}
+REFACTOR_SUITE = ['-m', 'unittest', 'discover', '-s', 'tests']
 
 
 def _digest(value, lengths=(64,)):
@@ -111,6 +112,37 @@ def _attempt_counts(attempts):
     }
 
 
+def _verified_refactor(original_source, attempts):
+    """Find passing original and final suite runs with the same final tests."""
+    if not attempts or not attempts[-1]['accepted']:
+        return False
+    grade = attempts[-1]['grade']
+    state = grade.get('verification_state') or {}
+    cwd, source, tests = (state.get(key) for key in ('cwd', 'src', 'tests'))
+    count = grade.get('own_suite_tests')
+    if (not isinstance(cwd, str) or not Path(cwd).is_absolute() or source == original_source
+            or not _digest(source, (16,)) or not _digest(tests, (16,))
+            or type(count) is not int or count <= 0):
+        return False
+    baseline_end = None
+    for attempt in attempts:
+        for run in attempt.get('test_observations', []):
+            start, end = run.get('t0'), run.get('t1')
+            if (run.get('source_digest') != 'bytes' or run.get('cwd') != cwd
+                    or run.get('argv') not in (REFACTOR_SUITE, ['-B', *REFACTOR_SUITE])
+                    or type(run.get('exit')) is not int or run['exit'] != 0
+                    or type(run.get('tests_run')) is not int or run['tests_run'] != count
+                    or run.get('src0') != run.get('src1') or run.get('tests0') != tests or run.get('tests1') != tests
+                    or type(start) not in (int, float) or type(end) not in (int, float)
+                    or not 0 < start <= end < float('inf')):
+                continue
+            if run['src0'] == original_source:
+                baseline_end = end if baseline_end is None else min(baseline_end, end)
+            elif run['src0'] == source and baseline_end is not None and baseline_end <= start:
+                return True
+    return False
+
+
 def check_workload(document, candidate, *, seen_responses=None):
     """Evaluate one frozen workload with all three arms and every attempt."""
     _candidate(candidate)
@@ -119,6 +151,12 @@ def check_workload(document, candidate, *, seen_responses=None):
     plan = document['plan']
     digest = _validate_plan(plan, candidate)
     native = plan['protocol']['provider'] == NATIVE_PROVIDER
+    tasks = plan['sequences'][0]['tasks']
+    verify_refactor = 'refactor_verification' in plan['protocol']
+    if verify_refactor and (document['workload'] != 'refactor'
+                            or plan['protocol']['refactor_verification'] != 'unittest-discover'
+                            or any(not _digest(task.get('original_source_digest'), (16,)) for task in tasks)):
+        raise ValueError('refactor verification requires unittest discovery and frozen original source digests')
     if seen_responses is None:
         seen_responses = set()
     rows = document['attempts']
@@ -136,7 +174,7 @@ def check_workload(document, candidate, *, seen_responses=None):
                 or (model != plan['protocol']['model'] and not model_unverified) or row['plan_sha256'] != digest):
             raise ValueError('attempt does not match the frozen schedule, build, model or plan')
         stage = plan['schedule'][index][1]
-        task = plan['sequences'][0]['tasks'][stage]
+        task = tasks[stage]
         prompt = FOLLOWUP_PROMPTS.get(row['attempt_kind'], 'prompt_sha256') if native else 'prompt_sha256'
         if (row['prompt_sha256'] != task[prompt]
                 or any(row[key] != task[key] for key in ('fixture_sha256', 'grader_sha256'))):
@@ -170,6 +208,16 @@ def check_workload(document, candidate, *, seen_responses=None):
         arms[arm].update(_attempt_counts(rows))
         if not native and arms[arm]['requests'] > plan['protocol']['request_cap']:
             raise ValueError(f'{arm}: recorded requests exceed the frozen cap')
+        if verify_refactor:
+            verified = []
+            for stage in arms[arm]['accepted_stages']:
+                task = tasks[stage]
+                history = sorted((row for row in rows if row['stage'] == stage), key=lambda row: row['attempt'])
+                if _verified_refactor(task['original_source_digest'], history):
+                    verified.append(stage)
+                else:
+                    blockers.append(f"{arm}: missing matched original and final test runs for {task['name']}")
+            arms[arm]['verified_refactor_stages'] = verified
     final = {}
     for row in sorted(attempts, key=lambda row: row['attempt']):
         if row['arm'] == 'candidate':

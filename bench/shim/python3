@@ -3,6 +3,7 @@
 from itertools import dropwhile
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -36,21 +37,35 @@ def native_trace(root, log, args):
     try:
         root, log = root.resolve(strict=True), log.resolve()
         if Path.cwd().is_relative_to(root) and not log.is_relative_to(root):
-            return root, log
+            return root, log, module[1]
     except (OSError, RuntimeError):
         return None
     return None
+
+
+def run_unittest(args):
+    """Forward stderr while retaining the discovery count printed by unittest."""
+    count = None
+    with subprocess.Popen([sys.executable, *args], stderr=subprocess.PIPE) as child:
+        for line in child.stderr:
+            sys.stderr.buffer.write(line)
+            sys.stderr.buffer.flush()
+            match = re.fullmatch(rb"Ran ([0-9]{1,9}) tests? in [0-9]+(?:\.[0-9]+)?s\r?\n", line)
+            if match:
+                count = int(match[1])
+        return child.wait(), count
 
 
 args = ["-m", "pytest", *sys.argv[1:]] if Path(sys.argv[0]).name in ("pytest", "py.test") else sys.argv[1:]
 root = os.environ.get("COMPOUND_BENCH_TRACE_ROOT")
 log = os.environ.get("COMPOUND_BENCH_TRACE_LOG")
 exact = root is not None or log is not None
+module = None
 if exact:
     trace = native_trace(root, log, args)
     if trace is None:
         os.execv(sys.executable, [sys.executable, *args])
-    repo, log = trace
+    repo, log, module = trace
 else:
     sources = Path("/home", "dev", "src")
     log = Path("/home", ".devtrace", "exec.jsonl")
@@ -58,8 +73,12 @@ else:
     repo = projects[0] if len(projects) == 1 else None
 before = snapshot(repo, exact=exact)
 started = time.time()
+tests_run = None
 try:
-    code = subprocess.call([sys.executable, *args])
+    if module == "unittest" and sys.stderr is not None:
+        code, tests_run = run_unittest(args)
+    else:
+        code = subprocess.call([sys.executable, *args])
 except KeyboardInterrupt:
     code = 130
 after = snapshot(repo, exact=exact)
@@ -68,6 +87,8 @@ if before is not None and after is not None:
               "src0": before[0], "tests0": before[1], "src1": after[0], "tests1": after[1]}
     if exact:
         record["source_digest"] = "bytes"
+    if tests_run is not None:
+        record["tests_run"] = tests_run
     try:
         with log.open("a") as stream:
             stream.write(json.dumps(record) + "\n")
