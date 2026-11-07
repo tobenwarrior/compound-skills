@@ -75,12 +75,19 @@ def reconcile_receipts(attempt, seen_responses, thread_totals):
 
 
 
+def _skill_entries(text):
+    return {
+        line.rpartition(" (file: ")[0] for line in text.splitlines()
+        if line.startswith("- ") and " (file: " in line and line.endswith("/SKILL.md)")
+    }
+
+
 def _activation_markers(role, text):
     lines = text.splitlines()
     if role == "developer":
         entries = {
-            line.partition(": ")[0] for line in lines
-            if line.startswith("- compound-skills:") and " (file: " in line and line.endswith("/SKILL.md)")
+            entry.partition(": ")[0] for entry in _skill_entries(text)
+            if entry.startswith("- compound-skills:")
         }
         if "- compound-skills:compound" in entries:
             return {"plugin", "core"}
@@ -98,7 +105,7 @@ def _activation_markers(role, text):
     return markers
 
 
-def _audit_rollout(path, pending, arm):
+def _audit_rollout(path, pending, arm, catalogues):
     session = None
     cli_version = None
     turn = None
@@ -106,6 +113,7 @@ def _audit_rollout(path, pending, arm):
     receipt_count = prompt_count = context_count = completed = 0
     activation = set()
     activation_checked = False
+    default_skills = frozenset()
     receipt_fields = ("response_id", "session_id", "turn_id", "usage", "turn_token_usage", "thread_token_usage")
 
     def finish_turn():
@@ -141,7 +149,7 @@ def _audit_rollout(path, pending, arm):
                 turn = payload["turn_id"]
                 if (session, turn) not in pending:
                     raise ValueError(f"{arm}: saved rollout contains an unrecorded turn")
-                attempt, protocol = pending.pop((session, turn))
+                attempt, protocol, task = pending.pop((session, turn))
                 if f"Codex CLI {cli_version}" != protocol["runtime"]:
                     raise ValueError(f"{arm}: saved rollout does not match the frozen runtime")
                 receipt_count = prompt_count = context_count = completed = 0
@@ -152,6 +160,8 @@ def _audit_rollout(path, pending, arm):
                     raise ValueError(f"{arm}: saved rollout receipt does not match the ledger")
                 if not activation_checked and arm != "stock" and not {"core", "complete-rule"} <= activation:
                     raise ValueError(f"{arm}: missing Compound activation in startup context")
+                if catalogues.setdefault(task, default_skills) != default_skills:
+                    raise ValueError(f"{arm}: default skill catalogue changed for {attempt['task']}")
                 activation_checked = True
                 receipt_count += 1
             elif kind == "turn_context":
@@ -172,6 +182,8 @@ def _audit_rollout(path, pending, arm):
                             or not isinstance(part.get("text"), str)):
                         continue
                     text = part["text"]
+                    if role == "developer" and (entries := _skill_entries(text)):
+                        default_skills = frozenset(entry for entry in entries if not entry.startswith("- compound-skills:"))
                     if role == "user" and hashlib.sha256(text.encode()).hexdigest() == attempt["prompt_sha256"]:
                         prompt_count += 1
                     elif arm == "stock":
@@ -194,16 +206,20 @@ def audit_rollouts(documents, root, roles):
             turns = pending[attempt["arm"]]
             if (session, turn) in turns:
                 raise ValueError("multiple ledger attempts name the same Codex turn")
-            turns[session, turn] = attempt, document["plan"]["protocol"]
+            plan = document["plan"]
+            sequence, stage, _ = plan["schedule"][attempt["index"]]
+            task = document["workload"], sequence, stage
+            turns[session, turn] = attempt, plan["protocol"], task
 
     directories = {arm: (Path(root) / arm).resolve() for arm in roles}
     if len(set(directories.values())) != len(directories):
         raise ValueError("Codex rollouts need a separate directory for each arm")
     files = {}
+    catalogues = {}
     for arm, directory in directories.items():
         if not directory.is_dir():
             raise ValueError(f"{arm}: missing Codex rollout directory")
-        files[arm] = sorted(_audit_rollout(path, pending[arm], arm)
+        files[arm] = sorted(_audit_rollout(path, pending[arm], arm, catalogues)
                             for path in sorted(directory.rglob("rollout-*.jsonl")))
         if pending[arm]:
             raise ValueError(f"{arm}: saved rollouts are missing a ledger turn")
