@@ -438,6 +438,8 @@ Prompts are the same in every arm, apart from a `+prefix:` an arm asks for, and 
 - **Cost and time**: list-price cost and tokens as Claude Code reports them, wall time, tool calls, map and skill use.
 - **Validity**, decided before grading: the model served, the plugin loaded only in plugin arms, the control never seeing Compound, no leftover processes or held ports.
 
+For a native Python trial, launch test commands through [the Python shim](shim/python3) using the trial's Python interpreter. Set `COMPOUND_BENCH_TRACE_ROOT` to the absolute checkout path and `COMPOUND_BENCH_TRACE_LOG` to a fresh absolute log path outside that checkout for each attempt. The shim observes `python -m pytest` and `python -m unittest` when run from the checkout. It records the exit code and hashes the bytes of `.py` files under `src/` and `tests/` before and after each observed command. Test output goes directly to the caller. Missing records leave the verification steps unobserved. Independent grading still evaluates the final artifacts.
+
 ## Add a task for a new feature
 
 1. Pick or build a fixture. Small synthetic projects go in `data/` and are built in `fixtures.py`, with a frozen tree and commit metadata so rebuilds stay identical. Upstream projects get a pin in `fixtures.PINS`.
