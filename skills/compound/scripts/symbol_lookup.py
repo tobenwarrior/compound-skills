@@ -199,7 +199,8 @@ def _find_grep_matches(
     for key in ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS"):
         env.pop(key, None)
     data = code_map._bounded_git_output(
-        root, ["grep", "-n", "-z", "-I", "-F", "--no-color", "--full-name", *patterns, "--", *scopes],
+        root, ["-c", "grep.fallbackToNoIndex=false", "grep", "-n", "-z", "-I", "-F",
+               "--no-color", "--full-name", *patterns, "--", *scopes],
         byte_limit, keep_prefix=True, env=env, ok_statuses=(0, 1), timeout=timeout,
     )
     if data is None:
