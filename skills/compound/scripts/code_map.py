@@ -22,6 +22,7 @@ import tempfile
 import time
 import urllib.parse
 import unicodedata
+from collections import Counter
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Iterator
 try:
@@ -1564,6 +1565,7 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
         "import links are heuristic" not in note for note in notes if isinstance(note, str)
     )
     terms = _query_terms(query)[0]
+    term_set = set(terms)
     exact_path = query.removeprefix("./")
     literal_names = _literal_query_names(query)
     by_path = {file["path"]: file for file in model["files"]}
@@ -1613,17 +1615,22 @@ def _text(model: dict[str, Any], limit: int, query: str = "") -> str:
             key = "qualified_name" if "." in exact_symbol else "name"
             symbol_values = [symbol for symbol in file["symbols"] if symbol.get(key, "").casefold() == exact_symbol][:8]
         elif terms or literal_names:
-            def relevance(symbol: dict[str, Any]) -> int:
+            term_counts = Counter(
+                term for symbol in file["symbols"] for term in _name_terms(symbol["name"]) & term_set
+            ) if compact_topic else Counter()
+
+            def relevance(symbol: dict[str, Any]) -> tuple[int, int]:
                 if literal_names and symbol["name"].casefold() in literal_names:
-                    return 3 * len(terms) + 1
+                    return 3 * len(terms) + 1, 0
                 name = _name_terms(symbol["name"])
                 signature = _name_terms(symbol.get("signature", ""))
-                return sum(2 * (term in name) + (term in signature) for term in terms)
-            ranked_symbols = sorted(file["symbols"], key=relevance, reverse=True)
-            if exact_file:
-                symbol_values = ranked_symbols[:8]
-            else:
-                symbol_values = [symbol for symbol in ranked_symbols if relevance(symbol) > 0][:8]
+                score = sum(2 * (term in name) + (term in signature) for term in terms)
+                rarest = min((term_counts[term] for term in name & term_counts.keys()), default=MAX_SYMBOLS + 1)
+                return score, -rarest
+
+            ranked = sorted(((relevance(symbol), symbol) for symbol in file["symbols"]),
+                            key=lambda item: item[0], reverse=True)
+            symbol_values = [symbol for (score, _), symbol in ranked if exact_file or score > 0][:8]
         else:
             symbol_values = file["symbols"][:8]
         declarations = []
