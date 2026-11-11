@@ -2,6 +2,13 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.17.1 (2026-11-11)
+
+- Ship the verified 99-word routing rule from one shared source. After updating Codex or Claude Code, use `compound refresh global` if you saved global defaults, then open a fresh chat.
+- Publish the two-fix Flask comparison. All three setups passed both fixes, and the 99-word rule used 11.8% less Go allowance than stock and 5.6% less than the 0.17.0 rule. [Benchmark and attempt ledger](README.md#two-consecutive-flask-fixes)
+- Move Git inventory and viewer service state into separate modules while keeping the existing code-map entry points.
+- Run portable package, routing and map checks in GitHub Actions.
+
 ## 0.17.0 (2026-11-07)
 
 - Project `/setup` saves guidance and prepares the local map. Use `compound tidy` when you want an assessment and cleanup pass.

@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.0 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–11 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.1 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–11 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#quick-start">Quick start</a> · <a href="#at-a-glance">Results</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -68,6 +68,10 @@ codex plugin add compound-skills@compound-skills
 
 The install smoke test checks saved guidance, a local map and map state recovery in temporary Codex and Claude Code homes. It uses the installed helpers directly. A separate offline Codex check verifies that a fresh chat receives the saved rule. The first task above lets you check how your model applies it. [Install smoke test](bench/README.md#installed-plugin-smoke-test)
 
+### Update
+
+Install the latest Compound Skills version through your host's plugin updater. If you saved global defaults in Codex or Claude Code, ask Compound to `refresh global` after updating, then open a fresh chat. In a configured project, `compound refresh` updates the project's saved rule.
+
 <a id="what-it-changes-on-your-machine"></a>
 <details>
 <summary>What it changes on your machine</summary>
@@ -79,8 +83,6 @@ The install smoke test checks saved guidance, a local map and map state recovery
 - **The map service** listens on `127.0.0.1:43127` (`COMPOUND_MAP_PORT` changes the port). It starts on the first map query of a task that may edit files, or on `map`, and runs until `map stop` or you log out. Project lists, maps and source previews require a local credential. The browser opens through a private launch file in your user cache. Access expires when the service restarts.
 - **A project `setup`** adds a marked section to that project's `AGENTS.md`, a file you would commit, and the same section to a nonempty `AGENTS.override.md` or, when a `CLAUDE.md` would hide `AGENTS.md` from Claude Code, to `.claude/rules/compound.md`. It prepares the local map and limits repository writes to the managed guidance files. Request `compound tidy` separately for assessment and verified cleanup.
 - **Not included:** hooks, MCP servers, other background processes, or network access. Compound's scripts connect to nothing but 127.0.0.1, and the map page loads nothing from elsewhere. Your code still goes to your model provider, as with any coding agent.
-
-After updating, use `compound refresh` in a configured project or `compound refresh global` for saved defaults. Refresh updates marked rules only. Start a fresh chat to load them.
 
 These are instructions to the agent, not enforcement; project instructions and your explicit requests take priority ([activation](skills/compound/references/activation.md)).
 
