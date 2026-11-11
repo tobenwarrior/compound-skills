@@ -99,7 +99,7 @@ def _json(value: Any) -> bytes:
 def _build_assets() -> tuple[dict[str, bytes], str]:
     assets: dict[str, bytes] = {}
     digest = hashlib.sha256()
-    modules = ("workspace_imports", "language_outlines", "language_imports", "safe_open", "symbol_lookup", "reference_cache", "viewer_access")
+    modules = ("map_inventory", "workspace_imports", "language_outlines", "language_imports", "safe_open", "symbol_lookup", "reference_cache", "viewer_access")
     for script in (Path(__file__), Path(engine.__file__), *(Path(engine.__file__).with_name(f"{name}.py") for name in modules)):
         try:
             digest.update(script.read_bytes())
