@@ -140,6 +140,8 @@ VARIANTS = {
         # Rules before 0.16.0 named the map query; 0.16.0's rule loads the skill only for some tasks and does not.
         ("skills/compound/scripts/project_setup.py", "Run its map query before searching. Reproduce", "Reproduce", "optional"),
         ("skills/compound/scripts/project_setup.py", "Use `map` for exact Python citations. ", "", "optional"),
+        ("skills/compound/scripts/project_setup.py", "Use `map` lookup for unverified Python citations. ", "", "optional"),
+        ("skills/compound/references/default-routing.md", " Use `map` for unverified Python citations.", "", "optional"),
     ],
     # 0.16.0 without loading the skill for reviews: the rule and the skill's description leave reviews out.
     "noreview": [
@@ -157,6 +159,8 @@ def apply_variant(root: Path, name: str) -> None:
         raise SystemExit(f"unknown variant {name!r}; known: {', '.join(VARIANTS)}")
     for relative, old, new, *optional in VARIANTS[name]:
         path = root / relative
+        if optional and not path.is_file():
+            continue
         text = path.read_text(encoding="utf-8")
         if optional and old not in text:
             continue

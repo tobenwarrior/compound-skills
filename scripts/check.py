@@ -33,6 +33,9 @@ MARKETPLACES = {
 }
 CURSOR_RULES_PATH = "./.cursor-plugin/rules/"
 CURSOR_RULE_PATH = ".cursor-plugin/rules/compound-default.mdc"
+DEFAULT_ROUTING_PATH = "skills/compound/references/default-routing.md"
+DEFAULT_ROUTING_MAX_WORDS = 100
+DEFAULT_ROUTING_MAX_BYTES = 1024
 PRIVATE_PATTERNS = (
     ("private_path", re.compile(r"/(?:Users|home|root|tmp|private/tmp|var/folders)/[^\s'\"`<>]+")),
     ("windows_private_path", re.compile(r"(?i)\b[A-Z]:\\Users\\[^\s'\"`<>]+")),
@@ -581,7 +584,28 @@ def release_text(path: Path, root: Path, errors: list[dict[str, str]]) -> str | 
         return None
 
 
-def check_cursor_rule(root: Path, errors: list[dict[str, str]]) -> Path | None:
+def check_default_routing(root: Path, release: set[Path], errors: list[dict[str, str]]) -> str | None:
+    path = root / DEFAULT_ROUTING_PATH
+    if path not in release:
+        add(errors, "release_inventory", DEFAULT_ROUTING_PATH, "default routing source is not in the release inventory")
+        return None
+    if under_symlink(root, path, errors):
+        return None
+    text = release_text(path, root, errors)
+    if text is None:
+        return None
+    rule = text.strip()
+    if len(rule.splitlines()) != 1:
+        add(errors, "routing_rule_format", DEFAULT_ROUTING_PATH, "default routing must be one nonempty line")
+    if len(rule.split()) > DEFAULT_ROUTING_MAX_WORDS or len(rule.encode("utf-8")) > DEFAULT_ROUTING_MAX_BYTES:
+        add(errors, "routing_rule_budget", DEFAULT_ROUTING_PATH,
+            f"default routing exceeds {DEFAULT_ROUTING_MAX_WORDS} words or {DEFAULT_ROUTING_MAX_BYTES:,} UTF-8 bytes")
+    return rule
+
+
+def check_cursor_rule(
+    root: Path, errors: list[dict[str, str]], default_routing: str | None = None,
+) -> Path | None:
     rule = root / CURSOR_RULE_PATH
     if under_symlink(root, rule, errors):
         add(errors, "release_symlink", CURSOR_RULE_PATH, "release paths may not be symlinks")
@@ -627,6 +651,8 @@ def check_cursor_rule(root: Path, errors: list[dict[str, str]]) -> Path | None:
                 always_apply = True
     if not valid or not always_apply:
         add(errors, "cursor_rule_frontmatter", CURSOR_RULE_PATH, "Cursor rule frontmatter must declare alwaysApply: true")
+    elif default_routing is not None and "\n".join(lines[end + 1:]).strip() != default_routing:
+        add(errors, "routing_rule_drift", CURSOR_RULE_PATH, "Cursor rule differs from default routing. Run scripts/sync_routing.py")
     return rule
 
 
@@ -659,6 +685,7 @@ def check_package(root: Path) -> dict[str, Any]:
     skills: dict[str, dict[str, str]] = {}
     host_rules: list[Path] = []
     readable: list[Path] = []
+    default_routing = None
     try:
         try:
             root_is_directory = root.is_dir()
@@ -674,7 +701,8 @@ def check_package(root: Path) -> dict[str, Any]:
         published = release | {parent for path in release for parent in path.parents if inside(parent, root)}
         check_index_worktree(root, errors)
         manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
-        if rule := check_cursor_rule(root, errors):
+        default_routing = check_default_routing(root, release, errors) if root_is_directory else None
+        if rule := check_cursor_rule(root, errors, default_routing):
             if rule in release:
                 host_rules.append(rule)
             else:
@@ -709,6 +737,11 @@ def check_package(root: Path) -> dict[str, Any]:
     except OSError:
         add(errors, "unreadable_content", ".", "package measurements could not be read")
         measured_context = context(root, {}, {}, {}, [], [])
+    if default_routing is not None:
+        measured_context["default_routing"] = {
+            "words": len(default_routing.split()),
+            "bytes": len(default_routing.encode("utf-8")),
+        }
     return {
         "status": "pass" if not errors else "fail",
         "root": str(root),

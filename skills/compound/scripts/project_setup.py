@@ -46,20 +46,12 @@ CURSOR_DISABLE_NOTE = (
     "rule in Cursor Customize; this helper does not change app settings."
 )
 
+ROUTING_PATH = Path(__file__).resolve().parent.parent / "references" / "default-routing.md"
 BLOCK_LINES = (
     START_MARKER,
     "## Compound Skills default routing",
     "",
-    "Review requested diff once. Trace each changed caller. Verify changed lifecycle paths run in tests. "
-    "Report findings promptly. Probe with permission. After denial, source only. Use listed skill paths. Honor host-required first reads for edit targets. "
-    "Verify changed inputs at the real receiver before edits. Check falsy defaults. For bugs, run the regression before source edits and confirm the expected failure. "
-    "Run the final full suite once with the scoped diff. Use it for included regressions. Scoped extractions stay here. Batch caller and test reads. "
-    "Cover missing input and failure boundaries through existing callers. Pass baseline before source edits, "
-    "preserve policies, then retest. "
-    "Use project runner. Prevent bytecode (`PYTHONDONTWRITEBYTECODE=1`). Diagnose setup failures. "
-    "Stop Git after no-repository errors. Use `map` lookup for unverified Python citations. "
-    "Load `compound` for unclear conventions, broad refactors, features, performance, PR authoring. "
-    "Follow project/user instructions. Omit AI commit credits.",
+    ROUTING_PATH.read_text(encoding="utf-8").strip(),
     END_MARKER,
 )
 
