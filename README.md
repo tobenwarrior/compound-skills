@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.0 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–4 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.0 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–11 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#quick-start">Quick start</a> · <a href="#at-a-glance">Results</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -40,9 +40,9 @@ Day to day, ask for the task in your own words. Project `setup` is optional. It 
 | [Planted refactor regressions caught by the tests](#refactor-correctness) | 6/90 | 90/90 |
 | [Bug-fix runs that showed the regression fail before the edit](#real-bugs) | 1/48 | 48/48 |
 | [Three Django and Flask navigation tasks](#navigation-cost-on-django-and-flask) | 10/10 citations | 10/10 citations · 8.6% less Go allowance |
-| [Two consecutive upstream Flask fixes](#two-consecutive-flask-fixes) | 2/2 fixes | 2/2 fixes · 7.5% less Go allowance |
+| [Two consecutive upstream Flask fixes](#two-consecutive-flask-fixes) | 2/2 fixes | 2/2 fixes · 11.8% less Go allowance |
 
-The refactor and bug-fix counts come from Compound 0.16.0 on Claude Code. The navigation and Flask comparisons used DeepSeek V4.1 Flash through Y Harness on 0.16.57 and 0.16.45, respectively. [Full results and costs](#benchmark)
+The refactor and bug-fix counts come from Compound 0.16.0 on Claude Code. The navigation and Flask comparisons used DeepSeek V4.1 Flash through Y Harness. The navigation run used 0.16.57. The Flask run used the 0.17.0 package with the 99-word rule from this repository. [Full results and costs](#benchmark)
 
 ## Install
 
@@ -139,13 +139,13 @@ Both modes started in clean Git checkouts at Flask commit `514fc6b`, with identi
 
 ### Two consecutive Flask fixes
 
-With DeepSeek V4.1 Flash through Y Harness, Compound 0.16.45 used **7.5% less OpenCode Go allowance** across two upstream Flask fixes. Both modes passed **2/2 fixes on the first attempt**, including both hidden regressions and all 493 final tests.
+With DeepSeek V4.1 Flash through Y Harness, the 99-word rule used **11.8% less OpenCode Go allowance than stock** and **5.6% less than the released 0.17.0 rule**. All three setups passed both fixes on their first attempts, including the hidden regressions and all 493 final tests.
 
-![Two Flask fixes. Without Compound used $0.01083994 in Go allowance and with Compound used $0.01003235. Both modes passed 2/2 fixes. The first fix cost less with Compound and the second cost slightly more.](.github/assets/benchmark-flask-v01645.svg)
+![Two Flask fixes. Without Compound used $0.02059014 in Go allowance across 38 model requests. With Compound and the 99-word rule, the cost was $0.01816097 across 31 requests. Both setups passed both fixes.](.github/assets/benchmark-flask-v0170.svg)
 
-Without Compound used **$0.01083994** in Go allowance and **$0.01806659** at API list price across **38 model requests**. With Compound used **$0.01003235** and **$0.01672060** across **43 requests**. Total agent time was 257 s without Compound and 275 s with it. All four attempts are included. Neither mode needed a repair or incurred an additional cash charge under the subscription. The test-client session fix used 17.2% less allowance with Compound. The development-server fix used 1.0% more. [All attempts, usage and grades](bench/diagram_sources/comparison_flask_v01645.json)
+Without Compound used **$0.02059014** across **38 requests**. The 99-word rule used **$0.01816097** across **31 requests**. Released 0.17.0 used **$0.01924161** across **37 requests**. Every request had a usage receipt. [All attempts, usage and grades](bench/diagram_sources/comparison_flask_v0170.json)
 
-Both modes started from Flask commit `514fc6b`, received the same prompts and used the same tools and model settings. Each carried its checkout and conversation into the second task. Both workspaces had network access disabled. The provider cache was left in its normal state and covered 95.0% of input tokens without Compound and 97.1% with Compound. This was one two-fix sequence per mode. [Workload and grading](bench/README.md#consecutive-upstream-flask-fixes)
+Each setup started at Flask commit `514fc6b` and used the same prompts, tools, model settings and budget. Each carried its checkout and conversation into the second fix. The two Compound setups shared the same package and differed only in the saved rule. Stock and the 99-word rule use the original runs. The released rule uses the rerun after Docker recovery. The ledger includes the earlier interrupted attempts in the experiment totals. This was one two-fix sequence per setup with normal provider caching. [Workload and grading](bench/README.md#consecutive-upstream-flask-fixes)
 
 ### Compound vs pstack on two Flask fixes
 

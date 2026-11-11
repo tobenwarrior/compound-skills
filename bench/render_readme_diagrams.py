@@ -448,6 +448,19 @@ def two_change_comparison(source):
         raise ValueError(f'{workload} chart requires both tasks accepted in both modes with verified lower Compound costs')
     if any(type(attempt['requests']) is not int or attempt['requests'] < 1 for attempt in attempts):
         raise ValueError(f'{workload} chart requires a positive request count for every attempt')
+    if 'rule_words' in data:
+        released = data.get('released_rule')
+        if released is None:
+            raise ValueError('A rule comparison requires the released baseline')
+        candidate = [attempt for attempt in attempts if attempt['arm'] == 'with']
+        release_attempts = released['attempts']
+        release_result = evaluate(
+            plan, ({**attempt, 'known_costs': attempt['costs']} for attempt in release_attempts + candidate),
+        )
+        if (not release_result['claim']
+                or release_result['arms']['without']['totals'] != released['totals']
+                or sum(attempt['requests'] for attempt in release_attempts) != released['requests']):
+            raise ValueError('The shorter rule must cost less than the released rule with both fixes accepted')
     arms = []
     for mode in ('without', 'with'):
         arm = summary['arms'][mode]
@@ -459,8 +472,10 @@ def two_change_comparison(source):
     reduction = (1 - cost[1] / cost[0]) * 100
     desc = (f'{workload} matched pilot. Go allowance was ${cost[0]} without and ${cost[1]} with Compound, '
             f'{reduction:.1f}% less. Both modes finished both tasks. All attempts and repairs included.')
-    subtitle = (f"Compound {data['compound_version']} · DeepSeek V4.1 Flash through Y Harness"
-                ' · one sequence per mode')
+    version_label = f"Compound {data['compound_version']}"
+    if 'rule_words' in data:
+        version_label += f" with the {data['rule_words']}-word rule"
+    subtitle = f'{version_label} · DeepSeek V4.1 Flash through Y Harness · one sequence per mode'
     modes = ('Without Compound', 'With Compound')
     request_order = 'without / with'
     if pstack:
@@ -469,8 +484,8 @@ def two_change_comparison(source):
         desc = (f'Flask comparison. Go allowance was ${cost[0]} with pstack and ${cost[1]} with Compound, '
                 f'{reduction:.1f}% less. Both passed both fixes. All attempts and repairs included.')
         subtitle = 'Claude Code 2.1.312 · Qwen3.8 Flash · one sequence per plugin'
-    heading = 'Two Flask fixes' if pstack else 'Two changes'
-    precision = 5 if pstack else 8
+    heading = 'Two Flask fixes' if pstack or 'rule_words' in data else 'Two changes'
+    precision = 5 if pstack or 'rule_words' in data else 8
     chart = Canvas(958, f'{heading}, {reduction:.1f}% less allowance', 'MEASURED PILOT', desc, subtitle)
     chart.card(24, 157, 992, 251)
     maximum = max(cost) * Decimal('1.08')

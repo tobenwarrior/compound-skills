@@ -29,6 +29,8 @@ The generator uses only Python's standard library. It writes every README SVG in
 
 `comparison_flask_v01645.json` records the upstream Flask sequence. It includes all four attempts, provider-reported usage, the frozen inputs and the cumulative grades. The generator applies the same checks and uses the two IPv6 tasks as labels.
 
+`comparison_flask_v0170.json` records the 99-word rule, stock and the released 0.17.0 rule on the two upstream Flask fixes. The chart shows stock and the 99-word rule. The generator checks the cost and correctness condition against both baselines. The ledger includes the costs and grades of the earlier interrupted release attempts in the experiment totals.
+
 `comparison_codex_flask_luna.json` records the same two prompts in clean Git checkouts on GPT-6 Luna. It includes all four attempts, the native Codex token counts and the cumulative grades. The chart verifies both tasks passed and reconciles the per-attempt request counts.
 
 `comparison_codex_flask_current_luna.json` records the same two fixes on GPT-6 Luna against stock and the pinned 0.16.45 control. All six attempts passed the hidden checks and retained suites on the first try. The README chart shows stock and the current build and checks that the current build used fewer total tokens than both controls.

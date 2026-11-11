@@ -1,0 +1,594 @@
+{
+  "schema": "compound-flask-sequence-comparison-1",
+  "date": "2026-11-11",
+  "compound_version": "0.17.0",
+  "compound_commit": "0f450f8ea996a23be46ccd28e2b284985d38aed4",
+  "rule_words": 99,
+  "rule_commit": "25ab2b8a83c70ceb2bfee49ce03e605baa4ebaff",
+  "released_rule": {
+    "words": 142,
+    "attempts": [
+      {
+        "index": 0,
+        "stage": 0,
+        "task": "flask-ipv6-session",
+        "arm": "without",
+        "attempt": 0,
+        "attempt_kind": "initial",
+        "requests": 18,
+        "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842",
+        "valid_usage": true,
+        "accepted": true,
+        "costs": {
+          "allowance": "0.00887865",
+          "list_cost": "0.01479778",
+          "cost": "0"
+        },
+        "grade": {
+          "success": true,
+          "checks": {
+            "flask-ipv6-session": "pass"
+          },
+          "suites": {
+            "original": {
+              "ok": true,
+              "summary": "491 passed in 0.82s"
+            },
+            "final": {
+              "ok": true,
+              "summary": "492 passed in 0.93s"
+            }
+          }
+        },
+        "frozen_schedule_index": 1
+      },
+      {
+        "index": 3,
+        "stage": 1,
+        "task": "flask-ipv6-run",
+        "arm": "without",
+        "attempt": 0,
+        "attempt_kind": "initial",
+        "requests": 19,
+        "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47",
+        "valid_usage": true,
+        "accepted": true,
+        "costs": {
+          "allowance": "0.01036296",
+          "list_cost": "0.01727162",
+          "cost": "0"
+        },
+        "grade": {
+          "success": true,
+          "checks": {
+            "flask-ipv6-session": "pass",
+            "flask-ipv6-run": "pass"
+          },
+          "suites": {
+            "original": {
+              "ok": true,
+              "summary": "491 passed in 0.76s"
+            },
+            "final": {
+              "ok": true,
+              "summary": "493 passed in 0.74s"
+            },
+            "previous": {
+              "ok": true,
+              "summary": "492 passed in 0.78s"
+            }
+          }
+        },
+        "frozen_schedule_index": 4
+      }
+    ],
+    "requests": 37,
+    "totals": {
+      "allowance": "0.01924161",
+      "list_cost": "0.03206940",
+      "cost": "0"
+    }
+  },
+  "provider": "opencode-go",
+  "model": "deepseek-v4.1-flash",
+  "runtime_commit": "71e8e9933e6aee3a7dbe4b21ba4ff8d105c2f78e",
+  "reasoning_effort": "low",
+  "output_cap": 16384,
+  "per_arm_max_allowance_usd": "0.08",
+  "total_max_allowance_usd": "0.24",
+  "max_requests_per_run": 24,
+  "max_requests_per_repair": 12,
+  "flask_input_hashes": {
+    "fixture_sha256": "8037c27a8d61f9e6b55135008221ed3721640c032fed9fb1dd92a4c377243d48",
+    "grader_sha256": "4be8f81884bae5ef26303a5f82b39b566810de5146a891c76c8b8ac065283528"
+  },
+  "frozen_plan_sha256": "7c8ce575e4c62aa50d51844be585181d62c5cce23306f54ec1d3680198e789f1",
+  "sequences": [
+    {
+      "fixture": "flask-ipv6-session",
+      "fixture_head": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b",
+      "tasks": [
+        {
+          "name": "flask-ipv6-session",
+          "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842"
+        },
+        {
+          "name": "flask-ipv6-run",
+          "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47"
+        }
+      ]
+    }
+  ],
+  "schedule": [
+    [
+      0,
+      0,
+      "without"
+    ],
+    [
+      0,
+      0,
+      "with"
+    ],
+    [
+      0,
+      1,
+      "with"
+    ],
+    [
+      0,
+      1,
+      "without"
+    ]
+  ],
+  "method": "One two-fix sequence per setup on the same fixture and model settings. Stock and the 99-word rule use the original runs. The released rule uses the replacement run after Docker recovery. All measured requests were in the same Go pricing window. The provider cache was left in its normal state.",
+  "attempts": [
+    {
+      "index": 0,
+      "stage": 0,
+      "task": "flask-ipv6-session",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 20,
+      "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842",
+      "valid_usage": true,
+      "accepted": true,
+      "costs": {
+        "allowance": "0.00925554",
+        "list_cost": "0.01542590",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 6.26s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "492 passed in 2.88s"
+          }
+        }
+      },
+      "frozen_schedule_index": 0
+    },
+    {
+      "index": 1,
+      "stage": 0,
+      "task": "flask-ipv6-session",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 15,
+      "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842",
+      "valid_usage": true,
+      "accepted": true,
+      "costs": {
+        "allowance": "0.00827292",
+        "list_cost": "0.01378820",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 4.03s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "492 passed in 3.74s"
+          }
+        }
+      },
+      "frozen_schedule_index": 2
+    },
+    {
+      "index": 2,
+      "stage": 1,
+      "task": "flask-ipv6-run",
+      "arm": "with",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 16,
+      "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47",
+      "valid_usage": true,
+      "accepted": true,
+      "costs": {
+        "allowance": "0.00988805",
+        "list_cost": "0.01648009",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 0.66s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "493 passed in 0.65s"
+          },
+          "previous": {
+            "ok": true,
+            "summary": "492 passed in 0.84s"
+          }
+        }
+      },
+      "frozen_schedule_index": 3
+    },
+    {
+      "index": 3,
+      "stage": 1,
+      "task": "flask-ipv6-run",
+      "arm": "without",
+      "attempt": 0,
+      "attempt_kind": "initial",
+      "requests": 18,
+      "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47",
+      "valid_usage": true,
+      "accepted": true,
+      "costs": {
+        "allowance": "0.01133460",
+        "list_cost": "0.01889100",
+        "cost": "0"
+      },
+      "grade": {
+        "success": true,
+        "checks": {
+          "flask-ipv6-session": "pass",
+          "flask-ipv6-run": "pass"
+        },
+        "suites": {
+          "original": {
+            "ok": true,
+            "summary": "491 passed in 1.02s"
+          },
+          "final": {
+            "ok": true,
+            "summary": "493 passed in 0.95s"
+          },
+          "previous": {
+            "ok": true,
+            "summary": "492 passed in 0.97s"
+          }
+        }
+      },
+      "frozen_schedule_index": 5
+    }
+  ],
+  "summary": {
+    "valid": true,
+    "claim": true,
+    "complete": true,
+    "compound_cheaper": true,
+    "errors": [],
+    "arms": {
+      "without": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00925554",
+              "list_cost": "0.01542590",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.01133460",
+              "list_cost": "0.01889100",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.02059014",
+          "list_cost": "0.03431690",
+          "cost": "0"
+        },
+        "requests": 38
+      },
+      "with": {
+        "attempts": 2,
+        "stages": [
+          0,
+          1
+        ],
+        "accepted_stages": [
+          0,
+          1
+        ],
+        "by_stage": {
+          "0": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00827292",
+              "list_cost": "0.01378820",
+              "cost": "0"
+            }
+          },
+          "1": {
+            "attempts": 1,
+            "accepted": true,
+            "totals": {
+              "allowance": "0.00988805",
+              "list_cost": "0.01648009",
+              "cost": "0"
+            }
+          }
+        },
+        "totals": {
+          "allowance": "0.01816097",
+          "list_cost": "0.03026829",
+          "cost": "0"
+        },
+        "requests": 31
+      }
+    }
+  },
+  "interrupted_release_sequences": [
+    {
+      "attempts": [
+        {
+          "index": 1,
+          "stage": 0,
+          "task": "flask-ipv6-session",
+          "arm": "v0170",
+          "attempt": 0,
+          "attempt_kind": "initial",
+          "requests": 21,
+          "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842",
+          "valid_usage": true,
+          "accepted": true,
+          "costs": {
+            "allowance": "0.00918662",
+            "list_cost": "0.01531104",
+            "cost": "0"
+          },
+          "grade": {
+            "success": true,
+            "checks": {
+              "flask-ipv6-session": "pass"
+            },
+            "suites": {
+              "original": {
+                "ok": true,
+                "summary": "491 passed in 3.43s"
+              },
+              "final": {
+                "ok": true,
+                "summary": "493 passed in 3.46s"
+              }
+            }
+          }
+        },
+        {
+          "index": 4,
+          "stage": 1,
+          "task": "flask-ipv6-run",
+          "arm": "v0170",
+          "attempt": 0,
+          "attempt_kind": "initial",
+          "requests": 6,
+          "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47",
+          "valid_usage": true,
+          "accepted": false,
+          "costs": {
+            "allowance": "0.00393656",
+            "list_cost": "0.00656094",
+            "cost": "0"
+          },
+          "grade": {
+            "success": false,
+            "checks": {
+              "flask-ipv6-session": "pass",
+              "flask-ipv6-run": "fail"
+            }
+          }
+        },
+        {
+          "index": 4,
+          "stage": 1,
+          "task": "flask-ipv6-run",
+          "arm": "v0170",
+          "attempt": 1,
+          "attempt_kind": "interruption_recovery",
+          "requests": 12,
+          "prompt_sha256": "7b679bdef3df883441bccf4bd81d7193036496d3229f79cdd23c32a96e1f200c",
+          "valid_usage": true,
+          "accepted": true,
+          "costs": {
+            "allowance": "0.00661491",
+            "list_cost": "0.01102486",
+            "cost": "0"
+          },
+          "grade": {
+            "success": true,
+            "checks": {
+              "flask-ipv6-session": "pass",
+              "flask-ipv6-run": "pass"
+            },
+            "suites": {
+              "original": {
+                "ok": true,
+                "summary": "491 passed in 0.95s"
+              },
+              "final": {
+                "ok": true,
+                "summary": "494 passed in 0.86s"
+              },
+              "previous": {
+                "ok": true,
+                "summary": "493 passed in 1.40s"
+              }
+            }
+          }
+        }
+      ],
+      "totals": {
+        "allowance": "0.01973809",
+        "list_cost": "0.03289684",
+        "cost": "0"
+      },
+      "requests": 39
+    },
+    {
+      "attempts": [
+        {
+          "index": 1,
+          "stage": 0,
+          "task": "flask-ipv6-session",
+          "arm": "v0170",
+          "attempt": 0,
+          "attempt_kind": "initial",
+          "requests": 22,
+          "prompt_sha256": "1ca2181c4c990547f0229f95dbbba4b0fdc366351ff227ea0a5573d9bd596842",
+          "valid_usage": true,
+          "accepted": true,
+          "costs": {
+            "allowance": "0.00733175",
+            "list_cost": "0.01221955",
+            "cost": "0"
+          },
+          "grade": {
+            "success": true,
+            "checks": {
+              "flask-ipv6-session": "pass"
+            },
+            "suites": {
+              "original": {
+                "ok": true,
+                "summary": "491 passed in 0.73s"
+              },
+              "final": {
+                "ok": true,
+                "summary": "492 passed in 0.68s"
+              }
+            }
+          }
+        },
+        {
+          "index": 4,
+          "stage": 1,
+          "task": "flask-ipv6-run",
+          "arm": "v0170",
+          "attempt": 0,
+          "attempt_kind": "initial",
+          "requests": 11,
+          "prompt_sha256": "614802eeef75bf725221065faa7b24a0571f6e2bdbfe5df0a40f0c40c5ebea47",
+          "valid_usage": true,
+          "accepted": false,
+          "costs": {
+            "allowance": "0.00449710",
+            "list_cost": "0.00749515",
+            "cost": "0"
+          },
+          "grade": {
+            "success": false,
+            "checks": {
+              "flask-ipv6-session": "pass",
+              "flask-ipv6-run": "fail"
+            }
+          }
+        },
+        {
+          "index": 4,
+          "stage": 1,
+          "task": "flask-ipv6-run",
+          "arm": "v0170",
+          "attempt": 1,
+          "attempt_kind": "interruption_recovery",
+          "requests": 12,
+          "prompt_sha256": "7b679bdef3df883441bccf4bd81d7193036496d3229f79cdd23c32a96e1f200c",
+          "valid_usage": true,
+          "accepted": false,
+          "costs": {
+            "allowance": "0.00500706",
+            "list_cost": "0.00834511",
+            "cost": "0"
+          },
+          "grade": {
+            "success": false,
+            "checks": {
+              "flask-ipv6-session": "pass",
+              "flask-ipv6-run": "pass"
+            },
+            "suites": {
+              "original": {
+                "ok": false,
+                "summary": "1 failed, 490 passed in 3.86s"
+              },
+              "final": {
+                "ok": false,
+                "summary": "1 failed, 492 passed in 3.17s"
+              },
+              "previous": {
+                "ok": false,
+                "summary": "1 failed, 491 passed in 3.15s"
+              }
+            }
+          }
+        }
+      ],
+      "totals": {
+        "allowance": "0.01683591",
+        "list_cost": "0.02805981",
+        "cost": "0"
+      },
+      "requests": 45
+    }
+  ],
+  "all_experiment_requests": 190,
+  "all_experiment_spend": {
+    "allowance": "0.09456672",
+    "list_cost": "0.15761124",
+    "cost": "0"
+  }
+}
