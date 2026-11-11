@@ -1,2 +1,6 @@
 # Intentional package metadata, not session artifacts.
 root_allow_extra = ["plugin.json", "SOURCES.md", "THIRD_PARTY_NOTICES.md"]
+
+# The pytest grading probe that bench/fixtures.py runs. Saved benchmark plans copy it by
+# this name (bench/README.md), so the scratch-file pattern `probe_*.py` does not apply.
+litter_ignore = ["bench/probe_pytest.py"]
