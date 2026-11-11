@@ -58,6 +58,8 @@ The plugin must be installed and enabled at user scope in each app for global us
 
 ## Refresh saved guidance
 
+Codex and Claude Code refresh their existing marked global blocks on session startup after an update. Codex requires the user's approval for the startup hook. A fresh chat after the refresh reads the updated rule. Use the explicit global refresh when the user needs the change immediately or has disabled hooks.
+
 For an explicit `compound refresh`, resolve the project root and update its existing managed sections.
 
 ```bash

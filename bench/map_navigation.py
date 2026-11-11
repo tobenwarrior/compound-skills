@@ -208,7 +208,7 @@ def prepare() -> dict:
         })
     return {
         "schema": "compound-map-navigation-1",
-        "compound_version": json.loads((REPO / "plugin.json").read_text(encoding="utf-8"))["version"],
+        "compound_version": json.loads((REPO / ".codex-plugin/plugin.json").read_text(encoding="utf-8"))["version"],
         "map_script_sha256": hashlib.sha256(MAP.read_bytes()).hexdigest(),
         "tasks": tasks,
     }

@@ -1,6 +1,6 @@
 {
   "name": "compound-skills",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Compact engineering guidance for architecture, implementation, debugging, refactoring, and review.",
   "author": {
     "name": "tobenwarrior"
@@ -11,5 +11,6 @@
     "engineering",
     "code-review",
     "repository-hygiene"
-  ]
+  ],
+  "hooks": "./hooks/claude.json"
 }

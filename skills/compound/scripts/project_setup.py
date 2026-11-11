@@ -973,6 +973,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--host", choices=("all", "codex", "cursor", "claude"), help="global host selection")
     parser.add_argument("--check-claude-permissions", action="store_true",
                         help="check user allow entries with status --global --host claude")
+    parser.add_argument("--quiet", action="store_true",
+                        help="suppress success output from a single-host global refresh")
     return parser
 
 
@@ -1002,6 +1004,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.check_claude_permissions and (action != "status" or not args.global_scope or args.host != "claude"):
         return _emit(_payload(action, "error", False, None, [],
                               error="--check-claude-permissions requires status --global --host claude"))
+    if args.quiet and (action != "refresh" or not args.global_scope or args.host not in {"codex", "claude"}):
+        return _emit(_payload(action, "error", False, None, [],
+                              error="--quiet requires refresh --global --host codex or claude"))
     if args.global_scope:
         global_context: GlobalContext | None = None
         try:
@@ -1032,6 +1037,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             else:
                 plans = _global_disable_plans(global_context)
             changed, changed_paths = _apply(plans)
+            if args.quiet:
+                return 0
             after = _load_global_context(host_names)
             after = replace(after, notes=after.notes + skipped)
             return _emit(
@@ -1043,25 +1050,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                     changed_paths=changed_paths,
                 )
             )
-        except ApplyError as exc:
-            return _emit(
-                _global_payload(
-                    action,
-                    "error",
-                    bool(exc.changed_paths),
-                    global_context,
-                    error=str(exc),
-                    changed_paths=exc.changed_paths,
-                )
-            )
         except SetupError as exc:
+            if args.quiet:
+                print(f"Compound Skills global refresh: {exc}", file=sys.stderr)
+                return 1
+            changed_paths = exc.changed_paths if isinstance(exc, ApplyError) else ()
             return _emit(
                 _global_payload(
                     action,
                     "error",
-                    False,
+                    bool(changed_paths),
                     global_context,
                     error=str(exc),
+                    changed_paths=changed_paths,
                 )
             )
     if not args.project_root:

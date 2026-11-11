@@ -2,6 +2,10 @@
 
 Notable changes to Compound Skills, newest first. Every change is in the Git history; benchmark numbers come from [bench/](bench/README.md) and are explained in the [README](README.md#benchmark).
 
+## 0.17.2 (2026-11-11)
+
+- Refresh existing global rules when a new Codex or Claude Code session starts after a plugin update. Review the startup hook in Codex when prompted. The following fresh chat reads the refreshed rule.
+
 ## 0.17.1 (2026-11-11)
 
 - Ship the verified 99-word routing rule from one shared source. After updating Codex or Claude Code, use `compound refresh global` if you saved global defaults, then open a fresh chat.

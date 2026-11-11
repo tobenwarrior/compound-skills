@@ -1,6 +1,6 @@
 {
   "name": "compound-skills",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Compact engineering guidance for architecture, implementation, debugging, refactoring, and review.",
   "author": {
     "name": "tobenwarrior"
@@ -19,5 +19,6 @@
     "longDescription": "Compact engineering guidance for architecture, implementation, debugging, refactoring, and review.",
     "developerName": "tobenwarrior",
     "category": "Developer Tools"
-  }
+  },
+  "hooks": "./hooks/codex.json"
 }

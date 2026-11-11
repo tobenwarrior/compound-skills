@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "-IB",
+              "${CLAUDE_PLUGIN_ROOT}/skills/compound/scripts/project_setup.py",
+              "refresh",
+              "--global",
+              "--host",
+              "claude",
+              "--quiet"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -15,13 +15,11 @@ from typing import Any
 
 
 NAME = "compound-skills"
-VERSION = "0.17.1"
+VERSION = "0.17.2"
 AUTHOR = "tobenwarrior"
 REPOSITORY = "https://github.com/tobenwarrior/compound-skills"
 SKILLS = ("compound", "map", "setup", "setup-global", "status-global")
-SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MANIFESTS = {
-    "plugin.json": "portable",
     ".codex-plugin/plugin.json": "codex",
     ".cursor-plugin/plugin.json": "cursor",
     ".claude-plugin/plugin.json": "claude",
@@ -271,8 +269,8 @@ def check_manifest(root: Path, path: str, kind: str, errors: list[dict[str, str]
     if value is None:
         return None
     check_identity(path, value, errors)
-    if kind == "portable" and value.get("$schema") != SCHEMA:
-        add(errors, "schema_mismatch", path, "portable manifest uses an unexpected schema")
+    if kind in {"codex", "claude"}:
+        check_path(root, value.get("hooks"), path, "hooks", errors)
     if kind == "codex" and value.get("skills") != "./skills/":
         add(errors, "component_path", path, "Codex skills must be ./skills/")
     if kind == "cursor" and value.get("skills") not in (None, "./skills/"):
@@ -700,6 +698,9 @@ def check_package(root: Path) -> dict[str, Any]:
         release = release_files(root, public, errors) if root_is_directory else set()
         published = release | {parent for path in release for parent in path.parents if inside(parent, root)}
         check_index_worktree(root, errors)
+        if (root / "plugin.json").exists():
+            add(errors, "manifest_precedence", "plugin.json",
+                "the root manifest takes priority over Codex's native manifest and suppresses its startup hook")
         manifests = {path: value for path, kind in MANIFESTS.items() if (value := check_manifest(root, path, kind, errors)) is not None}
         default_routing = check_default_routing(root, release, errors) if root_is_directory else None
         if rule := check_cursor_rule(root, errors, default_routing):

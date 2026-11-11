@@ -48,6 +48,63 @@ class RoutingTests(unittest.TestCase):
                     self.assertFalse(json.loads(second.stdout)["changed"])
                     self.assertEqual(path.read_text(encoding="utf-8"), installed)
 
+    def test_startup_refresh_preserves_local_configuration(self):
+        canonical = (ROOT / RULE).read_text(encoding="utf-8").strip()
+        before, after = "User guidance before.\r\n", "User guidance after.\r\n"
+        old = f"{before}{START}\r\nOld rule.\r\n{END}\r\n{after}".encode()
+        block = f"{START}\r\n## Compound Skills default routing\r\n\r\n{canonical}\r\n{END}\r\n"
+        expected = (before + block + after).encode()
+        with TemporaryDirectory() as scratch:
+            base = Path(scratch).resolve()
+            codex, claude = base / "codex", base / "claude"
+            (claude / "rules").mkdir(parents=True)
+            codex.mkdir()
+            env = {**os.environ, "CODEX_HOME": str(codex), "CLAUDE_CONFIG_DIR": str(claude)}
+            targets = {"codex": codex / "AGENTS.override.md", "claude": claude / "rules/compound-skills.md"}
+            other = {"codex": targets["claude"], "claude": targets["codex"]}
+            (base / "AGENTS.md").write_bytes(old)
+            for host, target in targets.items():
+                with self.subTest(host=host):
+                    manifest = json.loads((ROOT / f".{host}-plugin/plugin.json").read_text(encoding="utf-8"))
+                    hooks = json.loads((ROOT / manifest["hooks"]).read_text(encoding="utf-8"))["hooks"]
+                    self.assertEqual(set(hooks), {"SessionStart"})
+                    group, = hooks["SessionStart"]
+                    self.assertEqual(group["matcher"], "startup")
+                    hook, = group["hooks"]
+                    self.assertEqual(hook["type"], "command")
+                    if host == "codex":
+                        if os.name == "nt":
+                            command = ["powershell", "-NoProfile", "-Command", hook["commandWindows"]]
+                        else:
+                            command = ["/bin/sh", "-c", hook["command"]]
+                    else:
+                        args = [arg.replace("${CLAUDE_PLUGIN_ROOT}", str(ROOT)) for arg in hook["args"]]
+                        command = [hook["command"], *args]
+                    env["PLUGIN_ROOT"] = str(ROOT)
+                    other[host].write_bytes(old)
+                    unmanaged = b"Unmanaged rule.\n"
+                    for original, updated in ((None, None), (unmanaged, unmanaged), (old, expected), (expected, expected)):
+                        if original is None:
+                            target.unlink(missing_ok=True)
+                        else:
+                            target.write_bytes(original)
+                        original_stat = target.stat() if original is not None else None
+                        result = subprocess.run(command, cwd=base, env=env, capture_output=True, check=True, timeout=10)
+                        self.assertEqual((result.stdout, result.stderr), (b"", b""))
+                        self.assertEqual(target.read_bytes() if target.exists() else None, updated)
+                        if original_stat is not None and original == updated:
+                            self.assertEqual(target.stat().st_ino, original_stat.st_ino)
+                        self.assertEqual(other[host].read_bytes(), old)
+                        self.assertEqual((base / "AGENTS.md").read_bytes(), old)
+
+                    malformed = f"{START}\nIncomplete block.\n".encode()
+                    target.write_bytes(malformed)
+                    result = subprocess.run(command, cwd=base, env=env, capture_output=True, timeout=10)
+                    self.assertEqual(result.returncode, 1)
+                    self.assertFalse(result.stdout)
+                    self.assertIn(b"Compound Skills", result.stderr)
+                    self.assertEqual(target.read_bytes(), malformed)
+
     def test_package_check_rejects_rule_drift_and_both_size_limits(self):
         with TemporaryDirectory() as scratch:
             root = Path(scratch)

@@ -2,7 +2,7 @@
 
 <p align="center"><strong>Make your coding agent show its work.</strong><br>It has your agent reproduce a bug and show the new test failing before fixing it, keep every caller's behavior through a refactor, and commit without AI co-author lines. Plus a live map of your code.</p>
 
-<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.1 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–11 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
+<p align="center">Free, open-source (MIT) plugin for Claude Code, Codex and Cursor · needs Python 3.11+ and Git<br>Version 0.17.2 · Claude Code benchmarks: 31 October–1 November 2026 · DeepSeek workflows: 2–11 November 2026 · not affiliated with Every's Compound Engineering plugin</p>
 
 <p align="center"><a href="#quick-start">Quick start</a> · <a href="#at-a-glance">Results</a> · <a href="#install">Install</a> · <a href="#benchmark">Benchmark</a> · <a href="#the-code-map">Code map</a> · <a href="#limits">Limits</a></p>
 
@@ -70,7 +70,9 @@ The install smoke test checks saved guidance, a local map and map state recovery
 
 ### Update
 
-Install the latest Compound Skills version through your host's plugin updater. If you saved global defaults in Codex or Claude Code, ask Compound to `refresh global` after updating, then open a fresh chat. In a configured project, `compound refresh` updates the project's saved rule.
+Update Compound through your host's plugin manager. For saved Codex and Claude Code global defaults, the first new session refreshes the rule automatically. In Codex, review and trust the Compound startup hook when prompted or through `/hooks`.
+
+The following fresh chat loads the updated rule. Use `compound refresh global` for an immediate refresh or when hooks are disabled. In a configured project, use `compound refresh` to update its saved rule.
 
 <a id="what-it-changes-on-your-machine"></a>
 <details>
@@ -82,7 +84,7 @@ Install the latest Compound Skills version through your host's plugin updater. I
 - **Optional map access:** `~/.cache/compound-skills` (`COMPOUND_SKILLS_STATE_DIR` moves it) holds the map's cache and a record of repository assessments. After saving routing, the agent can add this folder to Codex's `sandbox_workspace_write.writable_roots` in `config.toml` and to Cursor's `additionalReadwritePaths` in `~/.cursor/sandbox.json`, following the [activation guide](skills/compound/references/activation.md): back up and validate each file, and keep every other setting. If access is blocked, the agent reports it separately and the saved guidance still applies.
 - **The map service** listens on `127.0.0.1:43127` (`COMPOUND_MAP_PORT` changes the port). It starts on the first map query of a task that may edit files, or on `map`, and runs until `map stop` or you log out. Project lists, maps and source previews require a local credential. The browser opens through a private launch file in your user cache. Access expires when the service restarts.
 - **A project `setup`** adds a marked section to that project's `AGENTS.md`, a file you would commit, and the same section to a nonempty `AGENTS.override.md` or, when a `CLAUDE.md` would hide `AGENTS.md` from Claude Code, to `.claude/rules/compound.md`. It prepares the local map and limits repository writes to the managed guidance files. Request `compound tidy` separately for assessment and verified cleanup.
-- **Not included:** hooks, MCP servers, other background processes, or network access. Compound's scripts connect to nothing but 127.0.0.1, and the map page loads nothing from elsewhere. Your code still goes to your model provider, as with any coding agent.
+- **Startup refresh** runs locally in Codex and Claude Code and updates only existing marked global rules. Your coding agent sends its context to your configured model provider.
 
 These are instructions to the agent, not enforcement; project instructions and your explicit requests take priority ([activation](skills/compound/references/activation.md)).
 

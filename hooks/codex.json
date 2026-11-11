@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -IB \"$PLUGIN_ROOT/skills/compound/scripts/project_setup.py\" refresh --global --host codex --quiet",
+            "commandWindows": "python -IB \"$env:PLUGIN_ROOT/skills/compound/scripts/project_setup.py\" refresh --global --host codex --quiet",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
