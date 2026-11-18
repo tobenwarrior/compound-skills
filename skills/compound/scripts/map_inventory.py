@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 import selectors
@@ -10,7 +11,7 @@ import subprocess
 import time
 import urllib.parse
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, cast
 
 GIT_TIMEOUT = 5
 GIT_READ = ("git", "--no-optional-locks", "-c", "core.fsmonitor=false")
@@ -73,17 +74,160 @@ def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
         return None
 
 
+class _WindowsOutputProtocol(asyncio.SubprocessProtocol):
+    """Collect one bounded stdout stream from an asyncio subprocess transport."""
+
+    def __init__(
+        self,
+        loop: asyncio.AbstractEventLoop,
+        max_bytes: int,
+        keep_prefix: bool,
+        ok_statuses: tuple[int, ...],
+    ) -> None:
+        self._done = loop.create_future()
+        self._closed = loop.create_future()
+        self._max_bytes = max_bytes
+        self._keep_prefix = keep_prefix
+        self._ok_statuses = ok_statuses
+        self._data = bytearray()
+        self._transport: asyncio.SubprocessTransport | None = None
+        self._pipe_error: BaseException | None = None
+        self._returncode: int | None = None
+        self._process_exited = False
+        self._stdout_closed = False
+        self._overflow = False
+
+    @property
+    def done(self) -> asyncio.Future[bytes | None]:
+        return self._done
+
+    @property
+    def closed(self) -> asyncio.Future[None]:
+        return self._closed
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        self._transport = cast(asyncio.SubprocessTransport, transport)
+
+    def pipe_data_received(self, fd: int, data: bytes) -> None:
+        if fd != 1 or self._overflow:
+            return
+        remaining = self._max_bytes + 1 - len(self._data)
+        if remaining <= 0:
+            self._overflow = True
+            self._finish_overflow()
+            return
+        self._data.extend(data[:remaining])
+        if len(data) > remaining or len(self._data) > self._max_bytes:
+            self._overflow = True
+            self._finish_overflow()
+
+    def pipe_connection_lost(self, fd: int, exc: BaseException | None) -> None:
+        if fd != 1:
+            return
+        self._stdout_closed = True
+        self._pipe_error = exc
+        self._finish()
+
+    def process_exited(self) -> None:
+        self._process_exited = True
+        if self._transport is not None:
+            self._returncode = self._transport.get_returncode()
+        self._finish()
+
+    def connection_lost(self, exc: BaseException | None) -> None:
+        if not self._closed.done():
+            self._closed.set_result(None)
+
+    def close(self) -> None:
+        if self._transport is not None:
+            self._transport.close()
+
+    def _finish_overflow(self) -> None:
+        if not self._done.done():
+            self._done.set_result(bytes(self._data) if self._keep_prefix else None)
+        self.close()
+
+    def _finish(self) -> None:
+        if self._done.done() or not self._stdout_closed or not self._process_exited:
+            return
+        if self._pipe_error is not None:
+            result = None
+        elif self._returncode in self._ok_statuses:
+            result = bytes(self._data)
+        else:
+            result = None
+        self._done.set_result(result)
+
+
+async def _read_windows_command_output(
+    command: list[str], max_bytes: int, keep_prefix: bool, env: dict[str, str] | None,
+    ok_statuses: tuple[int, ...], deadline: float,
+) -> bytes | None:
+    loop = asyncio.get_running_loop()
+    protocol = _WindowsOutputProtocol(loop, max_bytes, keep_prefix, ok_statuses)
+    transport: asyncio.SubprocessTransport | None = None
+    try:
+        transport, _ = await loop.subprocess_exec(
+            lambda: protocol,
+            *command,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            env=env,
+        )
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            protocol.close()
+            return None
+        try:
+            return await asyncio.wait_for(asyncio.shield(protocol.done), remaining)
+        except asyncio.TimeoutError:
+            protocol.close()
+            return None
+    except (OSError, ValueError):
+        return None
+    finally:
+        if transport is not None:
+            protocol.close()
+            if not protocol.closed.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(protocol.closed), 1.0)
+                except asyncio.TimeoutError:
+                    pass
+
+
+def _bounded_windows_command_output(
+    command: list[str], max_bytes: int, keep_prefix: bool, *, env: dict[str, str] | None,
+    ok_statuses: tuple[int, ...], timeout: float,
+) -> bytes | None:
+    """Run one bounded Windows command through the Proactor subprocess transport."""
+    loop = asyncio.ProactorEventLoop()
+    try:
+        return loop.run_until_complete(
+            _read_windows_command_output(
+                command, max_bytes, keep_prefix, env, ok_statuses, time.monotonic() + timeout,
+            )
+        )
+    finally:
+        loop.close()
+
+
 def _bounded_git_output(
     root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *,
     env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,), timeout: float = GIT_TIMEOUT,
     config_options: list[str] | None = None,
 ) -> bytes | None:
     """Return Git's output, or None past ``max_bytes`` unless ``keep_prefix`` keeps the first ``max_bytes + 1``."""
+    command = [*GIT_READ, *(config_options or ()), "-C", str(root), *arguments]
+    if os.name == "nt":
+        return _bounded_windows_command_output(
+            command, max_bytes, keep_prefix, env=env, ok_statuses=ok_statuses, timeout=timeout,
+        )
     process: subprocess.Popen[bytes] | None = None
     selector: selectors.BaseSelector | None = None
     try:
         process = subprocess.Popen(
-            [*GIT_READ, *(config_options or ()), "-C", str(root), *arguments],
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             env=env,
