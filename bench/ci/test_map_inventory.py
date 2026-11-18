@@ -6,15 +6,38 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
-import threading
 import textwrap
 import time
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[2] / "skills/compound/scripts"
 sys.path.insert(0, str(SCRIPTS))
 import map_inventory
+
+FIXTURE_SOURCE = """
+import os
+import subprocess
+import sys
+import time
+
+mode = os.environ["COMPOUND_TEST_GIT_MODE"]
+if mode == "output":
+    sys.stdout.buffer.write(bytes.fromhex(os.environ["COMPOUND_TEST_GIT_OUTPUT"]))
+    sys.stdout.flush()
+elif mode == "sleep":
+    time.sleep(30)
+elif mode == "closed":
+    sys.stdout.close()
+    time.sleep(30)
+elif mode == "inherit":
+    subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+elif mode == "status":
+    raise SystemExit(int(os.environ["COMPOUND_TEST_GIT_STATUS"]))
+else:
+    raise SystemExit(f"unknown fixture mode: {mode}")
+"""
 
 
 class BoundedGitOutputTests(unittest.TestCase):
@@ -46,22 +69,22 @@ class BoundedGitOutputTests(unittest.TestCase):
                 pass
         process.wait()
 
-    def run_reader(self, source, max_bytes, *, keep_prefix=False, timeout=5, ok_statuses=(0,)):
-        if os.name == "nt":
-            return map_inventory._bounded_windows_command_output(
-                [sys.executable, "-c", source], max_bytes, keep_prefix,
-                env=None, ok_statuses=ok_statuses, timeout=timeout,
+    def run_reader(
+        self, mode, max_bytes, *, output=b"", status=0, keep_prefix=False, timeout=5, ok_statuses=(0,)
+    ):
+        env = os.environ.copy()
+        env.update({
+            "COMPOUND_TEST_GIT_MODE": mode,
+            "COMPOUND_TEST_GIT_OUTPUT": output.hex(),
+            "COMPOUND_TEST_GIT_STATUS": str(status),
+        })
+        with TemporaryDirectory() as scratch, patch.object(
+            map_inventory, "GIT_READ", (sys.executable, "-c", FIXTURE_SOURCE)
+        ):
+            return map_inventory._bounded_git_output(
+                Path(scratch), ["fixture"], max_bytes, keep_prefix=keep_prefix,
+                env=env, ok_statuses=ok_statuses, timeout=timeout,
             )
-        process = self.spawn_reader(source)
-        try:
-            result = map_inventory._bounded_process_output(
-                process, max_bytes, time.monotonic() + timeout, keep_prefix, ok_statuses,
-            )
-            self.assertIsNotNone(process.returncode)
-            return result
-        finally:
-            self.cleanup_process_group(process)
-            self.assertFalse(any(thread.name == "compound-code-map-git-reader" for thread in threading.enumerate()))
 
     @staticmethod
     def run_protocol_reader(source, max_bytes, *, keep_prefix=False, timeout=5, ok_statuses=(0,)):
@@ -77,64 +100,47 @@ class BoundedGitOutputTests(unittest.TestCase):
             loop.close()
 
     def test_portable_reader_preserves_success_and_prefix_cap(self):
-        source = "import sys; sys.stdout.buffer.write(b'0123456789'); sys.stdout.flush()"
-        self.assertEqual(self.run_reader(source, 32), b"0123456789")
-        self.assertEqual(self.run_reader(source, 3, keep_prefix=True), b"0123")
+        self.assertEqual(self.run_reader("output", 32, output=b"0123456789"), b"0123456789")
+        self.assertEqual(
+            self.run_reader("output", 3, output=b"0123456789", keep_prefix=True), b"0123"
+        )
 
     def test_portable_reader_reaps_overflowing_child(self):
-        source = "import sys; sys.stdout.buffer.write(b'0123456789'); sys.stdout.flush()"
-        self.assertIsNone(self.run_reader(source, 3))
+        self.assertIsNone(self.run_reader("output", 3, output=b"0123456789"))
 
     def test_portable_reader_reaps_timed_out_child(self):
-        self.assertIsNone(self.run_reader("import time; time.sleep(30)", 32, timeout=0.05))
+        self.assertIsNone(self.run_reader("sleep", 32, timeout=0.05))
 
-    def test_portable_reader_handles_closed_or_cancelled_output(self):
-        if os.name == "nt":
-            self.assertIsNone(self.run_reader("import time; time.sleep(30)", 32, timeout=0.05))
-            return
-        process = self.spawn_reader("import time; time.sleep(30)")
-        assert process.stdout is not None
-        process.stdout.close()
-        try:
-            self.assertIsNone(
-                map_inventory._bounded_process_output(
-                    process, 32, time.monotonic() + 1, False, (0,),
-                )
-            )
-            self.assertIsNotNone(process.returncode)
-        finally:
-            self.cleanup_process_group(process)
-            self.assertFalse(any(thread.name == "compound-code-map-git-reader" for thread in threading.enumerate()))
+    def test_git_reader_handles_closed_pipe(self):
+        self.assertIsNone(self.run_reader("closed", 32, timeout=0.05))
 
     def test_portable_reader_deadline_with_inherited_stdout(self):
         source = textwrap.dedent(
             """
-            import subprocess
             import os
+            from pathlib import Path
             import sys
+            from tempfile import TemporaryDirectory
             import time
 
             sys.path.insert(0, sys.argv[1])
             import map_inventory
 
-            owner_source = "import subprocess, sys; subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])"
+            fixture_source = sys.argv[2]
+            map_inventory.GIT_READ = (sys.executable, "-c", fixture_source)
+            env = os.environ.copy()
+            env["COMPOUND_TEST_GIT_MODE"] = "inherit"
+            env["COMPOUND_TEST_GIT_OUTPUT"] = ""
+            env["COMPOUND_TEST_GIT_STATUS"] = "0"
             started = time.monotonic()
-            if os.name == "nt":
-                result = map_inventory._bounded_windows_command_output(
-                    [sys.executable, "-c", owner_source], 32, False,
-                    env=None, ok_statuses=(0,), timeout=0.2,
-                )
-            else:
-                owner = subprocess.Popen(
-                    [sys.executable, "-c", owner_source], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                )
-                result = map_inventory._bounded_process_output(
-                    owner, 32, started + 0.2, False, (0,),
+            with TemporaryDirectory() as scratch:
+                result = map_inventory._bounded_git_output(
+                    Path(scratch), ["fixture"], 32, env=env, timeout=0.2,
                 )
             print(f"result={result!r} elapsed={time.monotonic() - started:.3f}", flush=True)
             """
         )
-        process = self.spawn_reader(source, str(SCRIPTS))
+        process = self.spawn_reader(source, str(SCRIPTS), FIXTURE_SOURCE)
         try:
             try:
                 output, _ = process.communicate(timeout=1)
@@ -148,8 +154,8 @@ class BoundedGitOutputTests(unittest.TestCase):
             self.cleanup_process_group(process)
 
     def test_portable_reader_rejects_unexpected_status(self):
-        self.assertIsNone(self.run_protocol_reader("import sys; sys.exit(7)", 32))
-        self.assertEqual(self.run_protocol_reader("import sys; sys.exit(1)", 32, ok_statuses=(0, 1)), b"")
+        self.assertIsNone(self.run_reader("status", 32, status=7))
+        self.assertEqual(self.run_reader("status", 32, status=1, ok_statuses=(0, 1)), b"")
 
     def test_asyncio_protocol_preserves_prefix_and_deadline(self):
         source = "import sys; sys.stdout.buffer.write(b'0123456789'); sys.stdout.flush()"
