@@ -233,11 +233,11 @@ def _bounded_git_output(
             env=env,
         )
         assert process.stdout is not None
-        deadline = time.monotonic() + timeout
         selector = selectors.DefaultSelector()
         selector.register(process.stdout, selectors.EVENT_READ)
         chunks: list[bytes] = []
         size = 0
+        deadline = time.monotonic() + timeout
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
