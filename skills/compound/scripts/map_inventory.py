@@ -7,7 +7,6 @@ import re
 import selectors
 import stat
 import subprocess
-import threading
 import time
 import urllib.parse
 from pathlib import Path, PurePosixPath
@@ -74,6 +73,114 @@ def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
         return None
 
 
+def _kill_and_reap(process: subprocess.Popen[bytes]) -> None:
+    """Stop a child and reap it without waiting for its output descendants."""
+    if process.poll() is None:
+        try:
+            process.kill()
+        except (OSError, ValueError):
+            pass
+    try:
+        process.wait(timeout=1)
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        pass
+
+
+def _bounded_posix_process_output(
+    process: subprocess.Popen[bytes], fd: int, max_bytes: int, deadline: float, keep_prefix: bool,
+    ok_statuses: tuple[int, ...],
+) -> bytes | None:
+    selector = selectors.DefaultSelector()
+    chunks: list[bytes] = []
+    size = 0
+    try:
+        selector.register(fd, selectors.EVENT_READ)
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired("git output", remaining)
+            if not selector.select(remaining):
+                raise subprocess.TimeoutExpired("git output", remaining)
+            block = os.read(fd, min(65536, max_bytes + 1 - size))
+            if not block:
+                break
+            chunks.append(block)
+            size += len(block)
+            if size > max_bytes:
+                _kill_and_reap(process)
+                return b"".join(chunks) if keep_prefix else None
+        process.wait(timeout=max(0.0, deadline - time.monotonic()))
+        data = b"".join(chunks)
+        return data if process.returncode in ok_statuses else None
+    except (OSError, subprocess.TimeoutExpired):
+        _kill_and_reap(process)
+        return None
+    finally:
+        selector.close()
+
+
+def _windows_peek_function(fd: int) -> tuple[Any, Any, Any]:
+    """Return a configured PeekNamedPipe callable for an anonymous pipe handle."""
+    import ctypes
+    from ctypes import wintypes
+    import msvcrt
+
+    handle = msvcrt.get_osfhandle(fd)
+    if handle == -1:
+        raise OSError("invalid Windows pipe handle")
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    peek = kernel32.PeekNamedPipe
+    peek.argtypes = [
+        wintypes.HANDLE,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    peek.restype = wintypes.BOOL
+    return peek, wintypes.HANDLE(handle), ctypes
+
+
+def _bounded_windows_process_output(
+    process: subprocess.Popen[bytes], fd: int, max_bytes: int, deadline: float, keep_prefix: bool,
+    ok_statuses: tuple[int, ...],
+) -> bytes | None:
+    """Read a Windows pipe without blocking on a buffered reader or a join."""
+    peek, handle, ctypes = _windows_peek_function(fd)
+    chunks: list[bytes] = []
+    size = 0
+    broken_pipe_errors = {6, 109, 232, 233}
+    try:
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired("git output", remaining)
+            available = ctypes.c_uint32()
+            if not peek(handle, None, 0, None, ctypes.byref(available), None):
+                error = ctypes.get_last_error()
+                if error in broken_pipe_errors:
+                    break
+                raise OSError(error, f"PeekNamedPipe failed with error {error}")
+            if available.value == 0:
+                time.sleep(min(0.01, remaining))
+                continue
+            block = os.read(fd, min(65536, max_bytes + 1 - size, available.value))
+            if not block:
+                break
+            chunks.append(block)
+            size += len(block)
+            if size > max_bytes:
+                _kill_and_reap(process)
+                return b"".join(chunks) if keep_prefix else None
+        process.wait(timeout=max(0.0, deadline - time.monotonic()))
+        data = b"".join(chunks)
+        return data if process.returncode in ok_statuses else None
+    except (OSError, subprocess.TimeoutExpired):
+        _kill_and_reap(process)
+        return None
+
+
 def _bounded_process_output(
     process: subprocess.Popen[bytes], max_bytes: int, deadline: float, keep_prefix: bool,
     ok_statuses: tuple[int, ...],
@@ -82,61 +189,19 @@ def _bounded_process_output(
     stream = process.stdout
     if stream is None:
         return None
-    chunks: list[bytes] = []
-    state: dict[str, Any] = {"error": None, "overflow": False}
-    finished = threading.Event()
-
-    def read_stream() -> None:
-        size = 0
-        try:
-            while True:
-                block = stream.read(min(65536, max_bytes + 1 - size))
-                if not block:
-                    return
-                if not isinstance(block, bytes):
-                    state["error"] = ValueError("Git output reader returned non-bytes data")
-                    return
-                chunks.append(block)
-                size += len(block)
-                if size > max_bytes:
-                    state["overflow"] = True
-                    return
-        except (OSError, ValueError) as error:
-            state["error"] = error
-        finally:
-            finished.set()
-
-    reader = threading.Thread(target=read_stream, name="compound-code-map-git-reader")
-    reader.start()
     try:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0 or not finished.wait(remaining):
-            raise subprocess.TimeoutExpired("git output", remaining)
-        if state["error"] is not None or state["overflow"]:
-            if process.poll() is None:
-                process.kill()
-            process.wait(timeout=1)
-            return b"".join(chunks) if state["overflow"] and keep_prefix else None
-        process.wait(timeout=max(0.0, deadline - time.monotonic()))
-        data = b"".join(chunks)
-        return data if process.returncode in ok_statuses else None
-    except (OSError, subprocess.TimeoutExpired):
-        if process.poll() is None:
-            try:
-                process.kill()
-            except OSError:
-                pass
-        try:
-            process.wait(timeout=1)
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+        fd = stream.fileno()
+        if os.name == "nt":
+            return _bounded_windows_process_output(process, fd, max_bytes, deadline, keep_prefix, ok_statuses)
+        return _bounded_posix_process_output(process, fd, max_bytes, deadline, keep_prefix, ok_statuses)
+    except (OSError, ValueError):
+        _kill_and_reap(process)
         return None
     finally:
         try:
             stream.close()
         except (OSError, ValueError):
             pass
-        reader.join()
 
 
 def _bounded_git_output(
