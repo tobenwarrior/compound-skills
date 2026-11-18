@@ -7,6 +7,7 @@ import re
 import selectors
 import stat
 import subprocess
+import threading
 import time
 import urllib.parse
 from pathlib import Path, PurePosixPath
@@ -73,6 +74,71 @@ def _git(path: Path, *args: str) -> subprocess.CompletedProcess[bytes] | None:
         return None
 
 
+def _bounded_process_output(
+    process: subprocess.Popen[bytes], max_bytes: int, deadline: float, keep_prefix: bool,
+    ok_statuses: tuple[int, ...],
+) -> bytes | None:
+    """Read one child pipe with a bounded reader that also works on Windows."""
+    stream = process.stdout
+    if stream is None:
+        return None
+    chunks: list[bytes] = []
+    state: dict[str, Any] = {"error": None, "overflow": False}
+    finished = threading.Event()
+
+    def read_stream() -> None:
+        size = 0
+        try:
+            while True:
+                block = stream.read(min(65536, max_bytes + 1 - size))
+                if not block:
+                    return
+                if not isinstance(block, bytes):
+                    state["error"] = ValueError("Git output reader returned non-bytes data")
+                    return
+                chunks.append(block)
+                size += len(block)
+                if size > max_bytes:
+                    state["overflow"] = True
+                    return
+        except (OSError, ValueError) as error:
+            state["error"] = error
+        finally:
+            finished.set()
+
+    reader = threading.Thread(target=read_stream, name="compound-code-map-git-reader")
+    reader.start()
+    try:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not finished.wait(remaining):
+            raise subprocess.TimeoutExpired("git output", remaining)
+        if state["error"] is not None or state["overflow"]:
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=1)
+            return b"".join(chunks) if state["overflow"] and keep_prefix else None
+        process.wait(timeout=max(0.0, deadline - time.monotonic()))
+        data = b"".join(chunks)
+        return data if process.returncode in ok_statuses else None
+    except (OSError, subprocess.TimeoutExpired):
+        if process.poll() is None:
+            try:
+                process.kill()
+            except OSError:
+                pass
+        try:
+            process.wait(timeout=1)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        return None
+    finally:
+        try:
+            stream.close()
+        except (OSError, ValueError):
+            pass
+        reader.join()
+
+
 def _bounded_git_output(
     root: Path, arguments: list[str], max_bytes: int, keep_prefix: bool = False, *,
     env: dict[str, str] | None = None, ok_statuses: tuple[int, ...] = (0,), timeout: float = GIT_TIMEOUT,
@@ -89,11 +155,13 @@ def _bounded_git_output(
             env=env,
         )
         assert process.stdout is not None
+        deadline = time.monotonic() + timeout
+        if os.name == "nt":
+            return _bounded_process_output(process, max_bytes, deadline, keep_prefix, ok_statuses)
         selector = selectors.DefaultSelector()
         selector.register(process.stdout, selectors.EVENT_READ)
         chunks: list[bytes] = []
         size = 0
-        deadline = time.monotonic() + timeout
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
