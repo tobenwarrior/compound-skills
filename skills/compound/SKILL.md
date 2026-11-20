@@ -1,6 +1,6 @@
 ---
 name: compound
-description: "Use for unfamiliar repos, new features, broader refactors, performance, PR authoring, or Compound setup, status, and guidance. Project solutions use scripts/solutions.py for lookup and references/solutions.md for capture."
+description: "Use for unfamiliar repos, new features, broader refactors, performance, UI/UX verification, PR authoring, or Compound setup, status, and guidance. Project solutions use scripts/solutions.py for lookup and references/solutions.md for capture."
 license: MIT
 ---
 
@@ -13,6 +13,8 @@ For visual map requests, including `compound map`, or standalone Python citation
 For project solution searches, run `python3 -B <installed-skill-dir>/scripts/solutions.py search --repo <repo-root> --query "<problem terms>"` directly, in parallel with the first source or diff read when possible. Query the project or library name and a specific symptom. Add `--limit 1 --show-note` when one note could change the next step. Continue with source on a missing index or no match.
 
 For explicit `compound solutions` requests for help, capture, or index refresh, follow [Project solutions](references/solutions.md) and skip engineering startup.
+
+For changes you make to visible UI or user flows, or for UI/UX verification requests, follow [UI and UX](references/verify.md#ui-and-ux).
 
 For review-only Compound work, bypass engineering startup. Use the supplied diff or read it from Git at `-U3`. Follow [Review](references/review.md) for targeted checks.
 

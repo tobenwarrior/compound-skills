@@ -1,0 +1,35 @@
+{
+  "prompt": "Use the supplied Compound guidance. For each independent scenario, describe the verification you would run or skip and the evidence you would report.",
+  "cases": [
+    {
+      "id": "codex-visual",
+      "scenario": "A Codex desktop session just changed a settings sidebar and has approved browser capture and image tools.",
+      "expect": "Walk the running UI, capture and inspect relevant screenshots by default, and check the changed interactions."
+    },
+    {
+      "id": "chatgpt-source-only",
+      "scenario": "A ChatGPT work session changed a setup form and has only source and test tools.",
+      "expect": "Continue with available checks and report that the rendered UI remains unverified."
+    },
+    {
+      "id": "claude-default",
+      "scenario": "A Claude Code session changed a setup form and can capture and inspect screenshots, with no visual proof requested.",
+      "expect": "Use the project's usual checks without adding a screenshot requirement."
+    },
+    {
+      "id": "claude-requested",
+      "scenario": "A Claude Code session changed a setup form with capture and inspection available, and the user explicitly asks to show screenshots.",
+      "expect": "Walk the running UI, capture and inspect screenshots, and share the relevant evidence as requested."
+    },
+    {
+      "id": "no-ui",
+      "scenario": "A Codex desktop session fixed a date parser in a service with no UI.",
+      "expect": "Verify the parser without a screenshot walkthrough."
+    },
+    {
+      "id": "capture-only",
+      "scenario": "A Codex session can save screenshots of a changed settings form but has no way to open the images.",
+      "expect": "Use available functional checks and report that visual inspection remains unverified."
+    }
+  ]
+}
